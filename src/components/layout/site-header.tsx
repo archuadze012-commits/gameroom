@@ -10,7 +10,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 items-center gap-6 px-4">
         <Link href="/" className="flex items-center gap-2 font-semibold">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/15 text-primary neon-border">
+          <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/20 text-primary ring-1 ring-primary/40">
             <Gamepad2 className="h-5 w-5" />
           </span>
           <span className="text-lg tracking-tight">

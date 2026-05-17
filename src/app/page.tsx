@@ -17,7 +17,7 @@ export default function HomePage() {
             </Badge>
             <h1 className="text-balance text-4xl font-bold tracking-tight md:text-6xl">
               ქართველი გეიმერების{" "}
-              <span className="text-primary neon-text">სათამაშო სახლი</span>
+              <span className="text-primary">სათამაშო სახლი</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-balance text-lg text-muted-foreground">
               იპოვე გუნდი, შეუერთდი ჩემპიონატებს და იპოვე ერთგულესი მოთამაშეები eFootball, FIFA,

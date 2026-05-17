@@ -7,7 +7,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="w-full max-w-md">
         <div className="mb-8 flex justify-center">
           <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
-            <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary/15 text-primary neon-border">
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary/20 text-primary ring-1 ring-primary/40">
               <Gamepad2 className="h-5 w-5" />
             </span>
             Game<span className="text-primary">room</span>

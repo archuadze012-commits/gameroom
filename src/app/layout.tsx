@@ -46,7 +46,7 @@ export default function RootLayout({
   return (
     <html
       lang="ka"
-      className={`${inter.variable} ${jetbrainsMono.variable} ${notoGeorgian.variable} h-full antialiased`}
+      className={`dark ${inter.variable} ${jetbrainsMono.variable} ${notoGeorgian.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <SiteHeader />
