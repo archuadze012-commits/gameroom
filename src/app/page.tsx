@@ -33,17 +33,6 @@ export default function HomePage() {
                 <Link href="/lfg">გუნდის ძებნა</Link>
               </Button>
             </div>
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
-              <span className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-primary" /> 7,500+ მოთამაშე
-              </span>
-              <span className="flex items-center gap-2">
-                <Trophy className="h-4 w-4 text-primary" /> 12 აქტიური ჩემპიონატი
-              </span>
-              <span className="flex items-center gap-2">
-                <Gamepad2 className="h-4 w-4 text-primary" /> 5 თამაში
-              </span>
-            </div>
           </div>
         </div>
 
