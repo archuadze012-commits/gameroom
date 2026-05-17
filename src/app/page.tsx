@@ -1,65 +1,281 @@
-import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, Trophy, Users, MessageSquare, Newspaper, Gamepad2, Zap } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { mockGames, mockLfgPosts, mockNews, mockTournaments } from "@/lib/mock-data";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="space-y-20 pb-24">
+      {/* Hero */}
+      <section className="relative overflow-hidden border-b border-border/60">
+        <div className="container mx-auto px-4 pb-20 pt-16 md:pt-24">
+          <div className="mx-auto max-w-3xl text-center">
+            <Badge variant="outline" className="border-primary/40 text-primary mb-6">
+              <Zap className="mr-1 h-3 w-3" /> ბეტა ვერსია
+            </Badge>
+            <h1 className="text-balance text-4xl font-bold tracking-tight md:text-6xl">
+              ქართველი გეიმერების{" "}
+              <span className="text-primary neon-text">სათამაშო სახლი</span>
+            </h1>
+            <p className="mx-auto mt-6 max-w-2xl text-balance text-lg text-muted-foreground">
+              იპოვე გუნდი, შეუერთდი ჩემპიონატებს და იპოვე ერთგულესი მოთამაშეები eFootball, FIFA,
+              PUBG, Warzone და Valorant-ში — ერთ ადგილას.
+            </p>
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Button asChild size="lg" className="w-full sm:w-auto">
+                <Link href="/auth/signup">
+                  დაიწყე ახლა <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
+                <Link href="/lfg">გუნდის ძებნა</Link>
+              </Button>
+            </div>
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+              <span className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary" /> 7,500+ მოთამაშე
+              </span>
+              <span className="flex items-center gap-2">
+                <Trophy className="h-4 w-4 text-primary" /> 12 აქტიური ჩემპიონატი
+              </span>
+              <span className="flex items-center gap-2">
+                <Gamepad2 className="h-4 w-4 text-primary" /> 5 თამაში
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]">
+          <div
+            className="absolute inset-0 opacity-30"
+            style={{
+              backgroundImage:
+                "linear-gradient(to right, oklch(1 0 0 / 0.06) 1px, transparent 1px), linear-gradient(to bottom, oklch(1 0 0 / 0.06) 1px, transparent 1px)",
+              backgroundSize: "48px 48px",
+            }}
+          />
+        </div>
+      </section>
+
+      <section className="container mx-auto px-4">
+        <SectionHeader
+          icon={<Gamepad2 className="h-5 w-5" />}
+          title="თამაშები"
+          subtitle="აარჩიე შენი მთავარი თამაში და იპოვე გუნდი"
+          href="/games"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {mockGames.map((g) => (
+            <Link key={g.slug} href={`/games/${g.slug}`} className="group">
+              <Card className="relative h-full overflow-hidden border-border/60 transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
+                <div className={`absolute inset-0 -z-10 bg-gradient-to-br ${g.accent} opacity-60`} />
+                <CardContent className="flex h-full flex-col gap-4 p-6">
+                  <div className="flex items-start justify-between">
+                    <span className="text-4xl">{g.emoji}</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {g.liveLfg} live LFG
+                    </Badge>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold transition-colors group-hover:text-primary">
+                      {g.nameKa}
+                    </h3>
+                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                      {g.description}
+                    </p>
+                  </div>
+                  <div className="mt-auto flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{g.players.toLocaleString()} მოთამაშე</span>
+                    <span className="text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                      გახსნა →
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      <section className="container mx-auto px-4">
+        <SectionHeader
+          icon={<Users className="h-5 w-5" />}
+          title="ცოცხალი LFG"
+          subtitle="ვინ ეძებს გუნდს ახლავე"
+          href="/lfg"
+        />
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {mockLfgPosts.slice(0, 6).map((post) => {
+            const game = mockGames.find((g) => g.slug === post.gameSlug);
+            return (
+              <Link key={post.id} href={`/lfg/${post.id}`}>
+                <Card className="h-full border-border/60 transition-colors hover:border-primary/40">
+                  <CardContent className="space-y-3 p-5">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1.5">
+                        <span>{game?.emoji}</span>
+                        <span>{game?.nameKa}</span>
+                      </span>
+                      <span>{post.createdAgo}</span>
+                    </div>
+                    <h3 className="line-clamp-2 font-semibold">{post.title}</h3>
+                    <p className="line-clamp-2 text-sm text-muted-foreground">{post.description}</p>
+                    <div className="flex flex-wrap items-center gap-2 pt-2 text-xs">
+                      <Badge variant="outline">{post.rank}</Badge>
+                      <Badge variant="outline">{post.region}</Badge>
+                      {post.voiceRequired && <Badge variant="outline">🎙 voice</Badge>}
+                      <Badge className="ml-auto">
+                        {post.slots.filled}/{post.slots.total} ადგილი
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
-      </main>
+      </section>
+
+      <section className="container mx-auto grid gap-10 px-4 lg:grid-cols-2">
+        <div>
+          <SectionHeader
+            icon={<Newspaper className="h-5 w-5" />}
+            title="ბოლო ამბები"
+            subtitle="რა ხდება გეიმინგ სამყაროში"
+            href="/news"
+            compact
+          />
+          <div className="space-y-3">
+            {mockNews.map((n) => (
+              <Link key={n.slug} href={`/news/${n.slug}`} className="block">
+                <Card className="overflow-hidden border-border/60 transition-colors hover:border-primary/40">
+                  <CardContent className="flex gap-4 p-4">
+                    <div className={`h-20 w-20 shrink-0 rounded-md bg-gradient-to-br ${n.cover}`} />
+                    <div className="min-w-0">
+                      <h3 className="line-clamp-2 font-semibold">{n.title}</h3>
+                      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{n.excerpt}</p>
+                      <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>{n.publishedAt}</span>
+                        <span>· {n.readMinutes} წთ კითხვა</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <SectionHeader
+            icon={<Trophy className="h-5 w-5" />}
+            title="მომავალი ჩემპიონატები"
+            subtitle="დაარეგისტრირდი ან უყურე"
+            href="/tournaments"
+            compact
+          />
+          <div className="space-y-3">
+            {mockTournaments.map((t) => {
+              const game = mockGames.find((g) => g.slug === t.gameSlug);
+              return (
+                <Link key={t.slug} href={`/tournaments/${t.slug}`} className="block">
+                  <Card className="overflow-hidden border-border/60 transition-colors hover:border-primary/40">
+                    <div className={`h-1.5 w-full bg-gradient-to-r ${t.banner}`} />
+                    <CardContent className="space-y-2 p-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          {game?.emoji} {game?.nameKa}
+                        </span>
+                        <StatusBadge status={t.status} />
+                      </div>
+                      <h3 className="font-semibold">{t.name}</h3>
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                        <span>🏆 {t.prizePool}</span>
+                        <span>👥 {t.participants.current}/{t.participants.max}</span>
+                        <span>🗓 {t.startsAt}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="container mx-auto grid gap-4 px-4 md:grid-cols-2">
+        <Card className="border-border/60">
+          <CardContent className="space-y-3 p-8">
+            <MessageSquare className="h-8 w-8 text-primary" />
+            <h3 className="text-xl font-semibold">ფორუმი</h3>
+            <p className="text-sm text-muted-foreground">
+              დისკუსიები თამაშებზე, ტექნიკაზე და კომუნიტიზე. შენი იდეები, კითხვები — ჩვენი თემი
+              დაგეხმარება.
+            </p>
+            <Button asChild variant="outline">
+              <Link href="/forum">ფორუმზე გადასვლა <ArrowRight className="ml-1 h-4 w-4" /></Link>
+            </Button>
+          </CardContent>
+        </Card>
+        <Card className="border-border/60">
+          <CardContent className="space-y-3 p-8">
+            <Zap className="h-8 w-8 text-accent" />
+            <h3 className="text-xl font-semibold">ცოცხალი ჩათი</h3>
+            <p className="text-sm text-muted-foreground">
+              თამაშების მიხედვით კანალები, LFG-ის ჩათები და ერთიანი ქართული გეიმერული ჩათი.
+            </p>
+            <Button asChild variant="outline">
+              <Link href="/chat">ჩათში შესვლა <ArrowRight className="ml-1 h-4 w-4" /></Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
+}
+
+function SectionHeader({
+  icon,
+  title,
+  subtitle,
+  href,
+  compact = false,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle?: string;
+  href?: string;
+  compact?: boolean;
+}) {
+  return (
+    <div className={`flex items-end justify-between ${compact ? "mb-4" : "mb-6"}`}>
+      <div>
+        <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+          <span className="text-primary">{icon}</span>
+          {title}
+        </h2>
+        {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
+      </div>
+      {href && (
+        <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+          <Link href={href}>
+            ყველა <ArrowRight className="ml-1 h-3.5 w-3.5" />
+          </Link>
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: "open" | "checkin" | "live" | "completed" }) {
+  const map = {
+    open: { label: "რეგისტრაცია", className: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
+    checkin: { label: "Check-in", className: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
+    live: { label: "🔴 ცოცხალი", className: "bg-red-500/15 text-red-400 border-red-500/30" },
+    completed: { label: "დასრულდა", className: "bg-muted text-muted-foreground border-border" },
+  };
+  const cfg = map[status];
+  return <Badge variant="outline" className={cfg.className}>{cfg.label}</Badge>;
 }

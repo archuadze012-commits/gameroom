@@ -1,36 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Gameroom
 
-## Getting Started
+ქართველი გეიმერების სათემო პლატფორმა — LFG მატჩმეიკინგი, ფორუმი, ჩათი, სიახლეები, ჩემპიონატები.
 
-First, run the development server:
+## ტექნოლოგიური სტეკი
 
+- **Next.js 16** (App Router) + **TypeScript** + **Turbopack**
+- **Tailwind CSS v4** + **shadcn/ui** (base-nova preset)
+- **Supabase** (PostgreSQL + Auth + Storage + Realtime)
+- **Drizzle ORM** — TypeScript-first schema
+- **Inter + Noto Sans Georgian** ფონტები
+- მუქი გეიმერული თემა (cyan + violet neon accent)
+
+## Phase 1 — გაკეთებული
+
+- ✅ Auth pages (Email magic link, Google OAuth, Discord OAuth)
+- ✅ Landing page (hero, თამაშები, LFG, news, tournaments)
+- ✅ LFG (list ფილტრებით, შექმნა, detail + join request)
+- ✅ ფორუმი (categories, threads, posts, ლაიქი)
+- ✅ სიახლეები (list, article + comments)
+- ✅ ჩემპიონატები (list, detail, single-elim bracket renderer)
+- ✅ ჩათი (Demo UI — real-time Phase 2-ში)
+- ✅ თამაშების კატალოგი
+- ✅ პროფილი (public + settings)
+- ✅ Admin panel (dashboard, news, games, tournaments, users)
+- ✅ Drizzle schema ყველა Phase 1 ცხრილით + seed script
+- ✅ Supabase server/client/proxy auth-ის wiring
+
+ფიჩერების უმეტესობას ჯერ მოქმედი backend არ აქვს — UI-ი render-დება mock data-ით
+(`src/lib/mock-data.ts`). Supabase ჩართვის შემდეგ ფორმები მიეცემა server actions-ს.
+
+## დაყენება
+
+### 1. Supabase პროექტი
+1. შექმენი ახალი პროექტი https://supabase.com-ზე
+2. დააკოპირე `.env.local.example` → `.env.local` და შეავსე:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=...
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+   SUPABASE_SERVICE_ROLE_KEY=...
+   DATABASE_URL=postgresql://...
+   ```
+3. Supabase Auth → Providers-ში ჩართე Google და Discord OAuth (callback URL: `https://YOUR-SITE/auth/callback`)
+
+### 2. ბაზის სქემა
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run db:generate   # მიგრაციების ფაილების გენერაცია
+npm run db:push       # შემოპლების Supabase-ში
+npm run db:seed       # თამაშები + ფორუმის კატეგორიების ჩაყრა
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. dev სერვერი
+```bash
+npm install
+npm run dev
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+ბრაუზერში http://localhost:3000
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## სტრუქტურა
 
-## Learn More
+```
+src/
+├── app/
+│   ├── (root)                    # landing, /chat, etc.
+│   ├── auth/                     # login, signup, callback, logout
+│   ├── lfg/                      # LFG list/new/detail
+│   ├── forum/[category]/[thread] # forum
+│   ├── news/[slug]               # news
+│   ├── tournaments/[slug]        # tournaments + brackets
+│   ├── games/[slug]              # games catalog
+│   ├── profile/[username]
+│   ├── settings/
+│   └── admin/                    # admin panel
+├── components/
+│   ├── ui/                       # shadcn primitives
+│   ├── layout/                   # header, footer, nav
+│   ├── tournament/bracket.tsx
+│   └── page-header.tsx
+├── db/
+│   ├── schema.ts                 # Drizzle schema (Phase 1 ცხრილები)
+│   ├── client.ts
+│   └── seed.ts
+├── lib/
+│   ├── supabase/                 # server, client, middleware helpers
+│   ├── tournament/generate-bracket.ts
+│   ├── mock-data.ts              # initial UI data
+│   ├── auth.ts
+│   └── utils.ts
+└── proxy.ts                      # Next.js 16 proxy (was middleware.ts)
+```
 
-To learn more about Next.js, take a look at the following resources:
+## შემდეგი ნაბიჯები (Phase 1 დასასრულებლად)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Supabase-ის env ცვლადების შევსება + `db:push` + `db:seed`
+2. Server actions-ის ჩაწერა (mock data → Drizzle queries):
+   - `app/lfg/new/new-lfg-form.tsx`
+   - `app/lfg/[id]/join-request-form.tsx`
+   - `app/settings/settings-form.tsx`
+   - `app/admin/news/...` CRUD
+3. RLS policies Supabase-ში (user-მა მხოლოდ თავის LFG მართოს, ა.შ.)
+4. Real auth gating `admin/layout.tsx`-ში (profiles.role === 'admin')
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Phase 2 (MVP-ის შემდეგ)
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- რეალური real-time ჩათი (Supabase Realtime)
+- გუნდები / კლანები
+- Reputation / Trust Score
+- Double-elim + round-robin ბრეკეტები
+- Email + push notifications (PWA)
+- Discord webhook ინტეგრაცია
+- სტრიმინგი (Twitch/YouTube embed)
