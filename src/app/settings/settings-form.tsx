@@ -12,7 +12,7 @@ import { mockGames } from "@/lib/mock-data";
 import { GameIcon } from "@/components/game-icon";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-const STORAGE_KEY = "gameroom_profile";
+const STORAGE_KEY_PREFIX = "gameroom_profile";
 
 type Profile = {
   username: string;
@@ -38,10 +38,10 @@ const defaults: Profile = {
   favoriteGameSlugs: [],
 };
 
-function loadFromStorage(): Partial<Profile> {
+function loadFromStorage(key: string): Partial<Profile> {
   if (typeof window === "undefined") return {};
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
@@ -69,12 +69,15 @@ const InstagramIcon = () => (
 export function SettingsForm() {
   const [profile, setProfile] = useState<Profile>(defaults);
   const [loading, setLoading] = useState(false);
+  const [storageKey, setStorageKey] = useState<string>(STORAGE_KEY_PREFIX);
 
   useEffect(() => {
     async function init() {
-      const stored = loadFromStorage();
       const supabase = createSupabaseBrowserClient();
       const { data: { user } } = await supabase.auth.getUser();
+      const key = user ? `${STORAGE_KEY_PREFIX}_${user.id}` : STORAGE_KEY_PREFIX;
+      setStorageKey(key);
+      const stored = loadFromStorage(key);
       setProfile({
         ...defaults,
         ...stored,
@@ -92,7 +95,7 @@ export function SettingsForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+    localStorage.setItem(storageKey, JSON.stringify(profile));
     try {
       const supabase = createSupabaseBrowserClient();
       await supabase.auth.updateUser({
