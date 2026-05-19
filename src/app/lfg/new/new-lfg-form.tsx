@@ -92,7 +92,7 @@ export function NewLfgForm() {
 
       <div className="space-y-1.5">
         <Label htmlFor="game">თამაში *</Label>
-        <Select name="game" required value={game} onValueChange={setGame}>
+        <Select name="game" required value={game} onValueChange={(v) => setGame(v ?? "")}>
           <SelectTrigger id="game">
             <SelectValue placeholder="აარჩიე თამაში" />
           </SelectTrigger>
