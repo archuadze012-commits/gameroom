@@ -11,9 +11,12 @@ export async function updateSession(request: NextRequest) {
     return response;
   }
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL.replace(/^﻿/, "").trim();
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.replace(/^﻿/, "").trim();
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() {
