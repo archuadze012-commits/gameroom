@@ -55,7 +55,7 @@ export default async function FeedPage() {
   const favSlugs: string[] = profile?.favorite_game_slugs ?? [];
   const filteredNews = favSlugs.length > 0
     ? mockNews.filter((n) => n.gameSlug != null && favSlugs.includes(n.gameSlug))
-    : mockNews; // show all if no favorites set
+    : [];
 
   const newsWithGame = filteredNews.map((n) => ({
     ...n,
