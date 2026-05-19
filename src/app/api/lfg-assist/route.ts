@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) return NextResponse.json({ error: "no_key" }, { status: 500 });
+  if (!process.env.GROQ_API_KEY) return NextResponse.json({ error: "no_key" }, { status: 500 });
 
   let body: { prompt?: string; game?: string };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "bad_request" }, { status: 400 });
-  }
+  try { body = await request.json(); } catch { return NextResponse.json({ error: "bad_request" }, { status: 400 }); }
 
   const prompt = (body.prompt ?? "").trim();
   if (!prompt) return NextResponse.json({ error: "empty" }, { status: 400 });
@@ -17,28 +12,24 @@ export async function POST(request: NextRequest) {
   const game = body.game ? `თამაში: ${body.game}` : "";
 
   try {
-    const res = await fetch("https://api.deepseek.com/chat/completions", {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "deepseek-chat",
+        model: "llama-3.3-70b-versatile",
         messages: [
           {
             role: "system",
             content:
               "შენ ხარ ასისტენტი Georgian gaming community საიტზე (gameroom.com.ge). " +
               "მომხმარებელი ეძებს teammate-ებს. მისი მოკლე აღწერის მიხედვით გენერირე: " +
-              "- სათაური (მაქს 60 სიმბოლო, მიმზიდველი) " +
-              "- აღწერა (2-3 წინადადება ქართულად, პირველი პირიდან) " +
+              "სათაური (მაქს 60 სიმბოლო, მიმზიდველი) და აღწერა (2-3 წინადადება ქართულად). " +
               'მხოლოდ JSON დააბრუნე: {"title": "...", "description": "..."}',
           },
-          {
-            role: "user",
-            content: `${game}\n${prompt}`,
-          },
+          { role: "user", content: `${game}\n${prompt}` },
         ],
         max_tokens: 200,
         temperature: 0.7,

@@ -1,29 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) return NextResponse.json({ error: "no_key" }, { status: 500 });
+  if (!process.env.GROQ_API_KEY) return NextResponse.json({ error: "no_key" }, { status: 500 });
 
   let body: { role?: string; games?: string[]; voiceChat?: boolean };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "bad_request" }, { status: 400 });
-  }
+  try { body = await request.json(); } catch { return NextResponse.json({ error: "bad_request" }, { status: 400 }); }
 
   const role = body.role ?? "user";
   const games = (body.games ?? []).join(", ") || "სხვადასხვა";
   const voice = body.voiceChat ? "voice chat-ით" : "voice chat-ის გარეშე";
 
   try {
-    const res = await fetch("https://api.deepseek.com/chat/completions", {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "deepseek-chat",
+        model: "llama-3.3-70b-versatile",
         messages: [
           {
             role: "system",
