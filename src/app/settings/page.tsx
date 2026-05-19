@@ -1,10 +1,14 @@
+import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
 import { SettingsForm } from "./settings-form";
+import { getSession } from "@/lib/auth";
 
 export const metadata = { title: "პარამეტრები" };
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const user = await getSession();
+  if (!user) redirect("/auth/login?next=/settings");
   return (
     <div className="container mx-auto max-w-3xl px-4 py-8">
       <PageHeader
