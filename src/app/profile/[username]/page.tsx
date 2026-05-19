@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Trophy, Users as UsersIcon, Gamepad2, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { ProfileFavoriteGames } from "@/components/profile-favorite-games";
 import { ProfileFeed } from "@/components/profile-feed";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { InviteButton } from "@/components/invite-button";
+import { ProfileStats } from "@/components/profile-stats";
 import { getSession } from "@/lib/auth";
 
 const YoutubeIcon = () => (
@@ -119,12 +120,10 @@ export default async function ProfilePage({
 
 
           {/* Stats */}
-          <div className="grid grid-cols-2 gap-4 text-center sm:grid-cols-4">
-            <Stat icon={<UsersIcon className="h-4 w-4" />} value="284" label="გამომწერი" />
-            <Stat icon={<Gamepad2 className="h-4 w-4" />} value="3" label="თამაში" />
-            <Stat icon={<Trophy className="h-4 w-4" />} value="12" label="ტიტული" />
-            <Stat icon={<UsersIcon className="h-4 w-4" />} value="47" label="LFG დაპოსტილი" />
-          </div>
+          <ProfileStats
+            lfgCount={mockLfgPosts.filter((p) => p.authorName === username).length}
+            userId={userId ?? undefined}
+          />
 
         </CardContent>
       </Card>
