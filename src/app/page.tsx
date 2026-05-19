@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Users, Gamepad2, Rss, Search } from "lucide-react";
+import { ArrowRight, Users, Gamepad2, Zap, Rss, Search } from "lucide-react";
 import { GameIcon } from "@/components/game-icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
