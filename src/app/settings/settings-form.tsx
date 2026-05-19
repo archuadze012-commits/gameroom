@@ -79,11 +79,27 @@ export function SettingsForm() {
       const key = user ? `${STORAGE_KEY_PREFIX}_${user.id}` : STORAGE_KEY_PREFIX;
       setStorageKey(key);
       const stored = loadFromStorage(key);
+
+      // load favorite_game_slugs from Supabase (authoritative source)
+      let dbFavoriteSlugs: string[] | null = null;
+      if (user) {
+        const { data: dbProfile } = await supabase
+          .from("profiles")
+          .select("favorite_game_slugs")
+          .eq("id", user.id)
+          .single();
+        if (dbProfile?.favorite_game_slugs?.length) {
+          dbFavoriteSlugs = dbProfile.favorite_game_slugs;
+        }
+      }
+
       setProfile({
         ...defaults,
         ...stored,
         username: (user?.user_metadata?.username as string | undefined) || stored.username || "",
         displayName: (user?.user_metadata?.display_name as string | undefined) || stored.displayName || "",
+        // DB takes priority; fall back to localStorage
+        favoriteGameSlugs: dbFavoriteSlugs ?? stored.favoriteGameSlugs ?? [],
       });
     }
     init();
@@ -133,6 +149,7 @@ export function SettingsForm() {
           displayName: profile.displayName,
           bio: profile.bio,
           voiceChat: profile.voice,
+          favoriteGameSlugs: profile.favoriteGameSlugs,
         }),
       });
       if (!res.ok) {

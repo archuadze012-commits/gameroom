@@ -26,6 +26,8 @@ export async function POST(request: NextRequest) {
     update.region = body.region.trim() || null;
   if (typeof body.voiceChat === "boolean")
     update.voice_chat = body.voiceChat;
+  if (Array.isArray(body.favoriteGameSlugs))
+    update.favorite_game_slugs = (body.favoriteGameSlugs as unknown[]).filter((s) => typeof s === "string");
 
   try {
     const supabase = await createSupabaseServerClient();
