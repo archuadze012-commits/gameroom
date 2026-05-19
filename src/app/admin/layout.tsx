@@ -7,6 +7,7 @@ import {
   Trophy,
   Users as UsersIcon,
   LayoutDashboard,
+  ShieldAlert,
 } from "lucide-react";
 import { getIsAdmin } from "@/lib/auth";
 
@@ -16,6 +17,7 @@ const adminLinks = [
   { href: "/admin/games", label: "თამაშები", icon: Gamepad2 },
   { href: "/admin/tournaments", label: "ჩემპიონატები", icon: Trophy },
   { href: "/admin/users", label: "მომხმარებლები", icon: UsersIcon },
+  { href: "/admin/moderation", label: "მოდერაცია", icon: ShieldAlert },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
