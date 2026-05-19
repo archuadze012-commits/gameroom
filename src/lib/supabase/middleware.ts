@@ -14,37 +14,28 @@ export async function updateSession(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL.replace(/^﻿/, "").trim();
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.replace(/^﻿/, "").trim();
 
-  const supabase = createServerClient(
-    supabaseUrl,
-    supabaseKey,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value),
-          );
-          response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options),
-          );
-        },
+  const supabase = createServerClient(supabaseUrl, supabaseKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) =>
+          request.cookies.set(name, value)
+        );
+        response = NextResponse.next({ request });
+        cookiesToSet.forEach(({ name, value, options }) =>
+          response.cookies.set(name, value, options)
+        );
       },
     },
-  );
+  });
 
+  // getUser() validates the session server-side and refreshes it if needed.
+  // @supabase/ssr handles clearing invalid sessions internally via setAll.
   const {
     data: { user },
-    error,
   } = await supabase.auth.getUser();
-
-  // Clear stale session cookies when Supabase can't find the session
-  if (error?.message?.includes("Session") || error?.status === 403) {
-    const cookiesToClear = request.cookies.getAll().filter((c) => c.name.startsWith("sb-"));
-    cookiesToClear.forEach(({ name }) => response.cookies.delete(name));
-  }
 
   const path = request.nextUrl.pathname;
   const protectedPrefixes = ["/settings", "/lfg/new", "/admin"];
