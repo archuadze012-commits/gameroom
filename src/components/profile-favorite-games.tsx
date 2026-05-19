@@ -5,28 +5,31 @@ import Link from "next/link";
 import { mockGames } from "@/lib/mock-data";
 import { GameIcon } from "@/components/game-icon";
 
-const STORAGE_KEY = "gameroom_profile";
-
 type Props = {
   fallbackSlugs: string[];
   isOwner: boolean;
+  userId?: string;
 };
 
-export function ProfileFavoriteGames({ fallbackSlugs, isOwner }: Props) {
+export function ProfileFavoriteGames({ fallbackSlugs, isOwner, userId }: Props) {
   const [slugs, setSlugs] = useState(fallbackSlugs);
 
   useEffect(() => {
-    if (!isOwner) return;
+    if (!isOwner || !userId) return;
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(`gameroom_profile_${userId}`);
       if (raw) {
         const saved = JSON.parse(raw);
         if (Array.isArray(saved.favoriteGameSlugs) && saved.favoriteGameSlugs.length > 0) {
           setSlugs(saved.favoriteGameSlugs);
+        } else {
+          setSlugs([]);
         }
+      } else {
+        setSlugs([]);
       }
     } catch {}
-  }, [isOwner]);
+  }, [isOwner, userId]);
 
   const games = slugs
     .map((slug) => mockGames.find((g) => g.slug === slug))

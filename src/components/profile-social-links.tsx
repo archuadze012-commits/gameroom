@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 const STORAGE_KEY = "gameroom_profile";
 
@@ -24,6 +25,7 @@ type Props = {
   ytSubscribers: string;
   ttFollowers: string;
   isOwner: boolean;
+  userId?: string;
 };
 
 export function ProfileSocialLinks({
@@ -32,15 +34,16 @@ export function ProfileSocialLinks({
   ytSubscribers,
   ttFollowers,
   isOwner,
+  userId,
 }: Props) {
   const [ytHandle, setYtHandle] = useState(defaultYtHandle);
   const [ttHandle, setTtHandle] = useState(defaultTtHandle);
   const [ttFollowersLocal, setTtFollowersLocal] = useState(ttFollowers);
 
   useEffect(() => {
-    if (!isOwner) return;
+    if (!isOwner || !userId) return;
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(`gameroom_profile_${userId}`);
       if (raw) {
         const saved = JSON.parse(raw);
         if (saved.youtubeHandle) setYtHandle(saved.youtubeHandle);
@@ -48,7 +51,9 @@ export function ProfileSocialLinks({
         if (saved.tiktokFollowers) setTtFollowersLocal(saved.tiktokFollowers);
       }
     } catch {}
-  }, [isOwner]);
+  }, [isOwner, userId]);
+
+  if (!ytHandle && !ttHandle) return null;
 
   const ytUrl = `https://youtube.com/@${ytHandle.replace(/^@/, "")}`;
   const ttUrl = `https://tiktok.com/@${ttHandle.replace(/^@/, "")}`;
@@ -56,6 +61,11 @@ export function ProfileSocialLinks({
   const ttDisplay = `@${ttHandle.replace(/^@/, "")}`;
 
   return (
+    <div>
+      <Separator className="mb-4" />
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+        სოციალური არხები
+      </h2>
     <div className="grid gap-3 sm:grid-cols-2">
       <a href={ytUrl} target="_blank" rel="noopener noreferrer" className="group">
         <Card className="border-border/60 transition-colors hover:border-red-500/60 hover:bg-red-500/5">
@@ -95,6 +105,7 @@ export function ProfileSocialLinks({
           </CardContent>
         </Card>
       </a>
+    </div>
     </div>
   );
 }

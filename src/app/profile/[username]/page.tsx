@@ -16,8 +16,6 @@ import { ProfileFeed } from "@/components/profile-feed";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { InviteButton } from "@/components/invite-button";
 import { getSession } from "@/lib/auth";
-import { getYouTubeSubscriberCount } from "@/lib/youtube";
-import { getTikTokFollowerCount } from "@/lib/tiktok";
 
 const YoutubeIcon = () => (
   <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" xmlns="http://www.w3.org/2000/svg">
@@ -45,25 +43,14 @@ export default async function ProfilePage({
   const isOwner = sessionUsername === username;
   const avatarUrl = (session?.user_metadata?.avatar_url as string | undefined) ?? null;
 
+  const userId = session?.id ?? null;
   const mockUser = mockUsers.find((u) => u.username === username);
   const displayName = mockUser?.displayName ?? username;
 
   const userPosts = mockLfgPosts.filter((p) => p.authorName === username).slice(0, 5);
   const feedPosts = mockFeedPosts.filter((p) => p.authorName === username);
 
-  const ytHandle = "@leonsio12";
-  const ttHandle = "@leonsio12";
-  const [ytSubscribers, ttFollowers] = await Promise.all([
-    getYouTubeSubscriberCount(ytHandle),
-    getTikTokFollowerCount(ttHandle),
-  ]);
-
-  const socialLinks = {
-    youtube: { url: `https://youtube.com/${ytHandle}`, channelName: "LEO", handle: ytHandle, subscribers: ytSubscribers ?? "—" },
-    tiktok: { url: `https://tiktok.com/${ttHandle}`, channelName: "LEO", handle: ttHandle, followers: ttFollowers ?? "4.8K" },
-  };
-
-  const fallbackFavoriteGameSlugs = ["pubg-mobile", "cs2", "warzone", "valorant"];
+  const fallbackFavoriteGameSlugs: string[] = [];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -85,6 +72,7 @@ export default async function ProfilePage({
               <ProfileFavoriteGames
                 fallbackSlugs={fallbackFavoriteGameSlugs}
                 isOwner={isOwner}
+                userId={userId ?? undefined}
               />
             </div>
 
@@ -97,7 +85,7 @@ export default async function ProfilePage({
                 isOwner={isOwner}
               />
               <h1 className="flex items-center gap-2 text-2xl font-bold">
-                {isOwner ? <ProfileDisplayName fallback={displayName} /> : displayName}
+                {isOwner ? <ProfileDisplayName fallback={displayName} userId={userId ?? undefined} /> : displayName}
               </h1>
               <RoleBadge username={username} defaultRole={mockUser?.role as UserRole | undefined} />
               <FollowButton username={username} />
@@ -117,21 +105,15 @@ export default async function ProfilePage({
 
           </div>
 
-          <Separator />
-
-          {/* Social channels */}
-          <div>
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              სოციალური არხები
-            </h2>
-            <ProfileSocialLinks
-              defaultYtHandle={ytHandle}
-              defaultTtHandle={ttHandle}
-              ytSubscribers={ytSubscribers ?? "—"}
-              ttFollowers={ttFollowers ?? "4.8K"}
-              isOwner={isOwner}
-            />
-          </div>
+          {/* Social channels — separator + heading rendered inside the component when links exist */}
+          <ProfileSocialLinks
+            defaultYtHandle=""
+            defaultTtHandle=""
+            ytSubscribers="—"
+            ttFollowers="—"
+            isOwner={isOwner}
+            userId={userId ?? undefined}
+          />
 
           <Separator />
 
