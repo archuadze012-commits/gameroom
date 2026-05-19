@@ -5,7 +5,7 @@ import { Search, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { mockUsers } from "@/lib/mock-data";
+import { mockUsers, type MockUser } from "@/lib/mock-data";
 import { PlayerCard } from "@/components/player-card";
 
 const ROLES_KEY = "gameroom_user_roles";
@@ -33,7 +33,7 @@ export function HomeSearchWidget() {
   const results = useMemo(() => {
     const withRoles = mockUsers.map((u) => ({
       ...u,
-      role: (roleOverrides[u.username] ?? u.role ?? "user") as string,
+      role: (roleOverrides[u.username] ?? u.role) as MockUser["role"],
     }));
     if (!q) return withRoles.slice(0, 6);
     return withRoles
