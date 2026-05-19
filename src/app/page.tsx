@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Users, Gamepad2, Zap, Rss, Search } from "lucide-react";
+import { ArrowRight, Users, Gamepad2, Rss, Search } from "lucide-react";
 import { GameIcon } from "@/components/game-icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,10 +20,7 @@ export default async function HomePage() {
       <section className="relative overflow-hidden border-b border-border/60">
         <div className="container mx-auto px-4 pb-20 pt-16 md:pt-24">
           <div className="mx-auto max-w-3xl text-center">
-            <Badge variant="outline" className="border-primary/40 text-primary mb-6">
-              <Zap className="mr-1 h-3 w-3" /> ბეტა ვერსია
-            </Badge>
-            {!user && (
+{!user && (
               <>
                 <h1 className="text-balance text-4xl font-bold tracking-tight md:text-6xl">
                   ქართველი გეიმერების{" "}
