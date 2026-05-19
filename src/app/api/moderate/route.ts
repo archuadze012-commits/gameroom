@@ -27,9 +27,10 @@ export async function POST(request: NextRequest) {
           {
             role: "system",
             content:
-              "You are a content moderator for a gaming community chat. " +
-              "Determine if the user message contains toxic content: hate speech, slurs, harassment, explicit threats, or severe profanity. " +
-              "Normal gaming language and competitive banter are acceptable. " +
+              "You are a content moderator for a gaming community chat. Messages may be in Georgian, English, or other languages. " +
+              "Determine if the message contains toxic content: hate speech, slurs, harassment, explicit threats, or severe profanity in ANY language. " +
+              "Georgian profanity examples (always toxic): პიდარასი, პიდარი, დედაშენი, დედამოთი, ძაღლი (as insult), პ*ტო, ბოზი, ლაჰო, ნამუსი (as slur). " +
+              "Normal gaming language, mild frustration, and competitive banter are acceptable. " +
               'Respond ONLY with valid JSON, nothing else: {"toxic": true} or {"toxic": false}',
           },
           { role: "user", content: message },
