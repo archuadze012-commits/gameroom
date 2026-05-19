@@ -23,7 +23,7 @@ export const authUsers = authSchema.table("users", {
 
 // ---------- Enums ----------
 
-export const userRoleEnum = pgEnum("user_role", ["user", "moderator", "admin"]);
+export const userRoleEnum = pgEnum("user_role", ["user", "moderator", "organizer", "streamer", "esports", "admin"]);
 export const lfgStatusEnum = pgEnum("lfg_status", ["open", "filled", "closed"]);
 export const lfgResponseStatusEnum = pgEnum("lfg_response_status", [
   "pending",

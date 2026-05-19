@@ -1,18 +1,17 @@
 import Link from "next/link";
-import { Gamepad2, Bell } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ShieldAlert } from "lucide-react";
+import Image from "next/image";
 import { UserMenu } from "./user-menu";
 import { MobileNav } from "./mobile-nav";
-import { navLinks } from "./nav-links";
+import { NotificationBell } from "./notification-bell";
+import { navLinks, adminLinks } from "./nav-links";
 
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 items-center gap-6 px-4">
         <Link href="/" className="flex items-center gap-2 font-semibold">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/20 text-primary ring-1 ring-primary/40">
-            <Gamepad2 className="h-5 w-5" />
-          </span>
+          <Image src="/logo.png" alt="Gameroom" width={36} height={36} className="rounded-lg" />
           <span className="text-lg tracking-tight">
             Game<span className="text-primary">room</span>
           </span>
@@ -23,18 +22,26 @@ export function SiteHeader() {
             <Link
               key={link.href}
               href={link.href}
-              className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
+              className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
             >
+              {link.label}
+            </Link>
+          ))}
+          <span className="mx-1 h-4 w-px bg-border/60" />
+          {adminLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm text-primary/70 transition-colors hover:bg-primary/10 hover:text-primary"
+            >
+              <ShieldAlert className="h-3.5 w-3.5" />
               {link.label}
             </Link>
           ))}
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          <Button variant="ghost" size="icon" aria-label="შეტყობინებები" className="relative">
-            <Bell className="h-4 w-4" />
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary" />
-          </Button>
+          <NotificationBell />
           <UserMenu />
           <MobileNav />
         </div>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { mockGames, mockLfgPosts } from "@/lib/mock-data";
 import { JoinRequestForm } from "./join-request-form";
+import { GameIcon } from "@/components/game-icon";
 
 export default async function LfgDetailPage({
   params,
@@ -39,7 +40,7 @@ export default async function LfgDetailPage({
           <Card className="border-border/60">
             <CardContent className="space-y-4 p-6">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>{game?.emoji}</span>
+                {game && <GameIcon game={game} size="sm" />}
                 <Link href={`/games/${game?.slug}`} className="hover:text-foreground">
                   {game?.nameKa}
                 </Link>

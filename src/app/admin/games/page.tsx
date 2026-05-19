@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { mockGames } from "@/lib/mock-data";
+import { GameIcon } from "@/components/game-icon";
 
 export const metadata = { title: "Admin · თამაშები" };
 
@@ -21,7 +22,9 @@ export default function AdminGamesPage() {
           <Card key={g.slug} className="border-border/60">
             <CardContent className="flex items-center justify-between p-4">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">{g.emoji}</span>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-secondary/40">
+                  <GameIcon game={g} size="md" />
+                </div>
                 <div>
                   <div className="font-semibold">{g.nameKa}</div>
                   <div className="text-xs text-muted-foreground">{g.slug}</div>

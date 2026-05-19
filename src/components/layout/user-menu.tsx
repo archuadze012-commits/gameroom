@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getSession } from "@/lib/auth";
+import { AvatarSync } from "@/components/avatar-sync";
 
 export async function UserMenu() {
   const user = await getSession().catch(() => null);
@@ -30,13 +32,17 @@ export async function UserMenu() {
     user.email?.split("@")[0] ??
     "მოთამაშე";
   const initial = displayName.slice(0, 1).toUpperCase();
+  const avatarUrl = (user.user_metadata?.avatar_url as string | undefined) ?? "/default-avatar.svg";
 
   return (
+    <>
+    <AvatarSync username={displayName} avatarUrl={avatarUrl} />
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
           <button className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <Avatar className="h-9 w-9 border border-border">
+              <AvatarImage src={avatarUrl} alt={displayName} />
               <AvatarFallback className="bg-primary/15 text-primary font-semibold">
                 {initial}
               </AvatarFallback>
@@ -45,19 +51,26 @@ export async function UserMenu() {
         }
       />
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col">
-            <span className="text-sm font-medium">{displayName}</span>
-            <span className="text-xs text-muted-foreground">{user.email}</span>
-          </div>
-        </DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">{displayName}</span>
+              <span className="text-xs text-muted-foreground">{user.email}</span>
+            </div>
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem render={<Link href={`/profile/${displayName}`}>ჩემი პროფილი</Link>} />
-        <DropdownMenuItem render={<Link href="/settings">პარამეტრები</Link>} />
-        <DropdownMenuItem render={<Link href="/lfg/new">LFG დაპოსტვა</Link>} />
+        <DropdownMenuGroup>
+          <DropdownMenuItem render={<Link href={`/profile/${displayName}`}>ჩემი პროფილი</Link>} />
+          <DropdownMenuItem render={<Link href="/settings">პარამეტრები</Link>} />
+          <DropdownMenuItem render={<Link href="/lfg/new">LFG დაპოსტვა</Link>} />
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem render={<Link href="/auth/logout">გასვლა</Link>} />
+        <DropdownMenuGroup>
+          <DropdownMenuItem render={<Link href="/auth/logout">გასვლა</Link>} />
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
+    </>
   );
 }

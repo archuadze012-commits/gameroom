@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Users as UsersIcon, Plus } from "lucide-react";
+import { GameIcon } from "@/components/game-icon";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,7 @@ export default async function GamePage({
       <div className={`relative -mx-4 mb-8 h-44 w-[calc(100%+2rem)] bg-gradient-to-br ${game.accent} px-4`}>
         <div className="container mx-auto flex h-full flex-col justify-end px-4 pb-6">
           <div className="flex items-end gap-4">
-            <span className="text-6xl">{game.emoji}</span>
+            <GameIcon game={game} size="xl" />
             <div>
               <h1 className="text-3xl font-bold">{game.nameKa}</h1>
               <p className="text-sm text-muted-foreground">{game.nameEn}</p>

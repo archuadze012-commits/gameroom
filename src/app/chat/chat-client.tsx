@@ -1,21 +1,29 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Hash, Users as UsersIcon, Volume2 } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Send, Hash, Globe, Tag, Cpu, Users as UsersIcon, Volume2, Menu, X } from "lucide-react";
+import { GameIcon } from "@/components/game-icon";
+import { UserAvatar } from "@/components/user-avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MentionText } from "@/components/mention-text";
+import Link from "next/link";
 import {
   mockChatChannels,
   mockChatMessages,
+  mockGames,
+  mockUsers,
   channelDescriptions,
   type MockChatMessage,
 } from "@/lib/mock-data";
 
+const ADMIN_USERNAMES = new Set(
+  mockUsers.filter((u) => u.role === "admin").map((u) => u.username),
+);
+
 const onlineUsers = [
-  "Admin", "GeoSniper", "Lasha10", "Sage_Tbilisi", "ZeroKD",
+  "archuadze012", "GeoSniper", "Lasha10", "Sage_Tbilisi", "ZeroKD",
   "Beka", "Nika", "Lika", "Saba", "Vakho", "Tamo", "Giorgi",
 ];
 
@@ -32,6 +40,7 @@ export function ChatClient() {
     Object.fromEntries(mockChatChannels.map((c) => [c.id, c.unread ?? 0])),
   );
   const [input, setInput] = useState("");
+  const [showMobileChannels, setShowMobileChannels] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const messages = messagesByChannel[activeChannelId] ?? [];
   const activeChannel = mockChatChannels.find((c) => c.id === activeChannelId);
@@ -43,6 +52,7 @@ export function ChatClient() {
   const selectChannel = (id: string) => {
     setActiveChannelId(id);
     setUnread((u) => ({ ...u, [id]: 0 }));
+    setShowMobileChannels(false);
   };
 
   const handleSend = (e: React.FormEvent) => {
@@ -63,16 +73,73 @@ export function ChatClient() {
     setInput("");
   };
 
+  const ChannelIcon = ({ c }: { c: typeof mockChatChannels[number] }) => {
+    if (c.gameSlug) {
+      const game = mockGames.find((g) => g.slug === c.gameSlug);
+      return game ? <GameIcon game={game} size="sm" /> : <Hash className="h-3.5 w-3.5 shrink-0" />;
+    }
+    if (c.type === "global") return <Globe className="h-3.5 w-3.5 shrink-0" />;
+    if (c.type === "market") return <Tag className="h-3.5 w-3.5 shrink-0" />;
+    if (c.type === "tech") return <Cpu className="h-3.5 w-3.5 shrink-0" />;
+    return <Hash className="h-3.5 w-3.5 shrink-0" />;
+  };
+
   return (
-    <div className="grid h-[calc(100vh-16rem)] grid-cols-1 md:grid-cols-[240px_1fr_240px]">
+    <div className="relative grid h-[calc(100vh-16rem)] grid-cols-1 md:grid-cols-[240px_1fr_240px]">
+
+      {/* Mobile channel drawer overlay */}
+      {showMobileChannels && (
+        <div className="fixed inset-0 z-40 md:hidden" onClick={() => setShowMobileChannels(false)}>
+          <div className="absolute inset-0 bg-black/60" />
+          <div
+            className="absolute left-0 top-0 flex h-full w-64 flex-col bg-sidebar border-r border-border/60"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border/60 p-4 shrink-0">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">არხები</h3>
+              <button onClick={() => setShowMobileChannels(false)} className="rounded-md p-1 hover:bg-secondary/60">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <nav className="flex flex-col gap-0.5 overflow-y-auto flex-1 p-2">
+              {mockChatChannels.map((c) => {
+                const isActive = c.id === activeChannelId;
+                const unreadCount = unread[c.id] ?? 0;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => selectChannel(c.id)}
+                    className={`flex items-center justify-between rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                      isActive
+                        ? "bg-primary/15 text-primary"
+                        : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2 truncate">
+                      <span className="h-4 w-4 shrink-0 flex items-center justify-center">
+                        <ChannelIcon c={c} />
+                      </span>
+                      <span className="truncate">{c.name}</span>
+                    </span>
+                    {unreadCount > 0 && !isActive && (
+                      <Badge className="h-5 min-w-5 px-1.5 text-[10px]">{unreadCount}</Badge>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
+      )}
       {/* Channels */}
-      <aside className="hidden border-r border-border/60 bg-sidebar/40 md:block">
-        <div className="border-b border-border/60 p-4">
+      <aside className="hidden border-r border-border/60 bg-sidebar/40 md:flex md:flex-col min-h-0">
+        <div className="border-b border-border/60 p-4 shrink-0">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            კანალები
+            არხები
           </h3>
         </div>
-        <nav className="flex flex-col gap-0.5 p-2">
+        <nav className="flex flex-col gap-0.5 p-2 overflow-y-auto flex-1 min-h-0">
           {mockChatChannels.map((c) => {
             const isActive = c.id === activeChannelId;
             const unreadCount = unread[c.id] ?? 0;
@@ -88,8 +155,10 @@ export function ChatClient() {
                 }`}
               >
                 <span className="flex items-center gap-2 truncate">
-                  <Hash className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">{c.name.replace(/^#\s*/, "")}</span>
+                  <span className="h-4 w-4 shrink-0 flex items-center justify-center">
+                    <ChannelIcon c={c} />
+                  </span>
+                  <span className="truncate">{c.name}</span>
                 </span>
                 {unreadCount > 0 && !isActive && (
                   <Badge className="h-5 min-w-5 px-1.5 text-[10px]">{unreadCount}</Badge>
@@ -103,8 +172,27 @@ export function ChatClient() {
       {/* Messages */}
       <section className="flex min-h-0 flex-col">
         <div className="flex items-center gap-2 border-b border-border/60 p-4">
-          <Hash className="h-4 w-4 text-primary" />
-          <h2 className="font-semibold">{activeChannel?.name.replace(/^#\s*/, "") ?? "channel"}</h2>
+          <button
+            type="button"
+            onClick={() => setShowMobileChannels(true)}
+            className="mr-1 rounded-md p-1.5 hover:bg-secondary/60 md:hidden"
+          >
+            <Menu className="h-4 w-4" />
+          </button>
+          {activeChannel?.gameSlug ? (
+            <span className="h-5 w-5 flex items-center justify-center">
+              <GameIcon game={mockGames.find((g) => g.slug === activeChannel.gameSlug)!} size="sm" />
+            </span>
+          ) : activeChannel?.type === "global" ? (
+            <Globe className="h-4 w-4 text-primary" />
+          ) : activeChannel?.type === "market" ? (
+            <Tag className="h-4 w-4 text-primary" />
+          ) : activeChannel?.type === "tech" ? (
+            <Cpu className="h-4 w-4 text-primary" />
+          ) : (
+            <Hash className="h-4 w-4 text-primary" />
+          )}
+          <h2 className="font-semibold">{activeChannel?.name ?? "channel"}</h2>
           <span className="ml-2 truncate text-xs text-muted-foreground">
             {channelDescriptions[activeChannelId] ?? ""}
           </span>
@@ -118,28 +206,19 @@ export function ChatClient() {
           )}
           {messages.map((m) => (
             <div key={m.id} className="flex gap-3">
-              <Avatar className="h-8 w-8 border border-border">
-                <AvatarFallback
-                  className={
-                    m.isMe
-                      ? "bg-accent/20 text-accent text-xs"
-                      : m.author === "Admin"
-                      ? "bg-primary/15 text-primary text-xs"
-                      : "bg-secondary text-foreground/80 text-xs"
-                  }
-                >
-                  {m.author.slice(0, 1)}
-                </AvatarFallback>
-              </Avatar>
+              <Link href={m.isMe ? "#" : `/profile/${m.author}`} className="shrink-0 hover:ring-2 hover:ring-primary/40 rounded-full transition-all">
+                <UserAvatar username={m.author} size="sm" />
+              </Link>
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline gap-2">
-                  <span
-                    className={`text-sm font-medium ${
-                      m.isMe ? "text-accent" : m.author === "Admin" ? "text-primary" : ""
+                  <Link
+                    href={m.isMe ? "#" : `/profile/${m.author}`}
+                    className={`text-sm font-medium hover:underline ${
+                      m.isMe ? "text-accent" : ADMIN_USERNAMES.has(m.author) ? "text-rose-400" : ""
                     }`}
                   >
                     {m.author}
-                  </span>
+                  </Link>
                   <span className="text-[10px] text-muted-foreground">{m.ago}</span>
                 </div>
                 <p className="text-sm whitespace-pre-wrap break-words">
@@ -159,7 +238,7 @@ export function ChatClient() {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={`დაწერე მესიჯი #${activeChannel?.name.replace(/^#\s*/, "") ?? ""} კანალში...`}
+            placeholder={`დაწერე მესიჯი ${activeChannel?.name ?? ""} კანალში...`}
             className="bg-background/40"
             autoFocus
           />
@@ -178,16 +257,18 @@ export function ChatClient() {
         </div>
         <ul className="space-y-1 p-2 text-sm">
           {onlineUsers.map((u, i) => (
-            <li
-              key={u}
-              className="flex items-center gap-2 rounded-md px-3 py-1.5 text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
-            >
-              <span
-                className={`h-2 w-2 rounded-full ${
-                  i < 3 ? "bg-emerald-400" : "bg-amber-400/60"
-                }`}
-              />
-              {u}
+            <li key={u}>
+              <Link
+                href={`/profile/${u}`}
+                className="flex items-center gap-2 rounded-md px-3 py-1.5 text-muted-foreground hover:bg-secondary/60 hover:text-foreground transition-colors"
+              >
+                <span className={`h-2 w-2 rounded-full shrink-0 ${i < 3 ? "bg-emerald-400" : "bg-amber-400/60"}`} />
+                <UserAvatar username={u} size="sm" className="h-5 w-5" />
+                <span className={ADMIN_USERNAMES.has(u) ? "text-rose-400 font-medium" : ""}>{u}</span>
+                {ADMIN_USERNAMES.has(u) && (
+                  <span className="ml-auto text-[9px] font-bold uppercase tracking-wider text-rose-400/80">ADM</span>
+                )}
+              </Link>
             </li>
           ))}
         </ul>

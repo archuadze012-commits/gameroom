@@ -1,7 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import { Gamepad2 } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 export function SiteFooter() {
+  const pathname = usePathname();
+  if (pathname !== "/") return null;
   return (
     <footer className="border-t border-border/60 bg-background/40">
       <div className="container mx-auto grid gap-8 px-4 py-10 md:grid-cols-4">

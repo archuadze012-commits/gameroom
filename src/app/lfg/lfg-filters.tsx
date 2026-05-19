@@ -1,11 +1,12 @@
 "use client";
 
+import React, { useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback } from "react";
 import { Filter, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { mockGames } from "@/lib/mock-data";
+import { GameIcon } from "@/components/game-icon";
 
 const regions = ["GE", "EU", "RU", "MENA"];
 
@@ -45,38 +46,23 @@ export function LfgFilters() {
 
       <div className="space-y-5">
         <FilterGroup label="თამაში">
+          {[...mockGames].sort((a, b) => b.favoritedBy - a.favoritedBy).map((g) => (
+            <FilterButton
+              key={g.slug}
+              icon={<GameIcon game={g} size="sm" />}
+              label={g.nameKa}
+              active={params.get("game") === g.slug}
+              onClick={() => update("game", g.slug)}
+            />
+          ))}
           <FilterButton
             label="ყველა"
             active={!params.get("game")}
             onClick={() => update("game", null)}
           />
-          {mockGames.map((g) => (
-            <FilterButton
-              key={g.slug}
-              label={`${g.emoji} ${g.nameKa}`}
-              active={params.get("game") === g.slug}
-              onClick={() => update("game", g.slug)}
-            />
-          ))}
         </FilterGroup>
 
-        <FilterGroup label="რეგიონი">
-          <FilterButton
-            label="ყველა"
-            active={!params.get("region")}
-            onClick={() => update("region", null)}
-          />
-          {regions.map((r) => (
-            <FilterButton
-              key={r}
-              label={r}
-              active={params.get("region") === r}
-              onClick={() => update("region", r)}
-            />
-          ))}
-        </FilterGroup>
-
-        <FilterGroup label="დამატებითი">
+<FilterGroup label="დამატებითი">
           <FilterButton
             label="🎙 მხოლოდ voice-ით"
             active={params.get("voice") === "1"}
@@ -102,10 +88,12 @@ function FilterGroup({ label, children }: { label: string; children: React.React
 }
 
 function FilterButton({
+  icon,
   label,
   active,
   onClick,
 }: {
+  icon?: React.ReactNode;
   label: string;
   active: boolean;
   onClick: () => void;
@@ -114,12 +102,13 @@ function FilterButton({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-md border px-2.5 py-1 text-xs transition-colors ${
+      className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs transition-colors ${
         active
           ? "border-primary/40 bg-primary/15 text-primary"
           : "border-border bg-background/40 text-muted-foreground hover:border-border/80 hover:text-foreground"
       }`}
     >
+      {icon}
       {label}
     </button>
   );

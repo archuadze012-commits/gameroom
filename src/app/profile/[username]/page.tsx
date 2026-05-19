@@ -1,12 +1,35 @@
 import Link from "next/link";
-import { MapPin, Mic, Trophy, Users as UsersIcon, Gamepad2 } from "lucide-react";
+import { Trophy, Users as UsersIcon, Gamepad2, ExternalLink } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { mockGames, mockLfgPosts } from "@/lib/mock-data";
+import { mockGames, mockLfgPosts, mockFeedPosts, mockUsers } from "@/lib/mock-data";
+import { GameIcon } from "@/components/game-icon";
+import { FollowButton } from "@/components/follow-button";
+import { RoleBadge, type UserRole } from "@/components/role-badge";
+import { ProfileDisplayName } from "@/components/profile-display-name";
+import { ProfileSocialLinks } from "@/components/profile-social-links";
+import { BannerUpload } from "@/components/banner-upload";
+import { ProfileFavoriteGames } from "@/components/profile-favorite-games";
+import { ProfileFeed } from "@/components/profile-feed";
+import { AvatarUpload } from "@/components/avatar-upload";
+import { InviteButton } from "@/components/invite-button";
+import { getSession } from "@/lib/auth";
+import { getYouTubeSubscriberCount } from "@/lib/youtube";
+import { getTikTokFollowerCount } from "@/lib/tiktok";
+
+const YoutubeIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" xmlns="http://www.w3.org/2000/svg">
+    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+  </svg>
+);
+
+const TikTokIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg">
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z" />
+  </svg>
+);
 
 export default async function ProfilePage({
   params,
@@ -14,111 +37,122 @@ export default async function ProfilePage({
   params: Promise<{ username: string }>;
 }) {
   const { username } = await params;
+  const session = await getSession().catch(() => null);
+  const sessionUsername =
+    (session?.user_metadata?.username as string | undefined) ??
+    session?.email?.split("@")[0] ??
+    null;
+  const isOwner = sessionUsername === username;
+  const avatarUrl = (session?.user_metadata?.avatar_url as string | undefined) ?? null;
+
+  const mockUser = mockUsers.find((u) => u.username === username);
+  const displayName = mockUser?.displayName ?? username;
+
   const userPosts = mockLfgPosts.filter((p) => p.authorName === username).slice(0, 5);
-  const gameProfiles = mockGames.slice(0, 3).map((g, i) => ({
-    ...g,
-    inGameId: ["GeoSniper99", "GS_main", "Sniper_GE"][i],
-    rank: ["Crown II", "Diamond IV", "Ace"][i],
-    role: ["Sniper", "IGL", "Entry"][i],
-  }));
+  const feedPosts = mockFeedPosts.filter((p) => p.authorName === username);
+
+  const ytHandle = "@leonsio12";
+  const ttHandle = "@leonsio12";
+  const [ytSubscribers, ttFollowers] = await Promise.all([
+    getYouTubeSubscriberCount(ytHandle),
+    getTikTokFollowerCount(ttHandle),
+  ]);
+
+  const socialLinks = {
+    youtube: { url: `https://youtube.com/${ytHandle}`, channelName: "LEO", handle: ytHandle, subscribers: ytSubscribers ?? "—" },
+    tiktok: { url: `https://tiktok.com/${ttHandle}`, channelName: "LEO", handle: ttHandle, followers: ttFollowers ?? "4.8K" },
+  };
+
+  const fallbackFavoriteGameSlugs = ["pubg-mobile", "cs2", "warzone", "valorant"];
 
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="overflow-hidden border-border/60">
-        <div className="h-32 bg-gradient-to-br from-primary/30 via-accent/20 to-transparent" />
-        <CardContent className="-mt-12 space-y-4 p-6">
-          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-end">
-              <Avatar className="h-24 w-24 border-4 border-background">
-                <AvatarFallback className="bg-primary/15 text-2xl font-bold text-primary">
-                  {username.slice(0, 1).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h1 className="text-2xl font-bold">@{username}</h1>
-                <p className="text-sm text-muted-foreground">
-                  PUBG-ის გულშემატკივარი, Crown ranked მოთამაშე. ხელმისაწვდომი საღამოს 21:00-დან.
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                  <Badge variant="outline">
-                    <MapPin className="mr-1 h-3 w-3" /> GE / EU
-                  </Badge>
-                  <Badge variant="outline">
-                    <Mic className="mr-1 h-3 w-3" /> voice OK
-                  </Badge>
-                  <Badge variant="outline">⭐ Trust 4.8</Badge>
-                </div>
-              </div>
+
+        {/* Banner */}
+        <BannerUpload isOwner={isOwner} />
+
+        <CardContent className="space-y-4 px-6 pb-6 pt-0">
+
+          {/* Avatar + name + trust + follow (center) with favorites (left) and buttons (right) */}
+          <div className="flex flex-col items-center gap-3 -mt-12 md:grid md:grid-cols-3 md:items-start md:gap-4">
+
+            {/* Left — favorite games (order 2 on mobile, 1 on desktop) */}
+            <div className="order-2 w-full md:order-1 md:pt-14">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                ფავორიტი ვიდეოთამაშები
+              </p>
+              <ProfileFavoriteGames
+                fallbackSlugs={fallbackFavoriteGameSlugs}
+                isOwner={isOwner}
+              />
             </div>
-            <div className="flex gap-2">
-              <Button>გუნდში მოწვევა</Button>
-              <Button variant="outline">შეტყობინება</Button>
+
+            {/* Center — avatar + name + trust + follow (order 1 on mobile, 2 on desktop) */}
+            <div className="order-1 flex flex-col items-center gap-2 md:order-2">
+              <AvatarUpload
+                username={username}
+                displayName={displayName}
+                avatarUrl={isOwner ? avatarUrl : null}
+                isOwner={isOwner}
+              />
+              <h1 className="flex items-center gap-2 text-2xl font-bold">
+                {isOwner ? <ProfileDisplayName fallback={displayName} /> : displayName}
+              </h1>
+              <RoleBadge username={username} defaultRole={mockUser?.role as UserRole | undefined} />
+              <FollowButton username={username} />
             </div>
+
+            {/* Right — action buttons (order 3 on both) */}
+            <div className="order-3 flex flex-wrap justify-center gap-2 md:justify-end md:pt-14">
+              {!isOwner && (
+                <InviteButton
+                  username={username}
+                  displayName={displayName}
+                  gameSlugs={mockUser?.games.map((g) => g.slug) ?? fallbackFavoriteGameSlugs}
+                />
+              )}
+              <Button size="sm" variant="outline">შეტყობინება</Button>
+            </div>
+
           </div>
 
           <Separator />
 
-          <div className="grid grid-cols-3 gap-4 text-center">
+          {/* Social channels */}
+          <div>
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              სოციალური არხები
+            </h2>
+            <ProfileSocialLinks
+              defaultYtHandle={ytHandle}
+              defaultTtHandle={ttHandle}
+              ytSubscribers={ytSubscribers ?? "—"}
+              ttFollowers={ttFollowers ?? "4.8K"}
+              isOwner={isOwner}
+            />
+          </div>
+
+          <Separator />
+
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 gap-4 text-center sm:grid-cols-4">
+            <Stat icon={<UsersIcon className="h-4 w-4" />} value="284" label="გამომწერი" />
             <Stat icon={<Gamepad2 className="h-4 w-4" />} value="3" label="თამაში" />
-            <Stat icon={<Trophy className="h-4 w-4" />} value="12" label="ჩემპიონატი" />
+            <Stat icon={<Trophy className="h-4 w-4" />} value="12" label="ტიტული" />
             <Stat icon={<UsersIcon className="h-4 w-4" />} value="47" label="LFG დაპოსტილი" />
           </div>
+
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="games" className="mt-8">
-        <TabsList>
-          <TabsTrigger value="games">თამაშები</TabsTrigger>
-          <TabsTrigger value="lfg">LFG ისტორია</TabsTrigger>
-          <TabsTrigger value="tournaments">ჩემპიონატები</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="games" className="mt-6">
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {gameProfiles.map((g) => (
-              <Card key={g.slug} className="border-border/60">
-                <CardContent className="space-y-3 p-5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">{g.emoji}</span>
-                      <h3 className="font-semibold">{g.nameKa}</h3>
-                    </div>
-                  </div>
-                  <Separator />
-                  <div className="space-y-1.5 text-xs">
-                    <Row label="In-game ID" value={g.inGameId} />
-                    <Row label="რანკი" value={g.rank} />
-                    <Row label="როლი" value={g.role} />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="lfg" className="mt-6">
-          {userPosts.length > 0 ? (
-            <div className="space-y-2">
-              {userPosts.map((p) => (
-                <Link key={p.id} href={`/lfg/${p.id}`}>
-                  <Card className="border-border/60 transition-colors hover:border-primary/40">
-                    <CardContent className="flex items-center justify-between p-4">
-                      <span className="text-sm">{p.title}</span>
-                      <span className="text-xs text-muted-foreground">{p.createdAgo}</span>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <EmptyState label="LFG პოსტი არ არის." />
-          )}
-        </TabsContent>
-
-        <TabsContent value="tournaments" className="mt-6">
-          <EmptyState label="ჩემპიონატის ისტორია მალე გამოჩნდება." />
-        </TabsContent>
-      </Tabs>
+      <ProfileFeed
+        username={username}
+        displayName={displayName}
+        initialPosts={feedPosts}
+        isOwner={isOwner}
+      />
     </div>
   );
 }

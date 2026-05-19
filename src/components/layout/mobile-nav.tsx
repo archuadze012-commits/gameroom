@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Menu } from "lucide-react";
+import { Menu, ShieldAlert } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +11,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { navLinks } from "./nav-links";
+import { Separator } from "@/components/ui/separator";
+import { navLinks, adminLinks } from "./nav-links";
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
@@ -34,8 +35,20 @@ export function MobileNav() {
               key={link.href}
               href={link.href}
               onClick={() => setOpen(false)}
-              className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
+              className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
             >
+              {link.label}
+            </Link>
+          ))}
+          <Separator className="my-2" />
+          {adminLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-primary/70 transition-colors hover:bg-primary/10 hover:text-primary"
+            >
+              <ShieldAlert className="h-3.5 w-3.5" />
               {link.label}
             </Link>
           ))}

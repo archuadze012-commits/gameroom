@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
-import { Mail, Loader2 } from "lucide-react";
+import { Mail, Loader2, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,12 +13,30 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export function LoginForm() {
   const params = useSearchParams();
+  const router = useRouter();
   const next = params.get("next") ?? "/";
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState<null | "email" | "google" | "discord">(null);
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState<null | "email" | "password" | "google" | "discord">(null);
 
   const supabaseConfigured =
     !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  const handlePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabaseConfigured) { toast.error("Supabase არ არის კონფიგურირებული."); return; }
+    setLoading("password");
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      window.location.href = next;
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "შეცდომა, სცადე ხელახლა.");
+    } finally {
+      setLoading(null);
+    }
+  };
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,6 +128,41 @@ export function LoginForm() {
         <Separator className="flex-1" />
       </div>
 
+      <form onSubmit={handlePassword} className="space-y-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="email-pw">ელფოსტა</Label>
+          <Input
+            id="email-pw"
+            type="email"
+            required
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="password">პაროლი</Label>
+          <Input
+            id="password"
+            type="password"
+            required
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        <Button type="submit" className="w-full" disabled={!!loading}>
+          {loading === "password" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}
+          შესვლა პაროლით
+        </Button>
+      </form>
+
+      <div className="flex items-center gap-3">
+        <Separator className="flex-1" />
+        <span className="text-xs text-muted-foreground">ან magic link-ით</span>
+        <Separator className="flex-1" />
+      </div>
+
       <form onSubmit={handleMagicLink} className="space-y-3">
         <div className="space-y-1.5">
           <Label htmlFor="email">ელფოსტა</Label>
@@ -121,7 +175,7 @@ export function LoginForm() {
             onChange={(e) => setEmail(e.target.value)}
           />
         </div>
-        <Button type="submit" className="w-full" disabled={!!loading}>
+        <Button type="submit" variant="outline" className="w-full" disabled={!!loading}>
           {loading === "email" ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (

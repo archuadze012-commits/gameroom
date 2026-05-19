@@ -60,7 +60,7 @@
 }
 
 .dark {
-  --background: oklch(0.2040 0.0490 307.6060);
+  --background: oklch(0.1420 0.0280 260);
   --foreground: oklch(0.9321 0.0791 201.7882);
   --card: oklch(0.2500 0.0373 197.9477);
   --card-foreground: oklch(0.9383 0.0862 197.5821);
@@ -84,7 +84,7 @@
   --chart-3: oklch(0.5500 0.2200 263);
   --chart-4: oklch(0.4900 0.2200 264);
   --chart-5: oklch(0.4200 0.1800 266);
-  --sidebar: oklch(0.2040 0.0490 307.6060);
+  --sidebar: oklch(0.1420 0.0280 260);
   --sidebar-foreground: oklch(0.9321 0.0791 201.7882);
   --sidebar-primary: oklch(0.6280 0.2577 29.2339);
   --sidebar-primary-foreground: oklch(0.2018 0.0710 309.5822);
@@ -175,7 +175,17 @@
     color-scheme: dark;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: #07080f;
+    background-image:
+      radial-gradient(ellipse 80% 55% at 8% 12%, rgba(210, 20, 55, 0.18) 0%, transparent 58%),
+      radial-gradient(ellipse 75% 55% at 92% 88%, rgba(20, 55, 230, 0.20) 0%, transparent 58%),
+      radial-gradient(ellipse 55% 40% at 85% 8%, rgba(15, 45, 200, 0.12) 0%, transparent 52%),
+      radial-gradient(ellipse 60% 45% at 20% 90%, rgba(180, 15, 60, 0.10) 0%, transparent 52%),
+      linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 52px 52px, 52px 52px;
+    background-attachment: fixed;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply tracking-tight;

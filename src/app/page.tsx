@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { ArrowRight, Trophy, Users, MessageSquare, Newspaper, Gamepad2, Zap } from "lucide-react";
+import { GameIcon } from "@/components/game-icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { mockGames, mockLfgPosts, mockNews, mockTournaments } from "@/lib/mock-data";
+import { mockGames, mockNews, mockTournaments } from "@/lib/mock-data";
 
 export default function HomePage() {
   return (
@@ -17,7 +18,7 @@ export default function HomePage() {
             </Badge>
             <h1 className="text-balance text-4xl font-bold tracking-tight md:text-6xl">
               ქართველი გეიმერების{" "}
-              <span className="text-primary">სათამაშო სახლი</span>
+              <span className="text-primary">პორტალი</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-balance text-lg text-muted-foreground">
               იპოვე გუნდი, შეუერთდი ჩემპიონატებს და იპოვე ერთგულესი მოთამაშეები eFootball, FIFA,
@@ -26,7 +27,7 @@ export default function HomePage() {
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Button asChild size="lg" className="w-full sm:w-auto">
                 <Link href="/auth/signup">
-                  დაიწყე ახლა <ArrowRight className="ml-1 h-4 w-4" />
+                  პორტალის გახსნა <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
@@ -58,72 +59,38 @@ export default function HomePage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {mockGames.map((g) => (
             <Link key={g.slug} href={`/games/${g.slug}`} className="group">
-              <Card className="relative h-full overflow-hidden border-border/60 transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
-                <div className={`absolute inset-0 -z-10 bg-gradient-to-br ${g.accent} opacity-60`} />
-                <CardContent className="flex h-full flex-col gap-4 p-6">
-                  <div className="flex items-start justify-between">
-                    <span className="text-4xl">{g.emoji}</span>
-                    <Badge variant="secondary" className="text-xs">
-                      {g.liveLfg} live LFG
-                    </Badge>
+              <Card className="relative h-56 overflow-hidden border-border/60 transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
+                {g.coverUrl ? (
+                  <img
+                    src={g.coverUrl}
+                    alt={g.nameKa}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className={`absolute inset-0 bg-gradient-to-br ${g.accent}`} />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <h3 className="text-lg font-bold text-white transition-colors group-hover:text-primary">
+                        {g.nameKa}
+                      </h3>
+                      <p className="text-xs text-white/60">{g.players.toLocaleString()} მოთამაშე</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge variant="secondary" className="text-xs">
+                        {g.players.toLocaleString()}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs text-emerald-400 border-emerald-500/40">
+                        🟢 {g.online}
+                      </Badge>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold transition-colors group-hover:text-primary">
-                      {g.nameKa}
-                    </h3>
-                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                      {g.description}
-                    </p>
-                  </div>
-                  <div className="mt-auto flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{g.players.toLocaleString()} მოთამაშე</span>
-                    <span className="text-primary opacity-0 transition-opacity group-hover:opacity-100">
-                      გახსნა →
-                    </span>
-                  </div>
-                </CardContent>
+                </div>
               </Card>
             </Link>
           ))}
-        </div>
-      </section>
-
-      <section className="container mx-auto px-4">
-        <SectionHeader
-          icon={<Users className="h-5 w-5" />}
-          title="ცოცხალი LFG"
-          subtitle="ვინ ეძებს გუნდს ახლავე"
-          href="/lfg"
-        />
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {mockLfgPosts.slice(0, 6).map((post) => {
-            const game = mockGames.find((g) => g.slug === post.gameSlug);
-            return (
-              <Link key={post.id} href={`/lfg/${post.id}`}>
-                <Card className="h-full border-border/60 transition-colors hover:border-primary/40">
-                  <CardContent className="space-y-3 p-5">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1.5">
-                        <span>{game?.emoji}</span>
-                        <span>{game?.nameKa}</span>
-                      </span>
-                      <span>{post.createdAgo}</span>
-                    </div>
-                    <h3 className="line-clamp-2 font-semibold">{post.title}</h3>
-                    <p className="line-clamp-2 text-sm text-muted-foreground">{post.description}</p>
-                    <div className="flex flex-wrap items-center gap-2 pt-2 text-xs">
-                      <Badge variant="outline">{post.rank}</Badge>
-                      <Badge variant="outline">{post.region}</Badge>
-                      {post.voiceRequired && <Badge variant="outline">🎙 voice</Badge>}
-                      <Badge className="ml-auto">
-                        {post.slots.filled}/{post.slots.total} ადგილი
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
         </div>
       </section>
 

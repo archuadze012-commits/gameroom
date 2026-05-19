@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   Shield,
   Newspaper,
@@ -7,7 +8,7 @@ import {
   Users as UsersIcon,
   LayoutDashboard,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { getIsAdmin } from "@/lib/auth";
 
 const adminLinks = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -18,27 +19,21 @@ const adminLinks = [
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  // TODO: replace with real role check from profiles.role === 'admin'.
-  // For now this layout renders for any signed-in user; the middleware
-  // ensures unauthenticated visitors are redirected to /auth/login.
+  const isAdmin = await getIsAdmin();
+  if (!isAdmin) redirect("/");
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary/15 text-primary">
-            <Shield className="h-5 w-5" />
-          </span>
-          <div>
-            <h1 className="text-xl font-bold">Admin Panel</h1>
-            <p className="text-xs text-muted-foreground">
-              მართე სიახლეები, ჩემპიონატები, მომხმარებლები
-            </p>
-          </div>
+      <div className="mb-6 flex items-center gap-3">
+        <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary/15 text-primary">
+          <Shield className="h-5 w-5" />
+        </span>
+        <div>
+          <h1 className="text-xl font-bold">Admin Panel</h1>
+          <p className="text-xs text-muted-foreground">
+            მართე სიახლეები, ჩემპიონატები, მომხმარებლები
+          </p>
         </div>
-        <Badge variant="outline" className="border-amber-500/40 text-amber-400">
-          stub — role check Phase 2
-        </Badge>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[200px_1fr]">

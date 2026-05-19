@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
-import { mockGames, mockLfgPosts } from "@/lib/mock-data";
+import { mockGames, mockLfgPosts, mockUsers } from "@/lib/mock-data";
 import { LfgFilters } from "./lfg-filters";
+import { GameIcon } from "@/components/game-icon";
 
 export const metadata = { title: "LFG — გუნდის ძებნა" };
 
@@ -47,6 +48,10 @@ export default async function LfgPage({
           ) : (
             filtered.map((post) => {
               const game = mockGames.find((g) => g.slug === post.gameSlug);
+              const author = mockUsers.find((u) => u.username === post.authorName);
+              const authorMainGame = author?.mainGameSlug
+                ? mockGames.find((g) => g.slug === author.mainGameSlug)
+                : undefined;
               return (
                 <Link key={post.id} href={`/lfg/${post.id}`}>
                   <Card className="border-border/60 transition-all hover:border-primary/40 hover:bg-card/80">
@@ -55,13 +60,16 @@ export default async function LfgPage({
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1.5">
-                              <span>{game?.emoji}</span>
+                              {game && <GameIcon game={game} size="sm" />}
                               <span>{game?.nameKa}</span>
                             </span>
                             <span>·</span>
                             <span>{post.createdAgo}</span>
                             <span>·</span>
-                            <span>@{post.authorName}</span>
+                            <span className="flex items-center gap-1">
+                              {authorMainGame && <GameIcon game={authorMainGame} size="sm" />}
+                              @{post.authorName}
+                            </span>
                           </div>
                           <h3 className="mt-1 text-lg font-semibold">{post.title}</h3>
                           <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">

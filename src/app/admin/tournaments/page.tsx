@@ -1,11 +1,15 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, GitBranch } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { mockGames, mockTournaments } from "@/lib/mock-data";
-
-export const metadata = { title: "Admin · ჩემპიონატები" };
+import { mockGames, mockTournaments, type MockTournament } from "@/lib/mock-data";
+import { GameIcon } from "@/components/game-icon";
+import { BracketDraw } from "./bracket-draw";
+import { TournamentForm } from "./tournament-form";
 
 const statusLabel = {
   open: "open",
@@ -15,11 +19,14 @@ const statusLabel = {
 };
 
 export default function AdminTournamentsPage() {
+  const [bracketTournament, setBracketTournament] = useState<MockTournament | null>(null);
+  const [showForm, setShowForm] = useState(false);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">ჩემპიონატები</h2>
-        <Button>
+        <Button onClick={() => setShowForm(true)}>
           <Plus className="mr-1 h-4 w-4" /> ახალი ჩემპიონატი
         </Button>
       </div>
@@ -47,8 +54,8 @@ export default function AdminTournamentsPage() {
                         {t.name}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {game?.emoji} {game?.nameKa}
+                    <td className="px-4 py-3">
+                      {game && <GameIcon game={game} size="lg" />}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{t.format}</td>
                     <td className="px-4 py-3">
@@ -58,6 +65,15 @@ export default function AdminTournamentsPage() {
                       {t.participants.current}/{t.participants.max}
                     </td>
                     <td className="px-4 py-3 text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mr-1 text-primary hover:bg-primary/10 hover:text-primary"
+                        onClick={() => setBracketTournament(t)}
+                        title="კენჭისყრა / Bracket"
+                      >
+                        <GitBranch className="mr-1 h-4 w-4" /> კენჭისყრა
+                      </Button>
                       <Button variant="ghost" size="icon">
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -72,6 +88,14 @@ export default function AdminTournamentsPage() {
           </table>
         </CardContent>
       </Card>
+
+      {bracketTournament && (
+        <BracketDraw
+          tournament={bracketTournament}
+          onClose={() => setBracketTournament(null)}
+        />
+      )}
+      {showForm && <TournamentForm onClose={() => setShowForm(false)} />}
     </div>
   );
 }
