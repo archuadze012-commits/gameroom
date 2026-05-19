@@ -34,12 +34,12 @@ export default async function HomePage() {
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               {user ? (
                 <>
-                  <Button asChild size="lg" className="w-full sm:w-auto">
+                  <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
                     <Link href="/search">
                       ძებნა <Search className="ml-1 h-4 w-4" />
                     </Link>
                   </Button>
-                  <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
+                  <Button asChild size="lg" className="w-full sm:w-auto">
                     <Link href="#feed">
                       პოსტები <Rss className="ml-1 h-4 w-4" />
                     </Link>
