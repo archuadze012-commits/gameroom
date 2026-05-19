@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Hash, Globe, Tag, Cpu, Users as UsersIcon, Volume2, Menu, X } from "lucide-react";
+import { Send, Hash, Globe, Tag, Cpu, Users as UsersIcon, Volume2, Menu, X, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { GameIcon } from "@/components/game-icon";
 import { UserAvatar } from "@/components/user-avatar";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,7 @@ export function ChatClient() {
     Object.fromEntries(mockChatChannels.map((c) => [c.id, c.unread ?? 0])),
   );
   const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
   const [showMobileChannels, setShowMobileChannels] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const messages = messagesByChannel[activeChannelId] ?? [];
@@ -55,10 +57,28 @@ export function ChatClient() {
     setShowMobileChannels(false);
   };
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = input.trim();
-    if (!trimmed) return;
+    if (!trimmed || sending) return;
+
+    setSending(true);
+    try {
+      const res = await fetch("/api/moderate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: trimmed }),
+      });
+      const { toxic } = await res.json();
+      if (toxic) {
+        toast.error("მესიჯი დაიბლოკა — შეიცავს აკრძალულ კონტენტს.");
+        setSending(false);
+        return;
+      }
+    } catch {
+      // If moderation fails, allow the message through
+    }
+
     const newMessage: MockChatMessage = {
       id: `me-${Date.now()}`,
       author: "შენ",
@@ -71,6 +91,7 @@ export function ChatClient() {
       [activeChannelId]: [...(prev[activeChannelId] ?? []), newMessage],
     }));
     setInput("");
+    setSending(false);
   };
 
   const ChannelIcon = ({ c }: { c: typeof mockChatChannels[number] }) => {
@@ -242,8 +263,10 @@ export function ChatClient() {
             className="bg-background/40"
             autoFocus
           />
-          <Button type="submit" disabled={!input.trim()}>
-            <Send className="h-4 w-4" />
+          <Button type="submit" disabled={!input.trim() || sending}>
+            {sending
+              ? <Loader2 className="h-4 w-4 animate-spin" />
+              : <Send className="h-4 w-4" />}
           </Button>
         </form>
       </section>
