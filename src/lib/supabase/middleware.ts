@@ -31,17 +31,16 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // getSession reads the session from cookies without a network request —
-  // sufficient for redirect decisions. Server components do full getUser() validation.
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
   const path = request.nextUrl.pathname;
   const protectedPrefixes = ["/settings", "/lfg/new", "/admin"];
   const requiresAuth = protectedPrefixes.some((p) => path.startsWith(p));
 
-  if (requiresAuth && !session) {
+  // Check session cookie directly — avoids supabase-js parsing issues in edge runtime
+  const hasSessionCookie = request.cookies.getAll().some(
+    (c) => c.name.includes("-auth-token") && c.value.length > 10
+  );
+
+  if (requiresAuth && !hasSessionCookie) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/auth/login";
     loginUrl.searchParams.set("next", path);
