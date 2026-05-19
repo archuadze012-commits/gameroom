@@ -41,7 +41,7 @@ export default async function HomePage() {
                     </Link>
                   </Button>
                   <Button asChild size="lg" className="w-full sm:w-auto">
-                    <Link href="#feed">
+                    <Link href="/feed">
                       პოსტები <Rss className="ml-1 h-4 w-4" />
                     </Link>
                   </Button>
