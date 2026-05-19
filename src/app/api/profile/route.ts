@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
-
-function anonClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { persistSession: false } },
-  );
-}
 
 export async function POST(request: NextRequest) {
   const user = await getSession().catch(() => null);
@@ -36,7 +28,8 @@ export async function POST(request: NextRequest) {
     update.voice_chat = body.voiceChat;
 
   try {
-    const { error } = await anonClient()
+    const supabase = await createSupabaseServerClient();
+    const { error } = await supabase
       .from("profiles")
       .update(update)
       .eq("id", user.id);

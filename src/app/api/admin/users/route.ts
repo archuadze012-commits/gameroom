@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getIsAdmin } from "@/lib/auth";
 import type { UserRole } from "@/lib/types";
 
@@ -61,7 +62,8 @@ export async function PATCH(request: NextRequest) {
   if (body.banReason !== undefined) update.ban_reason = body.banReason ?? null;
 
   try {
-    const { error } = await anonClient()
+    const supabase = await createSupabaseServerClient();
+    const { error } = await supabase
       .from("profiles")
       .update(update)
       .eq("id", body.userId);
