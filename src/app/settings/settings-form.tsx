@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,6 +69,7 @@ const InstagramIcon = () => (
 export function SettingsForm() {
   const [profile, setProfile] = useState<Profile>(defaults);
   const [loading, setLoading] = useState(false);
+  const [generatingBio, setGeneratingBio] = useState(false);
   const [storageKey, setStorageKey] = useState<string>(STORAGE_KEY_PREFIX);
 
   useEffect(() => {
@@ -91,6 +92,27 @@ export function SettingsForm() {
   const set = (key: keyof Profile) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => setProfile((p) => ({ ...p, [key]: e.target.value }));
+
+  const handleGenerateBio = async () => {
+    setGeneratingBio(true);
+    try {
+      const res = await fetch("/api/bio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role: profile.username ? "gamer" : "user",
+          games: profile.favoriteGameSlugs,
+          voiceChat: profile.voice,
+        }),
+      });
+      const data = await res.json();
+      if (data.bio) setProfile((p) => ({ ...p, bio: data.bio }));
+      else toast.error("Bio ვერ გენერირდა, სცადე თავიდან.");
+    } catch {
+      toast.error("შეცდომა — სცადე თავიდან.");
+    }
+    setGeneratingBio(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,7 +170,20 @@ export function SettingsForm() {
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="bio">ბიო</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="bio">ბიო</Label>
+          <button
+            type="button"
+            onClick={handleGenerateBio}
+            disabled={generatingBio}
+            className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
+          >
+            {generatingBio
+              ? <Loader2 className="h-3 w-3 animate-spin" />
+              : <Sparkles className="h-3 w-3" />}
+            AI-ით გენერაცია
+          </button>
+        </div>
         <Textarea
           id="bio"
           rows={3}

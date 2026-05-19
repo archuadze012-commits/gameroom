@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,38 @@ import { mockGames } from "@/lib/mock-data";
 export function NewLfgForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [game, setGame] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [aiPrompt, setAiPrompt] = useState("");
+
+  const handleAiAssist = async () => {
+    if (!aiPrompt.trim()) {
+      toast.error("მოკლე აღწერა შეიყვანე.");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const gameName = mockGames.find((g) => g.slug === game)?.nameKa ?? game;
+      const res = await fetch("/api/lfg-assist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: aiPrompt, game: gameName }),
+      });
+      const data = await res.json();
+      if (data.title && data.description) {
+        setTitle(data.title);
+        setDescription(data.description);
+        toast.success("AI-მა შეავსო!");
+      } else {
+        toast.error("ვერ გენერირდა, სცადე თავიდან.");
+      }
+    } catch {
+      toast.error("შეცდომა — სცადე თავიდან.");
+    }
+    setGenerating(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -33,9 +65,34 @@ export function NewLfgForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {/* AI Quick Fill */}
+      <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
+        <p className="flex items-center gap-1.5 text-sm font-medium text-primary">
+          <Sparkles className="h-4 w-4" /> AI-ით შევსება
+        </p>
+        <div className="flex gap-2">
+          <Input
+            placeholder="მაგ: CS2-ში ვარ Gold Nova, ვეძებ ქართველ სერიოზულ თიმს"
+            value={aiPrompt}
+            onChange={(e) => setAiPrompt(e.target.value)}
+            className="bg-background/60"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleAiAssist}
+            disabled={generating}
+            className="shrink-0"
+          >
+            {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : "შევსება"}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">AI შეავსებს სათაურს და აღწერას — შემდეგ შეგიძლია დაარედაქტირო.</p>
+      </div>
+
       <div className="space-y-1.5">
         <Label htmlFor="game">თამაში *</Label>
-        <Select name="game" required>
+        <Select name="game" required value={game} onValueChange={setGame}>
           <SelectTrigger id="game">
             <SelectValue placeholder="აარჩიე თამაში" />
           </SelectTrigger>
@@ -57,6 +114,8 @@ export function NewLfgForm() {
           required
           maxLength={140}
           placeholder="მაგ. Squad 3+1 → Erangel ranked"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
         />
       </div>
 
@@ -67,6 +126,8 @@ export function NewLfgForm() {
           name="description"
           rows={4}
           placeholder="დაწერე რა ტიპის მოთამაშეებს ეძებ, რა საათებში თამაშობ, რა მოლოდინი გაქვს."
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
         />
       </div>
 
