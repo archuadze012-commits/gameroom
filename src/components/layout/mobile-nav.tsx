@@ -14,7 +14,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { navLinks, adminLinks } from "./nav-links";
 
-export function MobileNav() {
+export function MobileNav({ isAdmin }: { isAdmin: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -40,18 +40,22 @@ export function MobileNav() {
               {link.label}
             </Link>
           ))}
-          <Separator className="my-2" />
-          {adminLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-primary/70 transition-colors hover:bg-primary/10 hover:text-primary"
-            >
-              <ShieldAlert className="h-3.5 w-3.5" />
-              {link.label}
-            </Link>
-          ))}
+          {isAdmin && (
+            <>
+              <Separator className="my-2" />
+              {adminLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-primary/70 transition-colors hover:bg-primary/10 hover:text-primary"
+                >
+                  <ShieldAlert className="h-3.5 w-3.5" />
+                  {link.label}
+                </Link>
+              ))}
+            </>
+          )}
           <Link
             href="/auth/login"
             onClick={() => setOpen(false)}
