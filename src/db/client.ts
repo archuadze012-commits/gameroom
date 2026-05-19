@@ -4,28 +4,29 @@ import * as schema from "./schema";
 
 declare global {
   // eslint-disable-next-line no-var
-  var __dbClient: ReturnType<typeof postgres> | undefined;
+  var __db: DrizzleDB | undefined;
 }
 
-const connectionString = process.env.DATABASE_URL;
+type DrizzleDB = ReturnType<typeof drizzle<typeof schema>>;
 
-function buildClient() {
-  if (!connectionString) {
-    throw new Error(
-      "DATABASE_URL is not set. Add it to .env.local before using the database.",
-    );
-  }
-  return postgres(connectionString, {
-    prepare: false,
-    max: 10,
-    idle_timeout: 20,
-  });
+function createDb(): DrizzleDB {
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL is not set. Add it to .env.local before using the database.");
+  const client = postgres(url, { prepare: false, max: 10, idle_timeout: 20 });
+  return drizzle(client, { schema, casing: "snake_case" });
 }
 
-const client = globalThis.__dbClient ?? buildClient();
-if (process.env.NODE_ENV !== "production") {
-  globalThis.__dbClient = client;
-}
+// Lazy singleton: module loads without throwing; DB only connects on first query.
+const handler: ProxyHandler<object> = {
+  get(_, prop, receiver) {
+    if (process.env.NODE_ENV !== "production") {
+      global.__db ??= createDb();
+    } else {
+      global.__db ??= createDb();
+    }
+    return Reflect.get(global.__db, prop, receiver);
+  },
+};
 
-export const db = drizzle(client, { schema, casing: "snake_case" });
-export type DB = typeof db;
+export const db = new Proxy({}, handler) as DrizzleDB;
+export type DB = DrizzleDB;
