@@ -35,13 +35,13 @@ export default async function HomePage() {
               {user ? (
                 <>
                   <Button asChild size="lg" className="w-full sm:w-auto">
-                    <Link href="#feed">
-                      პოსტები <Rss className="ml-1 h-4 w-4" />
+                    <Link href="/search">
+                      ძებნა <Search className="ml-1 h-4 w-4" />
                     </Link>
                   </Button>
                   <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
-                    <Link href="/search">
-                      ძებნა <Search className="ml-1 h-4 w-4" />
+                    <Link href="#feed">
+                      პოსტები <Rss className="ml-1 h-4 w-4" />
                     </Link>
                   </Button>
                   <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
