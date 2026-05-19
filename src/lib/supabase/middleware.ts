@@ -37,7 +37,14 @@ export async function updateSession(request: NextRequest) {
 
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser();
+
+  // Clear stale session cookies when Supabase can't find the session
+  if (error?.message?.includes("Session") || error?.status === 403) {
+    const cookiesToClear = request.cookies.getAll().filter((c) => c.name.startsWith("sb-"));
+    cookiesToClear.forEach(({ name }) => response.cookies.delete(name));
+  }
 
   const path = request.nextUrl.pathname;
   const protectedPrefixes = ["/settings", "/lfg/new", "/admin"];
