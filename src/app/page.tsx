@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Trophy, Users, MessageSquare, Newspaper, Gamepad2, Zap } from "lucide-react";
+import { ArrowRight, Trophy, Users, MessageSquare, Newspaper, Gamepad2, Zap, Rss } from "lucide-react";
 import { GameIcon } from "@/components/game-icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,8 +33,8 @@ export default async function HomePage() {
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               {user ? (
                 <Button asChild size="lg" className="w-full sm:w-auto">
-                  <Link href={`/profile/${username}`}>
-                    ჩემი პროფილი <ArrowRight className="ml-1 h-4 w-4" />
+                  <Link href="#feed">
+                    სიახლეების ზოლი <Rss className="ml-1 h-4 w-4" />
                   </Link>
                 </Button>
               ) : (
@@ -62,6 +62,29 @@ export default async function HomePage() {
           />
         </div>
       </section>
+
+      {/* Feed — visible only when logged in */}
+      {user && (
+        <section id="feed" className="container mx-auto px-4 scroll-mt-20">
+          <SectionHeader
+            icon={<Rss className="h-5 w-5" />}
+            title="სიახლეების ზოლი"
+            subtitle="გამოწერილი გეიმერების პოსტები"
+          />
+          <Card className="border-dashed border-border/60">
+            <CardContent className="flex flex-col items-center gap-4 p-12 text-center text-sm text-muted-foreground">
+              <Users className="h-10 w-10 opacity-30" />
+              <div className="space-y-1">
+                <p className="font-medium text-foreground">ჯერ არავინ გამოგიწერია</p>
+                <p>გამოიწერე სხვა გეიმერები — მათი პოსტები აქ გამოჩნდება</p>
+              </div>
+              <Button asChild size="sm" variant="outline">
+                <Link href="/lfg">გეიმერების ძებნა <ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       <section className="container mx-auto px-4">
         <SectionHeader
