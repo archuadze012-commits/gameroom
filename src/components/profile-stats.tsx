@@ -1,33 +1,17 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import { Trophy, Users as UsersIcon, Gamepad2 } from "lucide-react";
 
 export function ProfileStats({
   lfgCount,
-  userId,
+  followerCount,
+  gameCount,
 }: {
   lfgCount: number;
-  userId?: string;
+  followerCount: number;
+  gameCount: number;
 }) {
-  const [gameCount, setGameCount] = useState(0);
-
-  useEffect(() => {
-    if (!userId) return;
-    try {
-      const raw = localStorage.getItem(`gameroom_profile_${userId}`);
-      if (raw) {
-        const saved = JSON.parse(raw);
-        if (Array.isArray(saved.favoriteGameSlugs)) {
-          setGameCount(saved.favoriteGameSlugs.length);
-        }
-      }
-    } catch {}
-  }, [userId]);
-
   return (
     <div className="grid grid-cols-2 gap-4 text-center sm:grid-cols-4">
-      <Stat icon={<UsersIcon className="h-4 w-4" />} value="0" label="გამომწერი" />
+      <Stat icon={<UsersIcon className="h-4 w-4" />} value={String(followerCount)} label="გამომწერი" />
       <Stat icon={<Gamepad2 className="h-4 w-4" />} value={String(gameCount)} label="თამაში" />
       <Stat icon={<Trophy className="h-4 w-4" />} value="0" label="ტიტული" />
       <Stat icon={<UsersIcon className="h-4 w-4" />} value={String(lfgCount)} label="LFG დაპოსტილი" />
