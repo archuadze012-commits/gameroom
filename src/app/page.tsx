@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { mockGames } from "@/lib/mock-data";
 import { getSession } from "@/lib/auth";
+import { GoogleSignInButton } from "@/components/google-sign-in-button";
 
 export default async function HomePage() {
   const user = await getSession().catch(() => null);
@@ -56,9 +57,7 @@ export default async function HomePage() {
                       დარეგისტრირდი <ArrowRight className="ml-1 h-4 w-4" />
                     </Link>
                   </Button>
-                  <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
-                    <Link href="/lfg">გუნდის ძებნა</Link>
-                  </Button>
+                  <GoogleSignInButton className="w-full sm:w-auto" />
                 </>
               )}
             </div>
