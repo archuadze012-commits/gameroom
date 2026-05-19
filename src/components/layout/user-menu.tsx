@@ -13,6 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getSession } from "@/lib/auth";
 import { AvatarSync } from "@/components/avatar-sync";
+import { LogoutButton } from "@/components/logout-button";
 
 export async function UserMenu() {
   const user = await getSession().catch(() => null);
@@ -67,7 +68,7 @@ export async function UserMenu() {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem render={<Link href="/auth/logout">გასვლა</Link>} />
+          <DropdownMenuItem render={<LogoutButton />} />
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
