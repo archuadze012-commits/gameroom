@@ -1,18 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { db } from "@/db/client";
-import { profiles } from "@/db/schema";
 import { getIsAdmin } from "@/lib/auth";
-import { eq } from "drizzle-orm";
 import type { UserRole } from "@/lib/types";
 
-function adminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-  if (!key) throw new Error("SUPABASE_SERVICE_ROLE_KEY not set");
-  return createClient(url, key, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
+function anonClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false } },
+  );
 }
 
 export async function GET() {
@@ -20,25 +16,23 @@ export async function GET() {
   if (!isAdmin) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   try {
-    const [profileRows, authData] = await Promise.all([
-      db.select().from(profiles).orderBy(profiles.createdAt),
-      adminClient().auth.admin.listUsers({ perPage: 1000 }),
-    ]);
-
-    const emailMap = new Map(
-      (authData.data?.users ?? []).map((u) => [u.id, u.email ?? null]),
-    );
+    const { data, error } = await anonClient()
+      .from("profiles")
+      .select("id, username, display_name, avatar_url, role, banned, ban_reason, created_at, email")
+      .order("created_at");
+    if (error) throw error;
 
     return NextResponse.json(
-      profileRows.map((p) => ({
+      (data ?? []).map((p) => ({
         id: p.id,
         username: p.username,
-        displayName: p.displayName,
+        displayName: p.display_name,
+        avatarUrl: p.avatar_url,
         role: p.role,
         banned: p.banned,
-        banReason: p.banReason,
-        createdAt: p.createdAt,
-        email: emailMap.get(p.id) ?? null,
+        banReason: p.ban_reason,
+        createdAt: p.created_at,
+        email: p.email,
       })),
     );
   } catch (e) {
@@ -61,13 +55,17 @@ export async function PATCH(request: NextRequest) {
   if (!body.userId)
     return NextResponse.json({ error: "userId required" }, { status: 400 });
 
-  const update: Partial<typeof profiles.$inferInsert> = { updatedAt: new Date() };
+  const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (body.role !== undefined) update.role = body.role;
   if (body.banned !== undefined) update.banned = body.banned;
-  if (body.banReason !== undefined) update.banReason = body.banReason ?? null;
+  if (body.banReason !== undefined) update.ban_reason = body.banReason ?? null;
 
   try {
-    await db.update(profiles).set(update).where(eq(profiles.id, body.userId));
+    const { error } = await anonClient()
+      .from("profiles")
+      .update(update)
+      .eq("id", body.userId);
+    if (error) throw error;
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("[/api/admin/users PATCH]", e);

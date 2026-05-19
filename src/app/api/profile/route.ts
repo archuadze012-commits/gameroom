@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/db/client";
-import { profiles } from "@/db/schema";
+import { createClient } from "@supabase/supabase-js";
 import { getSession } from "@/lib/auth";
-import { eq } from "drizzle-orm";
+
+function anonClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false } },
+  );
+}
 
 export async function POST(request: NextRequest) {
   const user = await getSession().catch(() => null);
@@ -15,26 +21,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
 
-  const update: Partial<typeof profiles.$inferInsert> = {
-    updatedAt: new Date(),
+  const update: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
   };
   if (typeof body.username === "string" && body.username.trim())
     update.username = body.username.trim().slice(0, 32);
   if (typeof body.displayName === "string")
-    update.displayName = body.displayName.trim().slice(0, 64) || null;
+    update.display_name = body.displayName.trim().slice(0, 64) || null;
   if (typeof body.bio === "string")
     update.bio = body.bio.trim() || null;
   if (typeof body.region === "string")
     update.region = body.region.trim() || null;
   if (typeof body.voiceChat === "boolean")
-    update.voiceChat = body.voiceChat;
+    update.voice_chat = body.voiceChat;
 
   try {
-    await db.update(profiles).set(update).where(eq(profiles.id, user.id));
+    const { error } = await anonClient()
+      .from("profiles")
+      .update(update)
+      .eq("id", user.id);
+    if (error) {
+      if (error.code === "23505")
+        return NextResponse.json({ error: "username_taken" }, { status: 409 });
+      throw error;
+    }
     return NextResponse.json({ ok: true });
-  } catch (e: unknown) {
-    if (typeof e === "object" && e !== null && "code" in e && (e as { code: string }).code === "23505")
-      return NextResponse.json({ error: "username_taken" }, { status: 409 });
+  } catch (e) {
     console.error("[/api/profile]", e);
     return NextResponse.json({ error: "db_error" }, { status: 500 });
   }

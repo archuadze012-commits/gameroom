@@ -1,36 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/db/client";
-import { profiles } from "@/db/schema";
-import { ilike, or, and, eq } from "drizzle-orm";
+import { createClient } from "@supabase/supabase-js";
+import type { PublicProfile } from "@/lib/types";
+
+function client() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false } },
+  );
+}
 
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get("q")?.trim() ?? "";
   try {
-    const condition = and(
-      eq(profiles.banned, false),
-      q
-        ? or(
-            ilike(profiles.username, `%${q}%`),
-            ilike(profiles.displayName, `%${q}%`),
-          )
-        : undefined,
-    );
+    let query = client()
+      .from("profiles")
+      .select("username, display_name, avatar_url, role, region, voice_chat, bio")
+      .eq("banned", false)
+      .order("created_at");
 
-    const rows = await db
-      .select({
-        username: profiles.username,
-        displayName: profiles.displayName,
-        avatarUrl: profiles.avatarUrl,
-        role: profiles.role,
-        region: profiles.region,
-        voiceChat: profiles.voiceChat,
-        bio: profiles.bio,
-      })
-      .from(profiles)
-      .where(condition)
-      .orderBy(profiles.createdAt);
+    if (q) {
+      query = query.or(`username.ilike.%${q}%,display_name.ilike.%${q}%`);
+    }
 
-    return NextResponse.json(rows);
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const profiles: PublicProfile[] = (data ?? []).map((r) => ({
+      username: r.username,
+      displayName: r.display_name,
+      avatarUrl: r.avatar_url,
+      role: r.role,
+      region: r.region,
+      voiceChat: r.voice_chat,
+      bio: r.bio,
+    }));
+
+    return NextResponse.json(profiles);
   } catch (e) {
     console.error("[/api/users]", e);
     return NextResponse.json({ error: "db_error" }, { status: 500 });

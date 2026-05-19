@@ -1,8 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { db } from "@/db/client";
-import { profiles } from "@/db/schema";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -40,35 +38,37 @@ export async function GET(request: NextRequest) {
         .slice(0, 26);
       const fallbackUsername = `${emailPrefix}_${user.id.slice(0, 6)}`;
 
+      let hasProfile = !!savedUsername;
       try {
-        await db
-          .insert(profiles)
-          .values({
+        const { data: existing } = await supabase
+          .from("profiles")
+          .select("username")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (!existing) {
+          await supabase.from("profiles").insert({
             id: user.id,
             username: savedUsername ?? fallbackUsername,
-            displayName:
+            display_name:
               (user.user_metadata?.full_name as string | undefined) ??
               (user.user_metadata?.name as string | undefined) ??
               emailPrefix,
-            avatarUrl: user.user_metadata?.avatar_url as string | undefined,
-          })
-          .onConflictDoUpdate({
-            target: profiles.id,
-            set: {
-              displayName:
-                (user.user_metadata?.full_name as string | undefined) ??
-                (user.user_metadata?.name as string | undefined) ??
-                undefined,
-              avatarUrl:
-                (user.user_metadata?.avatar_url as string | undefined) ?? undefined,
-              updatedAt: new Date(),
-            },
+            avatar_url: (user.user_metadata?.avatar_url as string | undefined) ?? null,
+            email: user.email ?? null,
           });
+        } else {
+          hasProfile = true;
+          await supabase.from("profiles").update({
+            avatar_url: (user.user_metadata?.avatar_url as string | undefined) ?? null,
+            email: user.email ?? null,
+            updated_at: new Date().toISOString(),
+          }).eq("id", user.id);
+        }
       } catch (e) {
         console.error("[auth/callback] profile upsert:", e);
       }
 
-      const hasProfile = !!savedUsername;
       return NextResponse.redirect(hasProfile ? redirectTo : `${origin}/settings`);
     }
 
