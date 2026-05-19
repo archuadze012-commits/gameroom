@@ -5,8 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { mockGames, mockNews, mockTournaments } from "@/lib/mock-data";
+import { getSession } from "@/lib/auth";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const user = await getSession().catch(() => null);
+  const username =
+    (user?.user_metadata?.username as string | undefined) ??
+    user?.email?.split("@")[0];
+
   return (
     <div className="space-y-20 pb-24">
       {/* Hero */}
@@ -25,11 +31,19 @@ export default function HomePage() {
               PUBG, Warzone და Valorant-ში — ერთ ადგილას.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button asChild size="lg" className="w-full sm:w-auto">
-                <Link href="/auth/signup">
-                  პორტალის გახსნა <ArrowRight className="ml-1 h-4 w-4" />
-                </Link>
-              </Button>
+              {user ? (
+                <Button asChild size="lg" className="w-full sm:w-auto">
+                  <Link href={`/profile/${username}`}>
+                    ჩემი პროფილი <ArrowRight className="ml-1 h-4 w-4" />
+                  </Link>
+                </Button>
+              ) : (
+                <Button asChild size="lg" className="w-full sm:w-auto">
+                  <Link href="/auth/signup">
+                    დარეგისტრირდი <ArrowRight className="ml-1 h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
               <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
                 <Link href="/lfg">გუნდის ძებნა</Link>
               </Button>
