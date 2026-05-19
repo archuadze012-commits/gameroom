@@ -12,7 +12,7 @@ export default function SignupPage() {
       <CardHeader>
         <CardTitle className="text-2xl">დარეგისტრირდი</CardTitle>
         <p className="text-sm text-muted-foreground">
-          შექმენი ანგარიში 30 წამში — magic link ან Google/Discord.
+          შექმენი ანგარიში 30 წამში — magic link ან Google.
         </p>
       </CardHeader>
       <CardContent className="space-y-6">

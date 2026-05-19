@@ -12,7 +12,7 @@ export default function LoginPage() {
       <CardHeader>
         <CardTitle className="text-2xl">შესვლა</CardTitle>
         <p className="text-sm text-muted-foreground">
-          გამოიყენე ელფოსტა ან სოციალური ანგარიში.
+          გამოიყენე Google ანგარიში ან magic link.
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
