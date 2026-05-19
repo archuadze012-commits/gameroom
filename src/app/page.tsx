@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { ArrowRight, Trophy, Users, MessageSquare, Newspaper, Gamepad2, Zap, Rss, Search } from "lucide-react";
+import { ArrowRight, Users, MessageSquare, Gamepad2, Zap, Rss, Search } from "lucide-react";
 import { GameIcon } from "@/components/game-icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { mockGames, mockNews, mockTournaments } from "@/lib/mock-data";
+import { mockGames } from "@/lib/mock-data";
 import { getSession } from "@/lib/auth";
 
 export default async function HomePage() {
@@ -145,72 +145,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="container mx-auto grid gap-10 px-4 lg:grid-cols-2">
-        <div>
-          <SectionHeader
-            icon={<Newspaper className="h-5 w-5" />}
-            title="ბოლო ამბები"
-            subtitle="რა ხდება გეიმინგ სამყაროში"
-            href="/news"
-            compact
-          />
-          <div className="space-y-3">
-            {mockNews.map((n) => (
-              <Link key={n.slug} href={`/news/${n.slug}`} className="block">
-                <Card className="overflow-hidden border-border/60 transition-colors hover:border-primary/40">
-                  <CardContent className="flex gap-4 p-4">
-                    <div className={`h-20 w-20 shrink-0 rounded-md bg-gradient-to-br ${n.cover}`} />
-                    <div className="min-w-0">
-                      <h3 className="line-clamp-2 font-semibold">{n.title}</h3>
-                      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{n.excerpt}</p>
-                      <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-                        <span>{n.publishedAt}</span>
-                        <span>· {n.readMinutes} წთ კითხვა</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <SectionHeader
-            icon={<Trophy className="h-5 w-5" />}
-            title="მომავალი ჩემპიონატები"
-            subtitle="დაარეგისტრირდი ან უყურე"
-            href="/tournaments"
-            compact
-          />
-          <div className="space-y-3">
-            {mockTournaments.map((t) => {
-              const game = mockGames.find((g) => g.slug === t.gameSlug);
-              return (
-                <Link key={t.slug} href={`/tournaments/${t.slug}`} className="block">
-                  <Card className="overflow-hidden border-border/60 transition-colors hover:border-primary/40">
-                    <div className={`h-1.5 w-full bg-gradient-to-r ${t.banner}`} />
-                    <CardContent className="space-y-2 p-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">
-                          {game?.emoji} {game?.nameKa}
-                        </span>
-                        <StatusBadge status={t.status} />
-                      </div>
-                      <h3 className="font-semibold">{t.name}</h3>
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                        <span>🏆 {t.prizePool}</span>
-                        <span>👥 {t.participants.current}/{t.participants.max}</span>
-                        <span>🗓 {t.startsAt}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </section>
 
       <section className="container mx-auto grid gap-4 px-4 md:grid-cols-2">
         <Card className="border-border/60">
@@ -276,13 +210,3 @@ function SectionHeader({
   );
 }
 
-function StatusBadge({ status }: { status: "open" | "checkin" | "live" | "completed" }) {
-  const map = {
-    open: { label: "რეგისტრაცია", className: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
-    checkin: { label: "Check-in", className: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
-    live: { label: "🔴 ცოცხალი", className: "bg-red-500/15 text-red-400 border-red-500/30" },
-    completed: { label: "დასრულდა", className: "bg-muted text-muted-foreground border-border" },
-  };
-  const cfg = map[status];
-  return <Badge variant="outline" className={cfg.className}>{cfg.label}</Badge>;
-}
