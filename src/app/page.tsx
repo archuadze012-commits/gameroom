@@ -23,14 +23,18 @@ export default async function HomePage() {
             <Badge variant="outline" className="border-primary/40 text-primary mb-6">
               <Zap className="mr-1 h-3 w-3" /> ბეტა ვერსია
             </Badge>
-            <h1 className="text-balance text-4xl font-bold tracking-tight md:text-6xl">
-              ქართველი გეიმერების{" "}
-              <span className="text-primary">პორტალი</span>
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-balance text-lg text-muted-foreground">
-              იპოვე გუნდი, შეუერთდი ჩემპიონატებს და იპოვე ერთგულესი მოთამაშეები eFootball, FIFA,
-              PUBG, Warzone და Valorant-ში — ერთ ადგილას.
-            </p>
+            {!user && (
+              <>
+                <h1 className="text-balance text-4xl font-bold tracking-tight md:text-6xl">
+                  ქართველი გეიმერების{" "}
+                  <span className="text-primary">პორტალი</span>
+                </h1>
+                <p className="mx-auto mt-6 max-w-2xl text-balance text-lg text-muted-foreground">
+                  იპოვე გუნდი, შეუერთდი ჩემპიონატებს და იპოვე ერთგულესი მოთამაშეები eFootball, FIFA,
+                  PUBG, Warzone და Valorant-ში — ერთ ადგილას.
+                </p>
+              </>
+            )}
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               {user ? (
                 <>
