@@ -100,7 +100,7 @@ export type NewsWithGame = {
   publishedAt: string;
   readMinutes: number;
   cover: string;
-  gameSlug: string;
+  gameSlug?: string;
   author: string;
   game: { nameKa: string; emoji?: string } | null;
 };
