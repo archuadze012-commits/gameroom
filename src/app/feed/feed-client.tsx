@@ -159,7 +159,7 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
               <p>გამოიწერე სხვა გეიმერები — მათი პოსტები აქ გამოჩნდება</p>
             </div>
             <Button asChild size="sm" variant="outline">
-              <Link href="/lfg">გეიმერების ძებნა <ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
+              <Link href="/search">გეიმერების ძებნა <ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
             </Button>
           </CardContent>
         </Card>
