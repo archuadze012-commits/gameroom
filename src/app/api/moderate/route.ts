@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const GEO_BLOCKLIST = [
+  "პიდარ", "პედარ", "პიდრ", "ლაჰო", "ბოზ", "მეძავ",
+  "დედამოთ", "დედაშენ", "დედაც", "შენი დედა",
+  "ნამუსი", "ძაღლო", "სულელო", "იდიოტო",
+];
+
+function hasGeorgianProfanity(text: string): boolean {
+  const lower = text.toLowerCase();
+  return GEO_BLOCKLIST.some((w) => lower.includes(w));
+}
+
 export async function POST(request: NextRequest) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) return NextResponse.json({ toxic: false });
@@ -13,6 +24,9 @@ export async function POST(request: NextRequest) {
 
   const message = (body.message ?? "").trim();
   if (!message) return NextResponse.json({ toxic: false });
+
+  // Fast keyword check for Georgian profanity before hitting AI
+  if (hasGeorgianProfanity(message)) return NextResponse.json({ toxic: true });
 
   try {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
