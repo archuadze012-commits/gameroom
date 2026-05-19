@@ -1,14 +1,13 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import { ShieldCheck, Shield, Trophy, MonitorPlay, Gamepad2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import type { UserRole } from "@/lib/types";
 
-export type UserRole = "admin" | "moderator" | "organizer" | "streamer" | "esports";
+export type { UserRole };
 
-const ROLES_KEY = "gameroom_user_roles";
-
-const ROLE_CONFIG: Record<UserRole, { label: string; icon: React.ReactNode; className: string }> = {
+const ROLE_CONFIG: Record<
+  Exclude<UserRole, "user">,
+  { label: string; icon: React.ReactNode; className: string }
+> = {
   admin: {
     label: "ადმინი",
     icon: <ShieldCheck className="mr-1 h-3.5 w-3.5" />,
@@ -37,41 +36,13 @@ const ROLE_CONFIG: Record<UserRole, { label: string; icon: React.ReactNode; clas
 };
 
 export function RoleBadge({
-  username,
   defaultRole,
 }: {
-  username: string;
+  username?: string;
   defaultRole?: UserRole;
 }) {
-  const [role, setRole] = useState<UserRole | null>(defaultRole ?? null);
-
-  useEffect(() => {
-    function read() {
-      try {
-        const raw = localStorage.getItem(ROLES_KEY);
-        if (!raw) {
-          setRole(defaultRole ?? null);
-          return;
-        }
-        const overrides = JSON.parse(raw) as Record<string, string>;
-        const r = overrides[username];
-        if (r && r in ROLE_CONFIG) {
-          setRole(r as UserRole);
-        } else {
-          setRole(defaultRole ?? null);
-        }
-      } catch {
-        setRole(defaultRole ?? null);
-      }
-    }
-    read();
-    window.addEventListener("storage", read);
-    return () => window.removeEventListener("storage", read);
-  }, [username, defaultRole]);
-
-  if (!role || role === ("user" as string)) return null;
-
-  const c = ROLE_CONFIG[role];
+  if (!defaultRole || defaultRole === "user") return null;
+  const c = ROLE_CONFIG[defaultRole];
   return (
     <Badge variant="outline" className={c.className}>
       {c.icon} {c.label}

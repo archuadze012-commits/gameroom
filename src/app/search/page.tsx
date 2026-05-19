@@ -1,21 +1,20 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Search, Users, Gamepad2, Download, Star, ShieldCheck, Shield, Trophy, MonitorPlay } from "lucide-react";
+import { Search, Users, Gamepad2, Download, Star, ShieldCheck, Shield, Trophy, MonitorPlay, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { mockUsers, mockGames, crackedGames } from "@/lib/mock-data";
+import { mockGames, crackedGames } from "@/lib/mock-data";
 import { PlayerCard } from "@/components/player-card";
 import { GameIcon } from "@/components/game-icon";
+import type { PublicProfile, UserRole } from "@/lib/types";
 
 type Tab = "players" | "games" | "cracked";
-type Role = "all" | "admin" | "moderator" | "organizer" | "streamer" | "esports" | "user";
+type RoleFilter = "all" | Exclude<UserRole, "user">;
 
-const ROLES_KEY = "gameroom_user_roles";
-
-const ROLE_FILTERS: { role: Role; label: string; icon: React.ReactNode; className: string }[] = [
+const ROLE_FILTERS: { role: RoleFilter; label: string; icon: React.ReactNode; className: string }[] = [
   { role: "all",       label: "ყველა",           icon: <Users className="h-3.5 w-3.5" />,        className: "border-border text-foreground" },
   { role: "admin",     label: "ადმინი",           icon: <ShieldCheck className="h-3.5 w-3.5" />,  className: "border-rose-500/40 text-rose-400" },
   { role: "moderator", label: "მოდერატორი",       icon: <Shield className="h-3.5 w-3.5" />,       className: "border-amber-500/40 text-amber-400" },
@@ -27,48 +26,31 @@ const ROLE_FILTERS: { role: Role; label: string; icon: React.ReactNode; classNam
 export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<Tab>("players");
-  const [roleFilter, setRoleFilter] = useState<Role>("all");
-  const [roleOverrides, setRoleOverrides] = useState<Record<string, string>>({});
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
+  const [allUsers, setAllUsers] = useState<PublicProfile[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+
   useEffect(() => {
-    function load() {
-      try {
-        const raw = localStorage.getItem(ROLES_KEY);
-        setRoleOverrides(raw ? JSON.parse(raw) : {});
-      } catch {
-        setRoleOverrides({});
-      }
-    }
-    load();
-    window.addEventListener("storage", load);
-    return () => window.removeEventListener("storage", load);
+    fetch("/api/users")
+      .then((r) => r.json())
+      .then((data: PublicProfile[]) => setAllUsers(Array.isArray(data) ? data : []))
+      .catch(() => setAllUsers([]))
+      .finally(() => setLoadingUsers(false));
   }, []);
 
   const q = query.toLowerCase().trim();
 
-  const usersWithRole = useMemo(() =>
-    mockUsers.map((u) => ({
-      ...u,
-      effectiveRole: (roleOverrides[u.username] ?? u.role ?? "user") as Role,
-    })),
-    [roleOverrides]
-  );
-
   const playerResults = useMemo(() => {
     const byQuery = !q
-      ? usersWithRole
-      : usersWithRole.filter(
+      ? allUsers
+      : allUsers.filter(
           (u) =>
             u.username.toLowerCase().includes(q) ||
-            u.displayName.toLowerCase().includes(q) ||
-            u.region.toLowerCase().includes(q) ||
-            u.games.some(
-              (g) =>
-                g.rank.toLowerCase().includes(q) ||
-                mockGames.find((mg) => mg.slug === g.slug)?.nameKa.toLowerCase().includes(q),
-            ),
+            (u.displayName ?? "").toLowerCase().includes(q) ||
+            (u.region ?? "").toLowerCase().includes(q),
         );
-    return roleFilter === "all" ? byQuery : byQuery.filter((u) => u.effectiveRole === roleFilter);
-  }, [q, roleFilter, usersWithRole]);
+    return roleFilter === "all" ? byQuery : byQuery.filter((u) => u.role === roleFilter);
+  }, [q, roleFilter, allUsers]);
 
   const gameResults = useMemo(() => {
     if (!q) return mockGames;
@@ -92,20 +74,21 @@ export default function SearchPage() {
     );
   }, [q]);
 
-  const roleCounts = useMemo(() =>
-    Object.fromEntries(
-      ROLE_FILTERS.map((f) => [
-        f.role,
-        f.role === "all"
-          ? usersWithRole.length
-          : usersWithRole.filter((u) => u.effectiveRole === f.role).length,
-      ])
-    ) as Record<Role, number>,
-    [usersWithRole]
+  const roleCounts = useMemo(
+    () =>
+      Object.fromEntries(
+        ROLE_FILTERS.map((f) => [
+          f.role,
+          f.role === "all"
+            ? allUsers.length
+            : allUsers.filter((u) => u.role === f.role).length,
+        ]),
+      ) as Record<RoleFilter, number>,
+    [allUsers],
   );
 
   const tabs = [
-    { id: "players" as Tab, label: "მოთამაშეები", icon: <Users className="h-4 w-4" />, count: mockUsers.length },
+    { id: "players" as Tab, label: "მოთამაშეები", icon: <Users className="h-4 w-4" />, count: allUsers.length },
     { id: "games" as Tab, label: "თამაშები", icon: <Gamepad2 className="h-4 w-4" />, count: gameResults.length },
     { id: "cracked" as Tab, label: "Cracked Games", icon: <Download className="h-4 w-4" />, count: crackedResults.length },
   ];
@@ -153,11 +136,10 @@ export default function SearchPage() {
       {/* Players */}
       {tab === "players" && (
         <div className="space-y-4">
-          {/* Role filters */}
           <div className="flex gap-2 overflow-x-auto pb-1">
             {ROLE_FILTERS.map((f) => {
               const isActive = roleFilter === f.role;
-              const count = roleCounts[f.role];
+              const count = roleCounts[f.role] ?? 0;
               return (
                 <button
                   key={f.role}
@@ -178,22 +160,29 @@ export default function SearchPage() {
             })}
           </div>
 
-          <p className="text-sm text-muted-foreground">
-            {q
-              ? `${playerResults.length} შედეგი "${query}"-სთვის`
-              : roleFilter === "all"
-              ? `სულ ${playerResults.length} მოთამაშე`
-              : `${playerResults.length} მოთამაშე`}
-          </p>
-
-          {playerResults.length === 0 ? (
-            <EmptyState label="მოთამაშე ვერ მოიძებნა" />
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {playerResults.map((user) => (
-                <PlayerCard key={user.username} user={user} />
-              ))}
+          {loadingUsers ? (
+            <div className="flex items-center justify-center py-16 text-muted-foreground">
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" /> იტვირთება...
             </div>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">
+                {q
+                  ? `${playerResults.length} შედეგი "${query}"-სთვის`
+                  : roleFilter === "all"
+                  ? `სულ ${playerResults.length} მოთამაშე`
+                  : `${playerResults.length} მოთამაშე`}
+              </p>
+              {playerResults.length === 0 ? (
+                <EmptyState label="მოთამაშე ვერ მოიძებნა" />
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {playerResults.map((user) => (
+                    <PlayerCard key={user.username} user={user} />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

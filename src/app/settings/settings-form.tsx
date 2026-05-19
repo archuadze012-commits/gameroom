@@ -102,7 +102,26 @@ export function SettingsForm() {
         data: { username: profile.username, display_name: profile.displayName },
       });
     } catch {}
-    await new Promise((r) => setTimeout(r, 300));
+    try {
+      const res = await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: profile.username,
+          displayName: profile.displayName,
+          bio: profile.bio,
+          voiceChat: profile.voice,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        if (err?.error === "username_taken") {
+          toast.error("ეს username უკვე დაკავებულია.");
+          setLoading(false);
+          return;
+        }
+      }
+    } catch {}
     toast.success("პარამეტრები შენახულია.");
     setLoading(false);
   };

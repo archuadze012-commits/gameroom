@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { db } from "@/db/client";
+import { profiles } from "@/db/schema";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -31,7 +33,42 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      const hasProfile = !!data.user?.user_metadata?.username;
+      const user = data.user;
+      const savedUsername = user.user_metadata?.username as string | undefined;
+      const emailPrefix = (user.email?.split("@")[0] ?? "user")
+        .replace(/[^a-zA-Z0-9_]/g, "")
+        .slice(0, 26);
+      const fallbackUsername = `${emailPrefix}_${user.id.slice(0, 6)}`;
+
+      try {
+        await db
+          .insert(profiles)
+          .values({
+            id: user.id,
+            username: savedUsername ?? fallbackUsername,
+            displayName:
+              (user.user_metadata?.full_name as string | undefined) ??
+              (user.user_metadata?.name as string | undefined) ??
+              emailPrefix,
+            avatarUrl: user.user_metadata?.avatar_url as string | undefined,
+          })
+          .onConflictDoUpdate({
+            target: profiles.id,
+            set: {
+              displayName:
+                (user.user_metadata?.full_name as string | undefined) ??
+                (user.user_metadata?.name as string | undefined) ??
+                undefined,
+              avatarUrl:
+                (user.user_metadata?.avatar_url as string | undefined) ?? undefined,
+              updatedAt: new Date(),
+            },
+          });
+      } catch (e) {
+        console.error("[auth/callback] profile upsert:", e);
+      }
+
+      const hasProfile = !!savedUsername;
       return NextResponse.redirect(hasProfile ? redirectTo : `${origin}/settings`);
     }
 
