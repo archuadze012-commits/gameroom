@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -8,31 +9,28 @@ export async function GET(request: NextRequest) {
   const redirectTo = next.startsWith("/") ? `${origin}${next}` : origin;
 
   if (code) {
-    // Build the redirect response first so we can set cookies on it
-    const response = NextResponse.redirect(redirectTo);
+    const cookieStore = await cookies();
 
     const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/^﻿/, "").trim();
     const supabaseKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "").replace(/^﻿/, "").trim();
 
-    const supabase = createServerClient(
-      supabaseUrl,
-      supabaseKey,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll();
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              response.cookies.set(name, value, options)
-            );
-          },
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
         },
-      }
-    );
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {}
+        },
+      },
+    });
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return response;
+    if (!error) return NextResponse.redirect(redirectTo);
 
     console.error("[auth/callback] exchangeCodeForSession error:", error);
     return NextResponse.redirect(
