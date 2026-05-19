@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Users, MessageSquare, Gamepad2, Zap, Rss, Search } from "lucide-react";
+import { ArrowRight, Users, Gamepad2, Rss, Search } from "lucide-react";
 import { GameIcon } from "@/components/game-icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -143,35 +143,6 @@ export default async function HomePage() {
             </Link>
           ))}
         </div>
-      </section>
-
-
-      <section className="container mx-auto grid gap-4 px-4 md:grid-cols-2">
-        <Card className="border-border/60">
-          <CardContent className="space-y-3 p-8">
-            <MessageSquare className="h-8 w-8 text-primary" />
-            <h3 className="text-xl font-semibold">ფორუმი</h3>
-            <p className="text-sm text-muted-foreground">
-              დისკუსიები თამაშებზე, ტექნიკაზე და კომუნიტიზე. შენი იდეები, კითხვები — ჩვენი თემი
-              დაგეხმარება.
-            </p>
-            <Button asChild variant="outline">
-              <Link href="/forum">ფორუმზე გადასვლა <ArrowRight className="ml-1 h-4 w-4" /></Link>
-            </Button>
-          </CardContent>
-        </Card>
-        <Card className="border-border/60">
-          <CardContent className="space-y-3 p-8">
-            <Zap className="h-8 w-8 text-accent" />
-            <h3 className="text-xl font-semibold">ცოცხალი ჩათი</h3>
-            <p className="text-sm text-muted-foreground">
-              თამაშების მიხედვით კანალები, LFG-ის ჩათები და ერთიანი ქართული გეიმერული ჩათი.
-            </p>
-            <Button asChild variant="outline">
-              <Link href="/chat">ჩათში შესვლა <ArrowRight className="ml-1 h-4 w-4" /></Link>
-            </Button>
-          </CardContent>
-        </Card>
       </section>
     </div>
   );
