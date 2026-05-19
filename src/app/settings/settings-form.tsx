@@ -27,24 +27,24 @@ type Profile = {
 };
 
 const defaults: Profile = {
-  username: "leonsio12",
-  displayName: "LEO",
+  username: "",
+  displayName: "",
   bio: "",
   voice: true,
-  youtubeHandle: "leonsio12",
-  tiktokHandle: "leonsio12",
-  tiktokFollowers: "4.8K",
+  youtubeHandle: "",
+  tiktokHandle: "",
+  tiktokFollowers: "",
   instagramHandle: "",
   favoriteGameSlugs: [],
 };
 
-function load(): Profile {
-  if (typeof window === "undefined") return defaults;
+function loadFromStorage(): Partial<Profile> {
+  if (typeof window === "undefined") return {};
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? { ...defaults, ...JSON.parse(raw) } : defaults;
+    return raw ? JSON.parse(raw) : {};
   } catch {
-    return defaults;
+    return {};
   }
 }
 
@@ -71,7 +71,18 @@ export function SettingsForm() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setProfile(load());
+    async function init() {
+      const stored = loadFromStorage();
+      const supabase = createSupabaseBrowserClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      setProfile({
+        ...defaults,
+        ...stored,
+        username: (user?.user_metadata?.username as string | undefined) || stored.username || "",
+        displayName: (user?.user_metadata?.display_name as string | undefined) || stored.displayName || "",
+      });
+    }
+    init();
   }, []);
 
   const set = (key: keyof Profile) => (
