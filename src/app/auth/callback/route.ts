@@ -29,8 +29,11 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(redirectTo);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
+      const hasProfile = !!data.user?.user_metadata?.username;
+      return NextResponse.redirect(hasProfile ? redirectTo : `${origin}/settings`);
+    }
 
     console.error("[auth/callback] exchangeCodeForSession error:", error);
     return NextResponse.redirect(
