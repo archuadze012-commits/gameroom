@@ -31,17 +31,17 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // getUser() validates the session server-side and refreshes it if needed.
-  // @supabase/ssr handles clearing invalid sessions internally via setAll.
+  // getSession reads the session from cookies without a network request —
+  // sufficient for redirect decisions. Server components do full getUser() validation.
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
   const path = request.nextUrl.pathname;
   const protectedPrefixes = ["/settings", "/lfg/new", "/admin"];
   const requiresAuth = protectedPrefixes.some((p) => path.startsWith(p));
 
-  if (requiresAuth && !user) {
+  if (requiresAuth && !session) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/auth/login";
     loginUrl.searchParams.set("next", path);
