@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const GEO_BLOCKLIST = ["ბოზ", "პიდარ", "პედარ", "ლაჰო", "მეძავ", "დედამოთ", "დედაშენ", "ძაღლო", "სულელო"];
+
+function hasGeoProfanity(text: string) {
+  return GEO_BLOCKLIST.some((w) => text.includes(w));
+}
+
 async function groq(messages: { role: string; content: string }[], maxTokens = 20) {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -26,6 +32,7 @@ export async function POST(request: NextRequest) {
 
   const message = (body.message ?? "").trim();
   if (!message) return NextResponse.json({ toxic: false });
+  if (hasGeoProfanity(message)) return NextResponse.json({ toxic: true });
 
   try {
     const text = await groq([

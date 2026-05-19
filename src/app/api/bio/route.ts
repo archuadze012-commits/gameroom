@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
             content: `როლი: ${role}\nსაყვარელი თამაშები: ${games}\nთამაშის სტილი: ${voice}`,
           },
         ],
-        max_tokens: 150,
+        max_tokens: 200,
         temperature: 0.8,
       }),
     });
