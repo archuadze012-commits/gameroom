@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { mockGames, mockNews, mockTournaments } from "@/lib/mock-data";
 import { getSession } from "@/lib/auth";
-import { HomeSearchWidget } from "@/components/home-search-widget";
 
 export default async function HomePage() {
   const user = await getSession().catch(() => null);
@@ -40,8 +39,13 @@ export default async function HomePage() {
                     </Link>
                   </Button>
                   <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
+                    <Link href="/search">
+                      ძებნა <Search className="ml-1 h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
                     <Link href={`/profile/${username}`}>
-                      ჩემი გვერდი <ArrowRight className="ml-1 h-4 w-4" />
+                      ჩემი გვერდი
                     </Link>
                   </Button>
                 </>
@@ -73,45 +77,26 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Search + Feed — visible only when logged in */}
+      {/* Feed — visible only when logged in */}
       {user && (
         <section id="feed" className="container mx-auto px-4 scroll-mt-20">
-          <div className="grid gap-10 lg:grid-cols-[1fr_2fr]">
-
-            {/* Left — player search */}
-            <div>
-              <SectionHeader
-                icon={<Search className="h-5 w-5" />}
-                title="ძებნა"
-                subtitle="იპოვე მოთამაშეები"
-                href="/search"
-                compact
-              />
-              <HomeSearchWidget />
-            </div>
-
-            {/* Right — posts feed */}
-            <div>
-              <SectionHeader
-                icon={<Rss className="h-5 w-5" />}
-                title="პოსტები"
-                subtitle="გამოწერილი გეიმერების პოსტები"
-              />
-              <Card className="border-dashed border-border/60">
-                <CardContent className="flex flex-col items-center gap-4 p-12 text-center text-sm text-muted-foreground">
-                  <Users className="h-10 w-10 opacity-30" />
-                  <div className="space-y-1">
-                    <p className="font-medium text-foreground">ჯერ არავინ გამოგიწერია</p>
-                    <p>გამოიწერე სხვა გეიმერები — მათი პოსტები აქ გამოჩნდება</p>
-                  </div>
-                  <Button asChild size="sm" variant="outline">
-                    <Link href="/lfg">გეიმერების ძებნა <ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-
-          </div>
+          <SectionHeader
+            icon={<Rss className="h-5 w-5" />}
+            title="პოსტები"
+            subtitle="გამოწერილი გეიმერების პოსტები"
+          />
+          <Card className="border-dashed border-border/60">
+            <CardContent className="flex flex-col items-center gap-4 p-12 text-center text-sm text-muted-foreground">
+              <Users className="h-10 w-10 opacity-30" />
+              <div className="space-y-1">
+                <p className="font-medium text-foreground">ჯერ არავინ გამოგიწერია</p>
+                <p>გამოიწერე სხვა გეიმერები — მათი პოსტები აქ გამოჩნდება</p>
+              </div>
+              <Button asChild size="sm" variant="outline">
+                <Link href="/lfg">გეიმერების ძებნა <ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
+              </Button>
+            </CardContent>
+          </Card>
         </section>
       )}
 
