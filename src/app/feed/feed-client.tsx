@@ -79,7 +79,10 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
       )
     );
     try {
-      await fetch(`/api/posts/${postId}/like`, { method: "POST" });
+      const res = await fetch(`/api/posts/${postId}/like`, { method: "POST" });
+      // fetch resolves on 4xx/5xx — treat a non-OK response as a failure so the
+      // optimistic update below is rolled back.
+      if (!res.ok) throw new Error("like failed");
     } catch {
       setLikedIds((prev) => {
         const next = new Set(prev);

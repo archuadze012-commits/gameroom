@@ -3,7 +3,6 @@ import postgres from "postgres";
 import * as schema from "./schema";
 
 declare global {
-  // eslint-disable-next-line no-var
   var __db: DrizzleDB | undefined;
 }
 
@@ -19,11 +18,8 @@ function createDb(): DrizzleDB {
 // Lazy singleton: module loads without throwing; DB only connects on first query.
 const handler: ProxyHandler<object> = {
   get(_, prop, receiver) {
-    if (process.env.NODE_ENV !== "production") {
-      global.__db ??= createDb();
-    } else {
-      global.__db ??= createDb();
-    }
+    // Reuse a single connection across hot-reloads / serverless invocations.
+    global.__db ??= createDb();
     return Reflect.get(global.__db, prop, receiver);
   },
 };

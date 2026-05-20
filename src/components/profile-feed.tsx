@@ -38,14 +38,18 @@ export function ProfileFeed({ username, displayName, initialPosts, isOwner = fal
   }
 
   function toggleLike(id: string) {
+    // Snapshot the intended direction once so the count and the liked-set stay
+    // in sync (don't read the stale `likedIds` closure inside the updater).
+    const willLike = !likedIds.has(id);
     setLikedIds((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (willLike) next.add(id);
+      else next.delete(id);
       return next;
     });
     setPosts((prev) =>
       prev.map((p) =>
-        p.id === id ? { ...p, likes: p.likes + (likedIds.has(id) ? -1 : 1) } : p
+        p.id === id ? { ...p, likes: p.likes + (willLike ? 1 : -1) } : p
       )
     );
   }

@@ -2,8 +2,9 @@ export async function getYouTubeSubscriberCount(handle: string): Promise<string 
   const key = process.env.YOUTUBE_API_KEY;
   if (!key) return null;
 
-  // strip leading @ if present
-  const cleanHandle = handle.replace(/^@/, "");
+  // strip leading @ if present, and URL-encode so a handle with reserved
+  // characters can't break out of / inject extra query parameters.
+  const cleanHandle = encodeURIComponent(handle.replace(/^@/, ""));
 
   try {
     const res = await fetch(

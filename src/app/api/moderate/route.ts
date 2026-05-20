@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { rateLimit } from "@/lib/rate-limit";
 
 // 30-second in-memory cache for the blocklist
 let cachedWords: string[] = [];
@@ -41,6 +43,14 @@ async function groq(messages: { role: string; content: string }[]) {
 }
 
 export async function POST(request: NextRequest) {
+  // Require an authenticated user and rate-limit to prevent anonymous quota burn.
+  const auth = await createSupabaseServerClient();
+  const { data: { user } } = await auth.auth.getUser();
+  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!rateLimit(`moderate:${user.id}`, 30, 60_000)) {
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+  }
+
   if (!process.env.GROQ_API_KEY) return NextResponse.json({ toxic: false });
 
   let body: { message?: string };
@@ -49,9 +59,11 @@ export async function POST(request: NextRequest) {
   const message = (body.message ?? "").trim();
   if (!message) return NextResponse.json({ toxic: false });
 
-  // Check against DB blocklist first (fast, no AI needed)
+  // Check against DB blocklist first (fast, no AI needed). Compare lowercase:
+  // blocklist words are stored lowercased, so casing must not let toxic words slip through.
   const blocklist = await getBlocklist();
-  if (blocklist.some((w) => message.includes(w))) {
+  const lower = message.toLowerCase();
+  if (blocklist.some((w) => lower.includes(w))) {
     return NextResponse.json({ toxic: true });
   }
 

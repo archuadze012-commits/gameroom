@@ -33,10 +33,16 @@ export function BannerUpload({ isOwner }: { isOwner: boolean }) {
   const handleCropConfirm = (croppedDataUrl: string) => {
     setCropSrc(null);
     setLoading(true);
-    localStorage.setItem(STORAGE_KEY, croppedDataUrl);
-    setBannerSrc(croppedDataUrl);
-    toast.success("ბანერი განახლდა.");
-    setLoading(false);
+    try {
+      // A large banner can exceed the localStorage quota — don't let it throw.
+      localStorage.setItem(STORAGE_KEY, croppedDataUrl);
+      setBannerSrc(croppedDataUrl);
+      toast.success("ბანერი განახლდა.");
+    } catch {
+      toast.error("ბანერი ძალიან დიდია შესანახად — სცადე უფრო პატარა სურათი.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRemove = () => {

@@ -1,8 +1,12 @@
-export async function getTikTokFollowerCount(username: string): Promise<string | null> {
+// NOTE: TikTok's /v2/user/info endpoint only returns data for the account that
+// owns the access token — it cannot look up an arbitrary `username`. So this
+// returns the *connected* account's follower count regardless of `username`.
+// Showing it on other users' profiles would be misleading; only render it for
+// the profile that actually connected this TikTok token. (Real per-user lookup
+// needs a different data source / TikTok's public scraping is not permitted.)
+export async function getTikTokFollowerCount(_username: string): Promise<string | null> {
   const token = process.env.TIKTOK_ACCESS_TOKEN;
   if (!token) return null;
-
-  const clean = username.replace(/^@/, "");
 
   try {
     const res = await fetch(

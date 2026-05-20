@@ -69,14 +69,17 @@ export function ChatClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: trimmed }),
       });
-      const { toxic } = await res.json();
-      if (toxic) {
-        toast.error("მესიჯი დაიბლოკა — შეიცავს აკრძალულ კონტენტს.");
-        setSending(false);
-        return;
+      // fetch only rejects on network errors, so check the HTTP status too.
+      if (res.ok) {
+        const data = await res.json().catch(() => null);
+        if (data?.toxic) {
+          toast.error("მესიჯი დაიბლოკა — შეიცავს აკრძალულ კონტენტს.");
+          setSending(false);
+          return;
+        }
       }
     } catch {
-      // If moderation fails, allow the message through
+      // Moderation unreachable — allow the message through (advisory moderation).
     }
 
     const newMessage: MockChatMessage = {

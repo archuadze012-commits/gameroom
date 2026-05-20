@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Fragment } from "react";
 
 // Matches @username (latin letters, digits, underscore) — capture the name only.
-const MENTION_RE = /@([A-Za-z0-9_]+)/g;
+const MENTION_PATTERN = "@([A-Za-z0-9_]+)";
 
 /**
  * Renders message text, turning `@username` patterns into highlighted
@@ -16,8 +16,10 @@ export function MentionText({ children }: { children: string }) {
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
-  MENTION_RE.lastIndex = 0;
-  while ((match = MENTION_RE.exec(children)) !== null) {
+  // Fresh regex per render — a module-level /g regex carries mutable lastIndex
+  // state that is unsafe to share across concurrent renders.
+  const mentionRe = new RegExp(MENTION_PATTERN, "g");
+  while ((match = mentionRe.exec(children)) !== null) {
     const [whole, name] = match;
     const start = match.index;
 
