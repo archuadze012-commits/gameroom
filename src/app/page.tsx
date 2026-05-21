@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowRight, Rss, Heart, MessageCircle, Search, MessageSquare, Bell, Gamepad2 } from "lucide-react";
+import { ArrowRight, Rss, Heart, MessageCircle, Search, MessageSquare, Bell, Gamepad2, Monitor } from "lucide-react";
+import { mockGames } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/auth";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
@@ -119,6 +120,56 @@ export default async function HomePage() {
             }}
           />
         </div>
+      </section>
+
+      {/* Games — mobile + tablet */}
+      <section className="xl:hidden px-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="flex items-center gap-2 text-base font-bold">
+            <Gamepad2 className="h-4 w-4 text-primary" />
+            თამაშები
+          </h2>
+          <Link href="/games" className="text-xs text-primary hover:underline">
+            ყველა →
+          </Link>
+        </div>
+
+        <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] select-none">
+          {mockGames.map((game) => (
+            <Link
+              key={game.slug}
+              href={`/games/${game.slug}`}
+              className="flex-none w-24 group"
+            >
+              <div className="relative aspect-[3/4] w-24 overflow-hidden rounded-xl border border-[#1e2a44] bg-[#0f1626] transition-all group-hover:border-cyan-400/40">
+                {game.coverUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={game.coverUrl}
+                    alt={game.nameKa}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-3xl">
+                    {game.emoji}
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              </div>
+              <p className="mt-1.5 truncate text-center text-[11px] font-medium text-muted-foreground group-hover:text-foreground">
+                {game.nameKa}
+              </p>
+            </Link>
+          ))}
+        </div>
+
+        <Link
+          href="/tamashebi"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[#1e2a44] bg-[#0f1626] py-3 text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400/40 hover:bg-[#0a0f1e]"
+        >
+          <Monitor className="h-4 w-4" />
+          Free PC Games
+        </Link>
       </section>
 
       {/* Posts feed */}
