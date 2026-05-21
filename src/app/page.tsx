@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Rss, Heart, MessageCircle, Search, MessageSquare, Bell, Gamepad2, Monitor } from "lucide-react";
 import { mockGames } from "@/lib/mock-data";
+import { HomeNotificationsWidget } from "@/components/home-notifications-widget";
 import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/auth";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
@@ -75,6 +76,8 @@ export default async function HomePage() {
                     დაიწყე ახლავე →
                   </Link>
                 </div>
+
+                <HomeNotificationsWidget />
 
                 {/* Quick nav */}
                 <div className="mt-4 hidden xl:grid grid-cols-4 gap-3">
