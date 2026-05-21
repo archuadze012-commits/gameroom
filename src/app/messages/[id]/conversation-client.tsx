@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Send, Loader2, Globe, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Send, Loader2, Globe, Sparkles, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -38,10 +39,12 @@ function timeOnly(iso: string) {
 }
 
 export function ConversationClient({ conversationId, currentUserId, other }: Props) {
+  const router = useRouter();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [loading, setLoading] = useState(true);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [smartReplies, setSmartReplies] = useState<string[]>([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
   const [translations, setTranslations] = useState<Record<string, string>>({});
@@ -132,6 +135,18 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
     }
   };
 
+  const deleteConversation = async () => {
+    if (!confirm("მიმოწერა წაიშლება სამუდამოდ. დარწმუნებული ხარ?")) return;
+    setDeleting(true);
+    try {
+      await fetch(`/api/conversations/${conversationId}`, { method: "DELETE" });
+      router.push("/messages");
+    } catch {
+      toast.error("ვერ წაიშალა");
+      setDeleting(false);
+    }
+  };
+
   const translate = async (msgId: string, body: string) => {
     if (translations[msgId]) {
       setTranslations((prev) => { const n = { ...prev }; delete n[msgId]; return n; });
@@ -157,16 +172,25 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
         <Button asChild variant="ghost" size="icon">
           <Link href="/messages"><ArrowLeft className="h-4 w-4" /></Link>
         </Button>
-        <Link href={`/profile/${other.username}`} className="flex items-center gap-3">
+        <Link href={`/profile/${other.username}`} className="flex flex-1 items-center gap-3">
           <UserAvatar username={other.username} displayName={other.displayName ?? undefined} avatarUrl={other.avatarUrl} size="sm" />
           <div>
             <div className="flex items-center gap-1 font-semibold">
               {other.displayName ?? other.username}
               {other.isVerified && <VerifiedBadge className="h-3.5 w-3.5" />}
             </div>
-            <p className="text-xs text-muted-foreground">@{other.username}</p>
           </div>
         </Link>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={deleteConversation}
+          disabled={deleting}
+          className="shrink-0 text-muted-foreground hover:text-destructive"
+          title="მიმოწერის წაშლა"
+        >
+          {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+        </Button>
       </div>
 
       {/* messages */}

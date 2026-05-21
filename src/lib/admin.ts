@@ -2,7 +2,10 @@ import { cache } from "react";
 import { createSupabaseServerClient } from "./supabase/server";
 import { getSession } from "./auth";
 
-const ADMIN_EMAILS = ["archuadze012@gmail.com"];
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
+  .split(",")
+  .map((e) => e.trim())
+  .filter(Boolean);
 
 export type Permission =
   | "manage_users"

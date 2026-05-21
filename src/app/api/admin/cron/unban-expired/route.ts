@@ -1,8 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-// Called by cron (or manually by admin). Sweeps expired bans and mutes.
-export async function POST() {
+// Called by Vercel cron. Sweeps expired bans and mutes.
+export async function POST(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  const secret = process.env.CRON_SECRET;
+  if (secret && authHeader !== `Bearer ${secret}`) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
   const supabase = await createSupabaseServerClient();
   const now = new Date().toISOString();
 

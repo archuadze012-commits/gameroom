@@ -8,6 +8,42 @@
   -ms-overflow-style: none;
 }
 
+/* Gameroom v2 — diagonal light sweep across cards */
+@keyframes gr-sweep {
+  0%   { transform: translateX(-120%) rotate(20deg); opacity: 0; }
+  20%  { opacity: 0.9; }
+  60%  { opacity: 0.9; }
+  100% { transform: translateX(220%) rotate(20deg); opacity: 0; }
+}
+.gr-sweep { position: relative; overflow: hidden; }
+.gr-sweep::after {
+  content: "";
+  position: absolute;
+  inset: -50% -10%;
+  background: linear-gradient(110deg, transparent 35%, rgba(167, 139, 250, 0.35) 50%, transparent 65%);
+  pointer-events: none;
+  transform: translateX(-120%) rotate(20deg);
+}
+.gr-sweep:hover::after,
+.gr-sweep.gr-sweep-auto::after {
+  animation: gr-sweep 1.2s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gr-sweep::after { display: none; }
+}
+
+/* Vertical light pillar slow sweep */
+@keyframes gr-pillar {
+  0%, 100% { opacity: 0.7; transform: translateY(0); }
+  50%      { opacity: 1;   transform: translateY(-12px); }
+}
+
+/* Dot pattern for dark sections */
+.gr-dot-grid {
+  background-image: radial-gradient(rgba(167, 139, 250, 0.08) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -116,6 +152,62 @@
   --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
   --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+
+  /* ===== Gameroom v2 design tokens — "CODX × Tier One" direction =====
+     Cinematic dark canvas, violet/magenta light leaks, amber secondary,
+     uppercase brutalist typography. Used by new pages (forum, games, home)
+     and primitives in src/components/ui/. Old surfaces migrate progressively. */
+
+  /* canvas */
+  --gr-bg-0:       #08060F;   /* near-black, violet undertone */
+  --gr-bg-1:       #0E0B1A;   /* dark cards */
+  --gr-bg-2:       #15102A;   /* hover / inner panels */
+  --gr-bg-light:   #F1ECE6;   /* cream — light section inversion */
+  --gr-bg-light-2: #FFFFFF;
+
+  /* aliases for backward compat with earlier primitives (Pill, StatChip…) */
+  --gr-bg-base:    var(--gr-bg-0);
+  --gr-bg-elev-1:  var(--gr-bg-1);
+  --gr-bg-elev-2:  var(--gr-bg-2);
+
+  /* borders */
+  --gr-border:     rgba(168, 85, 247, 0.14);
+  --gr-border-hi:  rgba(168, 85, 247, 0.35);
+  --gr-divider-lt: rgba(10, 8, 20, 0.08);
+
+  /* text */
+  --gr-text:       #F5F2FF;
+  --gr-text-mute:  #A99CC9;
+  --gr-text-dim:   #6B5F88;
+  --gr-text-on-lt: #14101F;
+
+  /* accents */
+  --gr-violet:     #8B5CF6;
+  --gr-violet-hi:  #A78BFA;
+  --gr-magenta:    #C026D3;
+  --gr-amber:      #F5A524;
+  --gr-cyan-glow:  #22D3EE;
+
+  /* aliases — keep older tone names working in Pill etc. */
+  --gr-accent:     var(--gr-violet);
+  --gr-accent-2:   var(--gr-amber);
+  --gr-cyan:       var(--gr-cyan-glow);
+  --gr-lime:       #A3E635;
+
+  /* gradients */
+  --gr-grad-hero:   linear-gradient(135deg, #2A1056 0%, #08060F 60%);
+  --gr-grad-violet: linear-gradient(135deg, #8B5CF6 0%, #C026D3 100%);
+  --gr-grad-amber:  linear-gradient(135deg, #F5A524 0%, #FF6B35 100%);
+  --gr-grad-card:   linear-gradient(180deg, rgba(139, 92, 246, 0.08), rgba(139, 92, 246, 0) 70%);
+
+  /* glows */
+  --gr-glow-violet: 0 0 40px rgba(168, 85, 247, 0.45);
+  --gr-glow-amber:  0 0 30px rgba(245, 165, 36, 0.40);
+
+  /* card shadow */
+  --gr-card-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 12px 30px -18px rgba(0, 0, 0, 0.6);
 }
 
 @theme inline {
@@ -170,6 +262,35 @@
   --shadow-lg: var(--shadow-lg);
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
+
+  /* Gameroom v2 — exposes --gr-* tokens as Tailwind utilities
+     e.g. bg-gr-0, text-gr-mute, border-gr-border, ring-gr-violet-hi */
+  --color-gr-0:         var(--gr-bg-0);
+  --color-gr-1:         var(--gr-bg-1);
+  --color-gr-2:         var(--gr-bg-2);
+  --color-gr-light:     var(--gr-bg-light);
+  --color-gr-light-2:   var(--gr-bg-light-2);
+  --color-gr-base:      var(--gr-bg-0);
+  --color-gr-elev-1:    var(--gr-bg-1);
+  --color-gr-elev-2:    var(--gr-bg-2);
+  --color-gr-border:    var(--gr-border);
+  --color-gr-border-hi: var(--gr-border-hi);
+  --color-gr-divider-lt:var(--gr-divider-lt);
+  --color-gr-text:      var(--gr-text);
+  --color-gr-mute:      var(--gr-text-mute);
+  --color-gr-dim:       var(--gr-text-dim);
+  --color-gr-on-lt:     var(--gr-text-on-lt);
+  --color-gr-violet:    var(--gr-violet);
+  --color-gr-violet-hi: var(--gr-violet-hi);
+  --color-gr-magenta:   var(--gr-magenta);
+  --color-gr-amber:     var(--gr-amber);
+  --color-gr-cyan-glow: var(--gr-cyan-glow);
+  --color-gr-accent:    var(--gr-accent);
+  --color-gr-accent-2:  var(--gr-accent-2);
+  --color-gr-cyan:      var(--gr-cyan);
+  --color-gr-lime:      var(--gr-lime);
+
+  --font-display: var(--font-inter-tight), var(--font-noto-georgian), var(--font-inter), system-ui, sans-serif;
 }
 
 @layer base {

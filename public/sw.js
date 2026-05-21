@@ -8,6 +8,16 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
 
+// Minimal pass-through fetch handler — required for Chrome to treat the
+// site as installable. Network-first for navigations, transparent for everything else.
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+  if (req.method !== "GET") return;
+  if (req.mode === "navigate") {
+    event.respondWith(fetch(req).catch(() => new Response("offline", { status: 503 })));
+  }
+});
+
 self.addEventListener("push", (event) => {
   let data = {};
   try {

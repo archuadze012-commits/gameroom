@@ -34,6 +34,12 @@ export async function POST(request: NextRequest) {
     update.tiktok_handle = body.tiktokHandle.trim().replace(/^@/, "").slice(0, 64) || null;
   if (typeof body.tiktokFollowers === "string")
     update.tiktok_followers = body.tiktokFollowers.trim().slice(0, 32) || null;
+  if (typeof body.inGameName === "string")
+    update.in_game_name = body.inGameName.trim().slice(0, 64) || null;
+  if (typeof body.gameId === "string")
+    update.game_id = body.gameId.trim().slice(0, 64) || null;
+  if (typeof body.mainGameSlug === "string")
+    update.main_game_slug = body.mainGameSlug.trim() || null;
 
   try {
     const supabase = await createSupabaseServerClient();

@@ -12,7 +12,7 @@ type DrizzleDB = ReturnType<typeof drizzle<typeof schema>>;
 function createDb(): DrizzleDB {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL is not set. Add it to .env.local before using the database.");
-  const client = postgres(url, { prepare: false, max: 10, idle_timeout: 20 });
+  const client = postgres(url, { prepare: false, max: 1 });
   return drizzle(client, { schema, casing: "snake_case" });
 }
 

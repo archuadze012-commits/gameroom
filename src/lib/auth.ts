@@ -12,7 +12,10 @@ export const getSession = cache(async () => {
 export type SessionUser = Awaited<ReturnType<typeof getSession>>;
 
 // Emails that always get admin access (bootstrap). Other admins can be promoted in DB via role column.
-const ADMIN_EMAILS = ["archuadze012@gmail.com"];
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
+  .split(",")
+  .map((e) => e.trim())
+  .filter(Boolean);
 
 export const getIsAdmin = cache(async () => {
   const user = await getSession();

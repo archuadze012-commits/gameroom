@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { sendPushToUser } from "@/lib/push";
 
 export async function POST(
   request: NextRequest,
@@ -38,6 +39,20 @@ export async function POST(
     console.error("[POST /api/lfg/[id]/join]", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  const { data: senderProfile } = await supabase
+    .from("profiles")
+    .select("username, display_name")
+    .eq("id", user.id)
+    .maybeSingle();
+  const senderName = senderProfile?.display_name ?? senderProfile?.username ?? "ვინმე";
+
+  sendPushToUser(post.author_id, {
+    title: "ახალი LFG მოთხოვნა 🎮",
+    body: `${senderName}: ${message.slice(0, 80)}`,
+    url: `/lfg/${postId}`,
+    tag: `lfg-join-${postId}`,
+  }).catch(() => {});
 
   return NextResponse.json({ ok: true });
 }

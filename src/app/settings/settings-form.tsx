@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+
+type Game = { slug: string; nameKa: string; emoji: string };
 
 const STORAGE_KEY_PREFIX = "gameroom_profile";
 
@@ -21,6 +23,9 @@ type Profile = {
   tiktokHandle: string;
   tiktokFollowers: string;
   favoriteGameSlugs: string[];
+  inGameName: string;
+  gameId: string;
+  mainGameSlug: string;
 };
 
 const defaults: Profile = {
@@ -32,6 +37,9 @@ const defaults: Profile = {
   tiktokHandle: "",
   tiktokFollowers: "",
   favoriteGameSlugs: [],
+  inGameName: "",
+  gameId: "",
+  mainGameSlug: "",
 };
 
 function loadFromStorage(key: string): Partial<Profile> {
@@ -56,7 +64,7 @@ const TikTokIcon = () => (
   </svg>
 );
 
-export function SettingsForm() {
+export function SettingsForm({ games = [] }: { games?: Game[] }) {
   const [profile, setProfile] = useState<Profile>(defaults);
   const [loading, setLoading] = useState(false);
   const [generatingBio, setGeneratingBio] = useState(false);
@@ -79,11 +87,14 @@ export function SettingsForm() {
         tiktok_handle?: string | null;
         tiktok_followers?: string | null;
         display_name?: string | null;
+        in_game_name?: string | null;
+        game_id?: string | null;
+        main_game_slug?: string | null;
       } | null = null;
       if (user) {
         const { data } = await supabase
           .from("profiles")
-          .select("favorite_game_slugs, bio, voice_chat, youtube_handle, tiktok_handle, tiktok_followers, display_name")
+          .select("favorite_game_slugs, bio, voice_chat, youtube_handle, tiktok_handle, tiktok_followers, display_name, in_game_name, game_id, main_game_slug")
           .eq("id", user.id)
           .single();
         dbProfile = data;
@@ -94,13 +105,15 @@ export function SettingsForm() {
         ...stored,
         username: (user?.user_metadata?.username as string | undefined) || stored.username || "",
         displayName: dbProfile?.display_name || (user?.user_metadata?.display_name as string | undefined) || stored.displayName || "",
-        // DB takes priority over localStorage for all server-persisted fields
         bio: dbProfile?.bio ?? stored.bio ?? "",
         voice: dbProfile?.voice_chat ?? stored.voice ?? true,
         youtubeHandle: dbProfile?.youtube_handle ?? stored.youtubeHandle ?? "",
         tiktokHandle: dbProfile?.tiktok_handle ?? stored.tiktokHandle ?? "",
         tiktokFollowers: dbProfile?.tiktok_followers ?? stored.tiktokFollowers ?? "",
         favoriteGameSlugs: dbProfile?.favorite_game_slugs?.length ? dbProfile.favorite_game_slugs : (stored.favoriteGameSlugs ?? []),
+        inGameName: dbProfile?.in_game_name ?? stored.inGameName ?? "",
+        gameId: dbProfile?.game_id ?? stored.gameId ?? "",
+        mainGameSlug: dbProfile?.main_game_slug ?? stored.mainGameSlug ?? "",
       });
     }
     init();
@@ -154,6 +167,9 @@ export function SettingsForm() {
           youtubeHandle: profile.youtubeHandle,
           tiktokHandle: profile.tiktokHandle,
           tiktokFollowers: profile.tiktokFollowers,
+          inGameName: profile.inGameName,
+          gameId: profile.gameId,
+          mainGameSlug: profile.mainGameSlug,
         }),
       });
       if (!res.ok) {
@@ -212,6 +228,51 @@ export function SettingsForm() {
           value={profile.bio}
           onChange={set("bio")}
         />
+      </div>
+
+      <Separator />
+
+      <p className="text-sm font-medium">თამაშის ინფო</p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {games.length > 0 && (
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="mainGameSlug">თამაში</Label>
+            <div className="relative max-w-xs">
+              <select
+                id="mainGameSlug"
+                value={profile.mainGameSlug}
+                onChange={(e) => setProfile((p) => ({ ...p, mainGameSlug: e.target.value }))}
+                className="h-10 w-full appearance-none rounded-md border border-input bg-background px-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value="">— აირჩიე თამაში —</option>
+                {games.map((g) => (
+                  <option key={g.slug} value={g.slug}>
+                    {g.emoji} {g.nameKa}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            </div>
+          </div>
+        )}
+        <div className="space-y-1.5">
+          <Label htmlFor="inGameName">რა გაწერია თამაშში?</Label>
+          <Input
+            id="inGameName"
+            placeholder="შენი nickname თამაშში"
+            value={profile.inGameName}
+            onChange={set("inGameName")}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="gameId">ID</Label>
+          <Input
+            id="gameId"
+            placeholder="მაგ. 123456789"
+            value={profile.gameId}
+            onChange={set("gameId")}
+          />
+        </div>
       </div>
 
       <Separator />

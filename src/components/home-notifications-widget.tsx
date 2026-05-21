@@ -62,6 +62,11 @@ export function HomeNotificationsWidget() {
     };
   }, []);
 
+  async function markRead(id: string) {
+    setItems((prev) => prev.filter((n) => n.id !== id));
+    await fetch(`/api/notifications/${id}`, { method: "PATCH" });
+  }
+
   if (items.length === 0) return null;
 
   return (
@@ -79,11 +84,11 @@ export function HomeNotificationsWidget() {
           </div>
         );
         return n.link ? (
-          <Link key={n.id} href={n.link}>
+          <Link key={n.id} href={n.link} onClick={() => markRead(n.id)}>
             {card}
           </Link>
         ) : (
-          <div key={n.id}>{card}</div>
+          <div key={n.id} onClick={() => markRead(n.id)} className="cursor-pointer">{card}</div>
         );
       })}
       <Link

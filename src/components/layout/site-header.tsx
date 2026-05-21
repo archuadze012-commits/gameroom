@@ -3,35 +3,42 @@ import { ShieldAlert, User as UserIcon } from "lucide-react";
 import Image from "next/image";
 import { UserMenu } from "./user-menu";
 import { MobileNav } from "./mobile-nav";
-import { NotificationBell } from "./notification-bell";
-import { PushBell } from "@/components/push-bell";
-import { MessagesLink } from "./messages-link";
 import { AnnouncementsLink } from "./announcements-link";
 import { navLinks, adminLinks } from "./nav-links";
-import { getCurrentRole } from "@/lib/admin";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function SiteHeader() {
-  const role = await getCurrentRole();
-  const isAdmin = ["admin", "moderator", "organizer"].includes(role);
-
-  // resolve the canonical profile username for the logged-in user
   const session = await getSession().catch(() => null);
+
+  let role = "user";
   let profileHref: string | null = null;
+
   if (session) {
     const supabase = await createSupabaseServerClient();
     const { data } = await supabase
       .from("profiles")
-      .select("username")
+      .select("username, role")
       .eq("id", session.id)
       .maybeSingle();
+
+    const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+      .split(",")
+      .map((e) => e.trim())
+      .filter(Boolean);
+    role =
+      session.email && adminEmails.includes(session.email)
+        ? "admin"
+        : (data?.role ?? "user");
+
     const username =
       (data?.username as string | undefined) ??
       (session.user_metadata?.username as string | undefined) ??
       session.email?.split("@")[0];
     if (username) profileHref = `/profile/${username}`;
   }
+
+  const isAdmin = ["admin", "moderator", "organizer"].includes(role);
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
@@ -80,10 +87,7 @@ export async function SiteHeader() {
         </nav>
 
         <div className="ml-auto hidden xl:flex items-center gap-2">
-          <div className="hidden xl:flex"><MessagesLink /></div>
           <div className="hidden xl:flex"><AnnouncementsLink /></div>
-          <PushBell className="hidden xl:inline-flex" />
-          <div className="hidden xl:flex"><NotificationBell /></div>
           <UserMenu />
           <MobileNav isAdmin={isAdmin} profileHref={profileHref} />
         </div>

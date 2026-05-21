@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
+import { moderateText } from "@/lib/moderate";
 
 export async function POST(request: NextRequest) {
   const user = await getSession().catch(() => null);
@@ -38,19 +39,12 @@ export async function POST(request: NextRequest) {
   }
   if (title.length > 200) return NextResponse.json({ error: "title_required" }, { status: 400 });
 
-  // AI moderation
+  // AI moderation (inline — no loopback HTTP call)
   const textToCheck = [title, body.description ?? ""].filter(Boolean).join(" ");
-  try {
-    const modRes = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL ? request.nextUrl.origin : "http://localhost:3000"}/api/moderate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: textToCheck }),
-    });
-    const modData = await modRes.json();
-    if (modData.ok === false) {
-      return NextResponse.json({ error: "content_blocked", reason: modData.reason ?? "შეუსაბამო კონტენტი" }, { status: 422 });
-    }
-  } catch {}
+  const mod = await moderateText(textToCheck).catch(() => ({ ok: true }));
+  if (!mod.ok) {
+    return NextResponse.json({ error: "content_blocked", reason: mod.reason ?? "შეუსაბამო კონტენტი" }, { status: 422 });
+  }
 
   const row = {
     author_id: user.id,

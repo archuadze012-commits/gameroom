@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Loader2, Trophy } from "lucide-react";
+import { Sparkles, Loader2, Trophy, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,25 +19,32 @@ const TIER_COLORS: Record<string, string> = {
   Grandmaster: "text-red-400 border-red-400/40 bg-red-400/10",
 };
 
+type Game = { slug: string; nameKa: string; emoji: string };
 type Result = { tier: string; analysis: string; tips: string[] };
 
-export function SkillAssessment() {
-  const [game, setGame] = useState("");
+export function SkillAssessment({ games }: { games: Game[] }) {
+  const [gameSlug, setGameSlug] = useState(games[0]?.slug ?? "");
   const [rank, setRank] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
 
+  const selectedGame = games.find((g) => g.slug === gameSlug);
+
   const assess = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!game.trim()) return;
+    if (!gameSlug) return;
     setLoading(true);
     setResult(null);
     try {
       const res = await fetch("/api/skill-assess", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ game, rank, description }),
+        body: JSON.stringify({
+          game: selectedGame?.nameKa ?? gameSlug,
+          rank,
+          description,
+        }),
       });
       const data = await res.json();
       if (data.tier) setResult(data);
@@ -45,7 +52,9 @@ export function SkillAssessment() {
     setLoading(false);
   };
 
-  const tierColor = result ? (TIER_COLORS[result.tier] ?? "text-primary border-primary/40 bg-primary/10") : "";
+  const tierColor = result
+    ? (TIER_COLORS[result.tier] ?? "text-primary border-primary/40 bg-primary/10")
+    : "";
 
   return (
     <Card className="border-border/60">
@@ -59,12 +68,20 @@ export function SkillAssessment() {
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <Label className="text-xs">თამაში *</Label>
-              <Input
-                placeholder="მაგ. PUBG Mobile, CS2"
-                value={game}
-                onChange={(e) => setGame(e.target.value)}
-                className="h-8 text-sm"
-              />
+              <div className="relative">
+                <select
+                  value={gameSlug}
+                  onChange={(e) => setGameSlug(e.target.value)}
+                  className="h-8 w-full appearance-none rounded-md border border-input bg-background px-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  {games.map((g) => (
+                    <option key={g.slug} value={g.slug}>
+                      {g.emoji} {g.nameKa}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              </div>
             </div>
             <div className="space-y-1">
               <Label className="text-xs">მიმდინარე რანკი</Label>
@@ -83,11 +100,20 @@ export function SkillAssessment() {
               placeholder="მაგ. 500+ საათი, ვამჯობინებ aggressive სტილს..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="text-sm resize-none"
+              className="resize-none text-sm"
             />
           </div>
-          <Button type="submit" size="sm" disabled={!game.trim() || loading} className="gap-1.5">
-            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+          <Button
+            type="submit"
+            size="sm"
+            disabled={!gameSlug || loading}
+            className="gap-1.5"
+          >
+            {loading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="h-3.5 w-3.5" />
+            )}
             შეფასება
           </Button>
         </form>
@@ -95,17 +121,19 @@ export function SkillAssessment() {
         {result && (
           <div className="space-y-3 border-t border-border/60 pt-3">
             <div className="flex items-center gap-2">
-              <Badge className={`text-sm font-bold px-3 py-1 border ${tierColor}`}>
+              <Badge className={`border px-3 py-1 text-sm font-bold ${tierColor}`}>
                 {result.tier}
               </Badge>
               <span className="text-xs text-muted-foreground">AI-ის შეფასება</span>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">{result.analysis}</p>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {result.analysis}
+            </p>
             <div className="space-y-1.5">
               <p className="text-xs font-medium">გაუმჯობესების რჩევები:</p>
               {result.tips.map((tip, i) => (
                 <div key={i} className="flex gap-2 text-xs text-muted-foreground">
-                  <span className="text-primary font-bold shrink-0">{i + 1}.</span>
+                  <span className="shrink-0 font-bold text-primary">{i + 1}.</span>
                   <span>{tip}</span>
                 </div>
               ))}

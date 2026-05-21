@@ -5,6 +5,7 @@ import { Bell, Users, UserCheck, MessageSquare, Trophy, Gamepad2, Info, AlertTri
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { PushBell } from "@/components/push-bell";
 
 type NotificationType =
   | "lfg_response"
@@ -158,18 +159,21 @@ export default function AnnouncementsPage() {
             </Badge>
           )}
         </div>
-        {unreadCount > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-            onClick={markAllRead}
-            disabled={markingAll}
-          >
-            {markingAll ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCheck className="h-3.5 w-3.5" />}
-            ყველა წაღებულად
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          <PushBell />
+          {unreadCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+              onClick={markAllRead}
+              disabled={markingAll}
+            >
+              {markingAll ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCheck className="h-3.5 w-3.5" />}
+              ყველა წაღებულად
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}
