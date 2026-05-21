@@ -391,5 +391,4 @@ export type ForumThread = typeof forumThreads.$inferSelect;
 export type NewsArticle = typeof newsArticles.$inferSelect;
 export type Tournament = typeof tournaments.$inferSelect;
 export type TournamentMatch = typeof tournamentMatches.$inferSelect;
-export type ChatMessage = typeof chatMessages.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
