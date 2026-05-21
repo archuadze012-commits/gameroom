@@ -38,11 +38,11 @@ export default async function NewLfgPage() {
     ...mockGames.filter((m) => !dbSlugs.has(m.slug)).map((m) => ({ slug: m.slug, nameKa: m.nameKa, emoji: m.emoji })),
   ];
 
-  // Sort: user's favorites first, then by global fav count desc
-  const games = allGames.sort((a, b) => {
-    const aFav = userFavSet.has(a.slug) ? 1 : 0;
-    const bFav = userFavSet.has(b.slug) ? 1 : 0;
-    if (aFav !== bFav) return bFav - aFav;
+  // Show only user's favorites; fallback to all if none set
+  const filtered = userFavSet.size > 0
+    ? allGames.filter((g) => userFavSet.has(g.slug))
+    : allGames;
+  const games = filtered.sort((a, b) => {
     const aCount = favCount[a.slug] ?? 0;
     const bCount = favCount[b.slug] ?? 0;
     return bCount - aCount;
