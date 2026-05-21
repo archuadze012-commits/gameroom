@@ -77,7 +77,7 @@ export default async function HomePage() {
                 </div>
 
                 {/* Quick nav */}
-                <div className="mt-4 grid grid-cols-4 gap-3">
+                <div className="mt-4 hidden xl:grid grid-cols-4 gap-3">
                   {[
                     { icon: Search,        label: "ძებნა",     href: "/search" },
                     { icon: Gamepad2,      label: "თამაშები",  href: "/tamashebi" },
