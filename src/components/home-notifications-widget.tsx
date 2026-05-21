@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Users, Bell } from "lucide-react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type Notification = {
   id: string;
@@ -17,15 +18,48 @@ export function HomeNotificationsWidget() {
   const [items, setItems] = useState<Notification[]>([]);
 
   useEffect(() => {
-    fetch("/api/notifications")
-      .then((r) => r.json())
-      .then((data) => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const res = await fetch("/api/notifications", { cache: "no-store" });
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
         const unread = (data.notifications ?? []).filter(
           (n: Notification) => !n.read_at
         );
         setItems(unread.slice(0, 3));
-      })
-      .catch(() => {});
+      } catch {}
+    }
+
+    load();
+    const pollId = setInterval(load, 15_000);
+
+    const supabase = createSupabaseBrowserClient();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || cancelled) return;
+      channel = supabase
+        .channel(`notifications:${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "notifications",
+            filter: `user_id=eq.${user.id}`,
+          },
+          () => load()
+        )
+        .subscribe();
+    })();
+
+    return () => {
+      cancelled = true;
+      clearInterval(pollId);
+      if (channel) supabase.removeChannel(channel);
+    };
   }, []);
 
   if (items.length === 0) return null;
