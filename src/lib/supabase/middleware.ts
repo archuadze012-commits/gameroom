@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 export async function updateSession(request: NextRequest) {
@@ -10,21 +11,32 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
-  // Optimistic check: look for the Supabase session cookie using the
-  // next/headers cookies() API (same source server components use).
-  const cookieStore = await cookies();
-  const hasSession = cookieStore.getAll().some(
-    (c) =>
-      c.name.includes("-auth-token") &&
-      !c.name.includes("code-verifier") &&
-      c.value.length > 10
-  );
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  // If Supabase isn't configured, auth can't work anyway — don't hard-lock the
+  // route here; the page/route-level guards still apply. Otherwise, validate
+  // the session for real (a present-but-forged cookie must not pass).
+  if (url && anon) {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(url, anon, {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        // Read-only gate — token refresh is handled by server components.
+        setAll() {},
+      },
+    });
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!hasSession) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/auth/login";
-    loginUrl.searchParams.set("next", path);
-    return NextResponse.redirect(loginUrl);
+    if (!user) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/auth/login";
+      loginUrl.searchParams.set("next", path);
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
   return NextResponse.next({ request });

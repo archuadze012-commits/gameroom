@@ -11,21 +11,31 @@ export const getSession = cache(async () => {
 
 export type SessionUser = Awaited<ReturnType<typeof getSession>>;
 
-// Emails that always get admin access (bootstrap). Other admins can be promoted in DB via role column.
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
-  .split(",")
-  .map((e) => e.trim())
-  .filter(Boolean);
+// Bootstrap allowlist so the owner can never be locked out. Primary source of
+// truth is profiles.role. Env override allows promoting extra emails per env.
+const ADMIN_EMAILS = [
+  "archuadze012@gmail.com",
+  ...(process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim())
+    .filter(Boolean),
+];
 
 export const getIsAdmin = cache(async () => {
   const user = await getSession();
   if (!user) return false;
-  if (user.email && ADMIN_EMAILS.includes(user.email)) return true;
+
+  // A banned user is never an admin, regardless of role/email.
   const supabase = await createSupabaseServerClient();
-  const { data } = await supabase
+  const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, banned")
     .eq("id", user.id)
     .maybeSingle();
-  return data?.role === "admin";
+
+  if (profile?.banned) return false;
+  if (profile?.role === "admin") return true;
+
+  // Fallback for the bootstrap owner.
+  return !!user.email && ADMIN_EMAILS.includes(user.email);
 });

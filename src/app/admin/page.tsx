@@ -31,7 +31,7 @@ export default function AdminDashboard() {
           <h2 className="mb-3 text-lg font-semibold">ბოლო აქტივობა</h2>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li>· @GeoSniper-მა შექმნა ახალი LFG (5 წთ წინ)</li>
-            <li>· @Admin-მა გამოაქვეყნა სიახლე "Georgia Cup 2026" (1 სთ წინ)</li>
+            <li>· @Admin-მა გამოაქვეყნა სიახლე „Georgia Cup 2026“ (1 სთ წინ)</li>
             <li>· @Nika-მ დაარეგისტრირდა Tbilisi PUBG Night-ზე (2 სთ წინ)</li>
             <li>· 12 ახალი მომხმარებელი ბოლო 24 საათში</li>
           </ul>

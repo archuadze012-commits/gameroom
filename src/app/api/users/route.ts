@@ -11,7 +11,10 @@ function client() {
 }
 
 export async function GET(request: NextRequest) {
-  const q = request.nextUrl.searchParams.get("q")?.trim() ?? "";
+  const rawQ = request.nextUrl.searchParams.get("q")?.trim() ?? "";
+  // Strip PostgREST structural/wildcard chars so a crafted `q` can't break out
+  // of the .or() filter string (filter injection). Keep it to a safe length.
+  const q = rawQ.replace(/[,()*:%\\]/g, " ").trim().slice(0, 64);
   try {
     const sb = client();
     let query = sb

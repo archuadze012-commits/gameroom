@@ -12,6 +12,9 @@ function anonClient() {
 }
 
 export async function GET() {
+  const isAdmin = await getIsAdmin();
+  if (!isAdmin) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+
   const { data, error } = await anonClient()
     .from("blocked_words")
     .select("id, word, created_at")
