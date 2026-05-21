@@ -13,6 +13,8 @@ import { TeammateSuggestions } from "./teammate-suggestions";
 import { GameIcon } from "@/components/game-icon";
 import { LfgComments } from "@/components/lfg-comments";
 import { LfgJoinRequests } from "@/components/lfg-join-requests";
+import { RoleBadge, type UserRole } from "@/components/role-badge";
+import { VerifiedBadge } from "@/components/verified-badge";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 
@@ -32,6 +34,8 @@ type LfgRow = {
     username: string | null;
     display_name: string | null;
     avatar_url: string | null;
+    role: string | null;
+    is_verified: boolean | null;
   } | null;
 };
 
@@ -47,7 +51,7 @@ export default async function LfgDetailPage({
   const { data } = await supabase
     .from("lfg_posts")
     .select(
-      "id, author_id, game_slug, title, description, rank, region, slots_total, voice_required, created_at, profiles!lfg_posts_author_id_fkey(username, display_name, avatar_url)"
+      "id, author_id, game_slug, title, description, rank, region, slots_total, voice_required, created_at, profiles!lfg_posts_author_id_fkey(username, display_name, avatar_url, role, is_verified)"
     )
     .eq("id", id)
     .is("deleted_at", null)
@@ -121,21 +125,34 @@ export default async function LfgDetailPage({
 
               <h1 className="text-2xl font-bold">{post.title}</h1>
 
-              <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10 border border-border">
-                  <AvatarImage src={author?.avatar_url ?? undefined} alt={displayName} />
-                  <AvatarFallback className="bg-primary/15 text-primary">
-                    {displayName.slice(0, 1).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <Link
-                    href={`/profile/${authorName}`}
-                    className="text-sm font-medium hover:text-primary"
-                  >
-                    @{authorName}
-                  </Link>
-                  <div className="text-xs text-muted-foreground">პოსტის ავტორი</div>
+              <div className="flex items-center gap-4 rounded-xl border border-border/60 bg-card/40 p-4">
+                <Link href={`/profile/${authorName}`} className="shrink-0">
+                  <Avatar className="h-14 w-14 border-2 border-border/60 transition-colors hover:border-primary/60">
+                    <AvatarImage src={author?.avatar_url ?? undefined} alt={displayName} />
+                    <AvatarFallback className="bg-primary/15 text-lg text-primary">
+                      {displayName.slice(0, 1).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </Link>
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Link
+                      href={`/profile/${authorName}`}
+                      className="text-base font-semibold hover:text-primary"
+                    >
+                      {displayName}
+                    </Link>
+                    {author?.is_verified && <VerifiedBadge className="h-4 w-4" />}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Link
+                      href={`/profile/${authorName}`}
+                      className="text-xs text-muted-foreground hover:text-primary"
+                    >
+                      @{authorName}
+                    </Link>
+                    <RoleBadge defaultRole={(author?.role ?? undefined) as UserRole | undefined} />
+                  </div>
                 </div>
               </div>
 
