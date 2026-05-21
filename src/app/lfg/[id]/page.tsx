@@ -11,7 +11,10 @@ import { mockGames } from "@/lib/mock-data";
 import { JoinRequestForm } from "./join-request-form";
 import { TeammateSuggestions } from "./teammate-suggestions";
 import { GameIcon } from "@/components/game-icon";
+import { LfgComments } from "@/components/lfg-comments";
+import { LfgJoinRequests } from "@/components/lfg-join-requests";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -43,14 +46,38 @@ export default async function LfgDetailPage({
   const { data } = await supabase
     .from("lfg_posts")
     .select(
-      "id, game_slug, title, description, rank, region, slots_total, voice_required, created_at, profiles!lfg_posts_author_id_fkey(username, display_name, avatar_url)"
+      "id, author_id, game_slug, title, description, rank, region, slots_total, voice_required, created_at, profiles!lfg_posts_author_id_fkey(username, display_name, avatar_url)"
     )
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();
 
   if (!data) notFound();
-  const post = data as unknown as LfgRow;
+  const post = data as unknown as LfgRow & { author_id: string };
+
+  const session = await getSession().catch(() => null);
+  const isAuthor = !!(session && session.id === post.author_id);
+
+  const { data: commentsData } = await supabase
+    .from("lfg_comments")
+    .select(
+      "id, body, created_at, user_id, profiles!lfg_comments_user_id_fkey(username, display_name, avatar_url)"
+    )
+    .eq("post_id", id)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: true });
+
+  let responses: unknown[] = [];
+  if (isAuthor) {
+    const { data: responsesData } = await supabase
+      .from("lfg_responses")
+      .select(
+        "id, message, status, created_at, user_id, profiles!lfg_responses_user_id_fkey(username, display_name, avatar_url)"
+      )
+      .eq("post_id", id)
+      .order("created_at", { ascending: false });
+    responses = responsesData ?? [];
+  }
   const game = mockGames.find((g) => g.slug === post.game_slug);
   const author = post.profiles;
   const authorName = author?.username ?? "გამოუცნობი";
@@ -136,6 +163,27 @@ export default async function LfgDetailPage({
                   0/{post.slots_total} ადგილი
                 </Badge>
               </div>
+            </CardContent>
+          </Card>
+
+          {isAuthor && (
+            <Card className="border-border/60">
+              <CardContent className="p-6">
+                <LfgJoinRequests
+                  postId={post.id}
+                  initialResponses={responses as never}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          <Card className="border-border/60">
+            <CardContent className="p-6">
+              <LfgComments
+                postId={post.id}
+                initialComments={(commentsData ?? []) as never}
+                hasSession={!!session}
+              />
             </CardContent>
           </Card>
         </div>
