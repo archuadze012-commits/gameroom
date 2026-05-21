@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PageHeader } from "@/components/page-header";
 import { LfgFilters } from "./lfg-filters";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/auth";
 
 export const metadata = { title: "LFG — გუნდის ძებნა" };
 export const dynamic = "force-dynamic";
@@ -38,6 +39,18 @@ export default async function LfgPage({
   const params = await searchParams;
 
   const supabase = await createSupabaseServerClient();
+
+  const session = await getSession().catch(() => null);
+  let favoriteSlugs: string[] = [];
+  if (session) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("favorite_game_slugs")
+      .eq("id", session.id)
+      .maybeSingle();
+    favoriteSlugs = (profile?.favorite_game_slugs as string[] | null) ?? [];
+  }
+
   let query = supabase
     .from("lfg_posts")
     .select(
@@ -70,7 +83,7 @@ export default async function LfgPage({
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[260px_1fr]">
         <aside className="space-y-6">
-          <LfgFilters />
+          <LfgFilters favoriteSlugs={favoriteSlugs} />
         </aside>
 
         <div className="space-y-3">

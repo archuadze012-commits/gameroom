@@ -10,9 +10,14 @@ import { GameIcon } from "@/components/game-icon";
 
 const regions = ["GE", "EU", "RU", "MENA"];
 
-export function LfgFilters() {
+export function LfgFilters({ favoriteSlugs = [] }: { favoriteSlugs?: string[] }) {
   const router = useRouter();
   const params = useSearchParams();
+
+  const games =
+    favoriteSlugs.length > 0
+      ? mockGames.filter((g) => favoriteSlugs.includes(g.slug))
+      : mockGames;
 
   const update = useCallback(
     (key: string, value: string | null) => {
@@ -46,7 +51,7 @@ export function LfgFilters() {
 
       <div className="space-y-5">
         <FilterGroup label="თამაში">
-          {[...mockGames].sort((a, b) => b.favoritedBy - a.favoritedBy).map((g) => (
+          {[...games].sort((a, b) => b.favoritedBy - a.favoritedBy).map((g) => (
             <FilterButton
               key={g.slug}
               icon={<GameIcon game={g} size="sm" />}
