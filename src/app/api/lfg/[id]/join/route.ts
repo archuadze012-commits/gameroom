@@ -19,7 +19,7 @@ export async function POST(
 
   const { data: post } = await supabase
     .from("lfg_posts")
-    .select("id, author_id, title")
+    .select("id, author_id")
     .eq("id", postId)
     .is("deleted_at", null)
     .maybeSingle();
@@ -35,25 +35,9 @@ export async function POST(
   if (error) {
     if (error.code === "23505")
       return NextResponse.json({ error: "already_requested" }, { status: 409 });
+    console.error("[POST /api/lfg/[id]/join]", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-
-  const { data: joinerProfile } = await supabase
-    .from("profiles")
-    .select("username, display_name")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const joinerName =
-    joinerProfile?.display_name ?? joinerProfile?.username ?? "მომხმარებელი";
-
-  await supabase.from("notifications").insert({
-    user_id: post.author_id,
-    type: "lfg_response",
-    title: "გუნდში შეერთების მოთხოვნა",
-    body: `${joinerName}-მ მოითხოვა შეერთება — "${post.title}"`,
-    link: `/lfg/${postId}`,
-  });
 
   return NextResponse.json({ ok: true });
 }
