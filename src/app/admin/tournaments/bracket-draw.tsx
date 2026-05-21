@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Shuffle, X, Trophy, ChevronRight } from "lucide-react";
+import { Shuffle, X, Trophy, ChevronRight, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { MockTournament } from "@/lib/mock-data";
@@ -64,11 +64,34 @@ export function BracketDraw({ tournament, onClose }: Props) {
 
   const [players, setPlayers] = useState<string[]>(initial);
   const [shuffled, setShuffled] = useState(false);
+  const [aiSeeding, setAiSeeding] = useState(false);
 
   const handleShuffle = useCallback(() => {
     setPlayers(shuffle(players));
     setShuffled(true);
   }, [players]);
+
+  const handleAiSeed = useCallback(async () => {
+    setAiSeeding(true);
+    try {
+      const res = await fetch("/api/bracket-generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          participants: players.map((name) => ({ name })),
+          format: "Single Elimination",
+          game: tournament.gameSlug,
+        }),
+      });
+      const data = await res.json();
+      if (data.seedings?.length) {
+        const sorted = [...data.seedings].sort((a: { seed: number }, b: { seed: number }) => a.seed - b.seed);
+        setPlayers(sorted.map((s: { name: string }) => s.name));
+        setShuffled(true);
+      }
+    } catch {}
+    setAiSeeding(false);
+  }, [players, tournament.gameSlug]);
 
   const rounds = buildBracket(players);
   const roundNames = ["მე-1 რაუნდი", "მეოთხედფინალი", "ნახევარფინალი", "ფინალი"];
@@ -96,6 +119,10 @@ export function BracketDraw({ tournament, onClose }: Props) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button onClick={handleAiSeed} size="sm" variant="outline" disabled={aiSeeding}>
+              {aiSeeding ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
+              AI Seeding
+            </Button>
             <Button onClick={handleShuffle} size="sm" variant={shuffled ? "outline" : "default"}>
               <Shuffle className="mr-1.5 h-4 w-4" />
               {shuffled ? "ხელახლა კენჭისყრა" : "კენჭისყრა"}

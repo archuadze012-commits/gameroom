@@ -16,5 +16,20 @@ export async function POST(
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // If they just liked (data === true), award +1 XP to the post author
+  if (data === true) {
+    try {
+      const { data: post } = await supabase
+        .from("posts")
+        .select("author_id")
+        .eq("id", id)
+        .maybeSingle();
+      if (post?.author_id && post.author_id !== user.id) {
+        await supabase.rpc("award_xp", { p_user_id: post.author_id, p_amount: 1 });
+      }
+    } catch {}
+  }
+
   return NextResponse.json({ liked: data });
 }

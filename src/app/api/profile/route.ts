@@ -28,6 +28,12 @@ export async function POST(request: NextRequest) {
     update.voice_chat = body.voiceChat;
   if (Array.isArray(body.favoriteGameSlugs))
     update.favorite_game_slugs = (body.favoriteGameSlugs as unknown[]).filter((s) => typeof s === "string");
+  if (typeof body.youtubeHandle === "string")
+    update.youtube_handle = body.youtubeHandle.trim().replace(/^@/, "").slice(0, 64) || null;
+  if (typeof body.tiktokHandle === "string")
+    update.tiktok_handle = body.tiktokHandle.trim().replace(/^@/, "").slice(0, 64) || null;
+  if (typeof body.tiktokFollowers === "string")
+    update.tiktok_followers = body.tiktokFollowers.trim().slice(0, 32) || null;
 
   try {
     const supabase = await createSupabaseServerClient();

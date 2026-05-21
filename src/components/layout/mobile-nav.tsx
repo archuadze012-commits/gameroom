@@ -14,13 +14,13 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { navLinks, adminLinks } from "./nav-links";
 
-export function MobileNav({ isAdmin }: { isAdmin: boolean }) {
+export function MobileNav({ isAdmin, profileHref }: { isAdmin: boolean; profileHref?: string | null }) {
   const [open, setOpen] = useState(false);
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         render={
-          <Button variant="ghost" size="icon" className="md:hidden" aria-label="მენიუ">
+          <Button variant="ghost" size="icon" className="hidden" aria-label="მენიუ">
             <Menu className="h-5 w-5" />
           </Button>
         }
@@ -40,6 +40,15 @@ export function MobileNav({ isAdmin }: { isAdmin: boolean }) {
               {link.label}
             </Link>
           ))}
+          {profileHref && (
+            <Link
+              href={profileHref}
+              onClick={() => setOpen(false)}
+              className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+            >
+              პროფილი
+            </Link>
+          )}
           {isAdmin && (
             <>
               <Separator className="my-2" />

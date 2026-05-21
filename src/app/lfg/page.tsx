@@ -1,14 +1,34 @@
 import Link from "next/link";
 import { Plus, MapPin, Mic, Users as UsersIcon } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ka } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PageHeader } from "@/components/page-header";
-import { mockGames, mockLfgPosts, mockUsers } from "@/lib/mock-data";
 import { LfgFilters } from "./lfg-filters";
-import { GameIcon } from "@/components/game-icon";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "LFG — გუნდის ძებნა" };
+export const dynamic = "force-dynamic";
+
+type LfgRow = {
+  id: string;
+  game_slug: string;
+  title: string;
+  description: string;
+  rank: string | null;
+  region: string | null;
+  slots_total: number;
+  voice_required: boolean;
+  created_at: string;
+  profiles: {
+    username: string | null;
+    display_name: string | null;
+    avatar_url: string | null;
+  } | null;
+};
 
 export default async function LfgPage({
   searchParams,
@@ -16,12 +36,23 @@ export default async function LfgPage({
   searchParams: Promise<{ game?: string; region?: string; voice?: string }>;
 }) {
   const params = await searchParams;
-  const filtered = mockLfgPosts.filter((p) => {
-    if (params.game && p.gameSlug !== params.game) return false;
-    if (params.region && !p.region.includes(params.region)) return false;
-    if (params.voice === "1" && !p.voiceRequired) return false;
-    return true;
-  });
+
+  const supabase = await createSupabaseServerClient();
+  let query = supabase
+    .from("lfg_posts")
+    .select(
+      "id, game_slug, title, description, rank, region, slots_total, voice_required, created_at, profiles!lfg_posts_author_id_fkey(username, display_name, avatar_url)"
+    )
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (params.game) query = query.eq("game_slug", params.game);
+  if (params.region) query = query.eq("region", params.region);
+  if (params.voice === "1") query = query.eq("voice_required", true);
+
+  const { data } = await query;
+  const posts = (data ?? []) as unknown as LfgRow[];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -43,65 +74,91 @@ export default async function LfgPage({
         </aside>
 
         <div className="space-y-3">
-          {filtered.length === 0 ? (
+          {posts.length === 0 ? (
             <EmptyState />
           ) : (
-            filtered.map((post) => {
-              const game = mockGames.find((g) => g.slug === post.gameSlug);
-              const author = mockUsers.find((u) => u.username === post.authorName);
-              const authorMainGame = author?.mainGameSlug
-                ? mockGames.find((g) => g.slug === author.mainGameSlug)
-                : undefined;
+            posts.map((post) => {
+              const author = post.profiles;
+              const authorUsername = author?.username ?? null;
+              const displayName = author?.display_name ?? authorUsername ?? "გამოუცნობი";
+              const createdAgo = (() => {
+                try {
+                  return formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: ka });
+                } catch {
+                  return "";
+                }
+              })();
               return (
-                <Link key={post.id} href={`/lfg/${post.id}`}>
-                  <Card className="border-border/60 transition-all hover:border-primary/40 hover:bg-card/80">
-                    <CardContent className="p-5">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1.5">
-                              {game && <GameIcon game={game} size="sm" />}
-                              <span>{game?.nameKa}</span>
+                <Card key={post.id} className="border-border/60 transition-all hover:border-primary/40 hover:bg-card/80">
+                  <CardContent className="p-5">
+                    <div className="flex gap-4">
+                      {/* Author — large avatar + name on the left */}
+                      <div className="flex shrink-0 flex-col items-center gap-2 w-24">
+                        {authorUsername ? (
+                          <Link
+                            href={`/profile/${authorUsername}`}
+                            className="flex flex-col items-center gap-2 group"
+                          >
+                            <Avatar className="h-16 w-16 border-2 border-border/60 transition-colors group-hover:border-primary/60">
+                              <AvatarImage src={author?.avatar_url ?? undefined} alt={displayName} />
+                              <AvatarFallback className="bg-primary/15 text-lg text-primary">
+                                {displayName.slice(0, 1).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-center text-sm font-semibold leading-tight group-hover:text-primary line-clamp-2 break-words">
+                              {displayName}
                             </span>
-                            <span>·</span>
-                            <span>{post.createdAgo}</span>
-                            <span>·</span>
-                            <span className="flex items-center gap-1">
-                              {authorMainGame && <GameIcon game={authorMainGame} size="sm" />}
-                              @{post.authorName}
+                          </Link>
+                        ) : (
+                          <>
+                            <Avatar className="h-16 w-16 border-2 border-border/60">
+                              <AvatarFallback className="bg-primary/15 text-lg text-primary">?</AvatarFallback>
+                            </Avatar>
+                            <span className="text-center text-sm font-semibold text-muted-foreground line-clamp-2 break-words">
+                              {displayName}
                             </span>
-                          </div>
-                          <h3 className="mt-1 text-lg font-semibold">{post.title}</h3>
-                          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                            {post.description}
-                          </p>
-                          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-                            <Badge variant="outline">🏅 {post.rank}</Badge>
-                            <Badge variant="outline">
-                              <MapPin className="mr-1 h-3 w-3" />
-                              {post.region}
+                          </>
+                        )}
+                      </div>
+
+                      {/* Right — title, description, badges */}
+                      <div className="min-w-0 flex-1">
+                        <Link href={`/lfg/${post.id}`} className="block">
+                          <div className="flex items-start justify-between gap-3">
+                            <h3 className="text-lg font-semibold hover:text-primary line-clamp-2">
+                              {post.title}
+                            </h3>
+                            <Badge className="shrink-0 text-sm">
+                              <UsersIcon className="mr-1 h-3.5 w-3.5" />
+                              0/{post.slots_total}
                             </Badge>
-                            {post.voiceRequired && (
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">{createdAgo}</p>
+                          {post.description && (
+                            <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
+                              {post.description}
+                            </p>
+                          )}
+                          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                            {post.rank && <Badge variant="outline">🏅 {post.rank}</Badge>}
+                            {post.region && (
+                              <Badge variant="outline">
+                                <MapPin className="mr-1 h-3 w-3" />
+                                {post.region}
+                              </Badge>
+                            )}
+                            {post.voice_required && (
                               <Badge variant="outline">
                                 <Mic className="mr-1 h-3 w-3" />
                                 voice
                               </Badge>
                             )}
                           </div>
-                        </div>
-                        <div className="flex flex-row items-center gap-3 sm:flex-col sm:items-end sm:gap-2">
-                          <Badge className="text-sm">
-                            <UsersIcon className="mr-1 h-3.5 w-3.5" />
-                            {post.slots.filled}/{post.slots.total}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {post.responseCount} პასუხი
-                          </span>
-                        </div>
+                        </Link>
                       </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                    </div>
+                  </CardContent>
+                </Card>
               );
             })
           )}
@@ -116,9 +173,9 @@ function EmptyState() {
     <Card className="border-dashed border-border/60">
       <CardContent className="flex flex-col items-center gap-3 p-12 text-center">
         <UsersIcon className="h-10 w-10 text-muted-foreground" />
-        <h3 className="font-semibold">ფილტრის შესაბამისი LFG ვერ მოიძებნა</h3>
+        <h3 className="font-semibold">ჯერ არცერთი LFG არ არის</h3>
         <p className="text-sm text-muted-foreground">
-          სცადე ფილტრების შეცვლა ან თვითონ დაპოსტე ერთი.
+          გახდი პირველი ვინც დაპოსტავს გუნდის ძებნას.
         </p>
         <Button asChild className="mt-2">
           <Link href="/lfg/new">LFG დაპოსტვა</Link>

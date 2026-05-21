@@ -484,8 +484,10 @@ export type CrackedGame = {
   releaseYear: number;
   description: string;
   downloadUrl: string;
+  gameplayUrl?: string;
   systemReqs: { min: SysReqRow; rec: SysReqRow };
   trending?: boolean;
+  metacriticScore?: number;
 };
 
 export const crackedGames: CrackedGame[] = [

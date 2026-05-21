@@ -1,12 +1,53 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Star, Monitor, Cpu, MemoryStick, HardDrive, Gamepad2, Smartphone } from "lucide-react";
+import { ArrowLeft, Star, Monitor, Cpu, MemoryStick, HardDrive, Gamepad2, Smartphone, Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { crackedGames } from "@/lib/mock-data";
+import { crackedGames, type CrackedGame } from "@/lib/mock-data";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { DownloadButton } from "./download-button";
 import { AdminUrlEditor } from "./admin-url-editor";
+import { AdminDeleteButton } from "./delete-button";
+import { YouTubeEmbed } from "@/components/youtube-embed";
+
+type DbRow = {
+  id: string;
+  title: string;
+  emoji: string;
+  cover_url: string | null;
+  release_year: number;
+  rating: number;
+  description: string;
+  download_url: string;
+  gameplay_url: string | null;
+  accent: string;
+  genres: string[];
+  platforms: string[];
+  trending: boolean;
+  system_reqs: { min: { os: string; cpu: string; ram: string; gpu: string; storage: string }; rec: { os: string; cpu: string; ram: string; gpu: string; storage: string } };
+  metacritic_score: number | null;
+};
+
+function dbRowToGame(row: DbRow): CrackedGame {
+  return {
+    id: row.id,
+    title: row.title,
+    emoji: row.emoji,
+    coverUrl: row.cover_url ?? undefined,
+    releaseYear: row.release_year,
+    rating: row.rating,
+    description: row.description,
+    downloadUrl: row.download_url,
+    gameplayUrl: row.gameplay_url ?? undefined,
+    accent: row.accent,
+    genre: row.genres,
+    platform: row.platforms,
+    trending: row.trending,
+    systemReqs: row.system_reqs,
+    metacriticScore: row.metacritic_score ?? undefined,
+  };
+}
 
 export default async function CrackedGamePage({
   params,
@@ -14,8 +55,26 @@ export default async function CrackedGamePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const game = crackedGames.find((g) => g.id === id);
+
+  // try DB first, then fall back to mock
+  let game: CrackedGame | undefined;
+  const supabase = await createSupabaseServerClient();
+  const [{ data: dbRow }, { data: { user } }] = await Promise.all([
+    supabase.from("cracked_games").select("*").eq("id", id).maybeSingle(),
+    supabase.auth.getUser(),
+  ]);
+  if (dbRow) {
+    game = dbRowToGame(dbRow as DbRow);
+  } else {
+    game = crackedGames.find((g) => g.id === id);
+  }
   if (!game) notFound();
+
+  let isAdmin = false;
+  if (user) {
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+    isAdmin = profile?.role === "admin" || profile?.role === "moderator";
+  }
 
   const PLATFORM_ICON: Record<string, React.ReactNode> = {
     PC: <Monitor className="h-3 w-3" />,
@@ -29,10 +88,10 @@ export default async function CrackedGamePage({
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8 space-y-6">
       <Link
-        href="/cracked-games"
+        href="/tamashebi"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-3.5 w-3.5" /> Cracked Games
+        <ArrowLeft className="h-3.5 w-3.5" /> თამაშები
       </Link>
 
       {/* Hero */}
@@ -59,9 +118,37 @@ export default async function CrackedGamePage({
                   <Star className="h-3.5 w-3.5 fill-amber-400" />
                   <span className="font-bold">{game.rating}</span>
                 </span>
+                {game.metacriticScore != null && (
+                  <>
+                    <span>·</span>
+                    <span className="flex items-center gap-1.5">
+                      <span className={`inline-flex h-6 min-w-[2rem] items-center justify-center rounded px-1.5 text-xs font-bold text-white ${
+                        game.metacriticScore >= 75 ? "bg-green-600" :
+                        game.metacriticScore >= 50 ? "bg-yellow-600" : "bg-red-600"
+                      }`}>
+                        {game.metacriticScore}
+                      </span>
+                      <span className="text-xs text-muted-foreground">Metacritic</span>
+                    </span>
+                  </>
+                )}
               </div>
             </div>
-            <DownloadButton gameId={game.id} fallbackUrl={game.downloadUrl} />
+            <div className="flex items-center gap-2">
+              {isAdmin && (
+                <>
+                  <Link
+                    href={`/admin/free-pc-games?edit=${game.id}`}
+                    className="flex h-9 w-9 items-center justify-center rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-400 transition-colors hover:bg-amber-500/20"
+                    title="ადმინ რედაქტირება"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Link>
+                  <AdminDeleteButton gameId={game.id} />
+                </>
+              )}
+              <DownloadButton gameId={game.id} fallbackUrl={game.downloadUrl} />
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -76,6 +163,18 @@ export default async function CrackedGamePage({
           </div>
         </CardContent>
       </Card>
+
+      {/* Gameplay video */}
+      {game.gameplayUrl && (
+        <Card className="border-border/60">
+          <CardContent className="p-6 space-y-3">
+            <h2 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
+              გეიმფლეი ვიდეო
+            </h2>
+            <YouTubeEmbed url={game.gameplayUrl} title={`${game.title} gameplay`} />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Description */}
       <Card className="border-border/60">
@@ -150,6 +249,4 @@ function ReqColumn({
   );
 }
 
-export function generateStaticParams() {
-  return crackedGames.map((g) => ({ id: g.id }));
-}
+export const dynamic = "force-dynamic";

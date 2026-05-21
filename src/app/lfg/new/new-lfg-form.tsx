@@ -15,15 +15,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { mockGames } from "@/lib/mock-data";
 
-export function NewLfgForm() {
+type GameOption = { slug: string; nameKa: string; emoji: string };
+
+const GAME_MODES: Record<string, string[]> = {
+  "pubg-mobile": ["Classic", "1 vs 1", "ULTIMATE ROYALE"],
+};
+
+export function NewLfgForm({ games }: { games: GameOption[] }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [game, setGame] = useState("");
+  const [selectedModes, setSelectedModes] = useState<string[]>([]);
+  const [ranked, setRanked] = useState("");
+  const [weapons, setWeapons] = useState<string[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [rank, setRank] = useState("");
+  const [slots, setSlots] = useState("4");
+  const [voice, setVoice] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
 
   const handleAiAssist = async () => {
@@ -33,7 +44,7 @@ export function NewLfgForm() {
     }
     setGenerating(true);
     try {
-      const gameName = mockGames.find((g) => g.slug === game)?.nameKa ?? game;
+      const gameName = games.find((g) => g.slug === game)?.nameKa ?? game;
       const res = await fetch("/api/lfg-assist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -55,12 +66,51 @@ export function NewLfgForm() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!game) {
+      toast.error("აარჩიე თამაში");
+      return;
+    }
+    if (!GAME_MODES[game] && !title.trim()) {
+      toast.error("სათაური შეიყვანე");
+      return;
+    }
+    if (GAME_MODES[game] && !selectedModes.includes("1 vs 1") && !ranked) {
+      toast.error("აირჩიე: Ranked თუ არა?");
+      return;
+    }
     setLoading(true);
-    // TODO: hook up Supabase server action to insert into lfg_posts
-    await new Promise((r) => setTimeout(r, 600));
-    toast.success("LFG დაიდო (demo). შემდეგ ეტაპზე ბაზაში ჩაიწერება.");
-    setLoading(false);
-    router.push("/lfg");
+    try {
+      const res = await fetch("/api/lfg", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gameSlug: game,
+          title,
+          description,
+          rank: rank || undefined,
+          slotsTotal: parseInt(slots) || 4,
+          voiceRequired: voice,
+          modes: selectedModes.length > 0 ? selectedModes : undefined,
+          ranked: ranked || undefined,
+          weapons: weapons.length > 0 ? weapons : undefined,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error || "unknown");
+      }
+      toast.success("LFG გამოქვეყნდა!");
+      router.push("/lfg");
+      router.refresh();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      if (msg === "content_blocked") {
+        toast.error("კონტენტი დაიბლოკა — შეუსაბამო ტექსტი");
+      } else {
+        toast.error(`LFG ვერ გამოქვეყნდა${msg ? ` — ${msg}` : ""}`);
+      }
+      setLoading(false);
+    }
   };
 
   return (
@@ -92,12 +142,12 @@ export function NewLfgForm() {
 
       <div className="space-y-1.5">
         <Label htmlFor="game">თამაში *</Label>
-        <Select name="game" required value={game} onValueChange={(v) => setGame(v ?? "")}>
+        <Select name="game" required value={game} onValueChange={(v) => { setGame(v ?? ""); setSelectedModes([]); setRanked(""); setWeapons([]); }}>
           <SelectTrigger id="game">
             <SelectValue placeholder="აარჩიე თამაში" />
           </SelectTrigger>
           <SelectContent>
-            {mockGames.map((g) => (
+            {games.map((g) => (
               <SelectItem key={g.slug} value={g.slug}>
                 {g.emoji} {g.nameKa}
               </SelectItem>
@@ -106,18 +156,92 @@ export function NewLfgForm() {
         </Select>
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="title">სათაური *</Label>
-        <Input
-          id="title"
-          name="title"
-          required
-          maxLength={140}
-          placeholder="მაგ. Squad 3+1 → Erangel ranked"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-      </div>
+      {GAME_MODES[game] && (
+        <>
+          <div className="space-y-1.5">
+            <Label>რეჟიმი</Label>
+            <div className="flex flex-wrap gap-2">
+              {GAME_MODES[game].map((mode) => {
+                const active = selectedModes.includes(mode);
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => {
+                      const next = active ? selectedModes.filter((m) => m !== mode) : [...selectedModes, mode];
+                      setSelectedModes(next);
+                      setRanked("");
+                      setWeapons([]);
+                    }}
+                    className={`rounded-md px-3 py-1.5 text-sm font-medium border transition-all ${
+                      active
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                    }`}
+                  >
+                    {mode}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {selectedModes.includes("1 vs 1") ? (
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap gap-2">
+                {["M416", "M24"].map((w) => (
+                  <button
+                    key={w}
+                    type="button"
+                    onClick={() => setWeapons((prev) => prev.includes(w) ? prev.filter((x) => x !== w) : [...prev, w])}
+                    className={`rounded-md px-3 py-1.5 text-sm font-medium border transition-all ${
+                      weapons.includes(w)
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                    }`}
+                  >
+                    {w}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap gap-2">
+                {["Ranked", "არ ვარ რანკზე", "არ ვარ რანკზე, მაგრამ დაგეხმარები"].map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => setRanked(opt)}
+                    className={`rounded-md px-3 py-1.5 text-sm font-medium border transition-all ${
+                      ranked === opt
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {!GAME_MODES[game] && (
+        <div className="space-y-1.5">
+          <Label htmlFor="title">სათაური *</Label>
+          <Input
+            id="title"
+            name="title"
+            required
+            maxLength={140}
+            placeholder="მაგ. Squad 3+1 → Erangel ranked"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
+      )}
 
       <div className="space-y-1.5">
         <Label htmlFor="description">აღწერა</Label>
@@ -131,43 +255,32 @@ export function NewLfgForm() {
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="rank">რანკი</Label>
-          <Input id="rank" name="rank" placeholder="მაგ. Crown II+" />
+      {!selectedModes.includes("1 vs 1") && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="rank">რანკი</Label>
+            <Input id="rank" placeholder="მაგ. Crown II+" value={rank} onChange={(e) => setRank(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="slots">ადგილების რაოდენობა</Label>
+            <Input
+              id="slots"
+              type="number"
+              min={1}
+              max={10}
+              value={slots}
+              onChange={(e) => setSlots(e.target.value)}
+            />
+          </div>
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="region">რეგიონი</Label>
-          <Select name="region">
-            <SelectTrigger id="region">
-              <SelectValue placeholder="აარჩიე" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="GE">GE</SelectItem>
-              <SelectItem value="EU">EU</SelectItem>
-              <SelectItem value="RU">RU</SelectItem>
-              <SelectItem value="MENA">MENA</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="slots">ადგილების რაოდენობა</Label>
-          <Input
-            id="slots"
-            name="slots"
-            type="number"
-            min={1}
-            max={10}
-            defaultValue={4}
-          />
-        </div>
-      </div>
+      )}
 
       <div className="flex items-center gap-2">
         <input
           type="checkbox"
           id="voice"
-          name="voice"
+          checked={voice}
+          onChange={(e) => setVoice(e.target.checked)}
           className="h-4 w-4 rounded border-border bg-background accent-primary"
         />
         <Label htmlFor="voice" className="font-normal">

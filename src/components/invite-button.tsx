@@ -134,7 +134,7 @@ export function InviteButton({ username, displayName, gameSlugs }: InviteButtonP
                   <span className="relative text-2xl">{g.emoji}</span>
                   <div className="relative">
                     <p className="font-medium leading-tight">{g.nameKa}</p>
-                    <p className="text-xs text-muted-foreground">{g.players.toLocaleString()} მოთამაშე</p>
+                    <p className="text-xs text-muted-foreground">{g.players.toLocaleString("en-US")} მოთამაშე</p>
                   </div>
                   <Swords className="relative ml-auto h-4 w-4 text-primary opacity-0 transition-opacity group-hover:opacity-100" />
                 </button>

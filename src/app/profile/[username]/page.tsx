@@ -1,17 +1,21 @@
-import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { mockLfgPosts, mockFeedPosts, mockUsers } from "@/lib/mock-data";
-import { GameIcon } from "@/components/game-icon";
 import { RoleBadge, type UserRole } from "@/components/role-badge";
 import { ProfileDisplayName } from "@/components/profile-display-name";
 import { ProfileSocialLinks } from "@/components/profile-social-links";
 import { BannerUpload } from "@/components/banner-upload";
-import { ProfileFavoriteGames } from "@/components/profile-favorite-games";
 import { ProfileFeed } from "@/components/profile-feed";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { InviteButton } from "@/components/invite-button";
-import { ProfileFollowClient } from "@/components/profile-follow-client";
+import { VerifiedBadge } from "@/components/verified-badge";
+import { ReportButton } from "@/components/report-button";
+import { MessageButton } from "@/components/message-button";
+import { ProfileXp } from "@/components/profile-xp";
+import { ProfileLinkedAccounts } from "@/components/profile-linked-accounts";
+import { ProfileSummaryRight } from "@/components/profile-summary-right";
+import { ProfileGameRows } from "@/components/profile-game-rows";
+import { ProfileTabs } from "@/components/profile-tabs";
 import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -23,26 +27,22 @@ export default async function ProfilePage({
 }) {
   const { username } = await params;
   const session = await getSession().catch(() => null);
-  const sessionUsername =
-    (session?.user_metadata?.username as string | undefined) ??
-    session?.email?.split("@")[0] ??
-    null;
-  const isOwner = sessionUsername === username;
   const avatarUrl = (session?.user_metadata?.avatar_url as string | undefined) ?? null;
   const currentUserId = session?.id ?? null;
 
   const supabase = await createSupabaseServerClient();
 
-  // fetch target profile from DB
   const { data: dbProfile } = await supabase
     .from("profiles")
-    .select("id, display_name, favorite_game_slugs")
+    .select("id, display_name, favorite_game_slugs, banner_url, is_verified, xp, level, daily_streak_count, youtube_handle, tiktok_handle, tiktok_followers")
     .eq("username", username)
     .maybeSingle();
 
   const targetUserId = dbProfile?.id ?? null;
 
-  // follower count
+  // isOwner = the logged-in user's profile row owns this username (authoritative via DB id)
+  const isOwner = !!(currentUserId && targetUserId && currentUserId === targetUserId);
+
   let followerCount = 0;
   if (targetUserId) {
     const { count } = await supabase
@@ -52,7 +52,6 @@ export default async function ProfilePage({
     followerCount = count ?? 0;
   }
 
-  // is current user following this profile?
   let initialFollowing = false;
   if (currentUserId && targetUserId && !isOwner) {
     const { data } = await supabase
@@ -64,38 +63,46 @@ export default async function ProfilePage({
     initialFollowing = !!data;
   }
 
-  const gameCount = (dbProfile?.favorite_game_slugs ?? []).length;
   const mockUser = mockUsers.find((u) => u.username === username);
   const displayName = dbProfile?.display_name ?? mockUser?.displayName ?? username;
   const userPosts = mockLfgPosts.filter((p) => p.authorName === username).slice(0, 5);
   const feedPosts = mockFeedPosts.filter((p) => p.authorName === username);
 
+  let badgeCodes: string[] = [];
+  let linkedAccounts: Array<{
+    provider: "steam" | "riot";
+    external_id: string;
+    data: Record<string, unknown> | null;
+    verified: boolean;
+  }> = [];
+  if (targetUserId) {
+    const [{ data: badges }, { data: linked }] = await Promise.all([
+      supabase.from("badge_unlocks").select("badge_code").eq("user_id", targetUserId),
+      supabase
+        .from("linked_accounts")
+        .select("provider, external_id, data, verified")
+        .eq("user_id", targetUserId),
+    ]);
+    badgeCodes = (badges ?? []).map((b: { badge_code: string }) => b.badge_code);
+    linkedAccounts = (linked ?? []) as typeof linkedAccounts;
+  }
+
+  const steamAccount = linkedAccounts.find((a) => a.provider === "steam");
+
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="overflow-hidden border-border/60">
+        <BannerUpload
+          isOwner={isOwner}
+          userId={isOwner ? (currentUserId ?? undefined) : undefined}
+          initialBannerUrl={dbProfile?.banner_url ?? null}
+        />
 
-        {/* Banner */}
-        <BannerUpload isOwner={isOwner} />
-
-        <CardContent className="space-y-4 px-6 pb-6 pt-0">
-
-          {/* Avatar + name + trust + follow (center) with favorites (left) and buttons (right) */}
-          <div className="flex flex-col items-center gap-3 -mt-12 md:grid md:grid-cols-3 md:items-start md:gap-4">
-
-            {/* Left — favorite games */}
-            <div className="order-2 w-full md:order-1 md:pt-14">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                ფავორიტი ვიდეოთამაშები
-              </p>
-              <ProfileFavoriteGames
-                fallbackSlugs={dbProfile?.favorite_game_slugs ?? []}
-                isOwner={isOwner}
-                userId={currentUserId ?? undefined}
-              />
-            </div>
-
-            {/* Center — avatar + name + follow button */}
-            <div className="order-1 flex flex-col items-center gap-2 md:order-2">
+        <CardContent className="space-y-5 px-6 pb-6 pt-0">
+          {/* Header — 2-col grid: left summary | right stats */}
+          <div className="-mt-16 flex flex-col items-center gap-5 md:grid md:grid-cols-[minmax(220px,1fr)_minmax(260px,1fr)] md:items-start md:gap-6">
+            {/* Left — avatar + name + badge + social icons */}
+            <div className="flex flex-col items-center gap-2 md:items-start">
               <AvatarUpload
                 username={username}
                 displayName={displayName}
@@ -103,72 +110,131 @@ export default async function ProfilePage({
                 isOwner={isOwner}
               />
               <h1 className="flex items-center gap-2 text-2xl font-bold">
-                {isOwner
-                  ? <ProfileDisplayName fallback={displayName} userId={currentUserId ?? undefined} />
-                  : displayName}
+                {isOwner ? (
+                  <ProfileDisplayName fallback={displayName} userId={currentUserId ?? undefined} />
+                ) : (
+                  displayName
+                )}
+                {dbProfile?.is_verified && <VerifiedBadge className="h-5 w-5" />}
               </h1>
               <RoleBadge username={username} defaultRole={mockUser?.role as UserRole | undefined} />
 
-              {/* FollowButton only for non-owners (rendered inside ProfileFollowClient) */}
-              {!isOwner && session && (
-                <ProfileFollowClient
-                  username={username}
-                  isOwner={false}
-                  initialFollowing={initialFollowing}
-                  initialFollowerCount={followerCount}
-                  lfgCount={userPosts.length}
-                  gameCount={gameCount}
-                  statsOnly={false}
+              <div className="mt-1">
+                <ProfileSocialLinks
+                  defaultYtHandle={dbProfile?.youtube_handle ?? ""}
+                  defaultTtHandle={dbProfile?.tiktok_handle ?? ""}
+                  isOwner={isOwner}
+                  userId={currentUserId ?? undefined}
+                  steam={
+                    steamAccount
+                      ? {
+                          external_id: steamAccount.external_id,
+                          data: steamAccount.data as {
+                            personaName?: string;
+                            profileUrl?: string;
+                            gameCount?: number;
+                          } | null,
+                        }
+                      : null
+                  }
                 />
-              )}
+              </div>
             </div>
 
-            {/* Right — action buttons */}
-            <div className="order-3 flex flex-wrap justify-center gap-2 md:justify-end md:pt-14">
+            {/* Right — stats list + follow + action buttons */}
+            <div className="w-full">
+              <ProfileSummaryRight
+                username={username}
+                isOwner={isOwner}
+                hasSession={!!session}
+                initialFollowing={initialFollowing}
+                initialFollowerCount={followerCount}
+                level={dbProfile?.level ?? 1}
+                xp={dbProfile?.xp ?? 0}
+                streak={dbProfile?.daily_streak_count ?? 0}
+              />
+
               {!isOwner && (
-                <InviteButton
-                  username={username}
-                  displayName={displayName}
-                  gameSlugs={mockUser?.games.map((g) => g.slug) ?? []}
-                />
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <InviteButton
+                    username={username}
+                    displayName={displayName}
+                    gameSlugs={mockUser?.games.map((g) => g.slug) ?? []}
+                  />
+                  {targetUserId && session && <MessageButton targetUserId={targetUserId} />}
+                  {targetUserId && (
+                    <Button size="sm" variant="outline" asChild>
+                      <span className="flex items-center gap-1.5">
+                        <ReportButton
+                          targetType="profile"
+                          targetId={targetUserId}
+                          iconSize="h-3.5 w-3.5"
+                        />
+                        Report
+                      </span>
+                    </Button>
+                  )}
+                </div>
               )}
-              <Button size="sm" variant="outline">შეტყობინება</Button>
             </div>
           </div>
 
-          {/* Social channels */}
-          <ProfileSocialLinks
-            defaultYtHandle=""
-            defaultTtHandle=""
-            ytSubscribers="—"
-            ttFollowers="—"
-            isOwner={isOwner}
-            userId={currentUserId ?? undefined}
-          />
-
           <Separator />
 
-          {/* Stats — for owner or unauthenticated visitor, use simple stat row */}
-          {(isOwner || !session) && (
-            <ProfileFollowClient
-              username={username}
-              isOwner={true}
-              initialFollowing={false}
-              initialFollowerCount={followerCount}
-              lfgCount={userPosts.length}
-              gameCount={gameCount}
-              statsOnly={true}
+          {/* XP + badges (level/streak/progress + badge collection) */}
+          {dbProfile && (
+            <ProfileXp
+              xp={dbProfile.xp ?? 0}
+              streak={dbProfile.daily_streak_count ?? 0}
+              unlockedBadgeCodes={badgeCodes}
             />
           )}
+
+          {/* Linked accounts (Riot only — Steam now lives in social icons above) */}
+          {linkedAccounts.filter((a) => a.provider !== "steam").length > 0 && (
+            <ProfileLinkedAccounts
+              accounts={linkedAccounts.filter((a) => a.provider !== "steam")}
+            />
+          )}
+
+          {/* Tabbed content area */}
+          <ProfileTabs
+            games={<ProfileGameRows slugs={dbProfile?.favorite_game_slugs ?? []} />}
+            posts={
+              <ProfileFeed
+                username={username}
+                displayName={displayName}
+                initialPosts={feedPosts}
+                isOwner={isOwner}
+              />
+            }
+            lfg={
+              userPosts.length === 0 ? (
+                <p className="rounded-2xl border border-dashed border-[#1e2a44] py-8 text-center text-sm text-[#9fb3d1]">
+                  ჯერ არცერთი LFG პოსტი არ არის.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {userPosts.map((p) => (
+                    <div
+                      key={p.id}
+                      className="rounded-2xl border border-[#1e2a44] bg-[#0f1626] p-3 text-sm"
+                    >
+                      <p className="font-medium">{p.title}</p>
+                      <p className="mt-1 text-xs text-[#9fb3d1]">{p.gameSlug}</p>
+                    </div>
+                  ))}
+                </div>
+              )
+            }
+            friends={
+              <p className="rounded-2xl border border-dashed border-[#1e2a44] py-8 text-center text-sm text-[#9fb3d1]">
+                მეგობრების სია მალე იქნება ხელმისაწვდომი.
+              </p>
+            }
+          />
         </CardContent>
       </Card>
-
-      <ProfileFeed
-        username={username}
-        displayName={displayName}
-        initialPosts={feedPosts}
-        isOwner={isOwner}
-      />
     </div>
   );
 }

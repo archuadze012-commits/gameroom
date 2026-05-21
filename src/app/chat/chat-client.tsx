@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Send, Hash, Globe, Tag, Cpu, Users as UsersIcon, Volume2, Menu, X, Loader2 } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Send, Hash, Globe, Tag, Cpu, Users as UsersIcon, Menu, X, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { GameIcon } from "@/components/game-icon";
 import { UserAvatar } from "@/components/user-avatar";
@@ -9,43 +9,164 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MentionText } from "@/components/mention-text";
+import { ReportButton } from "@/components/report-button";
+import { VerifiedBadge } from "@/components/verified-badge";
 import Link from "next/link";
-import {
-  mockChatChannels,
-  mockChatMessages,
-  mockGames,
-  mockUsers,
-  channelDescriptions,
-  type MockChatMessage,
-} from "@/lib/mock-data";
+import { mockChatChannels, mockGames, channelDescriptions } from "@/lib/mock-data";
+import type { PublicProfile } from "@/lib/types";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-const ADMIN_USERNAMES = new Set(
-  mockUsers.filter((u) => u.role === "admin").map((u) => u.username),
-);
+type ChatMessage = {
+  id: string;
+  body: string;
+  created_at: string;
+  author_id: string;
+  profiles: {
+    username: string;
+    display_name: string | null;
+    avatar_url: string | null;
+    role: string | null;
+    is_verified?: boolean;
+  } | null;
+};
 
-const onlineUsers = [
-  "archuadze012", "GeoSniper", "Lasha10", "Sage_Tbilisi", "ZeroKD",
-  "Beka", "Nika", "Lika", "Saba", "Vakho", "Tamo", "Giorgi",
-];
-
-function formatTime(d: Date) {
-  return d.toLocaleTimeString("ka-GE", { hour: "2-digit", minute: "2-digit", hour12: false });
+function formatTime(iso: string) {
+  try {
+    return new Date(iso).toLocaleTimeString("ka-GE", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  } catch {
+    return "";
+  }
 }
 
 export function ChatClient() {
   const [activeChannelId, setActiveChannelId] = useState<string>("global");
-  const [messagesByChannel, setMessagesByChannel] = useState<Record<string, MockChatMessage[]>>(
-    () => structuredClone(mockChatMessages),
-  );
-  const [unread, setUnread] = useState<Record<string, number>>(() =>
-    Object.fromEntries(mockChatChannels.map((c) => [c.id, c.unread ?? 0])),
-  );
+  const [messagesByChannel, setMessagesByChannel] = useState<Record<string, ChatMessage[]>>({});
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [unread, setUnread] = useState<Record<string, number>>({});
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [showMobileChannels, setShowMobileChannels] = useState(false);
+  const [allUsers, setAllUsers] = useState<PublicProfile[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentRole, setCurrentRole] = useState<string>("user");
   const scrollRef = useRef<HTMLDivElement>(null);
   const messages = messagesByChannel[activeChannelId] ?? [];
   const activeChannel = mockChatChannels.find((c) => c.id === activeChannelId);
+
+  // Get current user id + role
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+    supabase.auth.getUser().then(async ({ data }) => {
+      const uid = data.user?.id ?? null;
+      setCurrentUserId(uid);
+      if (uid) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", uid)
+          .maybeSingle();
+        setCurrentRole(profile?.role ?? "user");
+      }
+    });
+  }, []);
+
+  const canModerate = currentRole === "admin" || currentRole === "moderator";
+
+  async function deleteMessage(id: string) {
+    const res = await fetch(`/api/admin/messages/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setMessagesByChannel((prev) => ({
+        ...prev,
+        [activeChannelId]: (prev[activeChannelId] ?? []).filter((m) => m.id !== id),
+      }));
+      toast.success("მესიჯი წაშლილია");
+    } else {
+      toast.error("შეცდომა");
+    }
+  }
+
+  // Fetch online users
+  useEffect(() => {
+    function fetchUsers() {
+      fetch("/api/users")
+        .then((r) => r.json())
+        .then((data: PublicProfile[]) => setAllUsers(Array.isArray(data) ? data : []))
+        .catch(() => {});
+    }
+    fetchUsers();
+    const interval = setInterval(fetchUsers, 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch messages for active channel
+  const fetchMessages = useCallback(async (channelId: string) => {
+    setLoadingMessages(true);
+    try {
+      const res = await fetch(`/api/chat/${encodeURIComponent(channelId)}`);
+      if (!res.ok) throw new Error();
+      const data: ChatMessage[] = await res.json();
+      setMessagesByChannel((prev) => ({ ...prev, [channelId]: data }));
+    } catch {
+      setMessagesByChannel((prev) => ({ ...prev, [channelId]: [] }));
+    } finally {
+      setLoadingMessages(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMessages(activeChannelId);
+  }, [activeChannelId, fetchMessages]);
+
+  // Realtime subscription
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+    const channel = supabase
+      .channel(`chat:${activeChannelId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "chat_messages",
+          filter: `channel_id=eq.${activeChannelId}`,
+        },
+        async (payload) => {
+          const row = payload.new as { id: string; author_id: string; body: string; created_at: string; channel_id: string };
+          // Skip if it's our own message (already optimistically added)
+          if (row.author_id === currentUserId) return;
+
+          // Fetch profile for the author
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("username, display_name, avatar_url, role")
+            .eq("id", row.author_id)
+            .maybeSingle();
+
+          const newMessage: ChatMessage = {
+            id: row.id,
+            body: row.body,
+            created_at: row.created_at,
+            author_id: row.author_id,
+            profiles: profile,
+          };
+
+          setMessagesByChannel((prev) => {
+            const existing = prev[activeChannelId] ?? [];
+            if (existing.some((m) => m.id === newMessage.id)) return prev;
+            return { ...prev, [activeChannelId]: [...existing, newMessage] };
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeChannelId, currentUserId]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -61,37 +182,48 @@ export function ChatClient() {
     e.preventDefault();
     const trimmed = input.trim();
     if (!trimmed || sending) return;
+    if (!currentUserId) {
+      toast.error("გთხოვ შეხვიდე ანგარიშში მესიჯის გასაგზავნად.");
+      return;
+    }
 
     setSending(true);
+
+    // Moderation
     try {
-      const res = await fetch("/api/moderate", {
+      const modRes = await fetch("/api/moderate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: trimmed }),
       });
-      const { toxic } = await res.json();
+      const { toxic } = await modRes.json();
       if (toxic) {
         toast.error("მესიჯი დაიბლოკა — შეიცავს აკრძალულ კონტენტს.");
         setSending(false);
         return;
       }
     } catch {
-      // If moderation fails, allow the message through
+      // allow through on moderation failure
     }
 
-    const newMessage: MockChatMessage = {
-      id: `me-${Date.now()}`,
-      author: "შენ",
-      body: trimmed,
-      ago: formatTime(new Date()),
-      isMe: true,
-    };
-    setMessagesByChannel((prev) => ({
-      ...prev,
-      [activeChannelId]: [...(prev[activeChannelId] ?? []), newMessage],
-    }));
-    setInput("");
-    setSending(false);
+    try {
+      const res = await fetch(`/api/chat/${encodeURIComponent(activeChannelId)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: trimmed }),
+      });
+      if (!res.ok) throw new Error();
+      const newMessage: ChatMessage = await res.json();
+      setMessagesByChannel((prev) => ({
+        ...prev,
+        [activeChannelId]: [...(prev[activeChannelId] ?? []), newMessage],
+      }));
+      setInput("");
+    } catch {
+      toast.error("მესიჯის გაგზავნა ვერ მოხერხდა.");
+    } finally {
+      setSending(false);
+    }
   };
 
   const ChannelIcon = ({ c }: { c: typeof mockChatChannels[number] }) => {
@@ -104,6 +236,16 @@ export function ChatClient() {
     if (c.type === "tech") return <Cpu className="h-3.5 w-3.5 shrink-0" />;
     return <Hash className="h-3.5 w-3.5 shrink-0" />;
   };
+
+  // If the active channel is tied to a game, restrict members to users who favorited that game.
+  const channelGameSlug = activeChannel?.gameSlug ?? null;
+  const filteredUsers = channelGameSlug
+    ? allUsers.filter((u) => (u.favoriteGameSlugs ?? []).includes(channelGameSlug))
+    : allUsers;
+
+  const onlineUsersList = filteredUsers.filter((u) => u.isOnline);
+  const offlineUsersList = filteredUsers.filter((u) => !u.isOnline);
+  const sortedUsers = [...onlineUsersList, ...offlineUsersList];
 
   return (
     <div className="relative grid h-[calc(100vh-16rem)] grid-cols-1 md:grid-cols-[240px_1fr_240px]">
@@ -220,39 +362,67 @@ export function ChatClient() {
         </div>
 
         <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4">
-          {messages.length === 0 && (
+          {loadingMessages && messages.length === 0 && (
+            <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> იტვირთება...
+            </div>
+          )}
+          {!loadingMessages && messages.length === 0 && (
             <div className="py-8 text-center text-sm text-muted-foreground">
               მესიჯი ჯერ არ არის — შენ იყავი პირველი 👇
             </div>
           )}
-          {messages.map((m) => (
-            <div key={m.id} className="flex gap-3">
-              <Link href={m.isMe ? "#" : `/profile/${m.author}`} className="shrink-0 hover:ring-2 hover:ring-primary/40 rounded-full transition-all">
-                <UserAvatar username={m.author} size="sm" />
-              </Link>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-baseline gap-2">
-                  <Link
-                    href={m.isMe ? "#" : `/profile/${m.author}`}
-                    className={`text-sm font-medium hover:underline ${
-                      m.isMe ? "text-accent" : ADMIN_USERNAMES.has(m.author) ? "text-rose-400" : ""
-                    }`}
-                  >
-                    {m.author}
-                  </Link>
-                  <span className="text-[10px] text-muted-foreground">{m.ago}</span>
+          {messages.map((m) => {
+            const username = m.profiles?.username ?? "user";
+            const displayName = m.profiles?.display_name ?? username;
+            const isMe = m.author_id === currentUserId;
+            const isAuthorAdmin = m.profiles?.role === "admin";
+            const isVerified = m.profiles?.is_verified === true;
+            return (
+              <div key={m.id} className="group flex gap-3">
+                <Link href={`/profile/${username}`} className="shrink-0 hover:ring-2 hover:ring-primary/40 rounded-full transition-all">
+                  <UserAvatar
+                    username={username}
+                    displayName={displayName}
+                    avatarUrl={m.profiles?.avatar_url}
+                    size="sm"
+                  />
+                </Link>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline gap-2">
+                    <Link
+                      href={`/profile/${username}`}
+                      className={`flex items-center gap-1 text-sm font-medium hover:underline ${
+                        isMe ? "text-accent" : isAuthorAdmin ? "text-rose-400" : ""
+                      }`}
+                    >
+                      {displayName}
+                      {isVerified && <VerifiedBadge className="h-3.5 w-3.5" />}
+                    </Link>
+                    <span className="text-[10px] text-muted-foreground">{formatTime(m.created_at)}</span>
+                    <span className="ml-auto flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                      {!isMe && (
+                        <ReportButton targetType="message" targetId={m.id} />
+                      )}
+                      {canModerate && (
+                        <button
+                          type="button"
+                          onClick={() => deleteMessage(m.id)}
+                          className="text-muted-foreground/60 transition-colors hover:text-rose-400"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </span>
+                  </div>
+                  <p className="text-sm whitespace-pre-wrap break-words">
+                    <MentionText>{m.body}</MentionText>
+                  </p>
                 </div>
-                <p className="text-sm whitespace-pre-wrap break-words">
-                  <MentionText>{m.body}</MentionText>
-                </p>
               </div>
-            </div>
-          ))}
-          <div className="rounded-md border border-dashed border-border/60 p-3 text-center text-xs text-muted-foreground">
-            <Volume2 className="mx-auto mb-1 h-4 w-4 opacity-50" />
-            ეს Demo ჩათია — მესიჯები ბრაუზერის მეხსიერებაშია, refresh-ის შემდეგ ქრება.
-            რეალური real-time Supabase Realtime-ით ჩაჯდება Phase 2-ში.
-          </div>
+            );
+          })}
         </div>
 
         <form onSubmit={handleSend} className="flex items-center gap-2 border-t border-border/60 p-3">
@@ -272,28 +442,37 @@ export function ChatClient() {
       </section>
 
       {/* Members */}
-      <aside className="hidden border-l border-border/60 bg-sidebar/40 md:block">
-        <div className="border-b border-border/60 p-4">
+      <aside className="hidden border-l border-border/60 bg-sidebar/40 md:flex md:flex-col min-h-0">
+        <div className="border-b border-border/60 p-4 shrink-0">
           <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <UsersIcon className="h-3 w-3" /> ონლაინ — {onlineUsers.length}
+            <UsersIcon className="h-3 w-3" /> ონლაინ — {onlineUsersList.length}
           </h3>
         </div>
-        <ul className="space-y-1 p-2 text-sm">
-          {onlineUsers.map((u, i) => (
-            <li key={u}>
-              <Link
-                href={`/profile/${u}`}
-                className="flex items-center gap-2 rounded-md px-3 py-1.5 text-muted-foreground hover:bg-secondary/60 hover:text-foreground transition-colors"
-              >
-                <span className={`h-2 w-2 rounded-full shrink-0 ${i < 3 ? "bg-emerald-400" : "bg-amber-400/60"}`} />
-                <UserAvatar username={u} size="sm" className="h-5 w-5" />
-                <span className={ADMIN_USERNAMES.has(u) ? "text-rose-400 font-medium" : ""}>{u}</span>
-                {ADMIN_USERNAMES.has(u) && (
-                  <span className="ml-auto text-[9px] font-bold uppercase tracking-wider text-rose-400/80">ADM</span>
-                )}
-              </Link>
+        <ul className="flex-1 space-y-1 overflow-y-auto p-2 text-sm">
+          {sortedUsers.length === 0 && (
+            <li className="px-3 py-2 text-xs text-muted-foreground">
+              მომხმარებლები არ არიან
             </li>
-          ))}
+          )}
+          {sortedUsers.map((u) => {
+            const isAdmin = u.role === "admin";
+            const label = u.displayName ?? u.username;
+            return (
+              <li key={u.username}>
+                <Link
+                  href={`/profile/${u.username}`}
+                  className="flex items-center gap-2 rounded-md px-3 py-1.5 text-muted-foreground hover:bg-secondary/60 hover:text-foreground transition-colors"
+                >
+                  <span className={`h-2 w-2 rounded-full shrink-0 ${u.isOnline ? "bg-emerald-400" : "bg-amber-400/60"}`} />
+                  <UserAvatar username={u.username} displayName={u.displayName ?? undefined} avatarUrl={u.avatarUrl} size="sm" className="h-5 w-5" />
+                  <span className={`truncate ${isAdmin ? "text-rose-400 font-medium" : ""}`}>{label}</span>
+                  {isAdmin && (
+                    <span className="ml-auto text-[9px] font-bold uppercase tracking-wider text-rose-400/80">ADM</span>
+                  )}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </aside>
     </div>

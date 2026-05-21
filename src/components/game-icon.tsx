@@ -1,3 +1,5 @@
+"use client";
+
 import type { MockGame } from "@/lib/mock-data";
 
 type Props = {
@@ -16,11 +18,18 @@ export function GameIcon({ game, size = "md" }: Props) {
   const s = sizeMap[size];
   if (game.iconUrl) {
     return (
-      <img
-        src={game.iconUrl}
-        alt={game.nameKa}
-        className={`${s.img} object-contain${game.invertIcon ? " brightness-0 invert" : ""}`}
-      />
+      <span className="relative inline-flex items-center justify-center">
+        <img
+          src={game.iconUrl}
+          alt={game.nameKa}
+          className={`${s.img} object-contain${game.invertIcon ? " brightness-0 invert" : ""}`}
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+            (e.currentTarget.nextElementSibling as HTMLElement | null)?.removeAttribute("hidden");
+          }}
+        />
+        <span className={s.emoji} hidden>{game.emoji}</span>
+      </span>
     );
   }
   return <span className={s.emoji}>{game.emoji}</span>;

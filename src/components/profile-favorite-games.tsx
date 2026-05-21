@@ -33,7 +33,8 @@ export function ProfileFavoriteGames({ fallbackSlugs, isOwner, userId }: Props) 
 
   const games = slugs
     .map((slug) => mockGames.find((g) => g.slug === slug))
-    .filter(Boolean) as typeof mockGames;
+    .filter(Boolean)
+    .slice(0, 3) as typeof mockGames;
 
   if (games.length === 0) return null;
 

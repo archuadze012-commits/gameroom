@@ -4,6 +4,9 @@ import "./globals.css";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { Toaster } from "@/components/ui/sonner";
+import { updateLastSeen } from "@/lib/update-last-seen";
+import { ChatbotWidget } from "@/components/chatbot-widget";
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -30,6 +33,7 @@ export const metadata: Metadata = {
   },
   description:
     "იპოვე გუნდი, შეუერთდი ჩემპიონატებს და განიხილე საყვარელი თამაშები — eFootball, FIFA Mobile, PUBG, Warzone.",
+  manifest: "/manifest.json",
   openGraph: {
     title: "Gameroom",
     description: "ქართველი გეიმერების სათემო პლატფორმა.",
@@ -38,11 +42,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  await updateLastSeen();
   return (
     <html
       lang="ka"
@@ -50,8 +55,10 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <SiteHeader />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 pb-16 xl:pb-0">{children}</main>
         <SiteFooter />
+        <ChatbotWidget />
+        <MobileBottomNav />
         <Toaster richColors position="top-right" />
       </body>
     </html>

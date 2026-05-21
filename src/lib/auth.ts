@@ -11,11 +11,18 @@ export const getSession = cache(async () => {
 
 export type SessionUser = Awaited<ReturnType<typeof getSession>>;
 
-// Emails that have admin access. Replace with a real DB role check when DB is live.
+// Emails that always get admin access (bootstrap). Other admins can be promoted in DB via role column.
 const ADMIN_EMAILS = ["archuadze012@gmail.com"];
 
 export const getIsAdmin = cache(async () => {
   const user = await getSession();
-  if (!user?.email) return false;
-  return ADMIN_EMAILS.includes(user.email);
+  if (!user) return false;
+  if (user.email && ADMIN_EMAILS.includes(user.email)) return true;
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+  return data?.role === "admin";
 });

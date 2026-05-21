@@ -1,0 +1,46 @@
+﻿import { NextRequest, NextResponse } from "next/server";
+
+export async function POST(request: NextRequest) {
+  if (!process.env.GROQ_API_KEY) return NextResponse.json({ error: "no_key" }, { status: 500 });
+
+  let body: { messages?: { role: string; content: string }[] };
+  try { body = await request.json(); } catch { return NextResponse.json({ error: "bad_request" }, { status: 400 }); }
+
+  const history = (body.messages ?? []).slice(-10);
+
+  try {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          {
+            role: "system",
+            content:
+              "áƒ¨áƒ”áƒœ áƒ®áƒáƒ  Gameroom-áƒ˜áƒ¡ áƒáƒ¡áƒ˜áƒ¡áƒ¢áƒ”áƒœáƒ¢áƒ˜ â€” áƒ¥áƒáƒ áƒ—áƒ£áƒšáƒ˜ gaming community áƒ¡áƒáƒ˜áƒ¢áƒ˜ (gameroom.com.ge). " +
+              "áƒ”áƒ®áƒ›áƒáƒ áƒ”áƒ‘áƒ˜ áƒ›áƒáƒ›áƒ®áƒ›áƒáƒ áƒ”áƒ‘áƒšáƒ”áƒ‘áƒ¡ LFG-áƒ˜áƒ¡ áƒ¨áƒ”áƒ¥áƒ›áƒœáƒáƒ¨áƒ˜, áƒ—áƒáƒ›áƒáƒ¨áƒ”áƒ‘áƒ˜áƒ¡ áƒžáƒáƒ•áƒœáƒáƒ¨áƒ˜, match-áƒ˜áƒ¡ áƒ›áƒáƒ«áƒ˜áƒ”áƒ‘áƒáƒ¨áƒ˜ áƒ“áƒ áƒ¡áƒ®áƒ•áƒ áƒ™áƒ˜áƒ—áƒ®áƒ•áƒ”áƒ‘áƒ–áƒ”. " +
+              "áƒžáƒáƒ¡áƒ£áƒ®áƒáƒ‘ áƒ¥áƒáƒ áƒ—áƒ£áƒšáƒáƒ“, áƒ›áƒáƒ™áƒšáƒ”áƒ“ áƒ“áƒ áƒ›áƒ”áƒ’áƒáƒ‘áƒ áƒ£áƒšáƒáƒ“. " +
+              "áƒ¡áƒáƒ˜áƒ¢áƒ˜áƒ¡ áƒ«áƒ˜áƒ áƒ˜áƒ—áƒáƒ“áƒ˜ áƒ¡áƒ”áƒ¥áƒªáƒ˜áƒ”áƒ‘áƒ˜: /lfg (teammate-áƒ”áƒ‘áƒ˜áƒ¡ áƒžáƒáƒ•áƒœáƒ), /games (áƒ—áƒáƒ›áƒáƒ¨áƒ”áƒ‘áƒ˜áƒ¡ áƒ™áƒáƒ¢áƒáƒšáƒáƒ’áƒ˜), /tamashebi (áƒ£áƒ¤áƒáƒ¡áƒ PC áƒ—áƒáƒ›áƒáƒ¨áƒ”áƒ‘áƒ˜), /tournaments (áƒ©áƒ”áƒ›áƒžáƒ˜áƒáƒœáƒáƒ¢áƒ”áƒ‘áƒ˜), /messages (DM-áƒ”áƒ‘áƒ˜). " +
+              "áƒ—áƒ£ áƒ™áƒ˜áƒ—áƒ®áƒ•áƒ gaming-áƒ—áƒáƒœ áƒáƒœ áƒ¡áƒáƒ˜áƒ¢áƒ—áƒáƒœ áƒáƒ  áƒáƒ áƒ˜áƒ¡ áƒ“áƒáƒ™áƒáƒ•áƒ¨áƒ˜áƒ áƒ”áƒ‘áƒ£áƒšáƒ˜, áƒ–áƒ áƒ“áƒ˜áƒšáƒáƒ‘áƒ˜áƒáƒœáƒáƒ“ áƒ’áƒáƒ“áƒáƒáƒ›áƒ˜áƒ¡áƒáƒ›áƒáƒ áƒ—áƒ”.",
+          },
+          ...history,
+        ],
+        max_tokens: 300,
+        temperature: 0.7,
+      }),
+    });
+
+    const json = await res.json();
+    const reply: string = json.choices?.[0]?.message?.content?.trim() ?? "";
+    if (!reply) throw new Error("empty");
+    return NextResponse.json({ reply });
+  } catch (e) {
+    console.error("[/api/chatbot]", e);
+    return NextResponse.json({ error: "ai_error" }, { status: 500 });
+  }
+}
+

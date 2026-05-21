@@ -99,14 +99,14 @@ export function GameCard({ slug, nameKa, players, online, coverUrl, accent }: Ga
               <h3 className="text-lg font-bold text-white transition-colors duration-200 group-hover:text-primary">
                 {nameKa}
               </h3>
-              <p className="text-xs text-white/60">{players.toLocaleString()} მოთამაშე</p>
+              <p className="text-xs text-white/60">{players.toLocaleString("en-US")} მოთამაშე</p>
             </div>
             <div className="flex flex-col items-end gap-1">
               <Badge variant="secondary" className="text-xs tabular-nums">
-                {players.toLocaleString()}
+                {players.toLocaleString("en-US")}
               </Badge>
               <Badge variant="outline" className="text-xs text-emerald-400 border-emerald-500/40 tabular-nums">
-                🟢 {onlineCount.toLocaleString()}
+                🟢 {onlineCount.toLocaleString("en-US")}
               </Badge>
             </div>
           </div>

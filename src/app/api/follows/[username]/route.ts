@@ -28,6 +28,30 @@ export async function POST(
 
   if (error && error.code !== "23505") // ignore duplicate
     return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Push notification + XP for the followed user (not the follower)
+  try {
+    if (!error) {
+      const { data: follower } = await supabase
+        .from("profiles")
+        .select("username, display_name")
+        .eq("id", ids.followerId)
+        .maybeSingle();
+      const name = follower?.display_name ?? follower?.username ?? "ვინმე";
+
+      const { sendPushToUser } = await import("@/lib/push");
+      await sendPushToUser(ids.followingId, {
+        title: `${name}-მ გამოგიწერა`,
+        body: "ნახე ვინ მოგწერა და დაუბრუნე",
+        url: `/profile/${follower?.username ?? ""}`,
+        tag: `follow-${ids.followerId}`,
+      });
+
+      // Award XP to the followed user
+      await supabase.rpc("award_xp", { p_user_id: ids.followingId, p_amount: 5 });
+    }
+  } catch {}
+
   return NextResponse.json({ following: true });
 }
 

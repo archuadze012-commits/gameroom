@@ -74,6 +74,11 @@ export default function SearchPage() {
     );
   }, [q]);
 
+  const onlineCount = useMemo(
+    () => allUsers.filter((u) => u.isOnline).length,
+    [allUsers],
+  );
+
   const roleCounts = useMemo(
     () =>
       Object.fromEntries(
@@ -90,14 +95,14 @@ export default function SearchPage() {
   const tabs = [
     { id: "players" as Tab, label: "მოთამაშეები", icon: <Users className="h-4 w-4" />, count: allUsers.length },
     { id: "games" as Tab, label: "თამაშები", icon: <Gamepad2 className="h-4 w-4" />, count: gameResults.length },
-    { id: "cracked" as Tab, label: "Cracked Games", icon: <Download className="h-4 w-4" />, count: crackedResults.length },
+    { id: "cracked" as Tab, label: "PC თამაშები უფასოდ", icon: <Download className="h-4 w-4" />, count: crackedResults.length },
   ];
 
   return (
     <div className="container mx-auto px-4 py-10 space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">ძებნა</h1>
-        <p className="mt-2 text-muted-foreground">იპოვე მოთამაშეები, თამაშები ან cracked games</p>
+        <p className="mt-2 text-muted-foreground">იპოვე მოთამაშეები, თამაშები ან PC თამაშები უფასოდ</p>
       </div>
 
       <div className="relative">
@@ -136,6 +141,10 @@ export default function SearchPage() {
       {/* Players */}
       {tab === "players" && (
         <div className="space-y-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="h-3 w-3 rounded-full bg-emerald-500" />
+            <span>ონლაინი — {onlineCount}</span>
+          </div>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {ROLE_FILTERS.map((f) => {
               const isActive = roleFilter === f.role;
@@ -217,7 +226,7 @@ export default function SearchPage() {
                           <p className="font-semibold text-white leading-tight group-hover:text-primary transition-colors">
                             {g.nameKa}
                           </p>
-                          <p className="text-[11px] text-white/60">{g.players.toLocaleString()} მოთამაშე</p>
+                          <p className="text-[11px] text-white/60">{g.players.toLocaleString("en-US")} მოთამაშე</p>
                         </div>
                       </div>
                       <Badge variant="outline" className="text-xs text-emerald-400 border-emerald-500/40 shrink-0">
@@ -243,7 +252,7 @@ export default function SearchPage() {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {crackedResults.map((g) => (
-                <Link key={g.id} href={`/cracked-games/${g.id}`}>
+                <Link key={g.id} href={`/tamashebi/${g.id}`}>
                   <Card className="relative overflow-hidden border-border/60 transition-all hover:border-primary/40 hover:shadow-md hover:shadow-primary/5 h-full">
                     <div className={`absolute inset-0 -z-10 bg-gradient-to-br ${g.accent} opacity-50`} />
                     <CardContent className="p-4 flex flex-col gap-3 h-full">

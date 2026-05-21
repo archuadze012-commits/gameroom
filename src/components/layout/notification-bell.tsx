@@ -7,8 +7,17 @@ import { toast } from "sonner";
 import { loadAndClearInvites, type GameInvite } from "@/components/invite-button";
 import { playInviteSound } from "@/lib/sounds";
 
+type Announcement = {
+  id: string;
+  title: string;
+  body: string;
+  severity: "info" | "warning" | "critical";
+  created_at: string;
+};
+
 export function NotificationBell() {
   const [pending, setPending] = useState<GameInvite[]>([]);
+  const [unreadAnnouncements, setUnreadAnnouncements] = useState<Announcement[]>([]);
   const prevCountRef = useRef(0);
 
   useEffect(() => {
@@ -30,14 +39,47 @@ export function NotificationBell() {
       } catch {}
     };
 
+    const checkAnnouncements = async () => {
+      try {
+        const res = await fetch("/api/announcements");
+        const data: { announcements: Announcement[]; readIds: string[] } = await res.json();
+        const readSet = new Set(data.readIds ?? []);
+        const unread = (data.announcements ?? []).filter((a) => !readSet.has(a.id));
+        setUnreadAnnouncements(unread);
+      } catch {}
+    };
+
     checkInvites();
+    checkAnnouncements();
     const id = setInterval(checkInvites, 2000);
-    return () => clearInterval(id);
+    const idAnn = setInterval(checkAnnouncements, 30_000);
+    return () => {
+      clearInterval(id);
+      clearInterval(idAnn);
+    };
   }, []);
 
-  const handleClick = () => {
-    if (pending.length === 0) return;
+  const totalCount = pending.length + unreadAnnouncements.length;
 
+  const handleClick = async () => {
+    if (totalCount === 0) return;
+
+    // Show announcements
+    for (const ann of unreadAnnouncements) {
+      const variantFn =
+        ann.severity === "critical"
+          ? toast.error
+          : ann.severity === "warning"
+          ? toast.warning
+          : toast.info;
+      variantFn(ann.title, { description: ann.body, duration: 12000 });
+      try {
+        await fetch(`/api/announcements/${ann.id}/read`, { method: "POST" });
+      } catch {}
+    }
+    setUnreadAnnouncements([]);
+
+    // Show invites
     try {
       const raw = localStorage.getItem("gameroom_profile");
       const profile = raw ? JSON.parse(raw) : {};
@@ -78,9 +120,9 @@ export function NotificationBell() {
       onClick={handleClick}
     >
       <Bell className="h-4 w-4" />
-      {pending.length > 0 && (
+      {totalCount > 0 && (
         <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
-          {pending.length}
+          {totalCount}
         </span>
       )}
     </Button>

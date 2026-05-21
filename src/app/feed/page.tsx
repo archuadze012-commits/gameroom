@@ -33,8 +33,9 @@ export default async function FeedPage() {
   if (followingIds.length > 0) {
     const { data } = await supabase
       .from("posts")
-      .select("id, content, likes_count, created_at, profiles(username, display_name, avatar_url)")
+      .select("id, content, media_urls, likes_count, created_at, profiles!posts_author_id_fkey(username, display_name, avatar_url, is_verified, role)")
       .in("author_id", followingIds)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(50);
     posts = (data ?? []) as unknown as FeedPost[];
@@ -84,12 +85,15 @@ export default async function FeedPage() {
 export type FeedPost = {
   id: string;
   content: string;
+  media_urls?: string[] | null;
   likes_count: number;
   created_at: string;
   profiles: {
     username: string;
     display_name: string;
     avatar_url: string | null;
+    is_verified?: boolean;
+    role?: string | null;
   };
 };
 

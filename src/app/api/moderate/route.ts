@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 // 30-second in-memory cache for the blocklist
@@ -22,7 +22,7 @@ async function getBlocklist(): Promise<string[]> {
   return cachedWords;
 }
 
-async function groq(messages: { role: string; content: string }[]) {
+async function callOpenAI(messages: { role: string; content: string }[], maxTokens = 30) {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -32,7 +32,7 @@ async function groq(messages: { role: string; content: string }[]) {
     body: JSON.stringify({
       model: "llama-3.3-70b-versatile",
       messages,
-      max_tokens: 20,
+      max_tokens: maxTokens,
       temperature: 0,
     }),
   });
@@ -41,37 +41,39 @@ async function groq(messages: { role: string; content: string }[]) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!process.env.GROQ_API_KEY) return NextResponse.json({ toxic: false });
+  if (!process.env.GROQ_API_KEY) return NextResponse.json({ toxic: false, ok: true });
 
-  let body: { message?: string };
-  try { body = await request.json(); } catch { return NextResponse.json({ toxic: false }); }
+  let body: { message?: string; text?: string };
+  try { body = await request.json(); } catch { return NextResponse.json({ toxic: false, ok: true }); }
 
-  const message = (body.message ?? "").trim();
-  if (!message) return NextResponse.json({ toxic: false });
+  const content = ((body.message ?? body.text ?? "")).trim();
+  if (!content) return NextResponse.json({ toxic: false, ok: true });
 
   // Check against DB blocklist first (fast, no AI needed)
   const blocklist = await getBlocklist();
-  if (blocklist.some((w) => message.includes(w))) {
-    return NextResponse.json({ toxic: true });
+  if (blocklist.some((w) => content.toLowerCase().includes(w.toLowerCase()))) {
+    return NextResponse.json({ toxic: true, ok: false, reason: "áƒ“áƒáƒ‘áƒšáƒáƒ™áƒ˜áƒšáƒ˜ áƒ¡áƒ˜áƒ¢áƒ§áƒ•áƒ" });
   }
 
-  // AI check for English and complex cases
+  // AI check
   try {
-    const text = await groq([
+    const text = await callOpenAI([
       {
         role: "system",
         content:
-          "You are a content moderator for a Georgian gaming community chat. " +
-          "Determine if the message contains toxic content: hate speech, slurs, harassment, explicit threats, or severe profanity in any language. " +
+          "You are a content moderator for a Georgian gaming community. " +
+          "Check if the text contains: hate speech, slurs, harassment, spam, scam links, explicit threats, or adult content in any language. " +
           "Normal gaming language and competitive banter are acceptable. " +
-          'Respond ONLY with JSON: {"toxic": true} or {"toxic": false}',
+          'Respond ONLY with JSON: {"toxic": false} or {"toxic": true, "reason": "short reason in Georgian"}',
       },
-      { role: "user", content: message },
+      { role: "user", content },
     ]);
-    const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
-    return NextResponse.json({ toxic: !!parsed.toxic });
+    const match = text.match(/\{[\s\S]*\}/);
+    const parsed = JSON.parse(match?.[0] ?? '{"toxic":false}');
+    return NextResponse.json({ toxic: !!parsed.toxic, ok: !parsed.toxic, reason: parsed.reason });
   } catch (e) {
     console.error("[/api/moderate]", e);
-    return NextResponse.json({ toxic: false });
+    return NextResponse.json({ toxic: false, ok: true });
   }
 }
+

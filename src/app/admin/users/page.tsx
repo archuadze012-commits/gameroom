@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Ban, ShieldCheck, Shield, MonitorPlay, Trophy, Gamepad2, User, Loader2, RefreshCw } from "lucide-react";
+import { Ban, ShieldCheck, Shield, MonitorPlay, Trophy, Gamepad2, User, Loader2, RefreshCw, BadgeCheck, Download, Clock, History } from "lucide-react";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,15 +62,30 @@ export default function AdminUsersPage() {
     setSaving(null);
   }
 
-  async function toggleBan(userId: string, banned: boolean) {
+  async function toggleBan(userId: string, banned: boolean, minutes: number | null = null) {
     setSaving(userId);
     await fetch("/api/admin/users", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, banned: !banned }),
+      body: JSON.stringify({ userId, banned: !banned, banMinutes: minutes }),
     });
     setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, banned: !banned } : u)));
     setSaving(null);
+  }
+
+  async function toggleVerify(userId: string, current: boolean) {
+    setSaving(userId);
+    await fetch("/api/admin/users", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, isVerified: !current }),
+    });
+    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, isVerified: !current } : u)));
+    setSaving(null);
+  }
+
+  function exportCsv() {
+    window.open("/api/admin/users?format=csv", "_blank");
   }
 
   return (
@@ -86,6 +102,9 @@ export default function AdminUsersPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          <Button variant="outline" size="sm" onClick={exportCsv}>
+            <Download className="mr-1 h-4 w-4" /> CSV
+          </Button>
           <Button variant="outline" size="icon" onClick={load} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
@@ -166,33 +185,74 @@ export default function AdminUsersPage() {
                         {new Date(u.createdAt).toLocaleDateString("ka-GE")}
                       </td>
                       <td className="px-4 py-3">
-                        {u.banned ? (
-                          <Badge variant="outline" className="border-red-500/40 text-red-400">banned</Badge>
-                        ) : (
-                          <Badge variant="outline" className="border-emerald-500/40 text-emerald-400">active</Badge>
-                        )}
+                        <div className="flex flex-col gap-1">
+                          {u.banned ? (
+                            <Badge variant="outline" className="border-red-500/40 text-red-400">banned</Badge>
+                          ) : (
+                            <Badge variant="outline" className="border-emerald-500/40 text-emerald-400">active</Badge>
+                          )}
+                          {u.isVerified && (
+                            <Badge className="bg-sky-500/15 text-sky-400">
+                              <BadgeCheck className="mr-1 h-3 w-3" /> verified
+                            </Badge>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {u.banned ? (
+                        <div className="flex flex-wrap items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            asChild
+                            title="View profile"
+                          >
+                            <Link href={`/profile/${u.username}`} target="_blank">
+                              <User className="h-4 w-4" />
+                            </Link>
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             disabled={isSaving}
-                            onClick={() => toggleBan(u.id, u.banned)}
+                            onClick={() => toggleVerify(u.id, u.isVerified)}
+                            title={u.isVerified ? "Unverify" : "Verify"}
                           >
-                            <ShieldCheck className="mr-1 h-4 w-4" /> Unban
+                            <BadgeCheck className={`h-4 w-4 ${u.isVerified ? "text-sky-400" : ""}`} />
                           </Button>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-400"
-                            disabled={isSaving}
-                            onClick={() => toggleBan(u.id, u.banned)}
-                          >
-                            <Ban className="mr-1 h-4 w-4" /> Ban
-                          </Button>
-                        )}
+                          {u.banned ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={isSaving}
+                              onClick={() => toggleBan(u.id, u.banned)}
+                            >
+                              <ShieldCheck className="mr-1 h-4 w-4" /> Unban
+                            </Button>
+                          ) : (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-amber-400"
+                                disabled={isSaving}
+                                onClick={() => toggleBan(u.id, u.banned, 60)}
+                                title="Ban for 1 hour"
+                              >
+                                <Clock className="mr-1 h-4 w-4" /> 1h
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-400"
+                                disabled={isSaving}
+                                onClick={() => toggleBan(u.id, u.banned)}
+                                title="Permanent ban"
+                              >
+                                <Ban className="mr-1 h-4 w-4" /> Ban
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

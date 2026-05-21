@@ -4,7 +4,11 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { ka } from "date-fns/locale";
-import { Heart, Send, Users, Rss, Newspaper, ArrowRight } from "lucide-react";
+import { Heart, Send, Users, Rss, Newspaper, ArrowRight, ImagePlus, X, Loader2 } from "lucide-react";
+import { ReportButton } from "@/components/report-button";
+import { VerifiedBadge } from "@/components/verified-badge";
+import { PostContent } from "@/components/post-content";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -43,7 +47,47 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set(initialLikedIds));
   const [draft, setDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [mediaUrls, setMediaUrls] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    if (mediaUrls.length + files.length > 4) {
+      toast.error("მაქსიმუმ 4 სურათი");
+      return;
+    }
+    setUploading(true);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const uploads = await Promise.all(
+        Array.from(files).map(async (file) => {
+          if (file.size > 8 * 1024 * 1024) {
+            toast.error("მაქს 8MB სურათზე");
+            return null;
+          }
+          const ext = file.name.split(".").pop() ?? "jpg";
+          const path = `${currentUser.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+          const { error } = await supabase.storage.from("post_media").upload(path, file, {
+            contentType: file.type,
+            upsert: false,
+          });
+          if (error) {
+            toast.error(error.message);
+            return null;
+          }
+          const { data: { publicUrl } } = supabase.storage.from("post_media").getPublicUrl(path);
+          return publicUrl;
+        })
+      );
+      const okUrls = uploads.filter((u): u is string => !!u);
+      setMediaUrls((prev) => [...prev, ...okUrls]);
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
 
   async function handlePost() {
     const content = draft.trim();
@@ -53,14 +97,21 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
       const res = await fetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, mediaUrls }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error || "unknown");
+      }
       const newPost: FeedPost = await res.json();
       setPosts((prev) => [newPost, ...prev]);
       setDraft("");
-    } catch {
-      toast.error("პოსტის გამოქვეყნება ვერ მოხერხდა");
+      setMediaUrls([]);
+      // unlock badges in background
+      fetch("/api/badges/check", { method: "POST" }).catch(() => {});
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      toast.error(`პოსტის გამოქვეყნება ვერ მოხერხდა${msg ? ` — ${msg}` : ""}`);
     } finally {
       setSubmitting(false);
     }
@@ -129,9 +180,46 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handlePost(); }}
             />
+
+            {mediaUrls.length > 0 && (
+              <div className="grid grid-cols-4 gap-2">
+                {mediaUrls.map((url, i) => (
+                  <div key={url} className="relative aspect-square overflow-hidden rounded-md border border-border/60">
+                    <img src={url} alt="" className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setMediaUrls((prev) => prev.filter((_, j) => j !== i))}
+                      className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white hover:bg-rose-500"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              multiple
+              className="hidden"
+              onChange={(e) => handleFiles(e.target.files)}
+            />
             <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">{draft.length}/2000</span>
-              <Button size="sm" disabled={!draft.trim() || submitting} onClick={handlePost}>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading || mediaUrls.length >= 4}
+                  className="flex items-center gap-1 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-primary disabled:opacity-50"
+                  title="დაამატე სურათი"
+                >
+                  {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                </button>
+                <span className="text-xs text-muted-foreground">{draft.length}/2000</span>
+              </div>
+              <Button size="sm" disabled={!draft.trim() || submitting || uploading} onClick={handlePost}>
                 <Send className="mr-1.5 h-3.5 w-3.5" />
                 {submitting ? "იგზავნება..." : "გამოქვეყნება"}
               </Button>
@@ -183,8 +271,9 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
                     </Avatar>
                   </Link>
                   <div>
-                    <Link href={`/profile/${author.username}`} className="text-sm font-semibold hover:text-primary transition-colors">
+                    <Link href={`/profile/${author.username}`} className="flex items-center gap-1 text-sm font-semibold hover:text-primary transition-colors">
                       {author.display_name || author.username}
+                      {author.is_verified && <VerifiedBadge className="h-3.5 w-3.5" />}
                     </Link>
                     <p className="text-xs text-muted-foreground">{timeAgo(post.created_at)}</p>
                   </div>
@@ -192,15 +281,23 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
                     <Rss className="mr-1 h-2.5 w-2.5" /> პოსტი
                   </Badge>
                 </div>
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">{post.content}</p>
+                <PostContent
+                  content={post.content}
+                  mediaUrls={post.media_urls}
+                  authorRole={author.role}
+                  authorVerified={author.is_verified}
+                />
                 <Separator className="border-border/40" />
-                <button
-                  onClick={() => toggleLike(post.id)}
-                  className={`flex items-center gap-1.5 text-xs transition-colors ${liked ? "text-red-400" : "text-muted-foreground hover:text-red-400"}`}
-                >
-                  <Heart className={`h-4 w-4 ${liked ? "fill-red-400" : ""}`} />
-                  {post.likes_count}
-                </button>
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => toggleLike(post.id)}
+                    className={`flex items-center gap-1.5 text-xs transition-colors ${liked ? "text-red-400" : "text-muted-foreground hover:text-red-400"}`}
+                  >
+                    <Heart className={`h-4 w-4 ${liked ? "fill-red-400" : ""}`} />
+                    {post.likes_count}
+                  </button>
+                  <ReportButton targetType="post" targetId={post.id} />
+                </div>
               </CardContent>
             </Card>
           );

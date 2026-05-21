@@ -1,14 +1,36 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, MapPin, Mic, Users as UsersIcon, Clock } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ka } from "date-fns/locale";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { mockGames, mockLfgPosts } from "@/lib/mock-data";
+import { mockGames } from "@/lib/mock-data";
 import { JoinRequestForm } from "./join-request-form";
+import { TeammateSuggestions } from "./teammate-suggestions";
 import { GameIcon } from "@/components/game-icon";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
+
+type LfgRow = {
+  id: string;
+  game_slug: string;
+  title: string;
+  description: string;
+  rank: string | null;
+  region: string | null;
+  slots_total: number;
+  voice_required: boolean;
+  created_at: string;
+  profiles: {
+    username: string | null;
+    display_name: string | null;
+    avatar_url: string | null;
+  } | null;
+};
 
 export default async function LfgDetailPage({
   params,
@@ -16,15 +38,30 @@ export default async function LfgDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const post = mockLfgPosts.find((p) => p.id === id);
-  if (!post) notFound();
-  const game = mockGames.find((g) => g.slug === post.gameSlug);
 
-  const mockResponses = [
-    { name: "Beka", ago: "5 წთ წინ", message: "მოვალ! Crown I-ვარ" },
-    { name: "Nika", ago: "8 წთ წინ", message: "Voice-ით კი, +1" },
-    { name: "Saba", ago: "20 წთ წინ", message: "მე და მეგობარი მოვალთ" },
-  ];
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from("lfg_posts")
+    .select(
+      "id, game_slug, title, description, rank, region, slots_total, voice_required, created_at, profiles!lfg_posts_author_id_fkey(username, display_name, avatar_url)"
+    )
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (!data) notFound();
+  const post = data as unknown as LfgRow;
+  const game = mockGames.find((g) => g.slug === post.game_slug);
+  const author = post.profiles;
+  const authorName = author?.username ?? "გამოუცნობი";
+  const displayName = author?.display_name ?? authorName;
+  const createdAgo = (() => {
+    try {
+      return formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: ka });
+    } catch {
+      return "";
+    }
+  })();
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
@@ -41,82 +78,66 @@ export default async function LfgDetailPage({
             <CardContent className="space-y-4 p-6">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 {game && <GameIcon game={game} size="sm" />}
-                <Link href={`/games/${game?.slug}`} className="hover:text-foreground">
-                  {game?.nameKa}
-                </Link>
+                {game ? (
+                  <Link href={`/games/${game.slug}`} className="hover:text-foreground">
+                    {game.nameKa}
+                  </Link>
+                ) : (
+                  <span>{post.game_slug}</span>
+                )}
                 <span>·</span>
                 <Clock className="h-3.5 w-3.5" />
-                <span>{post.createdAgo}</span>
+                <span>{createdAgo}</span>
               </div>
 
               <h1 className="text-2xl font-bold">{post.title}</h1>
 
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10 border border-border">
+                  <AvatarImage src={author?.avatar_url ?? undefined} alt={displayName} />
                   <AvatarFallback className="bg-primary/15 text-primary">
-                    {post.authorName.slice(0, 1)}
+                    {displayName.slice(0, 1).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div>
                   <Link
-                    href={`/profile/${post.authorName}`}
+                    href={`/profile/${authorName}`}
                     className="text-sm font-medium hover:text-primary"
                   >
-                    @{post.authorName}
+                    @{authorName}
                   </Link>
                   <div className="text-xs text-muted-foreground">პოსტის ავტორი</div>
                 </div>
               </div>
 
-              <Separator />
-
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                {post.description}
-              </p>
+              {post.description && (
+                <>
+                  <Separator />
+                  <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+                    {post.description}
+                  </p>
+                </>
+              )}
 
               <div className="flex flex-wrap gap-2 pt-2">
-                <Badge variant="outline" className="text-xs">🏅 {post.rank}</Badge>
-                <Badge variant="outline" className="text-xs">
-                  <MapPin className="mr-1 h-3 w-3" /> {post.region}
-                </Badge>
-                {post.voiceRequired && (
+                {post.rank && <Badge variant="outline" className="text-xs">🏅 {post.rank}</Badge>}
+                {post.region && (
+                  <Badge variant="outline" className="text-xs">
+                    <MapPin className="mr-1 h-3 w-3" /> {post.region}
+                  </Badge>
+                )}
+                {post.voice_required && (
                   <Badge variant="outline" className="text-xs">
                     <Mic className="mr-1 h-3 w-3" /> voice
                   </Badge>
                 )}
                 <Badge className="text-xs">
                   <UsersIcon className="mr-1 h-3 w-3" />
-                  {post.slots.filled}/{post.slots.total} ადგილი
+                  0/{post.slots_total} ადგილი
                 </Badge>
               </div>
             </CardContent>
           </Card>
-
-          <div>
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              პასუხები ({mockResponses.length})
-            </h2>
-            <div className="space-y-2">
-              {mockResponses.map((r, i) => (
-                <Card key={i} className="border-border/60">
-                  <CardContent className="flex items-start gap-3 p-4">
-                    <Avatar className="h-9 w-9 border border-border">
-                      <AvatarFallback className="bg-secondary text-foreground/80">
-                        {r.name.slice(0, 1)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className="font-medium">@{r.name}</span>
-                        <span className="text-muted-foreground">{r.ago}</span>
-                      </div>
-                      <p className="mt-1 text-sm">{r.message}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
         </div>
 
         <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
@@ -132,18 +153,19 @@ export default async function LfgDetailPage({
             </CardContent>
           </Card>
 
+          <TeammateSuggestions
+            postId={post.id}
+            gameSlug={post.game_slug}
+            title={post.title}
+            description={post.description}
+          />
+
           <Card className="border-border/60">
             <CardContent className="space-y-2 p-5 text-xs text-muted-foreground">
               <h4 className="text-sm font-semibold text-foreground">სტატისტიკა</h4>
               <div className="flex justify-between">
-                <span>დარჩენილი ადგილი</span>
-                <span className="font-medium text-foreground">
-                  {post.slots.total - post.slots.filled}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>პასუხების რაოდენობა</span>
-                <span className="font-medium text-foreground">{post.responseCount}</span>
+                <span>ადგილების რაოდენობა</span>
+                <span className="font-medium text-foreground">{post.slots_total}</span>
               </div>
               <div className="flex justify-between">
                 <span>სტატუსი</span>
@@ -155,8 +177,4 @@ export default async function LfgDetailPage({
       </div>
     </div>
   );
-}
-
-export function generateStaticParams() {
-  return mockLfgPosts.map((p) => ({ id: p.id }));
 }

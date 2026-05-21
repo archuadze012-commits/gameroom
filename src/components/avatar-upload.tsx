@@ -63,6 +63,12 @@ export function AvatarUpload({ username, displayName, avatarUrl, isOwner }: Avat
       const { error: updateError } = await supabase.auth.updateUser({ data: { avatar_url: publicUrl } });
       if (updateError) throw updateError;
 
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: publicUrl })
+        .eq("id", user.id);
+      if (profileError) throw profileError;
+
       await supabase.auth.refreshSession();
 
       try {

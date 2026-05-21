@@ -1,24 +1,22 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { ImagePlus, Loader2, X } from "lucide-react";
 import { ImageCropModal } from "@/components/image-crop-modal";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
-const STORAGE_KEY = "gameroom_banner";
+interface BannerUploadProps {
+  isOwner: boolean;
+  userId?: string;
+  initialBannerUrl?: string | null;
+}
 
-export function BannerUpload({ isOwner }: { isOwner: boolean }) {
-  const [bannerSrc, setBannerSrc] = useState<string | null>(null);
+export function BannerUpload({ isOwner, userId, initialBannerUrl }: BannerUploadProps) {
+  const [bannerSrc, setBannerSrc] = useState<string | null>(initialBannerUrl ?? null);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) setBannerSrc(saved);
-    } catch {}
-  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -30,19 +28,52 @@ export function BannerUpload({ isOwner }: { isOwner: boolean }) {
     if (inputRef.current) inputRef.current.value = "";
   };
 
-  const handleCropConfirm = (croppedDataUrl: string) => {
+  const handleCropConfirm = async (croppedDataUrl: string) => {
     setCropSrc(null);
+    if (!userId) return;
     setLoading(true);
-    localStorage.setItem(STORAGE_KEY, croppedDataUrl);
-    setBannerSrc(croppedDataUrl);
-    toast.success("ბანერი განახლდა.");
-    setLoading(false);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const blob = await fetch(croppedDataUrl).then((r) => r.blob());
+      const path = `${userId}/banner.jpg`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("banners")
+        .upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage.from("banners").getPublicUrl(path);
+      const cacheBusted = `${publicUrl}?t=${Date.now()}`;
+
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ banner_url: publicUrl })
+        .eq("id", userId);
+      if (profileError) throw profileError;
+
+      setBannerSrc(cacheBusted);
+      toast.success("ბანერი განახლდა.");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "ატვირთვა ვერ მოხერხდა.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRemove = () => {
-    localStorage.removeItem(STORAGE_KEY);
-    setBannerSrc(null);
-    toast.success("ბანერი წაიშალა.");
+  const handleRemove = async () => {
+    if (!userId) return;
+    setLoading(true);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      await supabase.storage.from("banners").remove([`${userId}/banner.jpg`]);
+      await supabase.from("profiles").update({ banner_url: null }).eq("id", userId);
+      setBannerSrc(null);
+      toast.success("ბანერი წაიშალა.");
+    } catch {
+      toast.error("წაშლა ვერ მოხერხდა.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -77,7 +108,8 @@ export function BannerUpload({ isOwner }: { isOwner: boolean }) {
               <button
                 type="button"
                 onClick={handleRemove}
-                className="flex items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-red-500/40"
+                disabled={loading}
+                className="flex items-center gap-2 rounded-md bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-red-500/40 disabled:cursor-not-allowed"
               >
                 <X className="h-4 w-4" /> წაშლა
               </button>

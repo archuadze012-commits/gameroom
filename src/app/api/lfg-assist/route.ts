@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   if (!process.env.GROQ_API_KEY) return NextResponse.json({ error: "no_key" }, { status: 500 });
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   const prompt = (body.prompt ?? "").trim();
   if (!prompt) return NextResponse.json({ error: "empty" }, { status: 400 });
 
-  const game = body.game ? `თამაში: ${body.game}` : "";
+  const game = body.game ? `áƒ—áƒáƒ›áƒáƒ¨áƒ˜: ${body.game}` : "";
 
   try {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -24,21 +24,29 @@ export async function POST(request: NextRequest) {
           {
             role: "system",
             content:
-              "შენ ხარ ასისტენტი Georgian gaming community საიტზე (gameroom.com.ge). " +
-              "მომხმარებელი ეძებს teammate-ებს. მისი მოკლე აღწერის მიხედვით გენერირე: " +
-              "სათაური (მაქს 60 სიმბოლო, მიმზიდველი) და აღწერა (2-3 წინადადება ქართულად). " +
-              'მხოლოდ JSON დააბრუნე: {"title": "...", "description": "..."}',
+              "áƒ¨áƒ”áƒœ áƒ®áƒáƒ  áƒáƒ¡áƒ˜áƒ¡áƒ¢áƒ”áƒœáƒ¢áƒ˜ Georgian gaming community áƒ¡áƒáƒ˜áƒ¢áƒ–áƒ” (gameroom.com.ge). " +
+              "áƒ›áƒáƒ›áƒ®áƒ›áƒáƒ áƒ”áƒ‘áƒ”áƒšáƒ˜ áƒ”áƒ«áƒ”áƒ‘áƒ¡ teammate-áƒ”áƒ‘áƒ¡. áƒ›áƒ˜áƒ¡áƒ˜ áƒ›áƒáƒ™áƒšáƒ” áƒáƒ¦áƒ¬áƒ”áƒ áƒ˜áƒ¡ áƒ›áƒ˜áƒ®áƒ”áƒ“áƒ•áƒ˜áƒ— áƒ’áƒ”áƒœáƒ”áƒ áƒ˜áƒ áƒ”: " +
+              "áƒ¡áƒáƒ—áƒáƒ£áƒ áƒ˜ (áƒ›áƒáƒ¥áƒ¡ 60 áƒ¡áƒ˜áƒ›áƒ‘áƒáƒšáƒ, áƒ›áƒ˜áƒ›áƒ–áƒ˜áƒ“áƒ•áƒ”áƒšáƒ˜) áƒ“áƒ áƒáƒ¦áƒ¬áƒ”áƒ áƒ (2-3 áƒ¬áƒ˜áƒœáƒáƒ“áƒáƒ“áƒ”áƒ‘áƒ áƒ¥áƒáƒ áƒ—áƒ£áƒšáƒáƒ“). " +
+              'áƒ›áƒ®áƒáƒšáƒáƒ“ JSON áƒ“áƒáƒáƒ‘áƒ áƒ£áƒœáƒ”: {"title": "...", "description": "..."}',
           },
           { role: "user", content: `${game}\n${prompt}` },
         ],
-        max_tokens: 200,
+        max_tokens: 300,
         temperature: 0.7,
       }),
     });
 
     const json = await res.json();
+
+    if (!res.ok) {
+      console.error("[/api/lfg-assist] OpenAI error:", JSON.stringify(json));
+      return NextResponse.json({ error: "openai_error", detail: json?.error?.message }, { status: 500 });
+    }
+
     const text: string = json.choices?.[0]?.message?.content?.trim() ?? "";
-    const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error(`no json in: ${text.slice(0, 200)}`);
+    const parsed = JSON.parse(match[0]);
     if (!parsed.title || !parsed.description) throw new Error("bad format");
     return NextResponse.json({ title: parsed.title, description: parsed.description });
   } catch (e) {
@@ -46,3 +54,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "ai_error" }, { status: 500 });
   }
 }
+

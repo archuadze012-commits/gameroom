@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mockGames, mockTournaments } from "@/lib/mock-data";
 import { generateSingleElimBracket } from "@/lib/tournament/generate-bracket";
 import { Bracket } from "@/components/tournament/bracket";
+import { MatchSummary } from "@/components/tournament/match-summary";
 
 export default async function TournamentDetailPage({
   params,
@@ -129,8 +130,15 @@ export default async function TournamentDetailPage({
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="bracket" className="mt-6">
+        <TabsContent value="bracket" className="mt-6 space-y-4">
           <Bracket matches={matches} />
+          {(t.status === "completed" || t.status === "live") && (
+            <MatchSummary
+              tournamentName={t.name}
+              game={game?.nameKa ?? t.gameSlug}
+              matches={matches}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="participants" className="mt-6">
