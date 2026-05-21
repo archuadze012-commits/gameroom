@@ -52,13 +52,6 @@ export const matchStatusEnum = pgEnum("match_status", [
   "disputed",
 ]);
 export const articleStatusEnum = pgEnum("article_status", ["draft", "published", "archived"]);
-export const chatChannelTypeEnum = pgEnum("chat_channel_type", [
-  "global",
-  "game",
-  "lfg",
-  "tournament",
-  "direct",
-]);
 export const notificationTypeEnum = pgEnum("notification_type", [
   "lfg_response",
   "lfg_accepted",
@@ -245,20 +238,6 @@ export const forumPosts = pgTable(
   (t) => [index("forum_post_thread_idx").on(t.threadId, t.createdAt)],
 );
 
-export const forumLikes = pgTable(
-  "forum_likes",
-  {
-    postId: uuid("post_id")
-      .notNull()
-      .references(() => forumPosts.id, { onDelete: "cascade" }),
-    userId: uuid("user_id")
-      .notNull()
-      .references(() => profiles.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  },
-  (t) => [primaryKey({ columns: [t.postId, t.userId] })],
-);
-
 // ---------- News ----------
 
 export const newsArticles = pgTable(
@@ -280,23 +259,6 @@ export const newsArticles = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [index("news_published_idx").on(t.status, t.publishedAt)],
-);
-
-export const newsComments = pgTable(
-  "news_comments",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    articleId: uuid("article_id")
-      .notNull()
-      .references(() => newsArticles.id, { onDelete: "cascade" }),
-    userId: uuid("user_id")
-      .notNull()
-      .references(() => profiles.id, { onDelete: "cascade" }),
-    parentId: uuid("parent_id"),
-    body: text("body").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  },
-  (t) => [index("news_comment_article_idx").on(t.articleId, t.createdAt)],
 );
 
 // ---------- Tournaments ----------
@@ -372,36 +334,6 @@ export const tournamentMatches = pgTable(
   (t) => [
     uniqueIndex("tournament_match_unique").on(t.tournamentId, t.round, t.position),
   ],
-);
-
-// ---------- Chat ----------
-
-export const chatChannels = pgTable(
-  "chat_channels",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    type: chatChannelTypeEnum("type").notNull(),
-    referenceId: uuid("reference_id"),
-    name: varchar("name", { length: 128 }).notNull(),
-    description: text("description"),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  },
-);
-
-export const chatMessages = pgTable(
-  "chat_messages",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    channelId: uuid("channel_id")
-      .notNull()
-      .references(() => chatChannels.id, { onDelete: "cascade" }),
-    userId: uuid("user_id")
-      .notNull()
-      .references(() => profiles.id, { onDelete: "cascade" }),
-    body: text("body").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  },
-  (t) => [index("chat_message_channel_idx").on(t.channelId, t.createdAt)],
 );
 
 // ---------- Notifications ----------

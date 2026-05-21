@@ -6,6 +6,7 @@ import { MobileNav } from "./mobile-nav";
 import { NotificationBell } from "./notification-bell";
 import { PushBell } from "@/components/push-bell";
 import { MessagesLink } from "./messages-link";
+import { AnnouncementsLink } from "./announcements-link";
 import { navLinks, adminLinks } from "./nav-links";
 import { getCurrentRole } from "@/lib/admin";
 import { getSession } from "@/lib/auth";
@@ -80,6 +81,7 @@ export async function SiteHeader() {
 
         <div className="ml-auto hidden xl:flex items-center gap-2">
           <div className="hidden xl:flex"><MessagesLink /></div>
+          <div className="hidden xl:flex"><AnnouncementsLink /></div>
           <PushBell className="hidden xl:inline-flex" />
           <div className="hidden xl:flex"><NotificationBell /></div>
           <UserMenu />

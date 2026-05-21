@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Rss, Heart, MessageCircle } from "lucide-react";
+import { ArrowRight, Rss, Heart, MessageCircle, Search, MessageSquare, Bell, Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/auth";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
@@ -24,17 +24,19 @@ type HomePost = {
 export default async function HomePage() {
   const user = await getSession().catch(() => null);
 
-  // recent public feed posts (homepage hero feed section)
+  // recent public feed posts
   let recentPosts: HomePost[] = [];
-  if (user) {
+  try {
     const supabase = await createSupabaseServerClient();
     const { data } = await supabase
       .from("posts")
       .select("id, content, media_urls, likes_count, created_at, profiles!posts_author_id_fkey(username, display_name, avatar_url)")
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
-      .limit(5);
+      .limit(8);
     recentPosts = (data ?? []) as unknown as HomePost[];
+  } catch {
+    recentPosts = [];
   }
 
   return (
@@ -76,18 +78,20 @@ export default async function HomePage() {
                 {/* Quick nav */}
                 <div className="mt-4 grid grid-cols-4 gap-3">
                   {[
-                    { emoji: "🔎", label: "ძებნა", href: "/search" },
-                    { emoji: "💬", label: "ჩათი", href: "/chat" },
-                    { emoji: "📢", label: "პოსტები", href: "/feed" },
-                    { emoji: "🎮", label: "თამაშები", href: "/tamashebi" },
-                  ].map((it) => (
+                    { icon: Search,        label: "ძებნა",     href: "/search" },
+                    { icon: Gamepad2,      label: "თამაშები",  href: "/tamashebi" },
+                    { icon: MessageSquare, label: "მესენჯერი", href: "/messages" },
+                    { icon: Bell,          label: "უწყებები",  href: "/announcements" },
+                  ].map(({ icon: Icon, label, href }) => (
                     <Link
-                      key={it.href}
-                      href={it.href}
-                      className="flex flex-col items-center gap-1 rounded-xl border border-[#1e2a44] bg-[#0f1626] py-4 text-center text-sm transition-colors hover:border-cyan-400/40"
+                      key={href}
+                      href={href}
+                      className="group flex flex-col items-center gap-2 rounded-xl border border-[#1e2a44] bg-[#0a0f1e] py-4 text-center text-xs font-medium text-muted-foreground transition-all hover:border-cyan-400/40 hover:bg-[#0f1626]"
                     >
-                      <span className="text-2xl">{it.emoji}</span>
-                      <span>{it.label}</span>
+                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-400/10 text-cyan-400 shadow-[0_0_12px_2px_rgba(34,211,238,0.25)] transition-shadow group-hover:shadow-[0_0_18px_4px_rgba(34,211,238,0.4)]">
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <span>{label}</span>
                     </Link>
                   ))}
                 </div>
@@ -117,22 +121,20 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Posts feed (only shown to logged-in users) */}
-      {user && (
-        <section className="container mx-auto px-4">
-          <SectionHeader
-            icon={<Rss className="h-5 w-5" />}
-            title="ბოლო პოსტები"
-            subtitle="ახალი მესიჯები კომიუნითიდან"
-            href="/feed"
-          />
-          {recentPosts.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#1e2a44] py-10 text-center text-sm text-[#9fb3d1]">
-              ჯერ არცერთი პოსტი არ არის. გახდი პირველი ვინც დაწერს!
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {recentPosts.map((p) => {
+      {/* Posts feed */}
+      <section className="container mx-auto px-4">
+        <SectionHeader
+          icon={<Rss className="h-5 w-5" />}
+          title="ბოლო პოსტები"
+          subtitle="ახალი მესიჯები კომიუნითიდან"
+        />
+        {recentPosts.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-[#1e2a44] py-10 text-center text-sm text-[#9fb3d1]">
+            ჯერ არცერთი პოსტი არ არის. გახდი პირველი ვინც დაწერს!
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {recentPosts.map((p) => {
                 const author = p.profiles;
                 const name = author?.display_name ?? author?.username ?? "მომხმარებელი";
                 const initial = name.slice(0, 1).toUpperCase();
@@ -195,11 +197,10 @@ export default async function HomePage() {
                     </div>
                   </Link>
                 );
-              })}
-            </div>
-          )}
-        </section>
-      )}
+            })}
+          </div>
+        )}
+      </section>
 
     </div>
   );

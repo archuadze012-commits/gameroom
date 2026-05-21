@@ -142,7 +142,7 @@ export default async function ProfilePage({
             </div>
 
             {/* Right — stats list + follow + action buttons */}
-            <div className="w-full">
+            <div className="w-full md:mt-16">
               <ProfileSummaryRight
                 username={username}
                 isOwner={isOwner}

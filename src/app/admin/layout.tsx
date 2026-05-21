@@ -24,7 +24,6 @@ const allLinks = [
   { href: "/admin/users", label: "მომხმარებლები", icon: UsersIcon, roles: ["admin"] },
   { href: "/admin/reports", label: "Reports", icon: Flag, roles: ["admin", "moderator"] },
   { href: "/admin/moderation-queue", label: "Moderation Queue", icon: MessageSquareWarning, roles: ["admin", "moderator"] },
-  { href: "/admin/chat-mod", label: "Chat Mod", icon: ShieldAlert, roles: ["admin", "moderator"] },
   { href: "/admin/announcements", label: "Announcements", icon: Megaphone, roles: ["admin"] },
   { href: "/admin/pins", label: "Pins & Featured", icon: Pin, roles: ["admin"] },
   { href: "/admin/email", label: "Email Blast", icon: Mail, roles: ["admin"] },

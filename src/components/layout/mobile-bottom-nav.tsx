@@ -126,6 +126,8 @@ export function MobileBottomNav() {
     return () => document.removeEventListener("mousedown", handler);
   }, [moreOpen]);
 
+  if (!profile) return null;
+
   const isActive = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   const tabs = [
