@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
   // AI moderation (inline — no loopback HTTP call)
   const textToCheck = [title, body.description ?? ""].filter(Boolean).join(" ");
-  const mod = await moderateText(textToCheck).catch(() => ({ ok: true }));
+  const mod = await moderateText(textToCheck).catch(() => ({ ok: true, reason: undefined as string | undefined }));
   if (!mod.ok) {
     return NextResponse.json({ error: "content_blocked", reason: mod.reason ?? "შეუსაბამო კონტენტი" }, { status: 422 });
   }
