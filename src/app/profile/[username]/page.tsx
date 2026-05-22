@@ -1,4 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { mockLfgPosts, mockFeedPosts, mockUsers } from "@/lib/mock-data";
 import { RoleBadge, type UserRole } from "@/components/role-badge";
@@ -89,16 +88,30 @@ export default async function ProfilePage({
 
   const steamAccount = linkedAccounts.find((a) => a.provider === "steam");
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <Card className="overflow-hidden border-border/60">
-        <BannerUpload
-          isOwner={isOwner}
-          userId={isOwner ? (currentUserId ?? undefined) : undefined}
-          initialBannerUrl={dbProfile?.banner_url ?? null}
-        />
+  const cutMd = "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)";
+  const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.5))";
 
-        <CardContent className="space-y-5 px-6 pb-6 pt-0">
+  return (
+    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
+      <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
+
+      <div className="container relative mx-auto px-4 py-10 lg:py-14">
+        <article
+          className="relative isolate"
+          style={{ background: cardBorder, padding: 1, clipPath: cutMd }}
+        >
+          <div
+            className="relative overflow-hidden bg-[var(--gr-bg-1)]"
+            style={{ clipPath: cutMd }}
+          >
+            <span aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[var(--gr-grad-card)]" />
+            <BannerUpload
+              isOwner={isOwner}
+              userId={isOwner ? (currentUserId ?? undefined) : undefined}
+              initialBannerUrl={dbProfile?.banner_url ?? null}
+            />
+
+            <div className="space-y-5 px-6 pb-6 pt-0">
           {/* Header — 2-col grid: left summary | right stats */}
           <div className="-mt-16 flex flex-col items-center gap-5 md:grid md:grid-cols-[minmax(220px,1fr)_minmax(260px,1fr)] md:items-start md:gap-6">
             {/* Left — avatar + name + badge + social icons */}
@@ -210,7 +223,7 @@ export default async function ProfilePage({
             }
             lfg={
               userPosts.length === 0 ? (
-                <p className="rounded-2xl border border-dashed border-[#1e2a44] py-8 text-center text-sm text-[#9fb3d1]">
+                <p className="border border-dashed border-[var(--gr-border-hi)] bg-[var(--gr-bg-2)]/40 py-8 text-center text-[13px] text-[var(--gr-text-mute)]">
                   ჯერ არცერთი LFG პოსტი არ არის.
                 </p>
               ) : (
@@ -218,23 +231,26 @@ export default async function ProfilePage({
                   {userPosts.map((p) => (
                     <div
                       key={p.id}
-                      className="rounded-2xl border border-[#1e2a44] bg-[#0f1626] p-3 text-sm"
+                      className="bg-[var(--gr-bg-2)] p-3 text-[13px] ring-1 ring-[var(--gr-border)]"
+                      style={{ clipPath: "polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%)" }}
                     >
-                      <p className="font-medium">{p.title}</p>
-                      <p className="mt-1 text-xs text-[#9fb3d1]">{p.gameSlug}</p>
+                      <p className="font-display text-[14px] font-bold uppercase tracking-tight text-[var(--gr-text)]">{p.title}</p>
+                      <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-[var(--gr-text-dim)]">{p.gameSlug}</p>
                     </div>
                   ))}
                 </div>
               )
             }
             friends={
-              <p className="rounded-2xl border border-dashed border-[#1e2a44] py-8 text-center text-sm text-[#9fb3d1]">
+              <p className="border border-dashed border-[var(--gr-border-hi)] bg-[var(--gr-bg-2)]/40 py-8 text-center text-[13px] text-[var(--gr-text-mute)]">
                 მეგობრების სია მალე იქნება ხელმისაწვდომი.
               </p>
             }
           />
-        </CardContent>
-      </Card>
+            </div>
+          </div>
+        </article>
+      </div>
     </div>
   );
 }

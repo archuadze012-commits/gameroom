@@ -1,15 +1,51 @@
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
 import { SettingsForm } from "./settings-form";
 import { LinkedAccountsSection } from "@/components/linked-accounts-section";
 import { SkillAssessment } from "@/components/skill-assessment";
 import { PushBell } from "@/components/push-bell";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { mockGames } from "@/lib/mock-data";
 
 export const metadata = { title: "პარამეტრები" };
+
+const cutMd = "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)";
+const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.5))";
+
+function AngularSection({
+  eyebrow,
+  title,
+  description,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      className="relative isolate"
+      style={{ background: cardBorder, padding: 1, clipPath: cutMd }}
+    >
+      <div className="relative bg-[var(--gr-bg-1)] p-6 gr-sweep" style={{ clipPath: cutMd }}>
+        <span aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[var(--gr-grad-card)]" />
+        <header className="mb-5">
+          <Eyebrow tone="amber">{eyebrow}</Eyebrow>
+          <h2 className="mt-2 font-display text-[20px] font-bold uppercase tracking-tight text-[var(--gr-text)]">
+            {title}
+          </h2>
+          {description && (
+            <p className="mt-1 text-[13px] text-[var(--gr-text-mute)]">{description}</p>
+          )}
+        </header>
+        {children}
+      </div>
+    </section>
+  );
+}
 
 export default async function SettingsPage() {
   const user = await getSession();
@@ -35,36 +71,32 @@ export default async function SettingsPage() {
     : allGames;
 
   return (
-    <div className="container mx-auto max-w-3xl space-y-6 px-4 py-8">
-      <PageHeader
-        title="პარამეტრები"
-        description="შენი პროფილი, ხელმისაწვდომობა, თამაშების ცნობარი."
-      />
+    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
+      <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
 
-      <Card className="border-border/60">
-        <CardHeader>
-          <CardTitle>პროფილი</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="container relative mx-auto max-w-3xl px-4 py-10 lg:py-14 space-y-6">
+        <PageHeader
+          eyebrow="ანგარიში"
+          title="პარამეტრები"
+          description="შენი პროფილი, ხელმისაწვდომობა, თამაშების ცნობარი."
+        />
+
+        <AngularSection eyebrow="პერსონალური" title="პროფილი">
           <SettingsForm games={games} />
-        </CardContent>
-      </Card>
+        </AngularSection>
 
-      <SkillAssessment games={games} />
+        <SkillAssessment games={games} />
 
-      <Card className="border-border/60">
-        <CardHeader>
-          <CardTitle>Push შეტყობინებები</CardTitle>
-          <CardDescription>
-            ჩართე ბრაუზერის push შეტყობინებები — მიიღებ სიახლეებს ახალი გამოცხადებების, შეტყობინებებისა და მოწვევების შესახებ.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <AngularSection
+          eyebrow="შეტყობინებები"
+          title="Push შეტყობინებები"
+          description="ჩართე ბრაუზერის push შეტყობინებები — მიიღებ სიახლეებს ახალი გამოცხადებების, შეტყობინებებისა და მოწვევების შესახებ."
+        >
           <PushBell />
-        </CardContent>
-      </Card>
+        </AngularSection>
 
-      <LinkedAccountsSection />
+        <LinkedAccountsSection />
+      </div>
     </div>
   );
 }

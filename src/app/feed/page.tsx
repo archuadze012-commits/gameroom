@@ -64,20 +64,23 @@ export default async function FeedPage() {
   }));
 
   return (
-    <div className="container mx-auto max-w-2xl px-4 py-8">
-      <FeedClient
-        currentUser={{
-          id: user.id,
-          username: profile?.username ?? user.email?.split("@")[0] ?? "",
-          displayName: profile?.display_name ?? "",
-          avatarUrl: profile?.avatar_url ?? "",
-          favoriteGameSlugs: favSlugs,
-        }}
-        initialPosts={posts}
-        initialLikedIds={likedPostIds}
-        news={newsWithGame}
-        followingCount={followingIds.length}
-      />
+    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
+      <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
+      <div className="container relative mx-auto max-w-2xl px-4 py-10 lg:py-14">
+        <FeedClient
+          currentUser={{
+            id: user.id,
+            username: profile?.username ?? user.email?.split("@")[0] ?? "",
+            displayName: profile?.display_name ?? "",
+            avatarUrl: profile?.avatar_url ?? "",
+            favoriteGameSlugs: favSlugs,
+          }}
+          initialPosts={posts}
+          initialLikedIds={likedPostIds}
+          news={newsWithGame}
+          followingCount={followingIds.length}
+        />
+      </div>
     </div>
   );
 }

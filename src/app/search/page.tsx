@@ -9,6 +9,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { mockGames, crackedGames } from "@/lib/mock-data";
 import { PlayerCard } from "@/components/player-card";
 import { GameIcon } from "@/components/game-icon";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { DisplayHeading } from "@/components/ui/display-heading";
+import { Pill } from "@/components/ui/pill";
 import type { PublicProfile, UserRole } from "@/lib/types";
 
 type Tab = "players" | "games" | "cracked";
@@ -99,44 +102,50 @@ export default function SearchPage() {
   ];
 
   return (
-    <div className="container mx-auto px-4 py-10 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">ძებნა</h1>
-        <p className="mt-2 text-muted-foreground">იპოვე მოთამაშეები, თამაშები ან PC თამაშები უფასოდ</p>
-      </div>
+    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
+      <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
 
-      <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          autoFocus
-          placeholder="username, თამაში, ჟანრი, პლატფორმა..."
-          className="pl-10 h-12 text-base"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-      </div>
+      <div className="container relative mx-auto px-4 py-10 lg:py-14 space-y-6">
+        <div>
+          <Eyebrow tone="amber">ძებნა</Eyebrow>
+          <DisplayHeading as="h1" size="lg" className="mt-3">ძებნა</DisplayHeading>
+          <p className="mt-3 text-[14px] text-[var(--gr-text-mute)]">იპოვე მოთამაშეები, თამაშები ან PC თამაშები უფასოდ.</p>
+        </div>
 
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-1 rounded-lg border border-border/60 bg-secondary/20 p-1 w-fit">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-              tab === t.id
-                ? "bg-primary/15 text-primary"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {t.icon}
-            {t.label}
-            <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
-              {t.count}
-            </Badge>
-          </button>
-        ))}
-      </div>
+        <div className="relative">
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--gr-text-mute)]" />
+          <Input
+            autoFocus
+            placeholder="username, თამაში, ჟანრი, პლატფორმა..."
+            className="pl-10 h-12 text-base border-[var(--gr-border-hi)] bg-[var(--gr-bg-1)]"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+
+        {/* Tabs — underline slide */}
+        <div className="flex flex-wrap gap-1 border-b border-[var(--gr-border)]">
+          {tabs.map((t) => {
+            const active = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTab(t.id)}
+                className={`relative flex items-center gap-2 px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] transition-colors ${
+                  active ? "text-[var(--gr-text)]" : "text-[var(--gr-text-mute)] hover:text-[var(--gr-text)]"
+                }`}
+              >
+                {t.icon}
+                {t.label}
+                <Pill tone={active ? "accent" : "neutral"}>{t.count}</Pill>
+                {active && (
+                  <span aria-hidden className="absolute inset-x-2 -bottom-px h-[2px] bg-[var(--gr-violet)] shadow-[0_0_10px_rgba(139,92,246,0.6)]" />
+                )}
+              </button>
+            );
+          })}
+        </div>
 
       {/* Players */}
       {tab === "players" && (
@@ -207,8 +216,8 @@ export default function SearchPage() {
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {gameResults.map((g) => (
-                <Link key={g.slug} href={`/games/${g.slug}`} className="group">
-                  <Card className="relative h-40 overflow-hidden border-border/60 transition-all hover:border-primary/40">
+                <Link key={g.slug} href={`/games/${g.slug}`} className="group block transition-transform duration-200 hover:-translate-y-0.5">
+                  <Card className="relative h-40 overflow-hidden border-[var(--gr-border)] transition-colors hover:border-[var(--gr-violet-hi)] gr-sweep">
                     {g.coverUrl ? (
                       <img
                         src={g.coverUrl}
@@ -223,7 +232,7 @@ export default function SearchPage() {
                       <div className="flex items-center gap-2">
                         <GameIcon game={g} size="sm" />
                         <div>
-                          <p className="font-semibold text-white leading-tight group-hover:text-primary transition-colors">
+                          <p className="font-semibold text-white leading-tight group-hover:text-[var(--gr-violet-hi)] transition-colors">
                             {g.nameKa}
                           </p>
                           <p className="text-[11px] text-white/60">{g.players.toLocaleString("en-US")} მოთამაშე</p>
@@ -252,8 +261,8 @@ export default function SearchPage() {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {crackedResults.map((g) => (
-                <Link key={g.id} href={`/tamashebi/${g.id}`}>
-                  <Card className="relative overflow-hidden border-border/60 transition-all hover:border-primary/40 hover:shadow-md hover:shadow-primary/5 h-full">
+                <Link key={g.id} href={`/tamashebi/${g.id}`} className="group block transition-transform duration-200 hover:-translate-y-0.5">
+                  <Card className="relative overflow-hidden border-[var(--gr-border)] transition-colors hover:border-[var(--gr-violet-hi)] hover:shadow-md hover:shadow-[var(--gr-violet)]/15 h-full gr-sweep">
                     <div className={`absolute inset-0 -z-10 bg-gradient-to-br ${g.accent} opacity-50`} />
                     <CardContent className="p-4 flex flex-col gap-3 h-full">
                       <div className="flex items-start justify-between gap-2">
@@ -288,15 +297,17 @@ export default function SearchPage() {
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }
 
 function EmptyState({ label }: { label: string }) {
   return (
-    <div className="rounded-xl border border-border/60 py-16 text-center text-muted-foreground">
-      <Search className="mx-auto mb-3 h-8 w-8 opacity-40" />
-      <p>{label}</p>
+    <div className="border border-[var(--gr-border-hi)] bg-[var(--gr-bg-1)] py-16 text-center text-[var(--gr-text-mute)]"
+      style={{ clipPath: "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)" }}>
+      <Search className="mx-auto mb-3 h-8 w-8 text-[var(--gr-violet-hi)] opacity-60" />
+      <p className="text-[13.5px]">{label}</p>
     </div>
   );
 }

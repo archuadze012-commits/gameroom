@@ -73,13 +73,16 @@ export function HomeNotificationsWidget() {
     <div className="mt-3 space-y-2">
       {items.map((n) => {
         const card = (
-          <div className="flex items-start gap-3 rounded-xl border border-[#1e2a44] bg-[#0f1626] px-4 py-3 transition-colors hover:border-cyan-400/30">
-            <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+          <div
+            className="group flex items-start gap-3 bg-[var(--gr-bg-1)] px-4 py-3 ring-1 ring-[var(--gr-border)] transition-all duration-200 hover:-translate-y-0.5 hover:ring-[var(--gr-violet-hi)] gr-sweep"
+            style={{ clipPath: "polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%)" }}
+          >
+            <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md bg-[var(--gr-violet)]/15 text-[var(--gr-violet-hi)] ring-1 ring-[var(--gr-violet)]/30">
               <Users className="h-3.5 w-3.5" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-foreground">{n.title}</p>
-              <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{n.body}</p>
+              <p className="text-[12.5px] font-semibold text-[var(--gr-text)] group-hover:text-[var(--gr-violet-hi)]">{n.title}</p>
+              <p className="mt-0.5 line-clamp-1 text-[11.5px] text-[var(--gr-text-mute)]">{n.body}</p>
             </div>
           </div>
         );
@@ -93,7 +96,7 @@ export function HomeNotificationsWidget() {
       })}
       <Link
         href="/announcements"
-        className="flex items-center justify-center gap-1 pt-0.5 text-xs text-primary hover:underline"
+        className="flex items-center justify-center gap-1 pt-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--gr-violet-hi)] hover:text-[var(--gr-violet)]"
       >
         <Bell className="h-3 w-3" />
         ყველა შეტყობინება

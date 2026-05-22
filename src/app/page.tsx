@@ -1,14 +1,18 @@
 import Link from "next/link";
-import { ArrowRight, Rss, Heart, MessageCircle, Search, MessageSquare, Bell, Gamepad2, Monitor } from "lucide-react";
+import { Rss, Heart, MessageCircle, Search, MessageSquare, Bell, Gamepad2, Monitor, Rocket, Users, Trophy, Flame } from "lucide-react";
 import { mockGames } from "@/lib/mock-data";
 import { HomeNotificationsWidget } from "@/components/home-notifications-widget";
-import { Button } from "@/components/ui/button";
 import { getSession } from "@/lib/auth";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { ka } from "date-fns/locale";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { DisplayHeading } from "@/components/ui/display-heading";
+import { GradientText } from "@/components/ui/gradient-text";
+import { ChevronButton } from "@/components/ui/chevron-button";
+import { Pill } from "@/components/ui/pill";
 
 type HomePost = {
   id: string;
@@ -23,10 +27,19 @@ type HomePost = {
   } | null;
 };
 
+const QUICK_NAV = [
+  { icon: Search,        label: "ძებნა",     href: "/search" },
+  { icon: Gamepad2,      label: "თამაშები",  href: "/games" },
+  { icon: MessageSquare, label: "მესენჯერი", href: "/messages" },
+  { icon: Bell,          label: "უწყებები",  href: "/announcements" },
+];
+
+const cutClipSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
+const cutClipMd = "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)";
+
 export default async function HomePage() {
   const user = await getSession().catch(() => null);
 
-  // recent public feed posts
   let recentPosts: HomePost[] = [];
   try {
     const supabase = await createSupabaseServerClient();
@@ -42,153 +55,151 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="space-y-12 pb-24">
-      {/* Hero */}
-      <section className="relative overflow-hidden border-b border-border/60">
-        <div className={`container mx-auto px-4 ${user ? "py-6" : "pb-20 pt-16 md:pt-24"}`}>
-          <div className="mx-auto max-w-3xl text-center">
-            {!user && (
-              <>
-                <h1 className="text-balance text-4xl font-bold tracking-tight md:text-6xl">
-                  ქართველი გეიმერების{" "}
-                  <span className="text-primary">პორტალი</span>
-                </h1>
-                <p className="mx-auto mt-6 max-w-2xl text-balance text-lg text-muted-foreground">
-                  იპოვე გუნდი, შეუერთდი ჩემპიონატებს და იპოვე ერთგულესი მოთამაშეები eFootball, FIFA,
-                  PUBG, Warzone და Valorant-ში — ერთ ადგილას.
+    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
+      <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
+
+      <div className="container relative mx-auto px-4 py-10 lg:py-14 space-y-14">
+        {/* ── HERO ─────────────────────────────────────────── */}
+        <section className="relative isolate overflow-hidden">
+          {/* faint violet/magenta light leaks */}
+          <span aria-hidden className="pointer-events-none absolute -top-20 -right-20 h-72 w-72 rounded-full bg-[var(--gr-violet)]/25 blur-[120px]" />
+          <span aria-hidden className="pointer-events-none absolute -bottom-32 -left-10 h-72 w-72 rounded-full bg-[var(--gr-magenta)]/20 blur-[120px]" />
+
+          {!user ? (
+            <div className="mx-auto max-w-3xl text-center">
+              <Eyebrow tone="amber" className="justify-center inline-flex">ქართველი გეიმერების სახლი</Eyebrow>
+              <DisplayHeading as="h1" size="display" className="mt-5">
+                ერთად ვთამაშობთ.<br />
+                ერთად <GradientText tone="amber">ვიგებთ</GradientText>.
+              </DisplayHeading>
+              <p className="mx-auto mt-6 max-w-2xl text-balance text-[15px] leading-relaxed text-[var(--gr-text-mute)]">
+                იპოვე გუნდი, შეუერთდი ჩემპიონატებს და გაიცანი ქართველი გეიმერების კომუნიტი
+                — eFootball, FIFA, PUBG, Warzone, Valorant.
+              </p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <ChevronButton href="/auth/signup" variant="violet" size="lg">
+                  <Rocket className="h-4 w-4" /> დარეგისტრირდი
+                </ChevronButton>
+                <div className="w-full sm:w-auto"><GoogleSignInButton className="w-full sm:w-auto" /></div>
+              </div>
+            </div>
+          ) : (
+            <div className="mx-auto max-w-3xl">
+              {/* primary CTA — cut-corner gradient banner */}
+              <div
+                className="relative isolate overflow-hidden p-8 text-center text-white"
+                style={{ background: "var(--gr-grad-violet)", clipPath: cutClipMd }}
+              >
+                <span aria-hidden className="pointer-events-none absolute right-0 top-0 h-3 w-12 bg-[var(--gr-amber)]" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%)" }} />
+                <Eyebrow tone="amber" className="justify-center inline-flex !text-[#ffd9a3]">დაიწყე ახლავე</Eyebrow>
+                <DisplayHeading as="h2" size="lg" className="mt-3 !text-white">
+                  იპოვე გუნდი წამებში
+                </DisplayHeading>
+                <p className="mx-auto mt-2 max-w-md text-balance text-[14px] text-white/85">
+                  აარჩიე თამაში, შექმენი LFG და დაიწყე თამაში ქართველებთან.
                 </p>
-              </>
-            )}
-            {user ? (
-              <div className="mx-auto max-w-2xl">
-                {/* Hero CTA */}
-                <div className="rounded-2xl border border-[#1e2a44] bg-gradient-to-br from-indigo-600 to-cyan-500 p-8 text-center shadow-lg">
-                  <h2 className="text-2xl font-bold text-white md:text-3xl">
-                    იპოვე გუნდი წამებში
-                  </h2>
-                  <p className="mx-auto mt-2 max-w-md text-balance text-sm text-white/90 md:text-base">
-                    აარჩიე თამაში, შექმენი LFG და დაიწყე თამაში ქართველებთან
-                  </p>
-                  <Link
-                    href="/lfg"
-                    className="mt-5 inline-flex items-center gap-2 rounded-lg bg-cyan-400 px-6 py-3 font-bold text-black transition-colors hover:bg-cyan-300"
-                  >
-                    დაიწყე ახლავე →
-                  </Link>
+                <div className="mt-5 inline-block">
+                  <ChevronButton href="/lfg" variant="amber" size="md">
+                    LFG-ში გადასვლა
+                  </ChevronButton>
                 </div>
+              </div>
 
-                <HomeNotificationsWidget />
+              <HomeNotificationsWidget />
 
-                {/* Quick nav */}
-                <div className="mt-4 hidden xl:grid grid-cols-4 gap-3">
-                  {[
-                    { icon: Search,        label: "ძებნა",     href: "/search" },
-                    { icon: Gamepad2,      label: "თამაშები",  href: "/tamashebi" },
-                    { icon: MessageSquare, label: "მესენჯერი", href: "/messages" },
-                    { icon: Bell,          label: "უწყებები",  href: "/announcements" },
-                  ].map(({ icon: Icon, label, href }) => (
-                    <Link
-                      key={href}
-                      href={href}
-                      className="group flex flex-col items-center gap-2 rounded-xl border border-[#1e2a44] bg-[#0a0f1e] py-4 text-center text-xs font-medium text-muted-foreground transition-all hover:border-cyan-400/40 hover:bg-[#0f1626]"
-                    >
-                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-400/10 text-cyan-400 shadow-[0_0_12px_2px_rgba(34,211,238,0.25)] transition-shadow group-hover:shadow-[0_0_18px_4px_rgba(34,211,238,0.4)]">
+              {/* quick nav */}
+              <div className="mt-6 hidden xl:grid grid-cols-4 gap-3">
+                {QUICK_NAV.map(({ icon: Icon, label, href }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    className="group relative bg-[var(--gr-bg-1)] p-4 transition-transform hover:-translate-y-0.5 gr-sweep"
+                    style={{ clipPath: cutClipSm }}
+                  >
+                    <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
+                    <div className="flex flex-col items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-[var(--gr-text-mute)] group-hover:text-[var(--gr-text)]">
+                      <span className="grid h-10 w-10 place-items-center rounded-lg bg-[var(--gr-violet)]/12 text-[var(--gr-violet-hi)] ring-1 ring-[var(--gr-violet)]/30">
                         <Icon className="h-5 w-5" />
                       </span>
-                      <span>{label}</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Button asChild size="lg" className="w-full sm:w-auto">
-                  <Link href="/auth/signup">
-                    დარეგისტრირდი <ArrowRight className="ml-1 h-4 w-4" />
+                      {label}
+                    </div>
                   </Link>
-                </Button>
-                <GoogleSignInButton className="w-full sm:w-auto" />
+                ))}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          )}
+        </section>
 
-        <div className="pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_70%)]">
-          <div
-            className="absolute inset-0 opacity-20"
-            style={{
-              backgroundImage:
-                "linear-gradient(to right, oklch(1 0 0 / 0.05) 1px, transparent 1px), linear-gradient(to bottom, oklch(1 0 0 / 0.05) 1px, transparent 1px)",
-              backgroundSize: "80px 80px",
-            }}
-          />
-        </div>
-      </section>
-
-      {/* Games — mobile + tablet */}
-      <section className="xl:hidden px-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-base font-bold">
-            <Gamepad2 className="h-4 w-4 text-primary" />
-            თამაშები
-          </h2>
-          <Link href="/games" className="text-xs text-primary hover:underline">
-            ყველა →
-          </Link>
-        </div>
-
-        <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] select-none">
-          {mockGames.map((game) => (
-            <Link
-              key={game.slug}
-              href={`/games/${game.slug}`}
-              className="flex-none w-24 group"
-            >
-              <div className="relative aspect-[3/4] w-24 overflow-hidden rounded-xl border border-[#1e2a44] bg-[#0f1626] transition-all group-hover:border-cyan-400/40">
-                {game.coverUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={game.coverUrl}
-                    alt={game.nameKa}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-3xl">
-                    {game.emoji}
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-              </div>
-              <p className="mt-1.5 truncate text-center text-[11px] font-medium text-muted-foreground group-hover:text-foreground">
-                {game.nameKa}
-              </p>
+        {/* ── GAMES STRIP (mobile + tablet) ─────────────────── */}
+        <section className="xl:hidden">
+          <div className="mb-4 flex items-end justify-between">
+            <div>
+              <Eyebrow tone="violet">თამაშები</Eyebrow>
+              <DisplayHeading as="h2" size="md" className="mt-2">
+                ითამაშე ნებისმიერი
+              </DisplayHeading>
+            </div>
+            <Link href="/games" className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--gr-violet-hi)] hover:text-[var(--gr-violet)]">
+              ყველა →
             </Link>
-          ))}
-        </div>
-
-        <Link
-          href="/tamashebi"
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[#1e2a44] bg-[#0f1626] py-3 text-sm font-medium text-cyan-400 transition-colors hover:border-cyan-400/40 hover:bg-[#0a0f1e]"
-        >
-          <Monitor className="h-4 w-4" />
-          Free PC Games
-        </Link>
-      </section>
-
-      {/* Posts feed */}
-      <section className="container mx-auto px-4">
-        <SectionHeader
-          icon={<Rss className="h-5 w-5" />}
-          title="ბოლო პოსტები"
-          subtitle="ახალი მესიჯები კომიუნითიდან"
-        />
-        {recentPosts.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-[#1e2a44] py-10 text-center text-sm text-[#9fb3d1]">
-            ჯერ არცერთი პოსტი არ არის. გახდი პირველი ვინც დაწერს!
           </div>
-        ) : (
-          <div className="space-y-3">
-            {recentPosts.map((p) => {
+
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            {mockGames.map((game) => (
+              <Link key={game.slug} href={`/games/${game.slug}`} className="group flex-none w-28 transition-transform duration-200 hover:-translate-y-0.5">
+                <div
+                  className="relative aspect-[3/4] w-28 overflow-hidden bg-[var(--gr-bg-1)] ring-1 ring-[var(--gr-border)] transition-all group-hover:ring-[var(--gr-violet-hi)] gr-sweep"
+                  style={{ clipPath: cutClipSm }}
+                >
+                  {game.coverUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={game.coverUrl} alt={game.nameKa} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-3xl">{game.emoji}</div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)] via-[var(--gr-bg-0)]/30 to-transparent" />
+                </div>
+                <p className="mt-2 truncate text-center text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--gr-text-mute)] group-hover:text-[var(--gr-violet-hi)]">
+                  {game.nameKa}
+                </p>
+              </Link>
+            ))}
+          </div>
+
+          <Link
+            href="/tamashebi"
+            className="mt-4 flex w-full items-center justify-center gap-2 bg-[var(--gr-bg-1)] py-3 text-[12px] font-semibold uppercase tracking-[0.14em] text-[var(--gr-violet-hi)] ring-1 ring-[var(--gr-border)] transition-colors hover:ring-[var(--gr-violet-hi)] hover:text-[var(--gr-violet)]"
+            style={{ clipPath: cutClipSm }}
+          >
+            <Monitor className="h-4 w-4" /> Free PC Games
+          </Link>
+        </section>
+
+        {/* ── POSTS FEED ────────────────────────────────────── */}
+        <section>
+          <div className="mb-5 flex items-end justify-between">
+            <div>
+              <Eyebrow tone="amber">აქტივობა</Eyebrow>
+              <DisplayHeading as="h2" size="md" className="mt-2 flex items-center gap-2">
+                <Rss className="h-5 w-5 text-[var(--gr-amber)]" /> ბოლო პოსტები
+              </DisplayHeading>
+            </div>
+            <Link href="/feed" className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--gr-violet-hi)] hover:text-[var(--gr-violet)]">
+              ყველა →
+            </Link>
+          </div>
+
+          {recentPosts.length === 0 ? (
+            <div
+              className="relative bg-[var(--gr-bg-1)] py-12 text-center text-[14px] text-[var(--gr-text-mute)] ring-1 ring-[var(--gr-border)]"
+              style={{ clipPath: cutClipMd }}
+            >
+              <Flame className="mx-auto mb-2 h-5 w-5 text-[var(--gr-amber)]" />
+              ჯერ არცერთი პოსტი არ არის. გახდი პირველი ვინც დაწერს!
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {recentPosts.map((p) => {
                 const author = p.profiles;
                 const name = author?.display_name ?? author?.username ?? "მომხმარებელი";
                 const initial = name.slice(0, 1).toUpperCase();
@@ -203,92 +214,80 @@ export default async function HomePage() {
                   <Link
                     key={p.id}
                     href="/feed"
-                    className="block rounded-2xl border border-[#1e2a44] bg-[#0f1626] p-4 transition-colors hover:border-cyan-400/40"
+                    className="group relative block bg-[var(--gr-bg-1)] p-4 transition-transform hover:-translate-y-0.5 gr-sweep"
+                    style={{ clipPath: cutClipSm }}
                   >
+                    <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
                     <div className="flex items-start gap-3">
-                      <Avatar className="h-9 w-9 shrink-0 border border-border/60">
+                      <Avatar className="h-9 w-9 shrink-0 border border-[var(--gr-border-hi)]">
                         <AvatarImage src={author?.avatar_url ?? undefined} alt={name} />
-                        <AvatarFallback className="bg-primary/15 text-xs text-primary">
+                        <AvatarFallback className="bg-[var(--gr-violet)]/15 text-xs text-[var(--gr-violet-hi)]">
                           {initial}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="font-semibold">{name}</span>
-                          {created && (
-                            <span className="text-xs text-[#9fb3d1]">· {created}</span>
-                          )}
+                        <div className="flex items-center gap-2 text-[13px]">
+                          <span className="font-semibold text-[var(--gr-text)]">{name}</span>
+                          {created && <span className="text-[11px] text-[var(--gr-text-dim)]">· {created}</span>}
                         </div>
-                        <p className="mt-1 line-clamp-3 whitespace-pre-line text-sm text-foreground/90">
+                        <p className="mt-1 line-clamp-3 whitespace-pre-line text-[13px] text-[var(--gr-text)]/90">
                           {p.content}
                         </p>
                         {p.media_urls && p.media_urls.length > 0 && (
-                          <div
-                            className={`mt-2 grid gap-2 ${
-                              p.media_urls.length > 1 ? "grid-cols-2" : "grid-cols-1"
-                            }`}
-                          >
+                          <div className={`mt-2 grid gap-2 ${p.media_urls.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
                             {p.media_urls.slice(0, 4).map((url, i) => (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
                                 key={i}
                                 src={url}
                                 alt=""
-                                className="max-h-[600px] w-full rounded-lg border border-[#1e2a44] bg-[#0a0f1c] object-contain"
+                                className="max-h-[420px] w-full rounded-md border border-[var(--gr-border)] bg-[var(--gr-bg-2)] object-contain"
                               />
                             ))}
                           </div>
                         )}
-                        <div className="mt-2 flex items-center gap-4 text-xs text-[#9fb3d1]">
-                          <span className="flex items-center gap-1">
-                            <Heart className="h-3.5 w-3.5" /> {p.likes_count}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MessageCircle className="h-3.5 w-3.5" /> კომენტარი
-                          </span>
+                        <div className="mt-3 flex items-center gap-2">
+                          <Pill tone="accent" icon={<Heart className="h-3 w-3" />}>{p.likes_count}</Pill>
+                          <Pill tone="neutral" icon={<MessageCircle className="h-3 w-3" />}>კომენტარი</Pill>
                         </div>
                       </div>
                     </div>
                   </Link>
                 );
-            })}
-          </div>
-        )}
-      </section>
+              })}
+            </div>
+          )}
+        </section>
 
-    </div>
-  );
-}
-
-function SectionHeader({
-  icon,
-  title,
-  subtitle,
-  href,
-  compact = false,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  subtitle?: string;
-  href?: string;
-  compact?: boolean;
-}) {
-  return (
-    <div className={`flex items-end justify-between ${compact ? "mb-4" : "mb-6"}`}>
-      <div>
-        <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <span className="text-primary">{icon}</span>
-          {title}
-        </h2>
-        {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
+        {/* ── BOTTOM CTA ROW ────────────────────────────────── */}
+        <section className="grid gap-4 md:grid-cols-3">
+          {[
+            { href: "/games", icon: Gamepad2, eyebrow: "კატალოგი", title: "თამაშები", desc: "ნახე ყველა მხარდაჭერილი თამაში." },
+            { href: "/lfg", icon: Users, eyebrow: "გუნდი", title: "ცოცხალი LFG", desc: "შემოუერთდი მოთამაშეებს." },
+            { href: "/tournaments", icon: Trophy, eyebrow: "ჩემპიონატი", title: "ტურნირები", desc: "დარეგისტრირდი ან უყურე." },
+          ].map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="group relative block bg-[var(--gr-bg-1)] p-5 transition-transform hover:-translate-y-0.5 gr-sweep"
+                style={{ clipPath: cutClipMd }}
+              >
+                <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
+                <Icon className="h-6 w-6 text-[var(--gr-violet-hi)]" />
+                <div className="mt-3">
+                  <Eyebrow tone="amber">{item.eyebrow}</Eyebrow>
+                  <h3 className="mt-1.5 font-display text-[18px] font-bold uppercase text-[var(--gr-text)]">
+                    {item.title}
+                  </h3>
+                  <p className="mt-1.5 text-[12.5px] text-[var(--gr-text-mute)]">{item.desc}</p>
+                </div>
+              </Link>
+            );
+          })}
+        </section>
       </div>
-      {href && (
-        <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-          <Link href={href}>
-            ყველა <ArrowRight className="ml-1 h-3.5 w-3.5" />
-          </Link>
-        </Button>
-      )}
     </div>
   );
 }

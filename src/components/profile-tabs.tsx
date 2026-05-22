@@ -27,22 +27,28 @@ export function ProfileTabs({
 
   return (
     <div>
-      <div className="flex gap-1 overflow-x-auto border-b border-[#1e2a44]">
+      <div role="tablist" className="flex gap-1 overflow-x-auto border-b border-[var(--gr-border)]">
         {tabs.map((t) => {
           const active = tab === t.id;
           return (
             <button
               key={t.id}
               type="button"
+              role="tab"
+              aria-selected={active}
               onClick={() => setTab(t.id)}
-              className={`flex shrink-0 items-center gap-1.5 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
-                active
-                  ? "border-cyan-400 text-cyan-400"
-                  : "border-transparent text-[#9fb3d1] hover:text-foreground"
+              className={`relative flex shrink-0 items-center gap-1.5 px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gr-violet-hi)] rounded-md ${
+                active ? "text-[var(--gr-text)]" : "text-[var(--gr-text-mute)] hover:text-[var(--gr-text)]"
               }`}
             >
               {t.icon}
               {t.label}
+              {active && (
+                <span
+                  aria-hidden
+                  className="absolute inset-x-2 -bottom-px h-[2px] bg-[var(--gr-violet)] shadow-[0_0_10px_rgba(139,92,246,0.6)]"
+                />
+              )}
             </button>
           );
         })}

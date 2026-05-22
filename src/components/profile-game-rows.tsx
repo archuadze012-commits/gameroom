@@ -1,6 +1,13 @@
 import Link from "next/link";
+import { Rocket } from "lucide-react";
 import { mockGames, type MockGame } from "@/lib/mock-data";
 import { GameIcon } from "@/components/game-icon";
+import { Pill } from "@/components/ui/pill";
+
+const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
+
+// Games that have a dedicated 3D lobby route.
+const LOBBY_GAMES = new Set<string>(["pubg-mobile"]);
 
 export function ProfileGameRows({ slugs }: { slugs: string[] }) {
   const games = slugs
@@ -9,7 +16,10 @@ export function ProfileGameRows({ slugs }: { slugs: string[] }) {
 
   if (games.length === 0) {
     return (
-      <p className="rounded-2xl border border-dashed border-[#1e2a44] py-8 text-center text-sm text-[#9fb3d1]">
+      <p
+        className="border border-dashed border-[var(--gr-border-hi)] bg-[var(--gr-bg-2)]/40 py-8 text-center text-[13px] text-[var(--gr-text-mute)]"
+        style={{ clipPath: cutSm }}
+      >
         ჯერ არცერთი თამაში არ არის არჩეული.
       </p>
     );
@@ -19,31 +29,50 @@ export function ProfileGameRows({ slugs }: { slugs: string[] }) {
     <div className="space-y-2">
       {games.map((g, i) => {
         const isPrimary = i === 0;
+        const hasLobby = LOBBY_GAMES.has(g.slug);
         return (
-          <Link
+          <div
             key={g.slug}
-            href={`/games/${g.slug}`}
-            className="flex items-center gap-3 rounded-2xl border border-[#1e2a44] bg-[#0f1626] p-3 transition-colors hover:border-cyan-400/40"
+            className="group relative flex items-center gap-3 bg-[var(--gr-bg-1)] p-3 ring-1 ring-[var(--gr-border)] transition-all duration-200 hover:-translate-y-0.5 hover:ring-[var(--gr-violet-hi)] gr-sweep"
+            style={{ clipPath: cutSm }}
           >
-            <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-lg bg-secondary/40">
+            {/* row-wide game-page link, behind everything */}
+            <Link
+              href={`/games/${g.slug}`}
+              aria-label={g.nameKa}
+              className="absolute inset-0 z-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gr-violet-hi)]"
+            />
+
+            <div className="relative z-[1] grid h-[38px] w-[38px] shrink-0 place-items-center rounded-md bg-[var(--gr-bg-2)] ring-1 ring-[var(--gr-border)]">
               <GameIcon game={g} size="sm" />
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate font-semibold">{g.nameKa}</div>
-              <div className="truncate text-xs text-[#9fb3d1]">
-                {g.liveLfg} აქტიური LFG · {g.online} ონლაინ
+            <div className="relative z-[1] min-w-0 flex-1 pointer-events-none">
+              <div className="truncate font-display text-[14px] font-bold uppercase tracking-tight text-[var(--gr-text)] group-hover:text-[var(--gr-violet-hi)]">
+                {g.nameKa}
+              </div>
+              <div className="mt-0.5 truncate text-[11px] uppercase tracking-[0.12em] text-[var(--gr-text-dim)]">
+                <span className="tabular-nums text-[var(--gr-text-mute)]">{g.liveLfg}</span> აქტიური LFG ·{" "}
+                <span className="tabular-nums text-[var(--gr-text-mute)]">{g.online}</span> ონლაინ
               </div>
             </div>
-            <span
-              className={
-                isPrimary
-                  ? "rounded-md bg-[#0e3b2a] px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#34d399]"
-                  : "rounded-md bg-cyan-500/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-cyan-400"
-              }
-            >
-              {isPrimary ? "მთავარი" : "აქტიური"}
-            </span>
-          </Link>
+
+            {hasLobby ? (
+              <Link
+                href={`/games/${g.slug}/lobby`}
+                className="relative z-[2] inline-flex items-center gap-1.5 bg-[var(--gr-grad-violet)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white shadow-[0_4px_14px_-4px_rgba(139,92,246,0.7)] transition-all hover:scale-[1.03] hover:shadow-[0_0_18px_rgba(192,38,211,0.6)]"
+                style={{ clipPath: "polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%)" }}
+              >
+                <Rocket className="h-3 w-3" />
+                ლობის გახსნა
+              </Link>
+            ) : (
+              <div className="relative z-[1] pointer-events-none">
+                <Pill tone={isPrimary ? "online" : "cyan"}>
+                  {isPrimary ? "მთავარი" : "აქტიური"}
+                </Pill>
+              </div>
+            )}
+          </div>
         );
       })}
     </div>

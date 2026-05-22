@@ -1,32 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MessageCircle } from "lucide-react";
+import { ArrowLeft, MessageCircle, Eye } from "lucide-react";
 import { ThreadClient } from "./thread-client";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { DisplayHeading } from "@/components/ui/display-heading";
+import { Pill } from "@/components/ui/pill";
 import { mockForumCategories, mockForumThreads } from "@/lib/mock-data";
-
-const mockPosts = [
-  {
-    id: "1",
-    author: "Saba",
-    ago: "გუშინ",
-    body: "გამარჯობა! ვცდილობ ვაირჩიო GPU 2026 წლისთვის — ემულატორებზე ვაპირებ PUBG Mobile-ის ვითამაშოთ მაღალ ხარისხში. რა გირჩევთ?",
-    likes: 3,
-  },
-  {
-    id: "2",
-    author: "Nika",
-    ago: "23 სთ წინ",
-    body: "@Saba RTX 4060 საკმარისია მთლიანი მობილური ემულატორებისთვის. PUBG-სთვის 144fps-ზე გაჯდები ულტრაზე.",
-    likes: 7,
-  },
-  {
-    id: "3",
-    author: "Lika",
-    ago: "14 სთ წინ",
-    body: "@Nika ვეთანხმები, თუმცა LDPlayer-ზე CPU უფრო მნიშვნელოვანია. Ryzen 5 7600 + 4060 = სრულყოფილი combo.",
-    likes: 12,
-  },
-];
 
 export default async function ForumThreadPage({
   params,
@@ -39,26 +18,37 @@ export default async function ForumThreadPage({
   if (!cat || !t) notFound();
 
   return (
-    <div className="container mx-auto max-w-4xl px-4 py-8">
-      <Link
-        href={`/forum/${category}`}
-        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" /> {cat.name}
-      </Link>
+    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
+      <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
 
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">{t.title}</h1>
-        <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-          <span>{t.author}</span>
-          <span>·</span>
-          <span className="flex items-center gap-1">
-            <MessageCircle className="h-3 w-3" /> {t.replies} პოსტი
-          </span>
-        </div>
+      <div className="container relative mx-auto max-w-4xl px-4 py-10 lg:py-14">
+        <Link
+          href={`/forum/${category}`}
+          className="mb-4 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--gr-text-dim)] hover:text-[var(--gr-text-mute)]"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> ფორუმი / {cat.name}
+        </Link>
+
+        <header
+          className="relative mt-2 mb-8 pb-6 after:absolute after:bottom-0 after:left-0 after:h-px after:w-full after:bg-gradient-to-r after:from-[var(--gr-violet)]/40 after:via-[var(--gr-violet)]/10 after:to-transparent"
+        >
+          <Eyebrow tone="violet">თემა</Eyebrow>
+          <DisplayHeading as="h1" size="lg" className="mt-3" uppercase={false}>
+            {t.title}
+          </DisplayHeading>
+          <div className="mt-4 flex items-center gap-2">
+            <Pill tone="neutral">{t.author}</Pill>
+            <Pill tone="violet" icon={<MessageCircle className="h-3 w-3" />}>
+              {t.replies} პოსტი
+            </Pill>
+            <Pill tone="neutral" icon={<Eye className="h-3 w-3" />}>
+              {t.views} ნახვა
+            </Pill>
+          </div>
+        </header>
+
+        <ThreadClient />
       </div>
-
-      <ThreadClient />
     </div>
   );
 }
