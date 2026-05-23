@@ -122,9 +122,9 @@ function withinCooldown(key: string, days: number): boolean {
 }
 
 export function PWAInstallFloater({
-  delay = 5000,
+  delay = 18000,
   locale = "ka",
-  cooldownDays = 7,
+  cooldownDays = 21,
   forceStage = null,
   onInstall,
   onDismiss,
@@ -297,7 +297,7 @@ export function PWAInstallFloater({
   const isPin = stage === "pin";
   const positionClasses = isPin
     ? "bottom-20 xl:bottom-6 left-1/2 -translate-x-1/2 sm:w-[380px] w-[calc(100vw-32px)]"
-    : "top-20 right-4 sm:right-6 left-4 sm:left-auto sm:w-[380px]";
+    : "bottom-24 right-4 left-4 sm:left-auto sm:bottom-6 sm:right-6 sm:w-[320px]";
   const enterTransform = isPin
     ? (mounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0")
     : (mounted ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0");
@@ -315,7 +315,7 @@ export function PWAInstallFloater({
       className={[
         "fixed z-[60] pwaif-root",
         positionClasses,
-        "rounded-[18px] border p-4",
+        "rounded-[14px] border p-3",
         "bg-[rgba(15,18,28,0.85)] border-white/[0.08]",
         "shadow-[0_24px_70px_-12px_rgba(0,0,0,0.55),0_0_0_1px_rgba(255,255,255,0.04)_inset]",
         "backdrop-blur-[22px] backdrop-saturate-[180%]",
@@ -337,12 +337,12 @@ export function PWAInstallFloater({
       <div className="flex items-start gap-3">
         <div className="relative shrink-0">
           <div
-            className="grid h-11 w-11 place-items-center rounded-xl text-white"
+            className="grid h-9 w-9 place-items-center rounded-lg text-white"
             style={{ background: "linear-gradient(135deg, #4F8CFF 0%, #6E5BFF 100%)" }}
           >
             {stage === "pin"
-              ? <Pin className="h-5 w-5 pwaif-wiggle" />
-              : <MonitorDown className="h-5 w-5" />}
+              ? <Pin className="h-4 w-4 pwaif-wiggle" />
+              : <MonitorDown className="h-4 w-4" />}
           </div>
           {stage !== "pin" && (
             <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-sky-400 ring-2 ring-[rgba(15,18,28,0.85)] pwaif-pulse" />
@@ -350,10 +350,10 @@ export function PWAInstallFloater({
         </div>
 
         <div className="min-w-0 flex-1 pr-6">
-          <h3 id="pwaif-title" className="text-[16px] font-semibold leading-tight text-white">
+          <h3 id="pwaif-title" className="text-[14px] font-semibold leading-tight text-white">
             {title}
           </h3>
-          <p id="pwaif-body" className="mt-1 text-[13px] leading-snug text-[#9099AD]">
+          <p id="pwaif-body" className="mt-1 text-[12px] leading-snug text-[#9099AD]">
             {body}
           </p>
         </div>
@@ -397,7 +397,7 @@ export function PWAInstallFloater({
         </div>
       )}
 
-      <div className="mt-4 flex items-center justify-end gap-2">
+      <div className="mt-3 flex items-center justify-end gap-2">
         {stage === "install" && (
           <button
             onClick={() => dismiss("install")}

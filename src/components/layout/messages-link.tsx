@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export function MessagesLink() {
   const [unread, setUnread] = useState(0);
@@ -12,6 +13,12 @@ export function MessagesLink() {
     let cancelled = false;
     async function tick() {
       try {
+        const supabase = createSupabaseBrowserClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setUnread(0);
+          return;
+        }
         const res = await fetch("/api/conversations");
         if (!res.ok) return;
         const data = await res.json();

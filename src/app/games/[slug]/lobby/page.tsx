@@ -1,15 +1,13 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowLeft, Users, Rocket } from "lucide-react";
 import { mockGames } from "@/lib/mock-data";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { DisplayHeading } from "@/components/ui/display-heading";
 import { Pill } from "@/components/ui/pill";
 import { ChevronButton } from "@/components/ui/chevron-button";
 import { LobbyShell } from "@/components/lobby/lobby-shell";
-import { LobbyCanvas } from "@/components/lobby/lobby-canvas";
-import { LobbyInventory } from "@/components/lobby/lobby-inventory";
+import { LobbyStage } from "@/components/lobby/lobby-stage";
+import { LobbyOrientationGuard } from "@/components/lobby/lobby-orientation";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -17,7 +15,7 @@ export const dynamicParams = true;
 
 // slug → background image. Add a new entry per supported lobby.
 const LOBBY_BG: Record<string, string> = {
-  "pubg-mobile": "/lobbies/pubg-mobile.png",
+  "pubg-mobile": "/lobbies/pubg-mobile-optimized.jpg",
 };
 
 const cutLg = "polygon(0 0, calc(100% - 32px) 0, 100% 32px, 100% 100%, 0 100%)";
@@ -66,6 +64,7 @@ export default async function GameLobbyPage({
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
+      <LobbyOrientationGuard />
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
 
       <div className="lobby-fs-wrap container relative mx-auto max-w-6xl px-4 py-8 lg:py-10">
@@ -81,12 +80,20 @@ export default async function GameLobbyPage({
         </nav>
 
         {/* page header */}
-        <header className="lobby-chrome mb-6 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <Eyebrow tone="amber">{game.nameEn}</Eyebrow>
-            <DisplayHeading as="h1" size="lg" className="mt-3">
+        <header className="lobby-chrome mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-4">
+            <DisplayHeading as="h1" size="lg">
               {game.nameKa} — ლობი
             </DisplayHeading>
+            <ChevronButton
+              href={`/lfg/new?game=${game.slug}`}
+              variant="violet"
+              size="md"
+              className="shrink-0 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-amber-400 text-[12px] text-white shadow-[0_0_28px_rgba(139,92,246,0.45)]"
+              style={{ background: "linear-gradient(135deg, #8B5CF6 0%, #C026D3 50%, #F5A524 100%)" }}
+            >
+              <Rocket className="h-4 w-4" /> თამაშის დაწყება
+            </ChevronButton>
           </div>
           <div className="flex flex-col items-end gap-1.5">
             <Pill tone="live" pulse>
@@ -109,16 +116,7 @@ export default async function GameLobbyPage({
             style={{ clipPath: cutLg }}
           >
             <LobbyShell imageUrl={LOBBY_BG[slug]} eyebrow={`${game.nameEn} · ლობის გახსნა`}>
-            <Image
-              src={LOBBY_BG[slug]}
-              alt={`${game.nameKa} lobby`}
-              fill
-              priority
-              sizes="(max-width: 1280px) 100vw, 1152px"
-              className="object-cover object-center"
-            />
-            <LobbyCanvas />
-            <LobbyInventory />
+            <LobbyStage gameName={game.nameKa} imageUrl={LOBBY_BG[slug]} />
 
             {/* in-lobby HUD: top-left user chip — avatar 1:1 + name */}
             {user && (
@@ -167,22 +165,11 @@ export default async function GameLobbyPage({
           </div>
         </article>
 
-        {/* description + action bar */}
-        <div className="lobby-chrome mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
-          <p className="text-[14px] leading-relaxed text-[var(--gr-text-mute)]">
-            {game.description}
-          </p>
-          <div className="flex flex-wrap items-start gap-2 lg:justify-end">
-            <ChevronButton href={`/lfg/new?game=${game.slug}`} variant="amber" size="md">
-              <Rocket className="h-4 w-4" /> თამაშის დაწყება
-            </ChevronButton>
-            <ChevronButton href={`/lfg?game=${game.slug}`} variant="ghost" size="md">
-              LFG ნახე
-            </ChevronButton>
-            <ChevronButton href={`/games/${game.slug}`} variant="ghost" size="md">
-              თამაშის გვერდი
-            </ChevronButton>
-          </div>
+        {/* action bar */}
+        <div className="lobby-chrome mt-4 flex justify-end">
+          <ChevronButton href={`/games/${game.slug}`} variant="ghost" size="md" className="text-[12px]">
+            თამაშის გვერდი
+          </ChevronButton>
         </div>
       </div>
     </div>

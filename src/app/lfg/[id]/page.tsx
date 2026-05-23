@@ -9,7 +9,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { mockGames } from "@/lib/mock-data";
 import { JoinRequestForm } from "./join-request-form";
-import { TeammateSuggestions } from "./teammate-suggestions";
 import { GameIcon } from "@/components/game-icon";
 import { LfgComments } from "@/components/lfg-comments";
 import { LfgJoinRequests } from "@/components/lfg-join-requests";
@@ -105,8 +104,7 @@ export default async function LfgDetailPage({
         <ArrowLeft className="h-3.5 w-3.5" /> ყველა LFG
       </Link>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        <div className="space-y-6">
+      <div className="space-y-6">
           <Card className="border-border/60">
             <CardContent className="space-y-4 p-6">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -196,18 +194,6 @@ export default async function LfgDetailPage({
             </Card>
           )}
 
-          <Card className="border-border/60">
-            <CardContent className="p-6">
-              <LfgComments
-                postId={post.id}
-                initialComments={(commentsData ?? []) as never}
-                hasSession={!!session}
-              />
-            </CardContent>
-          </Card>
-        </div>
-
-        <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
           <Card className="border-primary/40 bg-primary/5">
             <CardContent className="space-y-4 p-5">
               <div>
@@ -220,27 +206,15 @@ export default async function LfgDetailPage({
             </CardContent>
           </Card>
 
-          <TeammateSuggestions
-            postId={post.id}
-            gameSlug={post.game_slug}
-            title={post.title}
-            description={post.description}
-          />
-
           <Card className="border-border/60">
-            <CardContent className="space-y-2 p-5 text-xs text-muted-foreground">
-              <h4 className="text-sm font-semibold text-foreground">სტატისტიკა</h4>
-              <div className="flex justify-between">
-                <span>ადგილების რაოდენობა</span>
-                <span className="font-medium text-foreground">{post.slots_total}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>სტატუსი</span>
-                <span className="font-medium text-emerald-400">ღია</span>
-              </div>
+            <CardContent className="p-6">
+              <LfgComments
+                postId={post.id}
+                initialComments={(commentsData ?? []) as never}
+                hasSession={!!session}
+              />
             </CardContent>
           </Card>
-        </aside>
       </div>
     </div>
   );

@@ -44,6 +44,44 @@
   background-size: 40px 40px;
 }
 
+.lobby-character {
+  position: absolute;
+  left: 51.5%;
+  bottom: 6%;
+  z-index: 4;
+  height: 78%;
+  width: auto;
+  max-width: none;
+  transform: translateX(-50%);
+  transform-origin: 50% 100%;
+  pointer-events: none;
+  user-select: none;
+}
+
+.lobby-contact-shadow {
+  position: absolute;
+  left: 51.5%;
+  bottom: 0.5%;
+  z-index: 3;
+  width: min(34%, 320px);
+  height: 20%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  overflow: visible;
+}
+
+
+@media (max-width: 640px) {
+  .lobby-character {
+    bottom: 6%;
+    height: 72%;
+  }
+  .lobby-contact-shadow {
+    width: 32%;
+    height: 18%;
+  }
+}
+
 /* Lobby — fullscreen on mobile / iPad in landscape (touch devices only) */
 @media (orientation: landscape) and (max-height: 1024px) and (any-pointer: coarse) {
   .lobby-fs-wrap {
@@ -53,21 +91,27 @@
     min-height: 0 !important;
     height: 100vh !important;
     height: 100svh !important;
-    padding: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    padding: clamp(8px, 2vw, 18px) !important;
     max-width: none !important;
+    background: var(--gr-bg-0) !important;
   }
   .lobby-fs-wrap .lobby-chrome { display: none !important; }
   .lobby-fs-wrap .lobby-card-outer {
-    background: none !important;
-    padding: 0 !important;
-    clip-path: none !important;
-    height: 100% !important;
+    width: min(calc(100vw - 20px), calc((100svh - 20px) * 2)) !important;
+    height: auto !important;
+    max-height: calc(100svh - 20px) !important;
   }
   .lobby-fs-wrap .lobby-card-inner {
-    aspect-ratio: auto !important;
-    height: 100% !important;
+    aspect-ratio: 2 / 1 !important;
+    height: auto !important;
     width: 100% !important;
-    clip-path: none !important;
+    max-height: calc(100svh - 22px) !important;
+  }
+  .lobby-fs-wrap .lobby-character {
+    bottom: 6%;
+    height: 86%;
   }
 }
 
@@ -81,8 +125,11 @@
   40%  { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.35); }
 }
-
-@custom-variant dark (&:is(.dark *));
+@keyframes lobby-radar {
+  0%   { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.18); transform: translate(-50%, -50%) scale(0.75); opacity: 0.15; }
+  45%  { opacity: 0.75; }
+  100% { box-shadow: 0 0 0 42px rgba(34, 211, 238, 0); transform: translate(-50%, -50%) scale(1.35); opacity: 0; }
+}
 
 :root {
   --background: oklch(1 0 0);

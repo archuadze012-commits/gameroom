@@ -100,7 +100,12 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
         throw new Error(err?.error || "unknown");
       }
       toast.success("LFG გამოქვეყნდა!");
-      router.push("/lfg");
+      const modeSlug = selectedModes.includes("1 vs 1")
+        ? "1v1"
+        : selectedModes.includes("Classic")
+        ? "classic"
+        : null;
+      router.push(modeSlug ? `/lfg?mode=${modeSlug}` : "/lfg");
       router.refresh();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";

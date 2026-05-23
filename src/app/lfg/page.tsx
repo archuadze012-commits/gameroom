@@ -37,7 +37,7 @@ const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,2
 export default async function LfgPage({
   searchParams,
 }: {
-  searchParams: Promise<{ game?: string; region?: string; voice?: string }>;
+  searchParams: Promise<{ game?: string; region?: string; voice?: string; mode?: string }>;
 }) {
   const params = await searchParams;
 
@@ -66,6 +66,7 @@ export default async function LfgPage({
     .limit(100);
 
   if (params.game) query = query.eq("game_slug", params.game);
+  if (params.mode) query = query.eq("mode", params.mode);
   if (params.region) query = query.eq("region", params.region);
   if (params.voice === "1") query = query.eq("voice_required", true);
 

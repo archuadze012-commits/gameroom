@@ -46,6 +46,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "content_blocked", reason: mod.reason ?? "შეუსაბამო კონტენტი" }, { status: 422 });
   }
 
+  const modeSlug =
+    body.modes?.includes("1 vs 1") ? "1v1" :
+    body.modes?.includes("Classic") ? "classic" :
+    body.modes?.[0]?.toLowerCase().replace(/\s+/g, "-") ?? null;
+
   const row = {
     author_id: user.id,
     game_slug: gameSlug.slice(0, 64),
@@ -55,6 +60,7 @@ export async function POST(request: NextRequest) {
     region: body.region?.trim().slice(0, 32) || null,
     slots_total: Math.min(10, Math.max(1, Number(body.slotsTotal) || 4)),
     voice_required: !!body.voiceRequired,
+    mode: modeSlug,
   };
 
   const supabase = await createSupabaseServerClient();

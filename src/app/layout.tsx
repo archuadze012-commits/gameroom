@@ -68,7 +68,7 @@ export default async function RootLayout({
         <SiteFooter />
         <ChatbotWidget />
         <MobileBottomNav />
-        <PWAInstallFloater delay={5000} locale="ka" />
+        <PWAInstallFloater delay={15000} locale="ka" />
         <Toaster richColors position="top-right" />
       </body>
     </html>

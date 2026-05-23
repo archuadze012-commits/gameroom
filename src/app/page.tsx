@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Rss, Heart, MessageCircle, Search, MessageSquare, Bell, Gamepad2, Monitor, Rocket, Users, Trophy, Flame } from "lucide-react";
 import { mockGames } from "@/lib/mock-data";
 import { HomeNotificationsWidget } from "@/components/home-notifications-widget";
+import { HomeFavoriteLobbies } from "@/components/home-favorite-lobbies";
 import { getSession } from "@/lib/auth";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -85,6 +86,7 @@ export default async function HomePage() {
             </div>
           ) : (
             <div className="mx-auto max-w-3xl">
+              <HomeFavoriteLobbies />
               {/* primary CTA — cut-corner gradient banner */}
               <div
                 className="relative isolate overflow-hidden p-8 text-center text-white"

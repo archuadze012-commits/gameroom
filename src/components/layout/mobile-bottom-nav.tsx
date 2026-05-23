@@ -50,6 +50,12 @@ function useMsgCount() {
     let cancelled = false;
     async function tick() {
       try {
+        const supabase = createSupabaseBrowserClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setCount(0);
+          return;
+        }
         const res = await fetch("/api/conversations");
         if (!res.ok || cancelled) return;
         const data = await res.json();

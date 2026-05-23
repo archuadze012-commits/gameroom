@@ -57,6 +57,12 @@ const TIER_LABEL: Record<Tier, string> = {
 
 type Tab = "characters" | "weapons" | "clothing";
 
+export type LobbyLoadout = {
+  character: string;
+  weapon: string;
+  clothing: string;
+};
+
 const TABS: { id: Tab; label: string; icon: typeof User; items: Item[] }[] = [
   { id: "characters", label: "გმირები",    icon: User,      items: CHARACTERS },
   { id: "weapons",    label: "იარაღი",    icon: Crosshair, items: WEAPONS },
@@ -65,13 +71,18 @@ const TABS: { id: Tab; label: string; icon: typeof User; items: Item[] }[] = [
 
 const cutSm = "polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%)";
 
-export function LobbyInventory() {
+type Props = {
+  initialLoadout?: LobbyLoadout;
+  onLoadoutChange?: (loadout: LobbyLoadout) => void;
+};
+
+export function LobbyInventory({ initialLoadout, onLoadoutChange }: Props = {}) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("characters");
   const [selected, setSelected] = useState<Record<Tab, string>>({
-    characters: "soldier",
-    weapons:    "m416",
-    clothing:   "tactical",
+    characters: initialLoadout?.character ?? "soldier",
+    weapons:    initialLoadout?.weapon ?? "m416",
+    clothing:   initialLoadout?.clothing ?? "tactical",
   });
 
   const activeItems = TABS.find((t) => t.id === tab)?.items ?? [];
@@ -155,7 +166,15 @@ export function LobbyInventory() {
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => setSelected({ ...selected, [tab]: item.id })}
+                    onClick={() => {
+                      const next = { ...selected, [tab]: item.id };
+                      setSelected(next);
+                      onLoadoutChange?.({
+                        character: next.characters,
+                        weapon: next.weapons,
+                        clothing: next.clothing,
+                      });
+                    }}
                     className={`group relative aspect-square overflow-hidden bg-gradient-to-br ${TIER_GRADIENT[item.tier]} ring-1 ${isSelected ? `ring-2 ${TIER_RING[item.tier]} shadow-[0_0_16px_rgba(139,92,246,0.5)]` : "ring-[var(--gr-border)] hover:ring-[var(--gr-border-hi)]"} transition-all hover:scale-[1.04]`}
                     style={{ clipPath: "polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%)" }}
                     title={`${item.name} · ${TIER_LABEL[item.tier]}`}

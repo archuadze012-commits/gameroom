@@ -66,6 +66,7 @@ type LinkProps = CommonProps & {
   target?: string;
   rel?: string;
   prefetch?: boolean;
+  style?: React.CSSProperties;
 };
 
 export function ChevronButton(props: ButtonProps | LinkProps) {
@@ -73,7 +74,7 @@ export function ChevronButton(props: ButtonProps | LinkProps) {
   const clip = `polygon(0 0, calc(100% - ${notch}px) 0, 100% ${notch}px, 100% 100%, 0 100%)`;
 
   if ("href" in props && props.href) {
-    const { href, target, rel, prefetch } = props as LinkProps;
+    const { href, target, rel, prefetch, style } = props as LinkProps;
     return (
       <Link
         href={href}
@@ -81,7 +82,7 @@ export function ChevronButton(props: ButtonProps | LinkProps) {
         rel={rel}
         prefetch={prefetch}
         className={baseClasses(variant, size, uppercase, className)}
-        style={{ clipPath: clip }}
+        style={{ ...style, clipPath: clip }}
       >
         {inner(children, notch)}
       </Link>

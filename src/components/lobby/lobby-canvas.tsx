@@ -3,21 +3,10 @@
 import { useEffect, useRef } from "react";
 
 type Props = {
-  /** Optional character/weapon PNG with transparent background. Placed on the podium. */
-  characterUrl?: string;
   className?: string;
 };
 
-/**
- * PixiJS-backed *overlay*. The static lobby image lives behind it as a regular <Image>.
- * This canvas adds the "alive" layer on top, with a transparent background:
- *   - Lantern + dome flicker glows (additive)
- *   - Ambient particle dust (violet/magenta/amber, drifting up)
- *   - Character sprite (if `characterUrl` is provided) with idle breathing + mouse follow
- *
- * Mounts as `absolute inset-0` inside its parent — the parent must be position:relative.
- */
-export function LobbyCanvas({ characterUrl, className }: Props) {
+export function LobbyCanvas({ className }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -29,7 +18,7 @@ export function LobbyCanvas({ characterUrl, className }: Props) {
 
     (async () => {
       const PIXI = await import("pixi.js");
-      const { Application, Assets, Sprite, Texture, Container, Graphics } = PIXI;
+      const { Application, Container, Graphics } = PIXI;
 
       if (destroyed) return;
 
@@ -56,125 +45,56 @@ export function LobbyCanvas({ characterUrl, className }: Props) {
       app.canvas.style.inset = "0";
       app.canvas.style.pointerEvents = "none";
 
-      // ── Layers ──────────────────────────────────────────────
-      const particleLayer = new Container();
-      const characterLayer = new Container();
-      app.stage.addChild(particleLayer, characterLayer);
+      const sparkleLayer = new Container();
+      app.stage.addChild(sparkleLayer);
 
-      // ── Particles ──────────────────────────────────────────
-      type Particle = {
+      type Sparkle = {
         gfx: InstanceType<typeof Graphics>;
         vx: number;
         vy: number;
         life: number;
         maxLife: number;
-        baseAlpha: number;
+        alpha: number;
       };
-      const particles: Particle[] = [];
-      const COUNT = 50;
-      const colors = [0xa78bfa, 0xc026d3, 0xff8a3d, 0xff4d6d];
 
-      for (let i = 0; i < COUNT; i++) {
-        const color = colors[i % colors.length];
-        const size = 1.2 + Math.random() * 2.2;
+      const sparkles: Sparkle[] = [];
+      const colors = [0xa78bfa, 0x22d3ee, 0xf5a524, 0xff4d6d];
+      const resetSparkle = (sparkle: Sparkle, randomizeLife = false) => {
+        sparkle.gfx.x = Math.random() * app.screen.width;
+        sparkle.gfx.y = app.screen.height * (0.2 + Math.random() * 0.62);
+        sparkle.vx = (Math.random() - 0.5) * 0.14;
+        sparkle.vy = -0.07 - Math.random() * 0.14;
+        sparkle.maxLife = 3.5 + Math.random() * 3.5;
+        sparkle.life = randomizeLife ? Math.random() * sparkle.maxLife : 0;
+        sparkle.alpha = 0.1 + Math.random() * 0.22;
+      };
+
+      for (let i = 0; i < 18; i++) {
         const gfx = new Graphics();
-        gfx.circle(0, 0, size).fill({ color, alpha: 1 });
+        const size = 0.8 + Math.random() * 1.7;
+        gfx.circle(0, 0, size).fill({ color: colors[i % colors.length], alpha: 1 });
         gfx.blendMode = "add";
-        const maxLife = 4 + Math.random() * 5;
-        particles.push({
-          gfx,
-          vx: (Math.random() - 0.5) * 0.4,
-          vy: -0.2 - Math.random() * 0.35,
-          life: Math.random() * maxLife,
-          maxLife,
-          baseAlpha: 0.35 + Math.random() * 0.45,
-        });
-        particleLayer.addChild(gfx);
+        const sparkle: Sparkle = { gfx, vx: 0, vy: 0, life: 0, maxLife: 1, alpha: 0.18 };
+        resetSparkle(sparkle, true);
+        sparkles.push(sparkle);
+        sparkleLayer.addChild(gfx);
       }
 
-      const layoutParticles = () => {
-        for (const p of particles) {
-          p.gfx.x = Math.random() * app.screen.width;
-          p.gfx.y = Math.random() * app.screen.height;
-        }
-      };
-      layoutParticles();
-
-      // ── Character (optional) ───────────────────────────────
-      let characterSprite: InstanceType<typeof Sprite> | null = null;
-      if (characterUrl) {
-        try {
-          const ctex = (await Assets.load(characterUrl)) as InstanceType<typeof Texture>;
-          if (!destroyed) {
-            characterSprite = new Sprite(ctex);
-            characterSprite.anchor.set(0.5, 1);
-            characterLayer.addChild(characterSprite);
+      app.ticker.add(() => {
+        for (const sparkle of sparkles) {
+          sparkle.gfx.x += sparkle.vx;
+          sparkle.gfx.y += sparkle.vy;
+          sparkle.life += 0.016;
+          const phase = sparkle.life / sparkle.maxLife;
+          sparkle.gfx.alpha = Math.max(0, Math.sin(phase * Math.PI) * sparkle.alpha);
+          sparkle.gfx.scale.set(0.85 + Math.sin(phase * Math.PI) * 0.3);
+          if (sparkle.life >= sparkle.maxLife || sparkle.gfx.y < -8) {
+            resetSparkle(sparkle);
           }
-        } catch {}
-      }
-
-      const layoutCharacter = () => {
-        if (!characterSprite) return;
-        const targetH = app.screen.height * 0.6;
-        const s = targetH / characterSprite.texture.height;
-        characterSprite.scale.set(s);
-        characterSprite.x = app.screen.width / 2;
-        characterSprite.y = app.screen.height * 0.92;
-      };
-      layoutCharacter();
-
-      const onResize = () => {
-        layoutCharacter();
-      };
-      window.addEventListener("resize", onResize);
-
-      // ── Mouse parallax ──────────────────────────────────
-      let mouseX = 0;
-      let mouseY = 0;
-      const onMouse = (e: MouseEvent) => {
-        const rect = host.getBoundingClientRect();
-        mouseX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-        mouseY = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
-      };
-      // Parent is pointer-events-none for canvas, so listen on the host instead
-      host.addEventListener("mousemove", onMouse);
-
-      // ── Ticker ──────────────────────────────────────────
-      app.ticker.add((tick) => {
-        const dt = tick.deltaTime;
-        const t = performance.now() / 1000;
-
-        // particles
-        for (const p of particles) {
-          p.gfx.x += p.vx * dt;
-          p.gfx.y += p.vy * dt;
-          p.life += 0.016 * dt;
-          const norm = p.life / p.maxLife;
-          // fade in/out
-          const fade = Math.sin(norm * Math.PI);
-          p.gfx.alpha = Math.max(0, fade * p.baseAlpha);
-          if (p.life >= p.maxLife || p.gfx.y < -10) {
-            p.life = 0;
-            p.gfx.x = Math.random() * app.screen.width;
-            p.gfx.y = app.screen.height + 5;
-          }
-        }
-
-        // character idle breathing + sway + mouse follow
-        if (characterSprite) {
-          const breathe = 1 + Math.sin(t * 1.3) * 0.012;
-          const s = characterSprite.scale.x / Math.max(0.0001, Math.abs(characterSprite.scale.x));
-          characterSprite.scale.x = (Math.abs(characterSprite.scale.x) || 1) * breathe * s;
-          characterSprite.scale.y = (Math.abs(characterSprite.scale.y) || 1) * breathe;
-          // mouse follow (subtle)
-          characterSprite.x = app.screen.width / 2 + Math.sin(t * 0.6) * 2 + mouseX * 6;
-          characterSprite.rotation = mouseX * 0.012;
         }
       });
 
       cleanup = () => {
-        window.removeEventListener("resize", onResize);
-        host.removeEventListener("mousemove", onMouse);
         app.ticker.stop();
         try {
           app.destroy(true, { children: true });
@@ -186,7 +106,7 @@ export function LobbyCanvas({ characterUrl, className }: Props) {
       destroyed = true;
       if (cleanup) cleanup();
     };
-  }, [characterUrl]);
+  }, []);
 
   return (
     <div

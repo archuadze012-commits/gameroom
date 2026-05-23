@@ -47,7 +47,7 @@ function timeAgo(iso: string) {
   return `${Math.floor(diff / 86400)} დღის წინ`;
 }
 
-const NOTIF_META: Record<NotificationType, { label: string; icon: React.ElementType; tone: "cyan" | "online" | "violet" | "amber" | "neutral" }> = {
+const NOTIF_META: Record<NotificationType, { label: string; icon: React.ComponentType<{ className?: string }>; tone: "cyan" | "online" | "violet" | "amber" | "neutral" }> = {
   lfg_response:       { label: "LFG",         icon: Users,         tone: "cyan" },
   lfg_accepted:       { label: "LFG",         icon: UserCheck,     tone: "online" },
   forum_reply:        { label: "ფორუმი",      icon: MessageSquare, tone: "violet" },
@@ -57,7 +57,7 @@ const NOTIF_META: Record<NotificationType, { label: string; icon: React.ElementT
   system:             { label: "სისტემა",     icon: Bell,          tone: "neutral" },
 };
 
-const SEVERITY_META: Record<Severity, { icon: React.ElementType; tone: "cyan" | "amber" | "live"; label: string }> = {
+const SEVERITY_META: Record<Severity, { icon: React.ComponentType<{ className?: string }>; tone: "cyan" | "amber" | "live"; label: string }> = {
   info:     { icon: Info,         tone: "cyan",  label: "ინფო" },
   warning:  { icon: AlertTriangle, tone: "amber", label: "გაფრთხილება" },
   critical: { icon: AlertOctagon,  tone: "live",  label: "მნიშვნელოვანი" },
