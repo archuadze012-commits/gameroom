@@ -87,6 +87,8 @@ export default async function GameLobbyPage({
   const canPersistLobby = !!(user?.id && lobbyUserId && user.id === lobbyUserId);
 
   let hudData = null;
+  let lobbyEffect: { effect: string; color?: string } | null = null;
+
   if (lobbyUserId) {
     const hud = getMockHud(username ?? displayName ?? lobbyUserId);
     const [wallet, dailyBonusAvailable, equippedItems] = await Promise.all([
@@ -113,7 +115,7 @@ export default async function GameLobbyPage({
 
     const lobbyEffectItem = equippedItems.find((i) => i.category === "lobby_effect");
     if (lobbyEffectItem) {
-      (hudData as Record<string, unknown>).lobbyEffect = lobbyEffectItem.metadata;
+      lobbyEffect = lobbyEffectItem.metadata as { effect: string; color?: string };
     }
   }
 
@@ -179,7 +181,7 @@ export default async function GameLobbyPage({
               imageUrl={LOBBY_BG[slug]}
               hudData={hudData}
               currentUserId={canPersistLobby ? user?.id ?? null : null}
-              lobbyEffect={(hudData as Record<string, unknown> | null)?.lobbyEffect as { effect: string; color?: string } | null ?? null}
+              lobbyEffect={lobbyEffect}
             />
 
             {/* atmospheric integration */}
