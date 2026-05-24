@@ -25,9 +25,9 @@ const REACTIONS = [
     active: "border-rose-400 bg-rose-500/25 text-rose-300 shadow-rose-500/30",
   },
   {
-    key: "op",
-    label: "OP",
-    sub: "Overpowered",
+    key: "noob",
+    label: "Noob",
+    sub: "Beginner",
     base: "border-violet-500/30 text-violet-400 bg-violet-500/5 hover:border-violet-400/60 hover:bg-violet-500/15 hover:shadow-violet-500/20",
     active: "border-violet-400 bg-violet-500/25 text-violet-300 shadow-violet-500/30",
   },
