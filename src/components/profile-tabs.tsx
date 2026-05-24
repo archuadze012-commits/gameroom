@@ -21,7 +21,7 @@ export function ProfileTabs({
   const tabs: { id: Tab; label: string; icon: ReactNode }[] = [
     { id: "games", label: "თამაშები", icon: <Gamepad2 className="h-3.5 w-3.5" /> },
     { id: "posts", label: "პოსტები", icon: <Rss className="h-3.5 w-3.5" /> },
-    { id: "lfg", label: "LFG", icon: <Search className="h-3.5 w-3.5" /> },
+    { id: "lfg", label: "ლოკალი", icon: <Search className="h-3.5 w-3.5" /> },
     { id: "friends", label: "მეგობრები", icon: <Users className="h-3.5 w-3.5" /> },
   ];
 

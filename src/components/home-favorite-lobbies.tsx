@@ -1,41 +1,13 @@
-"use client";
-
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { ChevronRight, Heart, Play } from "lucide-react";
 import { mockGames } from "@/lib/mock-data";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 // Games that currently have a lobby page. Add new slugs as more lobbies ship.
 const GAMES_WITH_LOBBY: string[] = ["pubg-mobile"];
 
 const cutClipSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
 
-export function HomeFavoriteLobbies() {
-  const [favoriteSlugs, setFavoriteSlugs] = useState<string[] | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const supabase = createSupabaseBrowserClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        if (!cancelled) setFavoriteSlugs([]);
-        return;
-      }
-      const { data } = await supabase
-        .from("profiles")
-        .select("favorite_game_slugs")
-        .eq("id", user.id)
-        .maybeSingle();
-      const slugs: string[] = Array.isArray(data?.favorite_game_slugs) ? data.favorite_game_slugs : [];
-      if (!cancelled) setFavoriteSlugs(slugs);
-    })();
-    return () => { cancelled = true; };
-  }, []);
-
-  if (favoriteSlugs === null) return null; // loading — render nothing to avoid CLS
-
+export function HomeFavoriteLobbies({ favoriteSlugs }: { favoriteSlugs: string[] }) {
   const lobbies = mockGames
     .filter((g) => GAMES_WITH_LOBBY.includes(g.slug))
     .filter((g) => favoriteSlugs.includes(g.slug));

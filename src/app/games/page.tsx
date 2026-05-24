@@ -188,7 +188,7 @@ export default async function GamesCatalogPage() {
                       {g.liveLfg > 0 && (
                         <div className="mt-2 flex items-center gap-1.5 text-[11px] text-[var(--gr-amber)]">
                           <UsersIcon className="h-3 w-3" />
-                          <span className="tabular-nums">{g.liveLfg}</span> ცოცხალი LFG
+                          <span className="tabular-nums">{g.liveLfg}</span> LIVE ლოკალი
                         </div>
                       )}
                     </div>

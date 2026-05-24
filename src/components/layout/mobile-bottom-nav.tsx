@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, FileText, MessageSquare, Bell, Menu, X, Search, Trophy, Gamepad2, Users, Settings, Star, LogOut } from "lucide-react";
+import { Home, FileText, MessageSquare, Bell, Menu, X, Search, Trophy, Gamepad2, Users, Settings, Star, ShoppingBag, LogOut } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 function useMobileProfile() {
@@ -96,9 +96,10 @@ function useAnnouncementCount() {
 const MORE_LINKS = [
   { href: "/forum", label: "ფორუმი", icon: FileText },
   { href: "/games", label: "თამაშები", icon: Gamepad2 },
-  { href: "/lfg", label: "LFG", icon: Users },
+  { href: "/lfg", label: "ლოკალი", icon: Users },
   { href: "/tournaments", label: "ჩემპიონატები", icon: Trophy },
   { href: "/leaderboard", label: "Leaderboard", icon: Star },
+  { href: "/shop", label: "შოპი", icon: ShoppingBag },
   { href: "/settings", label: "პარამეტრები", icon: Settings },
 ];
 
@@ -131,8 +132,6 @@ export function MobileBottomNav() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [moreOpen]);
-
-  if (!profile) return null;
 
   const isActive = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href);
 

@@ -11,6 +11,9 @@ import { LobbyOrientationGuard } from "@/components/lobby/lobby-orientation";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getMockHud } from "@/lib/lobby/mock-hud";
+import { getWallet, getDailyBonusAvailable } from "@/lib/wallet/queries";
+import { getActiveBoxes } from "@/lib/events/queries";
+import { LobbyEvents } from "@/components/lobby/lobby-events";
 
 export const dynamicParams = true;
 
@@ -36,46 +39,78 @@ export async function generateMetadata({
 
 export default async function GameLobbyPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ user?: string }>;
 }) {
   const { slug } = await params;
+  const { user: requestedUsername } = await searchParams;
 
   if (!LOBBY_BG[slug]) notFound();
   const game = mockGames.find((g) => g.slug === slug);
   if (!game) notFound();
 
   const user = await getSession().catch(() => null);
+  const supabase = await createSupabaseServerClient();
   let displayName: string | null = null;
   let username: string | null = null;
   let avatarUrl: string | null = null;
   let level = 1;
-  if (user) {
-    const supabase = await createSupabaseServerClient();
+
+  let lobbyUserId: string | null = null;
+  if (requestedUsername) {
     const { data } = await supabase
       .from("profiles")
-      .select("username, display_name, avatar_url, level")
+      .select("id, username, display_name, avatar_url, level")
+      .eq("username", requestedUsername)
+      .maybeSingle();
+    if (!data) notFound();
+    lobbyUserId = data?.id ?? null;
+    username = data?.username ?? null;
+    displayName = data?.display_name ?? null;
+    avatarUrl = data?.avatar_url ?? null;
+    level = data?.level ?? 1;
+  } else if (user) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, username, display_name, avatar_url, level")
       .eq("id", user.id)
       .maybeSingle();
+    lobbyUserId = data?.id ?? user.id;
     username = data?.username ?? null;
     displayName = data?.display_name ?? null;
     avatarUrl = data?.avatar_url ?? null;
     level = data?.level ?? 1;
   }
-  const hudData = user
-    ? (() => {
-        const hud = getMockHud(username ?? displayName ?? user.id);
-        return {
-          ...hud,
-          player: {
-            ...hud.player,
-            displayName: displayName ?? username ?? "მოთამაშე",
-            avatarUrl,
-            level,
-          },
-        };
-      })()
-    : null;
+  const canPersistLobby = !!(user?.id && lobbyUserId && user.id === lobbyUserId);
+
+  let hudData = null;
+  if (lobbyUserId) {
+    const hud = getMockHud(username ?? displayName ?? lobbyUserId);
+    const [wallet, dailyBonusAvailable] = await Promise.all([
+      getWallet(lobbyUserId),
+      getDailyBonusAvailable(lobbyUserId),
+    ]);
+
+    hudData = {
+      ...hud,
+      gameSlug: slug,
+      player: {
+        ...hud.player,
+        displayName: displayName ?? username ?? "მოთამაშე",
+        avatarUrl,
+        level,
+      },
+      currencies: {
+        pro: wallet.pro_balance,
+        nc: wallet.nc_balance,
+      },
+      dailyBonusAvailable,
+    };
+  }
+
+  const boxes = await getActiveBoxes();
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
@@ -112,7 +147,7 @@ export default async function GameLobbyPage({
           </div>
           <div className="flex flex-col items-end gap-1.5">
             <Pill tone="live" pulse>
-              ცოცხალი
+              LIVE
             </Pill>
             <span className="text-[10.5px] uppercase tracking-[0.16em] text-[var(--gr-text-dim)]">
               <Users className="mr-1 inline h-3 w-3 -translate-y-px" />
@@ -131,7 +166,13 @@ export default async function GameLobbyPage({
             style={{ clipPath: cutLg }}
           >
             <LobbyShell imageUrl={LOBBY_BG[slug]} eyebrow={`${game.nameEn} · ლობის გახსნა`}>
-            <LobbyStage gameName={game.nameKa} imageUrl={LOBBY_BG[slug]} hudData={hudData} />
+            <LobbyStage
+              gameName={game.nameKa}
+              gameSlug={slug}
+              imageUrl={LOBBY_BG[slug]}
+              hudData={hudData}
+              currentUserId={canPersistLobby ? user?.id ?? null : null}
+            />
 
             {/* atmospheric integration */}
             <div
@@ -157,6 +198,11 @@ export default async function GameLobbyPage({
           <ChevronButton href={`/games/${game.slug}`} variant="ghost" size="md" className="text-[12px]">
             თამაშის გვერდი
           </ChevronButton>
+        </div>
+
+        {/* events / crate opening */}
+        <div className="lobby-chrome">
+          <LobbyEvents boxes={boxes} hasSession={!!user} />
         </div>
       </div>
     </div>

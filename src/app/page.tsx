@@ -1,8 +1,7 @@
-import Link from "next/link";
-import { Rss, Heart, MessageCircle, Search, MessageSquare, Bell, Gamepad2, Monitor, Rocket, Users, Trophy, Flame } from "lucide-react";
+﻿import Link from "next/link";
+import { Heart, MessageCircle, Search, MessageSquare, Bell, Gamepad2, ShoppingBag, Rocket, Users, Trophy, Flame } from "lucide-react";
 import { mockGames } from "@/lib/mock-data";
 import { HomeNotificationsWidget } from "@/components/home-notifications-widget";
-import { HomeFavoriteLobbies } from "@/components/home-favorite-lobbies";
 import { getSession } from "@/lib/auth";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -11,7 +10,6 @@ import { formatDistanceToNow } from "date-fns";
 import { ka } from "date-fns/locale";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { DisplayHeading } from "@/components/ui/display-heading";
-import { GradientText } from "@/components/ui/gradient-text";
 import { ChevronButton } from "@/components/ui/chevron-button";
 import { Pill } from "@/components/ui/pill";
 
@@ -33,10 +31,12 @@ const QUICK_NAV = [
   { icon: Gamepad2,      label: "თამაშები",  href: "/games" },
   { icon: MessageSquare, label: "მესენჯერი", href: "/messages" },
   { icon: Bell,          label: "უწყებები",  href: "/announcements" },
+  { icon: ShoppingBag,   label: "შოპი",      href: "/shop" },
 ];
 
 const cutClipSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
 const cutClipMd = "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)";
+const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.55))";
 
 export default async function HomePage() {
   const user = await getSession().catch(() => null);
@@ -44,13 +44,13 @@ export default async function HomePage() {
   let recentPosts: HomePost[] = [];
   try {
     const supabase = await createSupabaseServerClient();
-    const { data } = await supabase
+    const { data: postsData } = await supabase
       .from("posts")
       .select("id, content, media_urls, likes_count, created_at, profiles!posts_author_id_fkey(username, display_name, avatar_url)")
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(8);
-    recentPosts = (data ?? []) as unknown as HomePost[];
+    recentPosts = (postsData ?? []) as unknown as HomePost[];
   } catch {
     recentPosts = [];
   }
@@ -60,7 +60,7 @@ export default async function HomePage() {
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
 
       <div className="container relative mx-auto px-4 py-10 lg:py-14 space-y-14">
-        {/* ── HERO ─────────────────────────────────────────── */}
+        {/* â”€â”€ HERO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <section className="relative isolate overflow-hidden">
           {/* faint violet/magenta light leaks */}
           <span aria-hidden className="pointer-events-none absolute -top-20 -right-20 h-72 w-72 rounded-full bg-[var(--gr-violet)]/25 blur-[120px]" />
@@ -68,14 +68,12 @@ export default async function HomePage() {
 
           {!user ? (
             <div className="mx-auto max-w-3xl text-center">
-              <Eyebrow tone="amber" className="justify-center inline-flex">ქართველი გეიმერების სახლი</Eyebrow>
+              <Eyebrow tone="amber" className="justify-center inline-flex">ქართული გეიმერების სახლი</Eyebrow>
               <DisplayHeading as="h1" size="display" className="mt-5">
-                ერთად ვთამაშობთ.<br />
-                ერთად <GradientText tone="amber">ვიგებთ</GradientText>.
+                იპოვე გუნდი ან მოწინააღმდეგე წამებში
               </DisplayHeading>
               <p className="mx-auto mt-6 max-w-2xl text-balance text-[15px] leading-relaxed text-[var(--gr-text-mute)]">
-                იპოვე გუნდი, შეუერთდი ჩემპიონატებს და გაიცანი ქართველი გეიმერების კომუნიტი
-                — eFootball, FIFA, PUBG, Warzone, Valorant.
+                შექმენი ან იპოვე გუნდი და ითამაშე შენი საყვარელი თამაშები ქართველებთან ერთად
               </p>
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <ChevronButton href="/auth/signup" variant="violet" size="lg">
@@ -85,32 +83,9 @@ export default async function HomePage() {
               </div>
             </div>
           ) : (
-            <div className="mx-auto max-w-3xl">
-              <HomeFavoriteLobbies />
-              {/* primary CTA — cut-corner gradient banner */}
-              <div
-                className="relative isolate overflow-hidden p-8 text-center text-white"
-                style={{ background: "var(--gr-grad-violet)", clipPath: cutClipMd }}
-              >
-                <span aria-hidden className="pointer-events-none absolute right-0 top-0 h-3 w-12 bg-[var(--gr-amber)]" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%)" }} />
-                <Eyebrow tone="amber" className="justify-center inline-flex !text-[#ffd9a3]">დაიწყე ახლავე</Eyebrow>
-                <DisplayHeading as="h2" size="lg" className="mt-3 !text-white">
-                  იპოვე გუნდი წამებში
-                </DisplayHeading>
-                <p className="mx-auto mt-2 max-w-md text-balance text-[14px] text-white/85">
-                  აარჩიე თამაში, შექმენი LFG და დაიწყე თამაში ქართველებთან.
-                </p>
-                <div className="mt-5 inline-block">
-                  <ChevronButton href="/lfg" variant="amber" size="md">
-                    LFG-ში გადასვლა
-                  </ChevronButton>
-                </div>
-              </div>
-
-              <HomeNotificationsWidget />
-
+            <div>
               {/* quick nav */}
-              <div className="mt-6 hidden xl:grid grid-cols-4 gap-3">
+              <div className="mt-6 hidden md:grid md:grid-cols-5 gap-3">
                 {QUICK_NAV.map(({ icon: Icon, label, href }) => (
                   <Link
                     key={href}
@@ -128,12 +103,44 @@ export default async function HomePage() {
                   </Link>
                 ))}
               </div>
+              {/* primary CTA - posts-style card */}
+              <div
+                className="relative isolate mt-4"
+                style={{ background: cardBorder, padding: 1, clipPath: cutClipMd }}
+              >
+                <div
+                  className="relative overflow-hidden bg-[var(--gr-bg-1)] p-6 sm:p-7"
+                  style={{ clipPath: cutClipMd }}
+                >
+                  <span
+                    aria-hidden
+                    className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]"
+                  />
+                  <DisplayHeading as="h2" size="md" className="text-center">
+                    იპოვე გუნდი ან მოწინააღმდეგე წამებში
+                  </DisplayHeading>
+                  <p className="mx-auto mt-3 max-w-2xl text-center text-[14px] leading-relaxed text-[var(--gr-text-mute)]">
+                    შექმენი ან იპოვე გუნდი და ითამაშე შენი საყვარელი თამაშები ქართველებთან ერთად
+                  </p>
+                  <div className="mt-5 flex justify-center">
+                    <ChevronButton
+                      href="/lfg"
+                      variant="ghost"
+                      size="md"
+                      className="text-[var(--gr-violet-hi)] border-[var(--gr-border)] bg-[var(--gr-bg-1)] hover:text-[var(--gr-violet)] hover:border-[var(--gr-violet-hi)]"
+                    >
+                      დაწყება
+                    </ChevronButton>
+                  </div>
+                </div>
+              </div>
+              <HomeNotificationsWidget />
             </div>
           )}
         </section>
 
-        {/* ── GAMES STRIP (mobile + tablet) ─────────────────── */}
-        <section className="xl:hidden">
+        {/* â”€â”€ GAMES STRIP (mobile + tablet) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        <section className="hidden">
           <div className="mb-4 flex items-end justify-between">
             <div>
               <Eyebrow tone="violet">თამაშები</Eyebrow>
@@ -148,48 +155,46 @@ export default async function HomePage() {
 
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             {mockGames.map((game) => (
-              <Link key={game.slug} href={`/games/${game.slug}`} className="group flex-none w-28 transition-transform duration-200 hover:-translate-y-0.5">
-                <div
-                  className="relative aspect-[3/4] w-28 overflow-hidden bg-[var(--gr-bg-1)] ring-1 ring-[var(--gr-border)] transition-all group-hover:ring-[var(--gr-violet-hi)] gr-sweep"
-                  style={{ clipPath: cutClipSm }}
-                >
-                  {game.coverUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={game.coverUrl} alt={game.nameKa} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-3xl">{game.emoji}</div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)] via-[var(--gr-bg-0)]/30 to-transparent" />
+              <Link key={game.slug} href={`/games/${game.slug}`} className="group flex-none w-28">
+                <div className="relative isolate" style={{ background: cardBorder, padding: 1, clipPath: cutClipSm }}>
+                  <div className="relative aspect-[3/4] w-full overflow-hidden bg-[var(--gr-bg-1)] gr-sweep" style={{ clipPath: cutClipSm }}>
+                    {game.coverUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={game.coverUrl} alt={game.nameKa} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-3xl">{game.emoji}</div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)] via-[var(--gr-bg-0)]/30 to-transparent" />
+                  </div>
                 </div>
-                <p className="mt-2 truncate text-center text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--gr-text-mute)] group-hover:text-[var(--gr-violet-hi)]">
-                  {game.nameKa}
-                </p>
+                <p className="mt-2 truncate text-center text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--gr-text-mute)]">{game.nameKa}</p>
               </Link>
             ))}
           </div>
 
           <Link
-            href="/tamashebi"
+            href="/shop"
             className="mt-4 flex w-full items-center justify-center gap-2 bg-[var(--gr-bg-1)] py-3 text-[12px] font-semibold uppercase tracking-[0.14em] text-[var(--gr-violet-hi)] ring-1 ring-[var(--gr-border)] transition-colors hover:ring-[var(--gr-violet-hi)] hover:text-[var(--gr-violet)]"
             style={{ clipPath: cutClipSm }}
           >
-            <Monitor className="h-4 w-4" /> Free PC Games
+            <ShoppingBag className="h-4 w-4" /> შოპი
           </Link>
         </section>
 
-        {/* ── POSTS FEED ────────────────────────────────────── */}
-        <section>
-          <div className="mb-5 flex items-end justify-between">
-            <div>
-              <Eyebrow tone="amber">აქტივობა</Eyebrow>
-              <DisplayHeading as="h2" size="md" className="mt-2 flex items-center gap-2">
-                <Rss className="h-5 w-5 text-[var(--gr-amber)]" /> ბოლო პოსტები
-              </DisplayHeading>
-            </div>
-            <Link href="/feed" className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--gr-violet-hi)] hover:text-[var(--gr-violet)]">
-              ყველა →
+        {/* â”€â”€ POSTS FEED â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {!user && (
+          <section className="hidden xl:block">
+            <Link
+              href="/shop"
+              className="flex w-full items-center justify-center gap-2 bg-[var(--gr-bg-1)] py-3 text-[12px] font-semibold uppercase tracking-[0.14em] text-[var(--gr-violet-hi)] ring-1 ring-[var(--gr-border)] transition-colors hover:ring-[var(--gr-violet-hi)] hover:text-[var(--gr-violet)]"
+              style={{ clipPath: cutClipSm }}
+            >
+              <ShoppingBag className="h-4 w-4" /> შოპი
             </Link>
-          </div>
+          </section>
+        )}
+
+        <section>
 
           {recentPosts.length === 0 ? (
             <div
@@ -200,7 +205,7 @@ export default async function HomePage() {
               ჯერ არცერთი პოსტი არ არის. გახდი პირველი ვინც დაწერს!
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 xl:grid-cols-2">
               {recentPosts.map((p) => {
                 const author = p.profiles;
                 const name = author?.display_name ?? author?.username ?? "მომხმარებელი";
@@ -213,14 +218,17 @@ export default async function HomePage() {
                   }
                 })();
                 return (
-                  <Link
-                    key={p.id}
-                    href="/feed"
-                    className="group relative block bg-[var(--gr-bg-1)] p-4 transition-transform hover:-translate-y-0.5 gr-sweep"
-                    style={{ clipPath: cutClipSm }}
-                  >
-                    <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
-                    <div className="flex items-start gap-3">
+                  <Link key={p.id} href="/feed" className="group block">
+                    <div
+                      className="relative isolate"
+                      style={{ background: cardBorder, padding: 1, clipPath: cutClipSm }}
+                    >
+                      <div
+                        className="relative bg-[var(--gr-bg-1)] p-4 gr-sweep"
+                        style={{ clipPath: cutClipSm }}
+                      >
+                        <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
+                        <div className="flex items-start gap-3">
                       <Avatar className="h-9 w-9 shrink-0 border border-[var(--gr-border-hi)]">
                         <AvatarImage src={author?.avatar_url ?? undefined} alt={name} />
                         <AvatarFallback className="bg-[var(--gr-violet)]/15 text-xs text-[var(--gr-violet-hi)]">
@@ -254,6 +262,8 @@ export default async function HomePage() {
                         </div>
                       </div>
                     </div>
+                      </div>
+                    </div>
                   </Link>
                 );
               })}
@@ -261,29 +271,34 @@ export default async function HomePage() {
           )}
         </section>
 
-        {/* ── BOTTOM CTA ROW ────────────────────────────────── */}
-        <section className="grid gap-4 md:grid-cols-3">
+        {/* â”€â”€ BOTTOM CTA ROW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        <section className="grid gap-4 xl:grid-cols-3">
           {[
             { href: "/games", icon: Gamepad2, eyebrow: "კატალოგი", title: "თამაშები", desc: "ნახე ყველა მხარდაჭერილი თამაში." },
-            { href: "/lfg", icon: Users, eyebrow: "გუნდი", title: "ცოცხალი LFG", desc: "შემოუერთდი მოთამაშეებს." },
+            { href: "/lfg", icon: Users, eyebrow: "გუნდი", title: "LIVE ლოკალი", desc: "შემოუერთდი მოთამაშეებს." },
             { href: "/tournaments", icon: Trophy, eyebrow: "ჩემპიონატი", title: "ტურნირები", desc: "დარეგისტრირდი ან უყურე." },
           ].map((item) => {
             const Icon = item.icon;
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="group relative block bg-[var(--gr-bg-1)] p-5 transition-transform hover:-translate-y-0.5 gr-sweep"
-                style={{ clipPath: cutClipMd }}
-              >
-                <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
-                <Icon className="h-6 w-6 text-[var(--gr-violet-hi)]" />
-                <div className="mt-3">
-                  <Eyebrow tone="amber">{item.eyebrow}</Eyebrow>
-                  <h3 className="mt-1.5 font-display text-[18px] font-bold uppercase text-[var(--gr-text)]">
-                    {item.title}
-                  </h3>
-                  <p className="mt-1.5 text-[12.5px] text-[var(--gr-text-mute)]">{item.desc}</p>
+              <Link key={item.href} href={item.href} className="group block">
+                <div
+                  className="relative isolate"
+                  style={{ background: cardBorder, padding: 1, clipPath: cutClipMd }}
+                >
+                  <div
+                    className="relative bg-[var(--gr-bg-1)] p-5 gr-sweep"
+                    style={{ clipPath: cutClipMd }}
+                  >
+                    <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
+                    <Icon className="h-6 w-6 text-[var(--gr-violet-hi)]" />
+                    <div className="mt-3">
+                      <Eyebrow tone="amber">{item.eyebrow}</Eyebrow>
+                      <h3 className="mt-1.5 font-display text-[18px] font-bold uppercase text-[var(--gr-text)]">
+                        {item.title}
+                      </h3>
+                      <p className="mt-1.5 text-[12.5px] text-[var(--gr-text-mute)]">{item.desc}</p>
+                    </div>
+                  </div>
                 </div>
               </Link>
             );
@@ -293,3 +308,4 @@ export default async function HomePage() {
     </div>
   );
 }
+

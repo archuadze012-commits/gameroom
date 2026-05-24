@@ -22,6 +22,10 @@ export function AvatarUpload({ username, displayName, avatarUrl, isOwner }: Avat
   const initial = displayName.slice(0, 1).toUpperCase();
 
   useEffect(() => {
+    setSrc(avatarUrl ?? "/default-avatar.svg");
+  }, [avatarUrl]);
+
+  useEffect(() => {
     if (!avatarUrl) return;
     try {
       const raw = localStorage.getItem("gameroom_avatars");

@@ -17,7 +17,7 @@ const statusTone: Record<string, "online" | "amber" | "live" | "neutral"> = {
 const statusLabel: Record<string, string> = {
   open: "რეგისტრაცია",
   checkin: "Check-in",
-  live: "ცოცხალი",
+  live: "LIVE",
   completed: "დასრულდა",
 };
 
@@ -48,7 +48,7 @@ export default function TournamentsPage() {
         />
 
         <div className="mt-10 space-y-12">
-          <Section eyebrow="LIVE" title="ცოცხალი" tone="live" tournaments={grouped.live} />
+          <Section eyebrow="LIVE" title="LIVE" tone="live" tournaments={grouped.live} />
           <Section eyebrow="მომავალი" title="დარეგისტრირდი" tone="amber" tournaments={grouped.upcoming} />
           <Section eyebrow="არქივი" title="დასრულებული" tone="mute" tournaments={grouped.completed} />
         </div>

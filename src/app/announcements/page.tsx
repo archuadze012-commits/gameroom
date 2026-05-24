@@ -48,8 +48,8 @@ function timeAgo(iso: string) {
 }
 
 const NOTIF_META: Record<NotificationType, { label: string; icon: React.ComponentType<{ className?: string }>; tone: "cyan" | "online" | "violet" | "amber" | "neutral" }> = {
-  lfg_response:       { label: "LFG",         icon: Users,         tone: "cyan" },
-  lfg_accepted:       { label: "LFG",         icon: UserCheck,     tone: "online" },
+  lfg_response:       { label: "ლოკალი",      icon: Users,         tone: "cyan" },
+  lfg_accepted:       { label: "ლოკალი",      icon: UserCheck,     tone: "online" },
   forum_reply:        { label: "ფორუმი",      icon: MessageSquare, tone: "violet" },
   news_comment:       { label: "სიახლე",      icon: MessageSquare, tone: "violet" },
   tournament_checkin: { label: "ჩემპიონატი",  icon: Trophy,        tone: "amber" },
@@ -65,7 +65,7 @@ const SEVERITY_META: Record<Severity, { icon: React.ComponentType<{ className?: 
 
 const TAB_LABELS: Record<Tab, string> = {
   all: "ყველა",
-  lfg: "LFG",
+  lfg: "ლოკალი",
   forum: "ფორუმი",
   system: "სისტემური",
 };
@@ -210,7 +210,7 @@ export default function AnnouncementsPage() {
             tone="violet"
             illustration={<Bell className="h-8 w-8 text-[var(--gr-violet-hi)]" />}
             title="შეტყობინება არ გაქვს"
-            description="როცა LFG-ში მოგწერენ ან ფორუმში გიპასუხებენ, აქ გამოჩნდება."
+            description="როცა ლოკალში მოგწერენ ან ფორუმში გიპასუხებენ, აქ გამოჩნდება."
           />
         ) : (
           <div className="space-y-2">

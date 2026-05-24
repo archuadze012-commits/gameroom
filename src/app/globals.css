@@ -8,6 +8,39 @@
   -ms-overflow-style: none;
 }
 
+/* Box opening animations */
+@keyframes box-shake {
+  0%,100% { transform: translateX(0) rotate(0deg); }
+  15%      { transform: translateX(-6px) rotate(-3deg); }
+  30%      { transform: translateX(6px)  rotate(3deg); }
+  45%      { transform: translateX(-4px) rotate(-2deg); }
+  60%      { transform: translateX(4px)  rotate(2deg); }
+  75%      { transform: translateX(-2px) rotate(-1deg); }
+}
+@keyframes item-reveal {
+  0%   { opacity: 0; transform: scale(0.5) translateY(20px); }
+  60%  { transform: scale(1.08) translateY(-4px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes tier-glow-pulse {
+  0%,100% { opacity: 0.6; }
+  50%     { opacity: 1; }
+}
+.box-shake    { animation: box-shake 0.6s ease-in-out; }
+.item-reveal  { animation: item-reveal 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.tier-glow-pulse { animation: tier-glow-pulse 1.6s ease-in-out infinite; }
+
+/* Pro Coin spinning star */
+@keyframes procoin-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.procoin-spin {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: procoin-spin 4s linear infinite;
+}
+
 /* Gameroom v2 — diagonal light sweep across cards */
 @keyframes gr-sweep {
   0%   { transform: translateX(-120%) rotate(20deg); opacity: 0; }
@@ -77,8 +110,8 @@
     height: 72%;
   }
   .lobby-contact-shadow {
-    width: 32%;
-    height: 18%;
+    width: min(34%, 320px);
+    height: 20%;
   }
 }
 
@@ -112,6 +145,12 @@
   .lobby-fs-wrap .lobby-character {
     bottom: 6%;
     height: 86%;
+  }
+  .lobby-fs-wrap .lobby-contact-shadow {
+    left: 51.5%;
+    bottom: 0.5%;
+    width: min(34%, 320px);
+    height: 20%;
   }
 }
 
@@ -164,9 +203,9 @@
   --sidebar-accent-foreground: oklch(0.2050 0 0);
   --sidebar-border: oklch(0.9220 0 0);
   --sidebar-ring: oklch(0.7080 0 0);
-  --font-sans: var(--font-inter), var(--font-noto-georgian), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-sans: var(--font-firago), var(--font-alk-sanet), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --radius: 0.625rem;
   --shadow-x: 0;
   --shadow-y: 1px;
@@ -222,9 +261,9 @@
   --sidebar-accent-foreground: #FFFFFF;
   --sidebar-border: rgba(168, 85, 247, 0.14);
   --sidebar-ring: #A78BFA;
-  --font-sans: var(--font-inter), var(--font-noto-georgian), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-sans: var(--font-firago), var(--font-alk-sanet), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --radius: 0.625rem;
   --shadow-x: 0;
   --shadow-y: 1px;
@@ -263,8 +302,9 @@
   --gr-border-hi:  rgba(168, 85, 247, 0.35);
   --gr-divider-lt: rgba(10, 8, 20, 0.08);
 
-  /* text */
-  --gr-text:       #F5F2FF;
+  /* text — shifted from violet-tinted near-white to cyan-tinted light blue */
+  --gr-text:       #DCEEFE;   /* bright light cyan (was #F5F2FF violet-tint) */
+  --gr-text-hi:    #BAE6FD;   /* slightly deeper cyan, for emphasis on dark covers */
   --gr-text-mute:  #A99CC9;
   --gr-text-dim:   #6B5F88;
   --gr-text-on-lt: #14101F;
@@ -273,7 +313,7 @@
   --gr-violet:     #8B5CF6;
   --gr-violet-hi:  #A78BFA;
   --gr-magenta:    #C026D3;
-  --gr-amber:      #F5A524;
+  --gr-amber:      #A78BFA;
   --gr-cyan-glow:  #22D3EE;
 
   --tier-bronze:   #B87333;
@@ -305,6 +345,12 @@
   --gr-card-shadow:
     0 1px 0 rgba(255, 255, 255, 0.04) inset,
     0 12px 30px -18px rgba(0, 0, 0, 0.6);
+}
+
+@theme {
+  /* Portrait iPad (≤1024px) → mobile. Landscape iPad (1194px+) → desktop.
+     xl sits between them at 1100px. */
+  --breakpoint-xl: 1100px;
 }
 
 @theme inline {
@@ -344,7 +390,7 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-display);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -374,6 +420,7 @@
   --color-gr-border-hi: var(--gr-border-hi);
   --color-gr-divider-lt:var(--gr-divider-lt);
   --color-gr-text:      var(--gr-text);
+  --color-gr-text-hi:   var(--gr-text-hi);
   --color-gr-mute:      var(--gr-text-mute);
   --color-gr-dim:       var(--gr-text-dim);
   --color-gr-on-lt:     var(--gr-text-on-lt);
@@ -387,7 +434,7 @@
   --color-gr-cyan:      var(--gr-cyan);
   --color-gr-lime:      var(--gr-lime);
 
-  --font-display: var(--font-inter-tight), var(--font-noto-georgian), var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-alk-sanet), var(--font-firago), system-ui, sans-serif;
 }
 
 @layer base {

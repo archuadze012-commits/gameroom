@@ -1,6 +1,23 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Users as UsersIcon, Plus, DoorOpen, Trophy, Radio, Mic, MapPin } from "lucide-react";
+import {
+  ArrowLeft,
+  Users as UsersIcon,
+  Plus,
+  Crosshair,
+  DoorOpen,
+  Flame,
+  Swords,
+  Target,
+  Shield,
+  Star,
+  Trophy,
+  Radio,
+  Mic,
+  MapPin,
+  Rocket,
+  Gift,
+} from "lucide-react";
 import { GameIcon } from "@/components/game-icon";
 import { mockGames, mockLfgPosts, mockTournaments, type MockGame } from "@/lib/mock-data";
 import { FindMatchButton } from "@/components/find-match-button";
@@ -11,14 +28,69 @@ import { DisplayHeading } from "@/components/ui/display-heading";
 import { ChevronButton } from "@/components/ui/chevron-button";
 import { Pill } from "@/components/ui/pill";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { RoleBadge, type UserRole } from "@/components/role-badge";
 
 export const dynamic = "force-dynamic";
 
 const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
-const cutMd = "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)";
 const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.5))";
+const LOBBY_GAMES = new Set<string>(["pubg-mobile"]);
+
+type RoomPreview = {
+  id: string;
+  room_code: string;
+  mode: string;
+  map: string | null;
+  perspective: string;
+  max_players: number;
+  current_players: number;
+  host_id: string;
+};
+
+type PromoCardProps = {
+  href: string;
+  title: string;
+  icon: React.ReactNode;
+  accent: string;
+};
+
+function PromoCard({ href, title, icon, accent }: PromoCardProps) {
+  return (
+    <Link href={href} className="block">
+      <article
+        className="group relative isolate"
+        style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
+      >
+        <div
+          className="relative h-56 overflow-hidden bg-[var(--gr-bg-1)] transition-transform duration-300 group-hover:scale-[1.01]"
+          style={{ clipPath: cutSm }}
+        >
+          <span aria-hidden className="absolute left-0 top-0 z-10 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
+          <div className={`absolute inset-0 bg-gradient-to-br ${accent}`} />
+          <div className={`absolute inset-0 bg-gradient-to-br ${accent} opacity-65`} />
+          <div className="absolute inset-0 bg-gradient-to-r from-[var(--gr-bg-0)] via-[var(--gr-bg-0)]/35 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)] via-[var(--gr-bg-0)]/30 to-transparent" />
+          <div aria-hidden className="absolute -left-10 top-1/2 h-40 w-40 -translate-y-1/2 rounded-full bg-white/10 blur-3xl transition-transform duration-500 group-hover:scale-125" />
+          <div aria-hidden className="absolute inset-y-0 right-[22%] w-[2px] bg-[var(--gr-violet)]/50 shadow-[0_0_18px_rgba(139,92,246,0.65)]" />
+          <div aria-hidden className="absolute inset-y-0 right-[18%] w-[4px] bg-[var(--gr-violet)]/65 shadow-[0_0_22px_rgba(139,92,246,0.8)]" />
+          <div aria-hidden className="absolute right-0 top-0 h-full w-[18%] bg-[linear-gradient(180deg,rgba(34,211,238,0.9),rgba(139,92,246,0.25))] opacity-80 [clip-path:polygon(32%_0,100%_0,100%_100%,0_100%)]" />
+          <div className="absolute inset-y-0 right-[11%] z-[1] flex items-center justify-center">
+            <div className="rounded-full border border-white/12 bg-white/[0.04] p-5 shadow-[0_0_30px_rgba(139,92,246,0.3)] backdrop-blur-sm transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 sm:p-6">
+              <div className="text-white/95 drop-shadow-[0_0_18px_rgba(34,211,238,0.45)] [&_svg]:h-16 [&_svg]:w-16 sm:[&_svg]:h-20 sm:[&_svg]:w-20">
+                {icon}
+              </div>
+            </div>
+          </div>
+
+          <div className="absolute bottom-0 left-0 right-0 z-10 p-4">
+            <h3 className="font-display text-[20px] font-extrabold uppercase leading-[1.02] tracking-tight text-[var(--gr-text)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">
+              {title}
+            </h3>
+          </div>
+        </div>
+      </article>
+    </Link>
+  );
+}
 
 export default async function GamePage({
   params,
@@ -45,41 +117,43 @@ export default async function GamePage({
         liveLfg: 0,
         favoritedBy: 0,
       }
-    : mockGames.find((g) => g.slug === slug);
+    : mockGames.find((entry) => entry.slug === slug);
 
   if (!game) notFound();
 
-  const gameLfg = mockLfgPosts.filter((p) => p.gameSlug === slug);
-  const gameTournaments = mockTournaments.filter((t) => t.gameSlug === slug);
+  const gameLfg = mockLfgPosts.filter((post) => post.gameSlug === slug);
+  const gameTournaments = mockTournaments.filter((entry) => entry.gameSlug === slug);
+  const hasLobby = LOBBY_GAMES.has(game.slug);
 
-  // Fetch open rooms for this game, sorted by host follower count
-  type RoomPreview = {
-    id: string; room_code: string; mode: string; map: string | null;
-    perspective: string; max_players: number; current_players: number; host_id: string;
-    profiles: { username: string | null; display_name: string | null; avatar_url: string | null; role: string | null } | null;
-  };
   const { data: roomsRaw } = await supabase
     .from("game_rooms")
-    .select("id, room_code, mode, map, perspective, max_players, current_players, host_id, profiles!game_rooms_host_id_fkey(username, display_name, avatar_url, role)")
+    .select("id, room_code, mode, map, perspective, max_players, current_players, host_id")
     .eq("game_slug", slug)
     .eq("status", "open")
     .gt("expires_at", new Date().toISOString())
     .limit(30);
-  let topRooms = (roomsRaw ?? []) as unknown as RoomPreview[];
+
+  let topRooms = (roomsRaw ?? []) as RoomPreview[];
+
   if (topRooms.length > 1) {
-    const hostIds = [...new Set(topRooms.map((r) => r.host_id))];
-    const { data: fc } = await supabase.from("follows").select("following_id").in("following_id", hostIds);
-    const fcMap: Record<string, number> = {};
-    (fc ?? []).forEach((f) => { fcMap[f.following_id] = (fcMap[f.following_id] || 0) + 1; });
-    topRooms = [...topRooms].sort((a, b) => (fcMap[b.host_id] || 0) - (fcMap[a.host_id] || 0));
+    const hostIds = [...new Set(topRooms.map((room) => room.host_id))];
+    const { data: followRows } = await supabase.from("follows").select("following_id").in("following_id", hostIds);
+    const followCountMap: Record<string, number> = {};
+    (followRows ?? []).forEach((row) => {
+      followCountMap[row.following_id] = (followCountMap[row.following_id] || 0) + 1;
+    });
+    topRooms = [...topRooms].sort((a, b) => (followCountMap[b.host_id] || 0) - (followCountMap[a.host_id] || 0));
   }
+
   topRooms = topRooms.slice(0, 3);
+
+  const featuredRoom = topRooms[0] ?? null;
+  const featuredTournament = gameTournaments[0] ?? null;
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
 
-      {/* ── COVER IMAGE ─────────────────────────────────── */}
       {game.coverUrl && (
         <div className="relative h-48 overflow-hidden border-b border-[var(--gr-border)] sm:h-56 lg:h-64">
           <div className={`absolute inset-0 bg-gradient-to-br ${game.accent}`} />
@@ -98,9 +172,7 @@ export default async function GamePage({
         </div>
       )}
 
-      {/* ── BODY ─────────────────────────────────────────── */}
       <div className="container relative mx-auto px-4 py-8 lg:py-10">
-        {/* breadcrumb */}
         <Link
           href="/games"
           className="mb-6 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--gr-text-dim)] hover:text-white"
@@ -108,7 +180,6 @@ export default async function GamePage({
           <ArrowLeft className="h-3.5 w-3.5" /> ყველა თამაში
         </Link>
 
-        {/* game header */}
         <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex items-end gap-4">
             <div
@@ -118,9 +189,27 @@ export default async function GamePage({
               <GameIcon game={game} size="xl" />
             </div>
             <div>
-              <DisplayHeading as="h1" size="display">
-                {game.nameKa}
-              </DisplayHeading>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <DisplayHeading as="h1" size="display">
+                  {game.nameKa}
+                </DisplayHeading>
+                {hasLobby && (
+                  <Link
+                    href={`/games/${game.slug}/lobby`}
+                    className="group relative inline-flex items-center gap-2 overflow-hidden bg-[linear-gradient(135deg,rgba(139,92,246,0.22),rgba(192,38,211,0.3))] px-4 py-2 text-white ring-1 ring-[var(--gr-violet-hi)]/45 shadow-[0_10px_30px_-12px_rgba(139,92,246,0.8)] backdrop-blur-md transition-all hover:-translate-y-0.5 hover:ring-[var(--gr-amber)]/55 hover:shadow-[0_0_28px_rgba(192,38,211,0.45)] sm:px-5 sm:py-2.5 lg:px-6 lg:py-3"
+                    style={{ clipPath: cutSm }}
+                  >
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent_0%,rgba(255,255,255,0.18)_35%,transparent_70%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                    />
+                    <Rocket className="relative z-[1] h-5 w-5 shrink-0 text-[var(--gr-amber)] drop-shadow-[0_0_10px_rgba(245,158,11,0.55)] sm:h-7 sm:w-7 lg:h-9 lg:w-9" />
+                    <span className="relative z-[1] font-display text-[26px] font-extrabold uppercase leading-[0.95] tracking-[-0.02em] sm:text-[36px] lg:text-[52px]">
+                      ლობის გახსნა
+                    </span>
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex shrink-0 gap-2">
@@ -128,34 +217,34 @@ export default async function GamePage({
           </div>
         </div>
 
-        {/* stats pill row */}
         <div className="mb-10 flex flex-wrap items-center gap-2">
           <Pill tone="online" icon={<Radio className="h-3 w-3" />}>
             {game.players.toLocaleString("en-US")} მოთამაშე
           </Pill>
           <Pill tone="violet" icon={<UsersIcon className="h-3 w-3" />}>
-            {game.liveLfg} ცოცხალი LFG
+            {game.liveLfg} LIVE ლოკალი
           </Pill>
           {gameTournaments.length > 0 && (
             <Pill tone="amber" icon={<Trophy className="h-3 w-3" />}>
-              {gameTournaments.length} ჩემპიონატი
+              {gameTournaments.length} ტურნირი
             </Pill>
           )}
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
           <div className="space-y-10">
-            {/* ── LFG ────────────────────────────────── */}
             <section>
               <div className="mb-5 flex items-end justify-between">
                 <div>
                   <Eyebrow tone="amber">გუნდი</Eyebrow>
-                  <DisplayHeading as="h2" size="md" className="mt-2">იპოვე თიმმეითი ან ეთამაშე ერთი ერთზე</DisplayHeading>
+                  <DisplayHeading as="h2" size="md" className="mt-2">
+                    იპოვე თიმმეითი ან ეთამაშე ერთი ერთზე
+                  </DisplayHeading>
                 </div>
                 <div className="flex gap-2">
                   <FindMatchButton gameSlug={game.slug} gameName={game.nameKa} />
                   <ChevronButton href={`/lfg/new?game=${game.slug}`} variant="violet" size="sm">
-                    <Plus className="h-3.5 w-3.5" /> ახალი LFG
+                    <Plus className="h-3.5 w-3.5" /> ახალი ლოკალი
                   </ChevronButton>
                 </div>
               </div>
@@ -164,32 +253,29 @@ export default async function GamePage({
                   <EmptyState
                     tone="violet"
                     illustration={<UsersIcon className="h-8 w-8 text-[var(--gr-violet-hi)]" />}
-                    title="ჯერ LFG არ არის"
+                    title="ჯერ ლოკალი არ არის"
                     description="გახდი პირველი ვინც დაიწყებს ძებნას ამ თამაშზე."
                     action={
                       <ChevronButton href={`/lfg/new?game=${game.slug}`} variant="violet" size="md">
-                        <Plus className="h-4 w-4" /> ახალი LFG
+                        <Plus className="h-4 w-4" /> ახალი ლოკალი
                       </ChevronButton>
                     }
                   />
                 ) : (
-                  gameLfg.map((p) => (
-                    <Link key={p.id} href={`/lfg/${p.id}`} className="block">
+                  gameLfg.map((post) => (
+                    <Link key={post.id} href={`/lfg/${post.id}`} className="block">
                       <article
                         className="group relative isolate transition-transform hover:-translate-y-0.5"
                         style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
                       >
-                        <div
-                          className="relative bg-[var(--gr-bg-1)] p-4 gr-sweep"
-                          style={{ clipPath: cutSm }}
-                        >
+                        <div className="relative bg-[var(--gr-bg-1)] p-4 gr-sweep" style={{ clipPath: cutSm }}>
                           <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
                               <h3 className="font-display text-[15px] font-bold uppercase tracking-tight text-[var(--gr-text)] group-hover:text-[var(--gr-violet-hi)]">
-                                {p.title}
+                                {post.title}
                               </h3>
                               <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-[var(--gr-text-dim)]">
-                                @{p.authorName} · {p.createdAgo}
+                                @{post.authorName} · {post.createdAgo}
                               </p>
                               <div className="mt-2 flex flex-wrap items-center gap-1.5">
                                 <Pill tone="amber">🏅 Crown II</Pill>
@@ -198,7 +284,7 @@ export default async function GamePage({
                               </div>
                             </div>
                             <Pill tone="accent" icon={<UsersIcon className="h-3 w-3" />}>
-                              {p.slots.filled}/{p.slots.total}
+                              {post.slots.filled}/{post.slots.total}
                             </Pill>
                           </div>
                         </div>
@@ -209,130 +295,98 @@ export default async function GamePage({
               </div>
             </section>
 
-            {/* ── ROOMS ──────────────────────────────── */}
-            <section>
-              <div className="mb-5 flex items-end justify-between">
-                <div>
-                  <Eyebrow tone="magenta">სივრცე</Eyebrow>
-                  <DisplayHeading as="h2" size="md" className="mt-2">რუმები</DisplayHeading>
-                </div>
-                <ChevronButton href={`/rooms/new?game=${game.slug}`} variant="ghost" size="sm">
-                  ყველა
-                </ChevronButton>
-              </div>
-              {topRooms.length === 0 ? (
-                <EmptyState
-                  tone="violet"
-                  illustration={<DoorOpen className="h-9 w-9 text-[var(--gr-magenta)]" />}
-                  title="ამ თამაშზე ჯერ რუმი არ არის"
-                  description="შექმენი პირველი და მოიწვიე გუნდი."
-                  action={
-                    <ChevronButton href={`/rooms/new?game=${game.slug}`} variant="violet" size="md">
-                      <Plus className="h-4 w-4" /> შექმენი რუმი
-                    </ChevronButton>
-                  }
-                />
-              ) : (
-                <div className="space-y-3">
-                  {topRooms.map((room) => {
-                    const host = room.profiles;
-                    const name = host?.display_name ?? host?.username ?? "მომხმარებელი";
-                    const initial = name.slice(0, 1).toUpperCase();
-                    return (
-                      <Link key={room.id} href={`/rooms/${room.room_code}`} className="block">
-                        <article
-                          className="group relative isolate transition-transform hover:-translate-y-0.5"
-                          style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
-                        >
-                          <div className="relative bg-[var(--gr-bg-1)] p-4 gr-sweep" style={{ clipPath: cutSm }}>
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="flex min-w-0 items-center gap-3">
-                                <Avatar className="h-9 w-9 shrink-0 border border-[var(--gr-border-hi)]">
-                                  <AvatarImage src={host?.avatar_url ?? undefined} alt={name} />
-                                  <AvatarFallback className="bg-[var(--gr-violet)]/15 text-xs text-[var(--gr-violet-hi)]">{initial}</AvatarFallback>
-                                </Avatar>
-                                <div className="min-w-0">
-                                  <div className="flex flex-wrap items-center gap-1.5">
-                                    <h3 className="font-display text-[15px] font-bold uppercase tracking-tight text-[var(--gr-text)] group-hover:text-[var(--gr-violet-hi)]">
-                                      {name}
-                                    </h3>
-                                    <RoleBadge defaultRole={(host?.role ?? undefined) as UserRole | undefined} />
-                                  </div>
-                                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                                    {room.map && <Pill tone="neutral" icon={<MapPin className="h-3 w-3" />}>{room.map}</Pill>}
-                                    <Pill tone="neutral">{room.perspective}</Pill>
-                                    {room.mode === "tdm" && <Pill tone="magenta">TDM</Pill>}
-                                  </div>
-                                </div>
-                              </div>
-                              <Pill tone="accent" icon={<UsersIcon className="h-3 w-3" />}>
-                                {room.current_players}/{room.max_players}
-                              </Pill>
-                            </div>
-                          </div>
-                        </article>
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
-
-            {/* ── TOURNAMENTS ───────────────────────── */}
             <section>
               <div className="mb-5">
-                <Eyebrow tone="amber">ჩემპიონატი</Eyebrow>
-                <DisplayHeading as="h2" size="md" className="mt-2">ტურნირები</DisplayHeading>
+                <Eyebrow tone="magenta">შემდეგი ნაბიჯი</Eyebrow>
+                <DisplayHeading as="h2" size="md" className="mt-2">
+                  რუმები, ტურნირები და გათამაშებები
+                </DisplayHeading>
               </div>
-              <div className="space-y-3">
-                {gameTournaments.length === 0 ? (
-                  <EmptyState
-                    tone="amber"
-                    illustration={<Trophy className="h-8 w-8 text-[var(--gr-amber)]" />}
-                    title="დაგეგმილი ჩემპიონატი ვერ მოიძებნა"
-                    description="ჩემპიონატის შემოთავაზება შესაძლებელია /tournaments-დან."
-                  />
-                ) : (
-                  gameTournaments.map((t) => (
-                    <Link key={t.slug} href={`/tournaments/${t.slug}`} className="block">
-                      <article
-                        className="relative isolate transition-transform hover:-translate-y-0.5"
-                        style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
-                      >
-                        <div className="relative bg-[var(--gr-bg-1)] gr-sweep" style={{ clipPath: cutSm }}>
-                          <div className={`h-2 w-full bg-gradient-to-r ${t.banner}`} />
-                          <div className="flex items-center justify-between gap-3 p-4">
-                            <div>
-                              <h3 className="font-display text-[15px] font-bold uppercase tracking-tight text-[var(--gr-text)] hover:text-[var(--gr-violet-hi)]">
-                                {t.name}
-                              </h3>
-                              <div className="mt-1.5 flex items-center gap-2 text-[11.5px] text-[var(--gr-text-mute)]">
-                                <Trophy className="h-3 w-3 text-[var(--gr-amber)]" />
-                                <span className="font-semibold tabular-nums text-[var(--gr-amber)]">{t.prizePool}</span>
-                                <span>·</span>
-                                <span>{t.startsAt}</span>
-                              </div>
-                            </div>
-                            <Pill tone="amber">{t.status}</Pill>
-                          </div>
-                        </div>
-                      </article>
-                    </Link>
-                  ))
-                )}
+              <Link href="/clans" className="mb-4 block">
+                <article
+                  className="group relative isolate"
+                  style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
+                >
+                  <div
+                    className="relative overflow-hidden bg-[var(--gr-bg-1)] px-5 py-5 transition-transform duration-300 group-hover:scale-[1.005] sm:px-6"
+                    style={{ clipPath: cutSm }}
+                  >
+                    <span aria-hidden className="absolute left-0 top-0 z-10 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-violet-500/20 via-fuchsia-500/10 to-cyan-500/20" />
+                    <div className="absolute inset-y-0 right-0 w-28 bg-[linear-gradient(180deg,rgba(34,211,238,0.5),rgba(139,92,246,0.12))] [clip-path:polygon(28%_0,100%_0,100%_100%,0_100%)]" />
+                    <div className="relative z-[1] flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--gr-violet-hi)]/85">
+                          CLAN HUB
+                        </p>
+                        <h3 className="mt-2 font-display text-[24px] font-extrabold uppercase tracking-tight text-[var(--gr-text)]">
+                          კლანის გვერდი
+                        </h3>
+                      </div>
+                      <div className="rounded-full border border-white/12 bg-white/[0.04] p-4 shadow-[0_0_30px_rgba(139,92,246,0.24)] backdrop-blur-sm transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
+                        <Shield className="h-9 w-9 text-white/95 drop-shadow-[0_0_18px_rgba(34,211,238,0.4)]" />
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              </Link>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <PromoCard
+                  href="/lfg?mode=classic"
+                  title="კლასიკები"
+                  icon={<Crosshair />}
+                  accent="from-violet-500/25 to-sky-500/10"
+                />
+                <PromoCard
+                  href="/lfg?mode=ultimate-royale"
+                  title="ULTIMATE ROYALE"
+                  icon={<Flame />}
+                  accent="from-orange-500/25 to-red-500/10"
+                />
+                <PromoCard
+                  href="/lfg?mode=1v1"
+                  title="1 VS 1"
+                  icon={<Swords />}
+                  accent="from-amber-500/25 to-red-500/10"
+                />
+                <PromoCard
+                  href={featuredRoom ? `/rooms/${featuredRoom.room_code}` : `/rooms/new?game=${game.slug}`}
+                  title={featuredRoom ? `ROOM ${featuredRoom.mode.toUpperCase()}` : "ROOM სტრიმები"}
+                  icon={<DoorOpen />}
+                  accent="from-violet-500/25 to-cyan-500/10"
+                />
+                <PromoCard
+                  href="/lfg?mode=practice"
+                  title="პრაქტიკული თამაშები"
+                  icon={<Target />}
+                  accent="from-emerald-500/25 to-cyan-500/10"
+                />
+                <PromoCard
+                  href="/tamashebi"
+                  title="გათამაშებები"
+                  icon={<Gift />}
+                  accent="from-cyan-500/25 to-fuchsia-500/10"
+                />
+                <PromoCard
+                  href="/tournaments"
+                  title={featuredTournament ? "ტურნირები" : "ახალი ბრაკეტი"}
+                  icon={<Trophy />}
+                  accent="from-amber-500/25 to-orange-500/10"
+                />
+                <PromoCard
+                  href="/leaderboard"
+                  title="რეიტინგი"
+                  icon={<Star />}
+                  accent="from-sky-500/25 to-violet-500/10"
+                />
               </div>
             </section>
           </div>
 
-          {/* ── SIDEBAR ─────────────────────────────── */}
           <aside className="space-y-5">
-            <section
-              className="relative isolate"
-              style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
-            >
+            <section className="relative isolate" style={{ background: cardBorder, padding: 1, clipPath: cutSm }}>
               <div className="bg-[var(--gr-bg-1)] p-5" style={{ clipPath: cutSm }}>
                 <span aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[var(--gr-grad-card)]" />
-                {/* amber corner notch */}
                 <span
                   aria-hidden
                   className="absolute right-0 top-0 h-3 w-10 bg-[var(--gr-amber)]"

@@ -3,15 +3,14 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Crosshair, DoorOpen, Gift, Swords, Trophy } from "lucide-react";
+import { ChevronDown, Crosshair, DoorOpen, Gift, Swords, Target, Trophy } from "lucide-react";
 import { LobbyCanvas } from "@/components/lobby/lobby-canvas";
-import { LobbyCharacter, type LobbyCharacterHandle } from "@/components/lobby/lobby-character";
 import { LobbyHud } from "@/components/lobby/lobby-hud";
 import { LobbyInventory, type LobbyLoadout } from "@/components/lobby/lobby-inventory";
-import { LobbyStageLight } from "@/components/lobby/lobby-stage-light";
+import { getLobbyLoadoutStorageKey } from "@/lib/lobby/loadout-storage";
 import type { LobbyHudData } from "@/types/lobby";
 
-type ModeKey = "classic" | "1v1" | "rooms" | "giveaway" | "tournaments";
+type ModeKey = "classic" | "ultimate-royale" | "1v1" | "practice" | "rooms" | "giveaway" | "tournaments";
 
 type ModeDef = {
   key: ModeKey;
@@ -22,7 +21,9 @@ type ModeDef = {
 
 const MODES: ModeDef[] = [
   { key: "classic", label: "კლასიკები", href: "/lfg?mode=classic", icon: Crosshair },
+  { key: "ultimate-royale", label: "ULTIMATE ROYALE", href: "/lfg?mode=ultimate-royale", icon: Trophy },
   { key: "1v1", label: "1v1", href: "/lfg?mode=1v1", icon: Swords },
+  { key: "practice", label: "პრაქტიკული თამაშები", href: "/lfg?mode=practice", icon: Target },
   { key: "rooms", label: "რუმები", href: "/rooms/new?game=pubg-mobile", icon: DoorOpen },
   { key: "giveaway", label: "გათამაშება", href: "/tamashebi", icon: Gift },
   { key: "tournaments", label: "ტურნირები", href: "/tournaments", icon: Trophy },
@@ -30,19 +31,23 @@ const MODES: ModeDef[] = [
 
 type Props = {
   gameName: string;
+  gameSlug: string;
   imageUrl: string;
   hudData?: LobbyHudData | null;
+  currentUserId?: string | null;
 };
 
 const DEFAULT_LOADOUT: LobbyLoadout = {
-  character: "soldier",
+  character: "leo",
   weapon: "m416",
   clothing: "tactical",
 };
 
 const CHARACTER_URL = "/characters/gameroom-vanguard.png";
 
-export function LobbyStage({ gameName, imageUrl, hudData = null }: Props) {
+export function LobbyStage({ gameName, gameSlug, imageUrl, hudData = null, currentUserId = null }: Props) {
+  const loadoutStorageKey = currentUserId ? getLobbyLoadoutStorageKey(gameSlug, currentUserId) : undefined;
+
   return (
     <div data-lobby-stage className="absolute inset-0 overflow-hidden">
       <Image
@@ -55,22 +60,27 @@ export function LobbyStage({ gameName, imageUrl, hudData = null }: Props) {
         className="object-cover object-center"
       />
       <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_50%_62%,transparent_0_28%,rgba(8,6,15,0.1)_48%,rgba(8,6,15,0.45)_100%)]" />
-      <LobbyStageLight />
       <LiveHud data={hudData} />
       <StartWidget />
-      <LobbyLoadoutLayer characterUrl={CHARACTER_URL} />
+      <LobbyLoadoutLayer
+        characterUrl={CHARACTER_URL}
+        persistEnabled={Boolean(currentUserId)}
+        storageKey={loadoutStorageKey}
+      />
     </div>
   );
 }
 
-function LobbyLoadoutLayer({ characterUrl }: { characterUrl: string }) {
+function LobbyLoadoutLayer({
+  characterUrl,
+  persistEnabled,
+  storageKey,
+}: {
+  characterUrl: string;
+  persistEnabled: boolean;
+  storageKey?: string;
+}) {
   const [loadout, setLoadout] = useState<LobbyLoadout>(DEFAULT_LOADOUT);
-  const characterRef = useRef<LobbyCharacterHandle>(null);
-
-  const handleLoadoutChange = (nextLoadout: LobbyLoadout) => {
-    setLoadout(nextLoadout);
-    characterRef.current?.triggerEquipFlash();
-  };
 
   return (
     <>
@@ -89,33 +99,46 @@ function LobbyLoadoutLayer({ characterUrl }: { characterUrl: string }) {
           </filter>
         </defs>
         {/* left leg */}
-        <path
-          d="M 34,5 C 30,5 22,18 8,68 L 6,78 C 12,83 24,84 29,80 L 31,55 Z"
-          fill="black"
-          opacity="0.70"
-          filter="url(#leg-shadow-blur)"
-        />
+        <g transform="translate(0 0.9)">
+          <path
+            d="M 39,5 C 35,5 29,18 16,68 L 14,78 C 20,83 31,84 36,80 L 38,55 Z"
+            fill="black"
+            opacity="0.70"
+            filter="url(#leg-shadow-blur)"
+          />
+        </g>
         {/* right leg (mirror) */}
-        <path
-          d="M 55,5 C 59,5 67,18 81,68 L 83,78 C 77,83 65,84 60,80 L 58,55 Z"
-          fill="black"
-          opacity="0.70"
-          filter="url(#leg-shadow-blur)"
-        />
+        <g transform="translate(0 0.9)">
+          <path
+            d="M 50,5 C 54,5 61,18 74,68 L 76,78 C 70,83 59,84 54,80 L 52,55 Z"
+            fill="black"
+            opacity="0.70"
+            filter="url(#leg-shadow-blur)"
+          />
+        </g>
         {/* center shadow between legs */}
         <path
-          d="M 35,55 C 35,65 39,75 45,87 C 51,75 55,65 55,55 C 52,52 38,52 35,55 Z"
+          d="M 36,54 C 36,65 39,75 45,87 C 51,75 54,65 54,54 C 50,51 40,51 36,54 Z"
           fill="black"
           opacity="0.65"
           filter="url(#leg-shadow-blur)"
         />
       </svg>
-      <LobbyCharacter
-        ref={characterRef}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         src={characterUrl}
         alt=""
+        aria-hidden="true"
+        className="lobby-character"
+        draggable={false}
       />
-      <LobbyInventory initialLoadout={loadout} onLoadoutChange={handleLoadoutChange} />
+      <LobbyInventory
+        key={storageKey ?? "guest-lobby"}
+        initialLoadout={loadout}
+        onLoadoutChange={setLoadout}
+        persistEnabled={persistEnabled}
+        storageKey={storageKey}
+      />
     </>
   );
 }

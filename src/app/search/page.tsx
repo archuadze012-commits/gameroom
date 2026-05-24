@@ -4,8 +4,6 @@ import { useState, useMemo, useEffect } from "react";
 import { Search, Users, Gamepad2, Download, Star, ShieldCheck, Shield, Trophy, MonitorPlay, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { mockGames, crackedGames } from "@/lib/mock-data";
 import { PlayerCard } from "@/components/player-card";
 import { GameIcon } from "@/components/game-icon";
@@ -17,14 +15,27 @@ import type { PublicProfile, UserRole } from "@/lib/types";
 type Tab = "players" | "games" | "cracked";
 type RoleFilter = "all" | Exclude<UserRole, "user">;
 
-const ROLE_FILTERS: { role: RoleFilter; label: string; icon: React.ReactNode; className: string }[] = [
-  { role: "all",       label: "ყველა",           icon: <Users className="h-3.5 w-3.5" />,        className: "border-border text-foreground" },
-  { role: "admin",     label: "ადმინი",           icon: <ShieldCheck className="h-3.5 w-3.5" />,  className: "border-rose-500/40 text-rose-400" },
-  { role: "moderator", label: "მოდერატორი",       icon: <Shield className="h-3.5 w-3.5" />,       className: "border-amber-500/40 text-amber-400" },
-  { role: "organizer", label: "ორგანიზატორი",     icon: <Trophy className="h-3.5 w-3.5" />,       className: "border-yellow-500/40 text-yellow-400" },
-  { role: "streamer",  label: "სტრიმერი",         icon: <MonitorPlay className="h-3.5 w-3.5" />,  className: "border-violet-500/40 text-violet-400" },
-  { role: "esports",   label: "კიბერსპორტსმენი", icon: <Gamepad2 className="h-3.5 w-3.5" />,     className: "border-cyan-500/40 text-cyan-400" },
+const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
+const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.55))";
+
+type RoleTone = "neutral" | "live" | "amber" | "violet" | "cyan";
+
+const ROLE_FILTERS: { role: RoleFilter; label: string; icon: React.ReactNode; tone: RoleTone }[] = [
+  { role: "all",       label: "ყველა",            icon: <Users className="h-3.5 w-3.5" />,         tone: "neutral" },
+  { role: "admin",     label: "ადმინი",            icon: <ShieldCheck className="h-3.5 w-3.5" />,   tone: "live" },
+  { role: "moderator", label: "მოდერატორი",        icon: <Shield className="h-3.5 w-3.5" />,        tone: "amber" },
+  { role: "organizer", label: "ორგანიზატორი",      icon: <Trophy className="h-3.5 w-3.5" />,        tone: "amber" },
+  { role: "streamer",  label: "სტრიმერი",          icon: <MonitorPlay className="h-3.5 w-3.5" />,   tone: "violet" },
+  { role: "esports",   label: "კიბერსპორტსმენი",  icon: <Gamepad2 className="h-3.5 w-3.5" />,      tone: "cyan" },
 ];
+
+const TONE_ACTIVE: Record<RoleTone, string> = {
+  neutral: "bg-[var(--gr-violet)]/14 text-[var(--gr-text)] ring-1 ring-[var(--gr-violet-hi)]/60",
+  live:    "bg-[color-mix(in_oklab,var(--gr-amber)_20%,transparent)] text-[var(--gr-amber)] ring-1 ring-[color-mix(in_oklab,var(--gr-amber)_55%,transparent)]",
+  amber:   "bg-[color-mix(in_oklab,var(--gr-amber)_18%,transparent)] text-[var(--gr-amber)] ring-1 ring-[color-mix(in_oklab,var(--gr-amber)_50%,transparent)]",
+  violet:  "bg-[color-mix(in_oklab,var(--gr-violet)_18%,transparent)] text-[var(--gr-violet-hi)] ring-1 ring-[color-mix(in_oklab,var(--gr-violet)_55%,transparent)]",
+  cyan:    "bg-[color-mix(in_oklab,var(--gr-cyan-glow)_15%,transparent)] text-[var(--gr-cyan-glow)] ring-1 ring-[color-mix(in_oklab,var(--gr-cyan-glow)_45%,transparent)]",
+};
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
@@ -104,12 +115,17 @@ export default function SearchPage() {
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
+      {/* faint light leaks like the home hero */}
+      <span aria-hidden className="pointer-events-none absolute -top-24 -right-20 h-72 w-72 rounded-full bg-[var(--gr-violet)]/20 blur-[120px]" />
+      <span aria-hidden className="pointer-events-none absolute top-40 -left-20 h-72 w-72 rounded-full bg-[var(--gr-magenta)]/15 blur-[120px]" />
 
-      <div className="container relative mx-auto px-4 py-10 lg:py-14 space-y-6">
+      <div className="container relative mx-auto px-4 py-10 lg:py-14 space-y-7">
         <div>
           <Eyebrow tone="amber">ძებნა</Eyebrow>
           <DisplayHeading as="h1" size="lg" className="mt-3">ძებნა</DisplayHeading>
-          <p className="mt-3 text-[14px] text-[var(--gr-text-mute)]">იპოვე მოთამაშეები, თამაშები ან PC თამაშები უფასოდ.</p>
+          <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-[var(--gr-text-mute)]">
+            იპოვე მოთამაშეები, თამაშები ან PC თამაშები უფასოდ.
+          </p>
         </div>
 
         <div className="relative">
@@ -149,12 +165,17 @@ export default function SearchPage() {
 
       {/* Players */}
       {tab === "players" && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <div className="h-3 w-3 rounded-full bg-emerald-500" />
-            <span>ონლაინი — {onlineCount}</span>
+        <div className="space-y-5">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="inline-flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-[var(--gr-text-mute)]">
+              <span className="relative grid h-2 w-2 place-items-center">
+                <span className="absolute inset-0 rounded-full bg-[var(--gr-lime)] opacity-60 motion-safe:animate-ping" />
+                <span className="relative h-2 w-2 rounded-full bg-[var(--gr-lime)]" />
+              </span>
+              ონლაინი — <span className="text-[var(--gr-lime)]">{onlineCount}</span>
+            </span>
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {ROLE_FILTERS.map((f) => {
               const isActive = roleFilter === f.role;
               const count = roleCounts[f.role] ?? 0;
@@ -162,15 +183,15 @@ export default function SearchPage() {
                 <button
                   key={f.role}
                   onClick={() => setRoleFilter(f.role)}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors ${
                     isActive
-                      ? `${f.className} bg-secondary/60`
-                      : "border-border/60 text-muted-foreground hover:border-border hover:text-foreground"
+                      ? TONE_ACTIVE[f.tone]
+                      : "bg-[var(--gr-bg-1)] text-[var(--gr-text-mute)] ring-1 ring-[var(--gr-border)] hover:text-[var(--gr-text)] hover:ring-[var(--gr-border-hi)]"
                   }`}
                 >
                   {f.icon}
                   {f.label}
-                  <span className={`rounded-full px-1.5 text-[10px] ${isActive ? "bg-white/10" : "bg-secondary text-muted-foreground"}`}>
+                  <span className={`rounded-full px-1.5 text-[10px] tabular-nums ${isActive ? "bg-white/10" : "bg-white/[0.04] text-[var(--gr-text-dim)]"}`}>
                     {count}
                   </span>
                 </button>
@@ -179,12 +200,12 @@ export default function SearchPage() {
           </div>
 
           {loadingUsers ? (
-            <div className="flex items-center justify-center py-16 text-muted-foreground">
+            <div className="flex items-center justify-center py-16 text-[var(--gr-text-mute)]">
               <Loader2 className="mr-2 h-5 w-5 animate-spin" /> იტვირთება...
             </div>
           ) : (
             <>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[12.5px] text-[var(--gr-text-mute)]">
                 {q
                   ? `${playerResults.length} შედეგი "${query}"-სთვის`
                   : roleFilter === "all"
@@ -192,7 +213,7 @@ export default function SearchPage() {
                   : `${playerResults.length} მოთამაშე`}
               </p>
               {playerResults.length === 0 ? (
-                <EmptyState label="მოთამაშე ვერ მოიძებნა" />
+                <EmptyResult label="მოთამაშე ვერ მოიძებნა" />
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {playerResults.map((user) => (
@@ -207,42 +228,50 @@ export default function SearchPage() {
 
       {/* Games */}
       {tab === "games" && (
-        <div>
-          <p className="mb-4 text-sm text-muted-foreground">
+        <div className="space-y-4">
+          <p className="text-[12.5px] text-[var(--gr-text-mute)]">
             {q ? `${gameResults.length} შედეგი "${query}"-სთვის` : `სულ ${gameResults.length} თამაში`}
           </p>
           {gameResults.length === 0 ? (
-            <EmptyState label="თამაში ვერ მოიძებნა" />
+            <EmptyResult label="თამაში ვერ მოიძებნა" />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {gameResults.map((g) => (
-                <Link key={g.slug} href={`/games/${g.slug}`} className="group block transition-transform duration-200 hover:-translate-y-0.5">
-                  <Card className="relative h-40 overflow-hidden border-[var(--gr-border)] transition-colors hover:border-[var(--gr-violet-hi)] gr-sweep">
-                    {g.coverUrl ? (
-                      <img
-                        src={g.coverUrl}
-                        alt={g.nameKa}
-                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className={`absolute inset-0 bg-gradient-to-br ${g.accent}`} />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-3 flex items-end justify-between">
-                      <div className="flex items-center gap-2">
-                        <GameIcon game={g} size="sm" />
-                        <div>
-                          <p className="font-semibold text-white leading-tight group-hover:text-[var(--gr-violet-hi)] transition-colors">
-                            {g.nameKa}
-                          </p>
-                          <p className="text-[11px] text-white/60">{g.players.toLocaleString("en-US")} მოთამაშე</p>
+                <Link key={g.slug} href={`/games/${g.slug}`} className="group block">
+                  <div
+                    className="relative isolate"
+                    style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
+                  >
+                    <div
+                      className="relative h-40 overflow-hidden bg-[var(--gr-bg-1)] gr-sweep"
+                      style={{ clipPath: cutSm }}
+                    >
+                      <span aria-hidden className="absolute left-0 top-0 z-10 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
+                      {g.coverUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={g.coverUrl}
+                          alt={g.nameKa}
+                          className="absolute inset-0 h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className={`absolute inset-0 bg-gradient-to-br ${g.accent}`} />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)] via-[var(--gr-bg-0)]/40 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between gap-2 p-3">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <GameIcon game={g} size="sm" />
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold leading-tight text-[var(--gr-text)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">
+                              {g.nameKa}
+                            </p>
+                            <p className="text-[11px] text-[var(--gr-text)]/65">{g.players.toLocaleString("en-US")} მოთამაშე</p>
+                          </div>
                         </div>
+                        <Pill tone="online" pulse>{g.online}</Pill>
                       </div>
-                      <Badge variant="outline" className="text-xs text-emerald-400 border-emerald-500/40 shrink-0">
-                        🟢 {g.online}
-                      </Badge>
                     </div>
-                  </Card>
+                  </div>
                 </Link>
               ))}
             </div>
@@ -252,45 +281,54 @@ export default function SearchPage() {
 
       {/* Cracked Games */}
       {tab === "cracked" && (
-        <div>
-          <p className="mb-4 text-sm text-muted-foreground">
+        <div className="space-y-4">
+          <p className="text-[12.5px] text-[var(--gr-text-mute)]">
             {q ? `${crackedResults.length} შედეგი "${query}"-სთვის` : `სულ ${crackedResults.length} cracked game`}
           </p>
           {crackedResults.length === 0 ? (
-            <EmptyState label="Cracked game ვერ მოიძებნა" />
+            <EmptyResult label="Cracked game ვერ მოიძებნა" />
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {crackedResults.map((g) => (
-                <Link key={g.id} href={`/tamashebi/${g.id}`} className="group block transition-transform duration-200 hover:-translate-y-0.5">
-                  <Card className="relative overflow-hidden border-[var(--gr-border)] transition-colors hover:border-[var(--gr-violet-hi)] hover:shadow-md hover:shadow-[var(--gr-violet)]/15 h-full gr-sweep">
-                    <div className={`absolute inset-0 -z-10 bg-gradient-to-br ${g.accent} opacity-50`} />
-                    <CardContent className="p-4 flex flex-col gap-3 h-full">
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="text-3xl">{g.emoji}</span>
-                        <div className="flex items-center gap-1 text-amber-400 shrink-0">
-                          <Star className="h-3.5 w-3.5 fill-amber-400" />
-                          <span className="text-sm font-bold">{g.rating}</span>
+                <Link key={g.id} href={`/tamashebi/${g.id}`} className="group block">
+                  <div
+                    className="relative isolate"
+                    style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
+                  >
+                    <div
+                      className="relative h-full bg-[var(--gr-bg-1)] p-4 gr-sweep"
+                      style={{ clipPath: cutSm }}
+                    >
+                      <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
+                      <div className={`pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br ${g.accent} opacity-25`} />
+                      <div className="flex h-full flex-col gap-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="text-3xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">{g.emoji}</span>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--gr-amber)]/15 px-2 py-0.5 text-[12px] font-bold text-[var(--gr-amber)] ring-1 ring-[var(--gr-amber)]/40">
+                            <Star className="h-3 w-3 fill-[var(--gr-amber)]" />
+                            {g.rating}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-display text-[15px] font-bold uppercase tracking-tight text-[var(--gr-text)] leading-tight">{g.title}</h3>
+                          <p className="mt-0.5 text-[11px] text-[var(--gr-text-dim)]">{g.releaseYear}</p>
+                          <p className="mt-2 line-clamp-2 text-[12px] leading-relaxed text-[var(--gr-text-mute)]">
+                            {g.description}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {g.genre.map((genre) => (
+                            <Pill key={genre} tone="violet">{genre}</Pill>
+                          ))}
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {g.platform.map((p) => (
+                            <Pill key={p} tone="neutral">{p}</Pill>
+                          ))}
                         </div>
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold leading-tight">{g.title}</h3>
-                        <p className="mt-0.5 text-xs text-muted-foreground">{g.releaseYear}</p>
-                        <p className="mt-2 text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                          {g.description}
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {g.genre.map((genre) => (
-                          <Badge key={genre} variant="secondary" className="text-xs">{genre}</Badge>
-                        ))}
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {g.platform.map((p) => (
-                          <Badge key={p} variant="outline" className="text-xs border-border/60">{p}</Badge>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 </Link>
               ))}
             </div>
@@ -302,12 +340,15 @@ export default function SearchPage() {
   );
 }
 
-function EmptyState({ label }: { label: string }) {
+function EmptyResult({ label }: { label: string }) {
   return (
-    <div className="border border-[var(--gr-border-hi)] bg-[var(--gr-bg-1)] py-16 text-center text-[var(--gr-text-mute)]"
-      style={{ clipPath: "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)" }}>
+    <div
+      className="relative border border-[var(--gr-border-hi)] bg-[var(--gr-bg-1)] py-16 text-center"
+      style={{ clipPath: "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)" }}
+    >
+      <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
       <Search className="mx-auto mb-3 h-8 w-8 text-[var(--gr-violet-hi)] opacity-60" />
-      <p className="text-[13.5px]">{label}</p>
+      <p className="text-[13.5px] text-[var(--gr-text-mute)]">{label}</p>
     </div>
   );
 }

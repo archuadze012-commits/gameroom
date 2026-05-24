@@ -9,7 +9,7 @@ const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
 // Games that have a dedicated 3D lobby route.
 const LOBBY_GAMES = new Set<string>(["pubg-mobile"]);
 
-export function ProfileGameRows({ slugs }: { slugs: string[] }) {
+export function ProfileGameRows({ slugs, username }: { slugs: string[]; username: string }) {
   const games = slugs
     .map((s) => mockGames.find((g) => g.slug === s))
     .filter(Boolean) as MockGame[];
@@ -51,14 +51,14 @@ export function ProfileGameRows({ slugs }: { slugs: string[] }) {
                 {g.nameKa}
               </div>
               <div className="mt-0.5 truncate text-[11px] uppercase tracking-[0.12em] text-[var(--gr-text-dim)]">
-                <span className="tabular-nums text-[var(--gr-text-mute)]">{g.liveLfg}</span> აქტიური LFG ·{" "}
+                <span className="tabular-nums text-[var(--gr-text-mute)]">{g.liveLfg}</span> აქტიური ლოკალი ·{" "}
                 <span className="tabular-nums text-[var(--gr-text-mute)]">{g.online}</span> ონლაინ
               </div>
             </div>
 
             {hasLobby ? (
               <Link
-                href={`/games/${g.slug}/lobby`}
+                href={`/games/${g.slug}/lobby?user=${encodeURIComponent(username)}`}
                 className="relative z-[2] inline-flex items-center gap-1.5 bg-[var(--gr-grad-violet)] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-white shadow-[0_4px_14px_-4px_rgba(139,92,246,0.7)] transition-all hover:scale-[1.03] hover:shadow-[0_0_18px_rgba(192,38,211,0.6)]"
                 style={{ clipPath: "polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%)" }}
               >

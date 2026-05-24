@@ -1,9 +1,11 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Pill } from "@/components/ui/pill";
+
+const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
+const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.55))";
 
 function useCountUp(target: number, duration = 1400) {
   const [count, setCount] = useState(0);
@@ -47,71 +49,48 @@ interface GameCardProps {
 }
 
 export function GameCard({ slug, nameKa, players, online, coverUrl, accent }: GameCardProps) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
   const { count: onlineCount, ref: counterRef } = useCountUp(online);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const card = cardRef.current;
-    const img = imgRef.current;
-    if (!card || !img) return;
-    const rect = card.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    img.style.transform = `scale(1.1) translate(${x * 14}px, ${y * 10}px)`;
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    const img = imgRef.current;
-    if (!img) return;
-    img.style.transform = "scale(1) translate(0px, 0px)";
-  }, []);
-
   return (
-    <Link href={`/games/${slug}`} className="group">
-      <Card
-        ref={cardRef}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        className="relative h-56 overflow-hidden border-border/60 transition-all duration-300 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10"
+    <Link href={`/games/${slug}`} className="block">
+      <div
+        className="relative isolate"
+        style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
       >
-        {coverUrl ? (
-          <img
-            ref={imgRef}
-            src={coverUrl}
-            alt={nameKa}
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out"
-            style={{ willChange: "transform" }}
-          />
-        ) : (
-          <div className={`absolute inset-0 bg-gradient-to-br ${accent}`} />
-        )}
+        <div
+          className="relative h-56 overflow-hidden bg-[var(--gr-bg-1)]"
+          style={{ clipPath: cutSm }}
+        >
+          <span aria-hidden className="absolute left-0 top-0 z-10 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
+          {coverUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={coverUrl}
+              alt={nameKa}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : (
+            <div className={`absolute inset-0 bg-gradient-to-br ${accent}`} />
+          )}
 
-        {/* base dark gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)]/85 via-[var(--gr-bg-0)]/25 to-transparent" />
 
-        {/* hover: primary tint from bottom */}
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/25 via-transparent to-transparent opacity-0 transition-opacity duration-400 group-hover:opacity-100" />
-
-        <div ref={counterRef} className="absolute bottom-0 left-0 right-0 p-4">
-          <div className="flex items-end justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-white transition-colors duration-200 group-hover:text-primary">
-                {nameKa}
-              </h3>
-              <p className="text-xs text-white/60">{players.toLocaleString("en-US")} მოთამაშე</p>
-            </div>
-            <div className="flex flex-col items-end gap-1">
-              <Badge variant="secondary" className="text-xs tabular-nums">
-                {players.toLocaleString("en-US")}
-              </Badge>
-              <Badge variant="outline" className="text-xs text-emerald-400 border-emerald-500/40 tabular-nums">
-                🟢 {onlineCount.toLocaleString("en-US")}
-              </Badge>
+          <div ref={counterRef} className="absolute bottom-0 left-0 right-0 p-4">
+            <div className="flex items-end justify-between">
+              <div className="min-w-0">
+                <h3 className="text-lg font-bold text-[var(--gr-text)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">
+                  {nameKa}
+                </h3>
+                <p className="text-xs text-[var(--gr-text)]/65">{players.toLocaleString("en-US")} მოთამაშე</p>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <Pill tone="violet" className="tabular-nums">{players.toLocaleString("en-US")}</Pill>
+                <Pill tone="online" pulse className="tabular-nums">{onlineCount.toLocaleString("en-US")}</Pill>
+              </div>
             </div>
           </div>
         </div>
-      </Card>
+      </div>
     </Link>
   );
 }

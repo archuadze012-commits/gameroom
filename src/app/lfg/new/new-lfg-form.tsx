@@ -99,7 +99,7 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err?.error || "unknown");
       }
-      toast.success("LFG გამოქვეყნდა!");
+      toast.success("ლოკალი გამოქვეყნდა!");
       const modeSlug = selectedModes.includes("1 vs 1")
         ? "1v1"
         : selectedModes.includes("Classic")
@@ -112,7 +112,7 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
       if (msg === "content_blocked") {
         toast.error("კონტენტი დაიბლოკა — შეუსაბამო ტექსტი");
       } else {
-        toast.error(`LFG ვერ გამოქვეყნდა${msg ? ` — ${msg}` : ""}`);
+        toast.error(`ლოკალი ვერ გამოქვეყნდა${msg ? ` — ${msg}` : ""}`);
       }
       setLoading(false);
     }

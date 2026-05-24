@@ -34,6 +34,7 @@ export function getMockHud(username: string): LobbyHudData {
    *   .maybeSingle();
    */
   return {
+    gameSlug: "pubg-mobile",
     player: {
       displayName: username,
       avatarUrl: null,
@@ -44,10 +45,10 @@ export function getMockHud(username: string): LobbyHudData {
       rp: seededRange(seed, 1600, 6800, 31),
     },
     currencies: {
-      silver: seededRange(seed, 400, 98000, 37),
-      bp: seededRange(seed, 1200, 640000, 41),
-      uc: seededRange(seed, 60, 12800, 43),
+      pro: 0,
+      nc: 0,
     },
+    dailyBonusAvailable: true,
     royalePass: {
       season: "M22",
       rank,

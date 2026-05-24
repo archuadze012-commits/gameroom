@@ -9,6 +9,7 @@ export type Tier =
   | "conqueror";
 
 export type LobbyHudData = {
+  gameSlug: string;
   player: {
     displayName: string;
     avatarUrl: string | null;
@@ -19,10 +20,10 @@ export type LobbyHudData = {
     rp: number;
   };
   currencies: {
-    silver: number;
-    bp: number;
-    uc: number;
+    pro: number;
+    nc: number;
   };
+  dailyBonusAvailable: boolean;
   royalePass: {
     season: string;
     rank: number;

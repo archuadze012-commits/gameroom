@@ -1,49 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
-import { Mail, Loader2 } from "lucide-react";
+import { Lock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { getBrowserOrigin } from "@/lib/url";
+import { signInWithPasswordAction } from "./actions";
 
 export function LoginForm() {
   const params = useSearchParams();
-  const router = useRouter();
   const next = params.get("next") ?? "/";
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState<null | "email" | "google">(null);
+  const loginError = params.get("error");
+  const [loading, setLoading] = useState<null | "google">(null);
 
   const supabaseConfigured =
     !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  const handleMagicLink = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!supabaseConfigured) {
-      toast.error("Supabase ჯერ არ არის კონფიგურირებული. დაამატე .env.local ფაილი.");
-      return;
-    }
-    setLoading("email");
-    try {
-      const supabase = createSupabaseBrowserClient();
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-        },
-      });
-      if (error) throw error;
-      toast.success("ბმული გამოგზავნილია ფოსტაზე — გაიხსენი ფოსტა.");
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "შეცდომა, სცადე ხელახლა.");
-    } finally {
-      setLoading(null);
-    }
-  };
 
   const handleGoogle = async () => {
     if (!supabaseConfigured) {
@@ -53,10 +29,11 @@ export function LoginForm() {
     setLoading("google");
     try {
       const supabase = createSupabaseBrowserClient();
+      const origin = getBrowserOrigin();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+          redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
         },
       });
       if (error) throw error;
@@ -97,26 +74,37 @@ export function LoginForm() {
         <Separator className="flex-1" />
       </div>
 
-      <form onSubmit={handleMagicLink} className="space-y-3">
+      <form action={signInWithPasswordAction} method="post" className="space-y-3">
+        <input type="hidden" name="next" value={next} />
         <div className="space-y-1.5">
           <Label htmlFor="email">ელფოსტა</Label>
           <Input
             id="email"
+            name="email"
             type="email"
             required
             placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="password">პაროლი</Label>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            required
+            placeholder="••••••••"
           />
         </div>
         <Button type="submit" variant="outline" className="w-full" disabled={!!loading}>
-          {loading === "email" ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Mail className="mr-2 h-4 w-4" />
-          )}
-          ბმულის გამოგზავნა
+          <Lock className="mr-2 h-4 w-4" />
+          შესვლა
         </Button>
+        {loginError && (
+          <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-300">
+            {loginError}
+          </div>
+        )}
       </form>
     </div>
   );

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { getBrowserOrigin } from "@/lib/url";
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -26,7 +27,7 @@ export function GoogleSignInButton({ className }: { className?: string }) {
       await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${getBrowserOrigin()}/auth/callback`,
         },
       });
     } catch {

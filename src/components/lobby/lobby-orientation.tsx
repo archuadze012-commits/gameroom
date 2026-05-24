@@ -22,7 +22,10 @@ export function LobbyOrientationGuard() {
         }
         // lock orientation if supported
         try {
-          screen.orientation?.lock("landscape").catch(() => {});
+          const orientation = screen.orientation as ScreenOrientation & {
+            lock?: (orientation: string) => Promise<void>;
+          };
+          orientation.lock?.("landscape").catch(() => {});
         } catch {}
       }
     };

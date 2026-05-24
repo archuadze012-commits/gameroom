@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       await supabase.from("conversation_messages").insert({
         conversation_id: convId,
         sender_id: user.id,
-        body: `🎮 ${name}-მ Smart LFG-ით გიპოვა ${gameSlug}-ისთვის. წავიდეთ?`,
+        body: `🎮 ${name}-მ Smart ლოკალით გიპოვა ${gameSlug}-ისთვის. წავიდეთ?`,
       });
     } catch {}
 

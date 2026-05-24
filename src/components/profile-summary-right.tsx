@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import {
-  Sparkles,
-  Flame,
   Users as UsersIcon,
   Trophy,
   UserPlus,
@@ -19,9 +17,6 @@ type Props = {
   hasSession: boolean;
   initialFollowing: boolean;
   initialFollowerCount: number;
-  level: number;
-  xp: number;
-  streak: number;
 };
 
 export function ProfileSummaryRight({
@@ -30,9 +25,6 @@ export function ProfileSummaryRight({
   hasSession,
   initialFollowing,
   initialFollowerCount,
-  level,
-  xp,
-  streak,
 }: Props) {
   const [following, setFollowing] = useState(initialFollowing);
   const [followerCount, setFollowerCount] = useState(initialFollowerCount);
@@ -59,29 +51,20 @@ export function ProfileSummaryRight({
 
   return (
     <div className="w-full space-y-3">
-      <div
-        className="relative space-y-0.5 bg-[var(--gr-bg-1)] p-3 ring-1 ring-[var(--gr-border)]"
-        style={{ clipPath: "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)" }}
-      >
-        <StatRow
-          icon={<Sparkles className="h-4 w-4 text-[var(--gr-violet-hi)]" />}
-          label={`Level ${level}`}
-          value={`${xp} XP`}
-        />
-        <StatRow
-          icon={<Flame className="h-4 w-4 text-[var(--gr-amber)]" />}
-          label="Streak"
-          value={`${streak} დღე`}
-        />
-        <StatRow
-          icon={<UsersIcon className="h-4 w-4 text-[var(--gr-cyan-glow)]" />}
+      <div className="grid grid-cols-2 gap-2">
+        <StatCard
+          icon={<UsersIcon className="h-5 w-5" />}
           label="გამომწერი"
           value={String(followerCount)}
+          color="#22D3EE"
+          glow="rgba(34,211,238,0.3)"
         />
-        <StatRow
-          icon={<Trophy className="h-4 w-4 text-[var(--gr-magenta)]" />}
+        <StatCard
+          icon={<Trophy className="h-5 w-5" />}
           label="ტიტული"
           value="0"
+          color="#C084FC"
+          glow="rgba(192,132,252,0.3)"
         />
       </div>
 
@@ -110,22 +93,64 @@ export function ProfileSummaryRight({
   );
 }
 
-function StatRow({
+function StatCard({
   icon,
   label,
   value,
+  sub,
+  color,
+  glow,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
+  sub?: string;
+  color: string;
+  glow: string;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-1.5">
-      <div className="flex items-center gap-2 text-[12.5px] text-[var(--gr-text-mute)]">
-        {icon}
-        <span>{label}</span>
+    <div
+      className="group relative overflow-hidden p-3 ring-1 ring-white/[0.06] transition-all hover:ring-white/[0.12]"
+      style={{
+        background: `linear-gradient(135deg, ${color}08 0%, ${color}03 100%)`,
+        clipPath: "polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%)",
+      }}
+    >
+      {/* glow orb */}
+      <div
+        className="pointer-events-none absolute -right-3 -top-3 h-14 w-14 rounded-full opacity-50 blur-xl transition-opacity group-hover:opacity-80"
+        style={{ background: glow }}
+      />
+
+      <div className="relative">
+        {/* icon */}
+        <div
+          className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg"
+          style={{ background: `${color}18`, color }}
+        >
+          {icon}
+        </div>
+
+        {/* value */}
+        <div className="flex items-baseline gap-1.5">
+          <span
+            className="font-display text-[22px] font-extrabold leading-none tabular-nums"
+            style={{ color }}
+          >
+            {value}
+          </span>
+          {sub && (
+            <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-white/40">
+              {sub}
+            </span>
+          )}
+        </div>
+
+        {/* label */}
+        <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.16em] text-white/35">
+          {label}
+        </p>
       </div>
-      <span className="text-[13px] font-bold tabular-nums text-[var(--gr-text)]">{value}</span>
     </div>
   );
 }

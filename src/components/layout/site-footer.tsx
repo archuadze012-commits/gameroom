@@ -49,7 +49,7 @@ export function SiteFooter() {
           <ul className="space-y-1.5 text-[13px] text-[var(--gr-text-mute)]">
             <li><Link href="/forum" className="hover:text-[var(--gr-violet-hi)]">ფორუმი</Link></li>
             <li><Link href="/games" className="hover:text-[var(--gr-violet-hi)]">თამაშები</Link></li>
-            <li><Link href="/lfg" className="hover:text-[var(--gr-violet-hi)]">LFG</Link></li>
+            <li><Link href="/lfg" className="hover:text-[var(--gr-violet-hi)]">ლოკალი</Link></li>
             <li><Link href="/tournaments" className="hover:text-[var(--gr-violet-hi)]">ჩემპიონატები</Link></li>
           </ul>
         </div>

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { getRequestOriginFromHeaders } from "@/lib/url";
 
 export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname;
@@ -32,8 +33,10 @@ export async function updateSession(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      const loginUrl = request.nextUrl.clone();
-      loginUrl.pathname = "/auth/login";
+      const loginUrl = new URL(
+        "/auth/login",
+        getRequestOriginFromHeaders(request.headers, request.nextUrl.origin)
+      );
       loginUrl.searchParams.set("next", path);
       return NextResponse.redirect(loginUrl);
     }

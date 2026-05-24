@@ -65,7 +65,7 @@ export async function UserMenu() {
           <DropdownMenuGroup>
             <DropdownMenuItem render={<Link href={`/profile/${displayName}`}>ჩემი პროფილი</Link>} />
             <DropdownMenuItem render={<Link href="/settings">პარამეტრები</Link>} />
-            <DropdownMenuItem render={<Link href="/lfg/new">LFG დაპოსტვა</Link>} />
+            <DropdownMenuItem render={<Link href="/lfg/new">ლოკალის დაპოსტვა</Link>} />
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>

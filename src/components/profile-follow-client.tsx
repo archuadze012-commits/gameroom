@@ -75,7 +75,7 @@ export function ProfileFollowClient({
         <Stat icon={<UsersIcon className="h-4 w-4" />} value={String(followerCount)} label="გამომწერი" />
         <Stat icon={<Gamepad2 className="h-4 w-4" />} value={String(gameCount)} label="თამაში" />
         <Stat icon={<Trophy className="h-4 w-4" />} value="0" label="ტიტული" />
-        <Stat icon={<UsersIcon className="h-4 w-4" />} value={String(lfgCount)} label="LFG დაპოსტილი" />
+        <Stat icon={<UsersIcon className="h-4 w-4" />} value={String(lfgCount)} label="ლოკალი დაპოსტილი" />
       </div>
     </>
   );

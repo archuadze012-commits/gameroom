@@ -108,7 +108,7 @@ export const mockGames: MockGame[] = [
     slug: "warzone",
     nameKa: "COD: Warzone",
     nameEn: "Call of Duty: Warzone",
-    description: "BR + Resurgence — სქვადი 4 კაცამდე, ცოცხალი ლობები.",
+    description: "BR + Resurgence — სქვადი 4 კაცამდე, LIVE ლობები.",
     accent: "from-red-500/30 to-red-500/5",
     emoji: "🔫",
     iconUrl: "/games/warzone.png",
@@ -465,7 +465,7 @@ export const mockChatChannels: MockChatChannel[] = [
   { id: "gta-v", name: "GTA V", type: "game", gameSlug: "gta-v" },
   { id: "warzone", name: "Warzone", type: "game", gameSlug: "warzone" },
   { id: "valorant", name: "Valorant", type: "game", gameSlug: "valorant" },
-  { id: "lfg-pubg-1", name: "LFG: Squad Erangel", type: "lfg", gameSlug: "pubg-battlegrounds" },
+  { id: "lfg-pubg-1", name: "ლოკალი: Squad Erangel", type: "lfg", gameSlug: "pubg-battlegrounds" },
 ];
 
 export type MockChatMessage = { id: string; author: string; body: string; ago: string; isMe?: boolean };
@@ -854,5 +854,5 @@ export const channelDescriptions: Record<string, string> = {
   pubg: "PUBG Mobile — squad, duo, TDM",
   warzone: "Call of Duty Warzone — BR + Resurgence",
   valorant: "Valorant — Premier, Competitive, Unrated",
-  "lfg-pubg-1": "LFG: Squad Erangel ranked — Crown II+ მოთამაშეებისთვის",
+  "lfg-pubg-1": "ლოკალი: Squad Erangel ranked — Crown II+ მოთამაშეებისთვის",
 };

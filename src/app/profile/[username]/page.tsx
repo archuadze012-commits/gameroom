@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { mockLfgPosts, mockFeedPosts, mockUsers } from "@/lib/mock-data";
 import { RoleBadge, type UserRole } from "@/components/role-badge";
@@ -10,14 +11,16 @@ import { InviteButton } from "@/components/invite-button";
 import { VerifiedBadge } from "@/components/verified-badge";
 import { ReportButton } from "@/components/report-button";
 import { MessageButton } from "@/components/message-button";
-import { ProfileXp } from "@/components/profile-xp";
 import { ProfileLinkedAccounts } from "@/components/profile-linked-accounts";
 import { ProfileSummaryRight } from "@/components/profile-summary-right";
 import { ProfileGameRows } from "@/components/profile-game-rows";
 import { ProfileTabs } from "@/components/profile-tabs";
 import { Button } from "@/components/ui/button";
-import { getSession } from "@/lib/auth";
+import { Paintbrush } from "lucide-react";
+import { getSession, getIsAdmin } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { AdminGrantCoins } from "@/components/admin-grant-coins";
+import { getEquippedItems } from "@/lib/shop/equip-queries";
 
 export default async function ProfilePage({
   params,
@@ -25,15 +28,18 @@ export default async function ProfilePage({
   params: Promise<{ username: string }>;
 }) {
   const { username } = await params;
-  const session = await getSession().catch(() => null);
-  const avatarUrl = (session?.user_metadata?.avatar_url as string | undefined) ?? null;
+  const [session, isAdmin] = await Promise.all([
+    getSession().catch(() => null),
+    getIsAdmin().catch(() => false),
+  ]);
+  const sessionAvatarUrl = (session?.user_metadata?.avatar_url as string | undefined) ?? null;
   const currentUserId = session?.id ?? null;
 
   const supabase = await createSupabaseServerClient();
 
   const { data: dbProfile } = await supabase
     .from("profiles")
-    .select("id, display_name, favorite_game_slugs, banner_url, is_verified, xp, level, daily_streak_count, youtube_handle, tiktok_handle, tiktok_followers")
+    .select("id, display_name, avatar_url, favorite_game_slugs, banner_url, is_verified, youtube_handle, tiktok_handle, tiktok_followers")
     .eq("username", username)
     .maybeSingle();
 
@@ -41,6 +47,8 @@ export default async function ProfilePage({
 
   // isOwner = the logged-in user's profile row owns this username (authoritative via DB id)
   const isOwner = !!(currentUserId && targetUserId && currentUserId === targetUserId);
+  const profileAvatarUrl = dbProfile?.avatar_url ?? null;
+  const avatarUrl = profileAvatarUrl ?? (isOwner ? sessionAvatarUrl : null);
 
   let followerCount = 0;
   if (targetUserId) {
@@ -88,42 +96,66 @@ export default async function ProfilePage({
 
   const steamAccount = linkedAccounts.find((a) => a.provider === "steam");
 
+  const equippedItems = targetUserId ? await getEquippedItems(targetUserId) : [];
+  const equippedCover = equippedItems.find((e) => e.category === "cover");
+  const equippedFrame = equippedItems.find((e) => e.category === "profile_frame");
+  const equippedNameFrame = equippedItems.find((e) => e.category === "name_frame");
+  const equippedTheme = equippedItems.find((e) => e.category === "profile_theme");
+
   const cutMd = "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)";
   const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.5))";
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
-      <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
-
-      <div className="container relative mx-auto px-4 py-10 lg:py-14">
-        <article
-          className="relative isolate"
-          style={{ background: cardBorder, padding: 1, clipPath: cutMd }}
-        >
-          <div
-            className="relative overflow-hidden bg-[var(--gr-bg-1)]"
-            style={{ clipPath: cutMd }}
-          >
-            <span aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[var(--gr-grad-card)]" />
-            <BannerUpload
-              isOwner={isOwner}
-              userId={isOwner ? (currentUserId ?? undefined) : undefined}
-              initialBannerUrl={dbProfile?.banner_url ?? null}
-            />
+    <div className={`relative min-h-[calc(100vh-4rem)] ${equippedTheme ? `bg-gradient-to-br ${equippedTheme.metadata.bg as string}` : "bg-[var(--gr-bg-1)]"}`}>
+            <div className="relative">
+              {equippedCover ? (
+                <div className={`h-40 w-full bg-gradient-to-r ${equippedCover.metadata.gradient as string} sm:h-48`} />
+              ) : (
+                <BannerUpload
+                  isOwner={false}
+                  initialBannerUrl={dbProfile?.banner_url ?? null}
+                />
+              )}
+              {isOwner && (
+                <Link
+                  href="/shop?mine=true"
+                  className="absolute bottom-3 right-3 z-10 inline-flex h-7 items-center gap-1.5 bg-[color-mix(in_srgb,var(--gr-bg-0)_80%,transparent)] px-2.5 text-[9px] font-black uppercase tracking-[0.14em] text-[var(--gr-violet-hi)] ring-1 ring-[var(--gr-border)] backdrop-blur-md transition hover:ring-[var(--gr-violet-hi)] hover:bg-[color-mix(in_srgb,var(--gr-violet)_14%,transparent)] [clip-path:polygon(0_0,calc(100%-7px)_0,100%_7px,100%_100%,0_100%)]"
+                >
+                  <Paintbrush className="h-3 w-3" />
+                  კუსტომიზაცია
+                </Link>
+              )}
+            </div>
 
             <div className="space-y-5 px-6 pb-6 pt-0">
           {/* Header — 2-col grid: left summary | right stats */}
           <div className="-mt-16 flex flex-col items-center gap-5 md:grid md:grid-cols-[minmax(220px,1fr)_minmax(260px,1fr)] md:items-start md:gap-6">
             {/* Left — avatar + name + badge + social icons */}
             <div className="flex flex-col items-center gap-2 md:items-start">
-              <AvatarUpload
-                username={username}
-                displayName={displayName}
-                avatarUrl={isOwner ? avatarUrl : null}
-                isOwner={isOwner}
-              />
+              <div
+                className="rounded-full"
+                style={equippedFrame ? {
+                  boxShadow: `0 0 20px ${equippedFrame.metadata.color as string}50, 0 0 40px ${equippedFrame.metadata.color as string}25`,
+                  border: `3px solid ${equippedFrame.metadata.color as string}`,
+                } : undefined}
+              >
+                <AvatarUpload
+                  username={username}
+                  displayName={displayName}
+                  avatarUrl={avatarUrl}
+                  isOwner={isOwner}
+                />
+              </div>
               <h1 className="flex items-center gap-2 text-2xl font-bold">
-                {isOwner ? (
+                {equippedNameFrame ? (
+                  <span className={`bg-gradient-to-r ${equippedNameFrame.metadata.gradient as string} bg-clip-text text-transparent`}>
+                    {isOwner ? (
+                      <ProfileDisplayName fallback={displayName} userId={currentUserId ?? undefined} />
+                    ) : (
+                      displayName
+                    )}
+                  </span>
+                ) : isOwner ? (
                   <ProfileDisplayName fallback={displayName} userId={currentUserId ?? undefined} />
                 ) : (
                   displayName
@@ -162,9 +194,6 @@ export default async function ProfilePage({
                 hasSession={!!session}
                 initialFollowing={initialFollowing}
                 initialFollowerCount={followerCount}
-                level={dbProfile?.level ?? 1}
-                xp={dbProfile?.xp ?? 0}
-                streak={dbProfile?.daily_streak_count ?? 0}
               />
 
               {!isOwner && (
@@ -194,13 +223,9 @@ export default async function ProfilePage({
 
           <Separator />
 
-          {/* XP + badges (level/streak/progress + badge collection) */}
-          {dbProfile && (
-            <ProfileXp
-              xp={dbProfile.xp ?? 0}
-              streak={dbProfile.daily_streak_count ?? 0}
-              unlockedBadgeCodes={badgeCodes}
-            />
+          {/* Admin: grant coins — only visible to admins, hidden on own profile */}
+          {isAdmin && targetUserId && (
+            <AdminGrantCoins targetUserId={targetUserId} targetUsername={username} />
           )}
 
           {/* Linked accounts (Riot only — Steam now lives in social icons above) */}
@@ -212,7 +237,7 @@ export default async function ProfilePage({
 
           {/* Tabbed content area */}
           <ProfileTabs
-            games={<ProfileGameRows slugs={dbProfile?.favorite_game_slugs ?? []} />}
+            games={<ProfileGameRows slugs={dbProfile?.favorite_game_slugs ?? []} username={username} />}
             posts={
               <ProfileFeed
                 username={username}
@@ -224,7 +249,7 @@ export default async function ProfilePage({
             lfg={
               userPosts.length === 0 ? (
                 <p className="border border-dashed border-[var(--gr-border-hi)] bg-[var(--gr-bg-2)]/40 py-8 text-center text-[13px] text-[var(--gr-text-mute)]">
-                  ჯერ არცერთი LFG პოსტი არ არის.
+                  ჯერ არცერთი ლოკალის პოსტი არ არის.
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -248,9 +273,6 @@ export default async function ProfilePage({
             }
           />
             </div>
-          </div>
-        </article>
-      </div>
     </div>
   );
 }

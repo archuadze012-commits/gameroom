@@ -1,12 +1,21 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { getRequestOriginFromHeaders } from "@/lib/url";
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams, origin: requestOrigin } = new URL(request.url);
+  const origin = getRequestOriginFromHeaders(request.headers, requestOrigin);
   const code = searchParams.get("code");
+  const authError = searchParams.get("error_description") ?? searchParams.get("error");
   const next = searchParams.get("next") ?? "/";
   const redirectTo = next.startsWith("/") ? `${origin}${next}` : origin;
+
+  if (!code && authError) {
+    return NextResponse.redirect(
+      `${origin}/auth/login?error=${encodeURIComponent(authError)}`
+    );
+  }
 
   if (code) {
     const cookieStore = await cookies();

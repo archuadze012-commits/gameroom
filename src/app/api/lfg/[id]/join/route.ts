@@ -48,7 +48,7 @@ export async function POST(
   const senderName = senderProfile?.display_name ?? senderProfile?.username ?? "ვინმე";
 
   sendPushToUser(post.author_id, {
-    title: "ახალი LFG მოთხოვნა 🎮",
+    title: "ახალი ლოკალის მოთხოვნა 🎮",
     body: `${senderName}: ${message.slice(0, 80)}`,
     url: `/lfg/${postId}`,
     tag: `lfg-join-${postId}`,

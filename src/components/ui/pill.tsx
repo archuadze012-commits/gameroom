@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 type Tone =
   | "neutral" | "live" | "online" | "accent"
-  | "cyan" | "violet" | "lime" | "amber";
+  | "cyan" | "violet" | "lime" | "amber" | "magenta";
 
 const toneClasses: Record<Tone, string> = {
   neutral: "bg-white/[0.04] text-[var(--gr-text-mute)] ring-1 ring-[var(--gr-border)]",
@@ -14,6 +14,7 @@ const toneClasses: Record<Tone, string> = {
   violet:  "bg-[color-mix(in_oklab,var(--gr-violet)_18%,transparent)] text-[var(--gr-violet)] ring-1 ring-[color-mix(in_oklab,var(--gr-violet)_40%,transparent)]",
   lime:    "bg-[color-mix(in_oklab,var(--gr-lime)_15%,transparent)] text-[var(--gr-lime)] ring-1 ring-[color-mix(in_oklab,var(--gr-lime)_35%,transparent)]",
   amber:   "bg-[color-mix(in_oklab,var(--gr-amber)_18%,transparent)] text-[var(--gr-amber)] ring-1 ring-[color-mix(in_oklab,var(--gr-amber)_40%,transparent)]",
+  magenta: "bg-[color-mix(in_oklab,var(--gr-magenta)_18%,transparent)] text-[var(--gr-magenta)] ring-1 ring-[color-mix(in_oklab,var(--gr-magenta)_40%,transparent)]",
 };
 
 type Props = React.HTMLAttributes<HTMLSpanElement> & {

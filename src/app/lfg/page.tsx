@@ -11,7 +11,7 @@ import { LfgFilters } from "./lfg-filters";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 
-export const metadata = { title: "LFG — გუნდის ძებნა" };
+export const metadata = { title: "ლოკალი — გუნდის ძებნა" };
 export const dynamic = "force-dynamic";
 
 type LfgRow = {
@@ -80,11 +80,11 @@ export default async function LfgPage({
       <div className="container relative mx-auto px-4 py-10 lg:py-14">
         <PageHeader
           eyebrow="გუნდის ძებნა"
-          title="ცოცხალი LFG"
+          title="LIVE ლოკალი"
           description="იპოვე მოთამაშეები შენი თამაშისთვის, რანკისა და რეგიონის მიხედვით."
           actions={
             <ChevronButton href="/lfg/new" variant="violet" size="md">
-              <Plus className="h-4 w-4" /> LFG დაპოსტვა
+              <Plus className="h-4 w-4" /> ლოკალის დაპოსტვა
             </ChevronButton>
           }
         />
@@ -99,11 +99,11 @@ export default async function LfgPage({
               <EmptyState
                 tone="violet"
                 illustration={<UsersIcon className="h-9 w-9 text-[var(--gr-violet-hi)]" />}
-                title="ჯერ არცერთი LFG არ არის"
+                title="ჯერ არცერთი ლოკალი არ არის"
                 description="გახდი პირველი ვინც დაპოსტავს გუნდის ძებნას."
                 action={
                   <ChevronButton href="/lfg/new" variant="violet" size="md">
-                    <Plus className="h-4 w-4" /> LFG დაპოსტვა
+                    <Plus className="h-4 w-4" /> ლოკალის დაპოსტვა
                   </ChevronButton>
                 }
               />

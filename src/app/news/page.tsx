@@ -1,65 +1,115 @@
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { PageHeader } from "@/components/page-header";
+import { Newspaper, Clock } from "lucide-react";
 import { mockGames, mockNews } from "@/lib/mock-data";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { DisplayHeading } from "@/components/ui/display-heading";
+import { Pill } from "@/components/ui/pill";
 
 export const metadata = { title: "სიახლეები" };
 
+const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
+const cutMd = "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)";
+const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.55))";
+
 export default function NewsPage() {
   const [featured, ...rest] = mockNews;
-  const featuredGame = mockGames.find((g) => g.slug === featured?.gameSlug);
+  const featuredGame = featured ? mockGames.find((g) => g.slug === featured.gameSlug) : undefined;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="სიახლეები"
-        description="გეიმინგ სამყაროს ბოლო ამბები — ადმინისტრაციის შერჩევით."
-      />
+    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
+      <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
+      <span aria-hidden className="pointer-events-none absolute -top-24 -right-20 h-72 w-72 rounded-full bg-[var(--gr-violet)]/20 blur-[120px]" />
+      <span aria-hidden className="pointer-events-none absolute top-40 -left-20 h-72 w-72 rounded-full bg-[var(--gr-magenta)]/15 blur-[120px]" />
 
-      {featured && (
-        <Link href={`/news/${featured.slug}`} className="mt-8 block">
-          <Card className="overflow-hidden border-border/60 transition-colors hover:border-primary/40">
-            <div className={`h-48 w-full bg-gradient-to-br ${featured.cover} md:h-64`} />
-            <CardContent className="space-y-3 p-6">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                {featuredGame && (
-                  <Badge variant="outline">{featuredGame.emoji} {featuredGame.nameKa}</Badge>
-                )}
-                <span>{featured.publishedAt}</span>
-                <span>· {featured.readMinutes} წთ კითხვა</span>
-              </div>
-              <h2 className="text-2xl font-bold md:text-3xl">{featured.title}</h2>
-              <p className="text-muted-foreground">{featured.excerpt}</p>
-              <div className="text-xs text-muted-foreground">@{featured.author}</div>
-            </CardContent>
-          </Card>
-        </Link>
-      )}
+      <div className="container relative mx-auto px-4 py-10 lg:py-14 space-y-10">
+        <header>
+          <Eyebrow tone="amber">სიახლეები</Eyebrow>
+          <DisplayHeading as="h1" size="lg" className="mt-3 flex items-center gap-3">
+            <Newspaper className="h-7 w-7 text-[var(--gr-violet-hi)]" />
+            სიახლეები
+          </DisplayHeading>
+          <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-[var(--gr-text-mute)]">
+            გეიმინგ სამყაროს ბოლო ამბები — ადმინისტრაციის შერჩევით.
+          </p>
+        </header>
 
-      <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {rest.map((n) => {
-          const game = mockGames.find((g) => g.slug === n.gameSlug);
-          return (
-            <Link key={n.slug} href={`/news/${n.slug}`}>
-              <Card className="h-full overflow-hidden border-border/60 transition-colors hover:border-primary/40">
-                <div className={`h-32 w-full bg-gradient-to-br ${n.cover}`} />
-                <CardContent className="space-y-2 p-5">
-                  {game && (
-                    <Badge variant="outline" className="text-[10px]">
-                      {game.emoji} {game.nameKa}
-                    </Badge>
-                  )}
-                  <h3 className="line-clamp-2 font-semibold">{n.title}</h3>
-                  <p className="line-clamp-2 text-sm text-muted-foreground">{n.excerpt}</p>
-                  <div className="text-xs text-muted-foreground">
-                    {n.publishedAt} · {n.readMinutes} წთ
+        {featured && (
+          <Link href={`/news/${featured.slug}`} className="group block">
+            <div
+              className="relative isolate"
+              style={{ background: cardBorder, padding: 1, clipPath: cutMd }}
+            >
+              <div
+                className="relative overflow-hidden bg-[var(--gr-bg-1)] gr-sweep"
+                style={{ clipPath: cutMd }}
+              >
+                <span aria-hidden className="absolute left-0 top-0 z-10 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
+                <div className="grid md:grid-cols-[1.1fr_1fr]">
+                  <div className={`relative h-48 w-full bg-gradient-to-br md:h-full ${featured.cover}`}>
+                    <span aria-hidden className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[var(--gr-bg-1)]/80 md:to-[var(--gr-bg-1)]" />
                   </div>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
+                  <div className="space-y-3 p-6 md:p-8">
+                    <div className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.14em] text-[var(--gr-text-dim)]">
+                      {featuredGame && (
+                        <Pill tone="violet">{featuredGame.emoji} {featuredGame.nameKa}</Pill>
+                      )}
+                      <span>{featured.publishedAt}</span>
+                      <span className="text-[var(--gr-text-dim)]">·</span>
+                      <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" /> {featured.readMinutes} წთ</span>
+                    </div>
+                    <h2 className="font-display text-[24px] font-bold uppercase tracking-tight text-[var(--gr-text)] md:text-[28px] leading-[1.1]">
+                      {featured.title}
+                    </h2>
+                    <p className="text-[14px] leading-relaxed text-[var(--gr-text-mute)]">{featured.excerpt}</p>
+                    <div className="pt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--gr-violet-hi)]">
+                      @{featured.author}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Link>
+        )}
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {rest.map((n) => {
+            const game = mockGames.find((g) => g.slug === n.gameSlug);
+            return (
+              <Link key={n.slug} href={`/news/${n.slug}`} className="group block">
+                <div
+                  className="relative isolate"
+                  style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
+                >
+                  <div
+                    className="relative bg-[var(--gr-bg-1)] gr-sweep"
+                    style={{ clipPath: cutSm }}
+                  >
+                    <span aria-hidden className="absolute left-0 top-0 z-10 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
+                    <div className={`relative h-32 w-full bg-gradient-to-br ${n.cover}`}>
+                      <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-1)] via-transparent to-transparent" />
+                    </div>
+                    <div className="space-y-2 p-4">
+                      {game && (
+                        <Pill tone="violet" className="!text-[10px]">
+                          {game.emoji} {game.nameKa}
+                        </Pill>
+                      )}
+                      <h3 className="line-clamp-2 font-display text-[15px] font-bold uppercase tracking-tight text-[var(--gr-text)] leading-tight">
+                        {n.title}
+                      </h3>
+                      <p className="line-clamp-2 text-[12.5px] leading-relaxed text-[var(--gr-text-mute)]">{n.excerpt}</p>
+                      <div className="flex items-center gap-2 pt-1 text-[11px] uppercase tracking-[0.14em] text-[var(--gr-text-dim)]">
+                        <span>{n.publishedAt}</span>
+                        <span>·</span>
+                        <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" /> {n.readMinutes} წთ</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

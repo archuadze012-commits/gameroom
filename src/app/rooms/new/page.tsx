@@ -149,7 +149,7 @@ export default async function NewRoomsPage({
           {/* Rooms list */}
           <section>
             <h2 className="mb-4 font-display text-[14px] font-bold uppercase tracking-[0.18em] text-white">
-              ცოცხალი რუმები <span className="ml-2 text-[var(--gr-text-dim)]">({rooms.length})</span>
+              LIVE რუმები <span className="ml-2 text-[var(--gr-text-dim)]">({rooms.length})</span>
             </h2>
 
             {rooms.length === 0 ? (
