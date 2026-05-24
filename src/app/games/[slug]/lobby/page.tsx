@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Users, Rocket } from "lucide-react";
+import { ArrowLeft, ShoppingBag, Users, Rocket } from "lucide-react";
 import { mockGames } from "@/lib/mock-data";
 import { DisplayHeading } from "@/components/ui/display-heading";
 import { Pill } from "@/components/ui/pill";
@@ -118,6 +118,13 @@ export default async function GameLobbyPage({
               <Users className="mr-1 inline h-3 w-3 -translate-y-px" />
               {game.players.toLocaleString("en-US")} ონლაინ
             </span>
+            <Link
+              href="/shop"
+              className="inline-flex h-8 items-center gap-1.5 bg-[color-mix(in_srgb,var(--gr-bg-0)_70%,transparent)] px-3 text-[10px] font-black uppercase tracking-[0.16em] text-[var(--gr-amber)] ring-1 ring-[color-mix(in_srgb,var(--gr-amber)_42%,transparent)] backdrop-blur-md transition hover:bg-[color-mix(in_srgb,var(--gr-amber)_14%,transparent)] hover:text-white [clip-path:polygon(0_0,calc(100%_-_9px)_0,100%_9px,100%_100%,0_100%)]"
+            >
+              <ShoppingBag className="h-3.5 w-3.5" />
+              შოპი
+            </Link>
           </div>
         </header>
 
