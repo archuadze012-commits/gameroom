@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Inter_Tight, JetBrains_Mono, Noto_Sans_Georgian } from "next/font/google";
 import "./globals.css";
+import "@/styles/lobby-animations.css";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { Toaster } from "@/components/ui/sonner";

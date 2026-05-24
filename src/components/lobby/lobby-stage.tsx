@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Crosshair, DoorOpen, Gift, Swords, Trophy } from "lucide-react";
 import { LobbyCanvas } from "@/components/lobby/lobby-canvas";
+import { LobbyCharacter, type LobbyCharacterHandle } from "@/components/lobby/lobby-character";
 import { LobbyInventory, type LobbyLoadout } from "@/components/lobby/lobby-inventory";
+import { LobbyStageLight } from "@/components/lobby/lobby-stage-light";
 
 type ModeKey = "classic" | "1v1" | "rooms" | "giveaway" | "tournaments";
 
@@ -39,7 +41,7 @@ const CHARACTER_URL = "/characters/gameroom-vanguard.png";
 
 export function LobbyStage({ gameName, imageUrl }: Props) {
   return (
-    <>
+    <div data-lobby-stage className="absolute inset-0 overflow-hidden">
       <Image
         src={imageUrl}
         alt={`${gameName} lobby`}
@@ -50,15 +52,22 @@ export function LobbyStage({ gameName, imageUrl }: Props) {
         className="object-cover object-center"
       />
       <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_50%_62%,transparent_0_28%,rgba(8,6,15,0.1)_48%,rgba(8,6,15,0.45)_100%)]" />
+      <LobbyStageLight />
       <LiveHud />
       <StartWidget />
       <LobbyLoadoutLayer characterUrl={CHARACTER_URL} />
-    </>
+    </div>
   );
 }
 
 function LobbyLoadoutLayer({ characterUrl }: { characterUrl: string }) {
   const [loadout, setLoadout] = useState<LobbyLoadout>(DEFAULT_LOADOUT);
+  const characterRef = useRef<LobbyCharacterHandle>(null);
+
+  const handleLoadoutChange = (nextLoadout: LobbyLoadout) => {
+    setLoadout(nextLoadout);
+    characterRef.current?.triggerEquipFlash();
+  };
 
   return (
     <>
@@ -98,15 +107,12 @@ function LobbyLoadoutLayer({ characterUrl }: { characterUrl: string }) {
           filter="url(#leg-shadow-blur)"
         />
       </svg>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <LobbyCharacter
+        ref={characterRef}
         src={characterUrl}
         alt=""
-        aria-hidden="true"
-        className="lobby-character"
-        draggable={false}
       />
-      <LobbyInventory initialLoadout={loadout} onLoadoutChange={setLoadout} />
+      <LobbyInventory initialLoadout={loadout} onLoadoutChange={handleLoadoutChange} />
     </>
   );
 }
