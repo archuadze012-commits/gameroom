@@ -262,47 +262,54 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
           const liked = likedIds.has(post.id);
           const author = post.profiles;
           return (
-            <Card key={post.id} className="border-border/60">
-              <CardContent className="space-y-3 p-4">
-                <div className="flex items-center gap-3">
-                  <Link href={`/profile/${author.username}`}>
-                    <Avatar className="h-9 w-9">
-                      <AvatarImage src={author.avatar_url ?? ""} alt={author.display_name} />
-                      <AvatarFallback className="bg-primary/15 text-primary text-xs">
-                        {author.display_name.slice(0, 1).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Link>
-                  <div>
-                    <Link href={`/profile/${author.username}`} className="flex items-center gap-1 text-sm font-semibold hover:text-primary transition-colors">
-                      {author.display_name || author.username}
-                      {author.is_verified && <VerifiedBadge className="h-3.5 w-3.5" />}
+            <div key={post.id} className="relative">
+              <Link
+                href={`/feed/${post.id}`}
+                className="absolute inset-0 z-0 rounded-[inherit]"
+                aria-label="პოსტის გახსნა"
+              />
+              <Card className="border-border/60 transition-colors hover:border-primary/40">
+                <CardContent className="space-y-3 p-4">
+                  <div className="flex items-center gap-3">
+                    <Link href={`/profile/${author.username}`} className="relative z-10">
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src={author.avatar_url ?? ""} alt={author.display_name} />
+                        <AvatarFallback className="bg-primary/15 text-primary text-xs">
+                          {author.display_name.slice(0, 1).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
                     </Link>
-                    <p className="text-xs text-muted-foreground">{timeAgo(post.created_at)}</p>
+                    <div>
+                      <Link href={`/profile/${author.username}`} className="relative z-10 flex items-center gap-1 text-sm font-semibold hover:text-primary transition-colors">
+                        {author.display_name || author.username}
+                        {author.is_verified && <VerifiedBadge className="h-3.5 w-3.5" />}
+                      </Link>
+                      <p className="text-xs text-muted-foreground">{timeAgo(post.created_at)}</p>
+                    </div>
+                    <Badge variant="outline" className="ml-auto text-[10px] text-muted-foreground">
+                      <Rss className="mr-1 h-2.5 w-2.5" /> პოსტი
+                    </Badge>
                   </div>
-                  <Badge variant="outline" className="ml-auto text-[10px] text-muted-foreground">
-                    <Rss className="mr-1 h-2.5 w-2.5" /> პოსტი
-                  </Badge>
-                </div>
-                <PostContent
-                  content={post.content}
-                  mediaUrls={post.media_urls}
-                  authorRole={author.role}
-                  authorVerified={author.is_verified}
-                />
-                <Separator className="border-border/40" />
-                <div className="flex items-center justify-between">
-                  <button
-                    onClick={() => toggleLike(post.id)}
-                    className={`flex items-center gap-1.5 text-xs transition-colors ${liked ? "text-red-400" : "text-muted-foreground hover:text-red-400"}`}
-                  >
-                    <Heart className={`h-4 w-4 ${liked ? "fill-red-400" : ""}`} />
-                    {post.likes_count}
-                  </button>
-                  <ReportButton targetType="post" targetId={post.id} />
-                </div>
-              </CardContent>
-            </Card>
+                  <PostContent
+                    content={post.content}
+                    mediaUrls={post.media_urls}
+                    authorRole={author.role}
+                    authorVerified={author.is_verified}
+                  />
+                  <Separator className="border-border/40" />
+                  <div className="relative z-10 flex items-center justify-between">
+                    <button
+                      onClick={() => toggleLike(post.id)}
+                      className={`flex items-center gap-1.5 text-xs transition-colors ${liked ? "text-red-400" : "text-muted-foreground hover:text-red-400"}`}
+                    >
+                      <Heart className={`h-4 w-4 ${liked ? "fill-red-400" : ""}`} />
+                      {post.likes_count}
+                    </button>
+                    <ReportButton targetType="post" targetId={post.id} />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           );
         })}
 
