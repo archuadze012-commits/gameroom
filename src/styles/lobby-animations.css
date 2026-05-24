@@ -243,10 +243,131 @@
   }
 }
 
+.lobby-mode-card {
+  transform-origin: 0% 100%;
+}
+
+.motion-safe\:lobby-mode-card-in {
+  animation: lobby-mode-card-in 240ms ease-out;
+}
+
+.lobby-start-button {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gr-amber) 82%, white), var(--gr-amber) 55%, color-mix(in srgb, var(--gr-amber) 62%, var(--gr-bg-0)));
+}
+
+.motion-safe\:lobby-start-glow {
+  animation: lobby-start-glow 2.8s ease-in-out infinite;
+}
+
+.lobby-start-searching {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gr-cyan-glow) 48%, white), var(--gr-cyan-glow), color-mix(in srgb, var(--gr-violet) 60%, var(--gr-bg-0)));
+}
+
+.lobby-start-found {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--gr-lime) 60%, white), var(--gr-lime), color-mix(in srgb, var(--gr-lime) 50%, var(--gr-bg-0)));
+}
+
+.lobby-start-shine {
+  position: absolute;
+  inset: -60% auto -60% -36%;
+  z-index: 1;
+  width: 34%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.55), transparent);
+  transform: rotate(18deg) translateX(-120%);
+  mix-blend-mode: screen;
+}
+
+.motion-safe\:lobby-start-shimmer {
+  animation: lobby-start-shimmer 3s ease-in-out infinite;
+}
+
+.lobby-start-spinner {
+  position: absolute;
+  inset: -8px;
+  z-index: 0;
+  border: 2px solid color-mix(in srgb, var(--gr-cyan-glow) 36%, transparent);
+  border-top-color: rgb(255 255 255 / 0.86);
+  clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 22px 100%, 0 calc(100% - 22px));
+}
+
+.motion-safe\:lobby-start-spinner-spin {
+  animation: lobby-start-spinner-spin 900ms linear infinite;
+}
+
+.lobby-match-dots {
+  display: inline-block;
+  width: 1.35em;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+
+.motion-safe\:lobby-match-dots-pulse {
+  animation: lobby-match-dots-pulse 900ms steps(4, end) infinite;
+}
+
+@keyframes lobby-mode-card-in {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes lobby-start-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--gr-amber) 32%, transparent));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 22px color-mix(in srgb, var(--gr-amber) 62%, transparent));
+  }
+}
+
+@keyframes lobby-start-shimmer {
+  0%,
+  58% {
+    transform: rotate(18deg) translateX(-140%);
+  }
+
+  78%,
+  100% {
+    transform: rotate(18deg) translateX(470%);
+  }
+}
+
+@keyframes lobby-start-spinner-spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes lobby-match-dots-pulse {
+  0% {
+    width: 0;
+  }
+
+  100% {
+    width: 1.35em;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .motion-safe\:lobby-char-breathe,
   .motion-safe\:lobby-stage-spotlight-spin,
   .motion-safe\:lobby-stage-shaft-drift,
+  .motion-safe\:lobby-mode-card-in,
+  .motion-safe\:lobby-start-glow,
+  .motion-safe\:lobby-start-shimmer,
+  .motion-safe\:lobby-start-spinner-spin,
+  .motion-safe\:lobby-match-dots-pulse,
   .lobby-char-inspect .lobby-character-image {
     animation: none;
   }
