@@ -276,6 +276,15 @@
   --gr-amber:      #F5A524;
   --gr-cyan-glow:  #22D3EE;
 
+  --tier-bronze:   #B87333;
+  --tier-silver:   #C0C0C0;
+  --tier-gold:     #FFB300;
+  --tier-plat:     #6AD4CF;
+  --tier-diamond:  #5EC8FF;
+  --tier-crown:    #C44EFF;
+  --tier-ace:      #FF4D6D;
+  --tier-conqueror: linear-gradient(135deg, #FF4D6D, #FFB300, #C44EFF);
+
   /* aliases — keep older tone names working in Pill etc. */
   --gr-accent:     var(--gr-violet);
   --gr-accent-2:   var(--gr-amber);

@@ -10,6 +10,7 @@ import { LobbyStage } from "@/components/lobby/lobby-stage";
 import { LobbyOrientationGuard } from "@/components/lobby/lobby-orientation";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getMockHud } from "@/lib/lobby/mock-hud";
 
 export const dynamicParams = true;
 
@@ -61,6 +62,20 @@ export default async function GameLobbyPage({
     avatarUrl = data?.avatar_url ?? null;
     level = data?.level ?? 1;
   }
+  const hudData = user
+    ? (() => {
+        const hud = getMockHud(username ?? displayName ?? user.id);
+        return {
+          ...hud,
+          player: {
+            ...hud.player,
+            displayName: displayName ?? username ?? "მოთამაშე",
+            avatarUrl,
+            level,
+          },
+        };
+      })()
+    : null;
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
@@ -116,35 +131,7 @@ export default async function GameLobbyPage({
             style={{ clipPath: cutLg }}
           >
             <LobbyShell imageUrl={LOBBY_BG[slug]} eyebrow={`${game.nameEn} · ლობის გახსნა`}>
-            <LobbyStage gameName={game.nameKa} imageUrl={LOBBY_BG[slug]} />
-
-            {/* in-lobby HUD: top-left user chip — avatar 1:1 + name */}
-            {user && (
-              <div className="absolute left-2 top-2 z-10 flex items-center gap-1.5 bg-black/45 px-1.5 py-1 ring-1 ring-white/15 backdrop-blur-md sm:left-4 sm:top-4 sm:gap-2.5 sm:px-2 sm:py-1.5"
-                style={{ clipPath: "polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%)" }}
-              >
-                <div
-                  className="relative h-6 w-6 shrink-0 overflow-hidden ring-1 ring-[var(--gr-violet-hi)]/50 sm:h-9 sm:w-9"
-                  style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 4px 100%, 0 calc(100% - 4px))" }}
-                >
-                  {avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={avatarUrl} alt={displayName ?? username ?? ""} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="grid h-full w-full place-items-center bg-[var(--gr-grad-violet)] text-[11px] font-bold uppercase text-white sm:text-[14px]">
-                      {(displayName ?? username ?? "?").slice(0, 1)}
-                    </div>
-                  )}
-                </div>
-                <div className="min-w-0 pr-1">
-                  <div className="truncate font-display text-[10px] font-bold uppercase leading-none tracking-tight text-white sm:text-[13px]"
-                    style={{ textShadow: "0 1px 3px rgba(0,0,0,0.85)" }}
-                  >
-                    {displayName ?? username ?? "მოთამაშე"}
-                  </div>
-                </div>
-              </div>
-            )}
+            <LobbyStage gameName={game.nameKa} imageUrl={LOBBY_BG[slug]} hudData={hudData} />
 
             {/* atmospheric integration */}
             <div

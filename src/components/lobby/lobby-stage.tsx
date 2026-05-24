@@ -6,8 +6,10 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Crosshair, DoorOpen, Gift, Swords, Trophy } from "lucide-react";
 import { LobbyCanvas } from "@/components/lobby/lobby-canvas";
 import { LobbyCharacter, type LobbyCharacterHandle } from "@/components/lobby/lobby-character";
+import { LobbyHud } from "@/components/lobby/lobby-hud";
 import { LobbyInventory, type LobbyLoadout } from "@/components/lobby/lobby-inventory";
 import { LobbyStageLight } from "@/components/lobby/lobby-stage-light";
+import type { LobbyHudData } from "@/types/lobby";
 
 type ModeKey = "classic" | "1v1" | "rooms" | "giveaway" | "tournaments";
 
@@ -29,6 +31,7 @@ const MODES: ModeDef[] = [
 type Props = {
   gameName: string;
   imageUrl: string;
+  hudData?: LobbyHudData | null;
 };
 
 const DEFAULT_LOADOUT: LobbyLoadout = {
@@ -39,7 +42,7 @@ const DEFAULT_LOADOUT: LobbyLoadout = {
 
 const CHARACTER_URL = "/characters/gameroom-vanguard.png";
 
-export function LobbyStage({ gameName, imageUrl }: Props) {
+export function LobbyStage({ gameName, imageUrl, hudData = null }: Props) {
   return (
     <div data-lobby-stage className="absolute inset-0 overflow-hidden">
       <Image
@@ -53,7 +56,7 @@ export function LobbyStage({ gameName, imageUrl }: Props) {
       />
       <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_50%_62%,transparent_0_28%,rgba(8,6,15,0.1)_48%,rgba(8,6,15,0.45)_100%)]" />
       <LobbyStageLight />
-      <LiveHud />
+      <LiveHud data={hudData} />
       <StartWidget />
       <LobbyLoadoutLayer characterUrl={CHARACTER_URL} />
     </div>
@@ -117,8 +120,8 @@ function LobbyLoadoutLayer({ characterUrl }: { characterUrl: string }) {
   );
 }
 
-function LiveHud() {
-  return null;
+function LiveHud({ data }: { data: LobbyHudData | null }) {
+  return <LobbyHud data={data} />;
 }
 
 function StartWidget() {
