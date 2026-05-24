@@ -35,6 +35,7 @@ type Props = {
   imageUrl: string;
   hudData?: LobbyHudData | null;
   currentUserId?: string | null;
+  lobbyEffect?: { effect: string; color?: string } | null;
 };
 
 const DEFAULT_LOADOUT: LobbyLoadout = {
@@ -45,7 +46,7 @@ const DEFAULT_LOADOUT: LobbyLoadout = {
 
 const CHARACTER_URL = "/characters/gameroom-vanguard.png";
 
-export function LobbyStage({ gameName, gameSlug, imageUrl, hudData = null, currentUserId = null }: Props) {
+export function LobbyStage({ gameName, gameSlug, imageUrl, hudData = null, currentUserId = null, lobbyEffect = null }: Props) {
   const loadoutStorageKey = currentUserId ? getLobbyLoadoutStorageKey(gameSlug, currentUserId) : undefined;
 
   return (
@@ -66,6 +67,7 @@ export function LobbyStage({ gameName, gameSlug, imageUrl, hudData = null, curre
         characterUrl={CHARACTER_URL}
         persistEnabled={Boolean(currentUserId)}
         storageKey={loadoutStorageKey}
+        lobbyEffect={lobbyEffect}
       />
     </div>
   );
@@ -75,16 +77,18 @@ function LobbyLoadoutLayer({
   characterUrl,
   persistEnabled,
   storageKey,
+  lobbyEffect,
 }: {
   characterUrl: string;
   persistEnabled: boolean;
   storageKey?: string;
+  lobbyEffect?: { effect: string; color?: string } | null;
 }) {
   const [loadout, setLoadout] = useState<LobbyLoadout>(DEFAULT_LOADOUT);
 
   return (
     <>
-      <LobbyCanvas />
+      <LobbyCanvas effect={lobbyEffect?.effect ?? null} color={lobbyEffect?.color ?? null} />
       {/* leg contact shadow — SVG path shaped like standing legs */}
       <svg
         aria-hidden

@@ -14,6 +14,7 @@ import { getMockHud } from "@/lib/lobby/mock-hud";
 import { getWallet, getDailyBonusAvailable } from "@/lib/wallet/queries";
 import { getActiveBoxes } from "@/lib/events/queries";
 import { LobbyEvents } from "@/components/lobby/lobby-events";
+import { getEquippedItems } from "@/lib/shop/equip-queries";
 
 export const dynamicParams = true;
 
@@ -88,9 +89,10 @@ export default async function GameLobbyPage({
   let hudData = null;
   if (lobbyUserId) {
     const hud = getMockHud(username ?? displayName ?? lobbyUserId);
-    const [wallet, dailyBonusAvailable] = await Promise.all([
+    const [wallet, dailyBonusAvailable, equippedItems] = await Promise.all([
       getWallet(lobbyUserId),
       getDailyBonusAvailable(lobbyUserId),
+      getEquippedItems(lobbyUserId),
     ]);
 
     hudData = {
@@ -108,6 +110,11 @@ export default async function GameLobbyPage({
       },
       dailyBonusAvailable,
     };
+
+    const lobbyEffectItem = equippedItems.find((i) => i.category === "lobby_effect");
+    if (lobbyEffectItem) {
+      (hudData as Record<string, unknown>).lobbyEffect = lobbyEffectItem.metadata;
+    }
   }
 
   const boxes = await getActiveBoxes();
@@ -172,6 +179,7 @@ export default async function GameLobbyPage({
               imageUrl={LOBBY_BG[slug]}
               hudData={hudData}
               currentUserId={canPersistLobby ? user?.id ?? null : null}
+              lobbyEffect={(hudData as Record<string, unknown> | null)?.lobbyEffect as { effect: string; color?: string } | null ?? null}
             />
 
             {/* atmospheric integration */}
