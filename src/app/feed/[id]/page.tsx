@@ -9,6 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import { VerifiedBadge } from "@/components/verified-badge";
 import { PostContent } from "@/components/post-content";
 import { PostDetailActions } from "./post-detail-actions";
+import { PostReactions } from "./post-reactions";
+import { PostComments } from "./post-comments";
 import { formatDistanceToNow } from "date-fns";
 import { ka } from "date-fns/locale";
 
@@ -33,21 +35,43 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
 
   const supabase = await createSupabaseServerClient();
 
-  const { data: post } = await supabase
-    .from("posts")
-    .select("id, content, media_urls, likes_count, created_at, profiles!posts_author_id_fkey(username, display_name, avatar_url, is_verified, role)")
-    .eq("id", id)
-    .is("deleted_at", null)
-    .single();
+  const [
+    { data: post },
+    { data: likeRow },
+    { data: profile },
+    { data: commentRows },
+    { data: reactionRows },
+  ] = await Promise.all([
+    supabase
+      .from("posts")
+      .select("id, content, media_urls, likes_count, created_at, profiles!posts_author_id_fkey(username, display_name, avatar_url, is_verified, role)")
+      .eq("id", id)
+      .is("deleted_at", null)
+      .single(),
+    supabase
+      .from("post_likes")
+      .select("post_id")
+      .eq("user_id", user.id)
+      .eq("post_id", id)
+      .maybeSingle(),
+    supabase
+      .from("profiles")
+      .select("username, display_name, avatar_url")
+      .eq("id", user.id)
+      .single(),
+    supabase
+      .from("post_comments")
+      .select("id, body, created_at, profiles!post_comments_author_id_fkey(username, display_name, avatar_url, is_verified)")
+      .eq("post_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("post_reactions")
+      .select("emoji, user_id")
+      .eq("post_id", id),
+  ]);
 
   if (!post) notFound();
-
-  const { data: likeRow } = await supabase
-    .from("post_likes")
-    .select("post_id")
-    .eq("user_id", user.id)
-    .eq("post_id", id)
-    .maybeSingle();
 
   const author = post.profiles as unknown as {
     username: string;
@@ -57,26 +81,41 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     role?: string | null;
   };
 
+  // aggregate reactions
+  const reactionCounts: Record<string, number> = {};
+  const myReactions: string[] = [];
+  for (const r of reactionRows ?? []) {
+    reactionCounts[r.emoji] = (reactionCounts[r.emoji] ?? 0) + 1;
+    if (r.user_id === user.id) myReactions.push(r.emoji);
+  }
+
   let timeAgoStr = "";
   try {
     timeAgoStr = formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: ka });
   } catch {}
 
+  const currentUser = {
+    id: user.id,
+    username: profile?.username ?? user.email?.split("@")[0] ?? "",
+    displayName: profile?.display_name ?? "",
+    avatarUrl: profile?.avatar_url ?? "",
+  };
+
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
-      <div className="container relative mx-auto max-w-2xl px-4 py-10 lg:py-14">
+      <div className="container relative mx-auto max-w-2xl px-4 py-10 lg:py-14 space-y-4">
         <Link
           href="/feed"
-          className="mb-6 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit"
         >
           <ArrowLeft className="h-4 w-4" />
           ლენტაზე დაბრუნება
         </Link>
 
+        {/* post card */}
         <Card className="border-border/60">
           <CardContent className="space-y-4 p-5">
-            {/* author */}
             <div className="flex items-center gap-3">
               <Link href={`/profile/${author.username}`}>
                 <Avatar className="h-10 w-10">
@@ -100,7 +139,6 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
 
             <Separator className="border-border/40" />
 
-            {/* content */}
             <PostContent
               content={post.content}
               mediaUrls={post.media_urls}
@@ -110,11 +148,31 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
 
             <Separator className="border-border/40" />
 
-            {/* actions */}
+            {/* reactions */}
+            <PostReactions
+              postId={post.id}
+              initialCounts={reactionCounts}
+              initialMine={myReactions}
+            />
+
+            <Separator className="border-border/40" />
+
+            {/* like + report */}
             <PostDetailActions
               postId={post.id}
               initialLikes={post.likes_count}
               initialLiked={!!likeRow}
+            />
+          </CardContent>
+        </Card>
+
+        {/* comments card */}
+        <Card className="border-border/60">
+          <CardContent className="p-5">
+            <PostComments
+              postId={post.id}
+              initialComments={(commentRows ?? []) as unknown as Parameters<typeof PostComments>[0]["initialComments"]}
+              currentUser={currentUser}
             />
           </CardContent>
         </Card>
