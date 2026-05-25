@@ -198,6 +198,75 @@ export function LobbyFireEffect() {
             }}
           />
         ))}
+
+        {/* needle spikes — narrow, very tall, deep red, give vertical drama */}
+        {[
+          { left: "1%",   w: 28, h: 280, dur: "1.52s", del: "0.07s", rot: "-11deg", br: "40% 60% 12% 18%", fx: "44% 82%" },
+          { left: "6%",   w: 32, h: 310, dur: "1.38s", del: "0.22s", rot:   "8deg", br: "55% 45% 18% 12%", fx: "56% 78%" },
+          { left: "11%",  w: 25, h: 295, dur: "1.60s", del: "0.14s", rot:  "-5deg", br: "48% 52% 10% 22%", fx: "42% 80%" },
+          { left: "18%",  w: 30, h: 270, dur: "1.44s", del: "0.30s", rot:  "12deg", br: "36% 64% 20% 14%", fx: "60% 84%" },
+          { left: "24%",  w: 26, h: 255, dur: "1.56s", del: "0.05s", rot:  "-8deg", br: "52% 48% 14% 20%", fx: "46% 79%" },
+          { left: "31%",  w: 29, h: 240, dur: "1.42s", del: "0.19s", rot:   "6deg", br: "44% 56% 22% 10%", fx: "54% 82%" },
+          { left: "38%",  w: 24, h: 225, dur: "1.62s", del: "0.11s", rot: "-10deg", br: "58% 42% 16% 24%", fx: "40% 80%" },
+          { left: "44%",  w: 31, h: 215, dur: "1.36s", del: "0.26s", rot:   "4deg", br: "46% 54% 18% 16%", fx: "52% 83%" },
+          { left: "50%",  w: 27, h: 210, dur: "1.50s", del: "0.08s", rot:  "-3deg", br: "50% 50% 12% 20%", fx: "48% 81%" },
+          { left: "56%",  w: 31, h: 215, dur: "1.40s", del: "0.23s", rot:   "9deg", br: "42% 58% 20% 12%", fx: "55% 83%" },
+          { left: "62%",  w: 24, h: 225, dur: "1.58s", del: "0.16s", rot:  "-6deg", br: "56% 44% 14% 22%", fx: "44% 80%" },
+          { left: "69%",  w: 29, h: 240, dur: "1.46s", del: "0.04s", rot:  "10deg", br: "38% 62% 22% 18%", fx: "58% 82%" },
+          { left: "76%",  w: 26, h: 255, dur: "1.54s", del: "0.28s", rot:  "-7deg", br: "52% 48% 16% 14%", fx: "46% 79%" },
+          { left: "82%",  w: 30, h: 270, dur: "1.32s", del: "0.12s", rot:  "11deg", br: "44% 56% 12% 24%", fx: "53% 84%" },
+          { left: "88%",  w: 25, h: 295, dur: "1.64s", del: "0.20s", rot:  "-9deg", br: "60% 40% 20% 16%", fx: "40% 80%" },
+          { left: "93%",  w: 32, h: 310, dur: "1.38s", del: "0.06s", rot:   "7deg", br: "46% 54% 10% 22%", fx: "57% 78%" },
+          { left: "98%",  w: 28, h: 280, dur: "1.56s", del: "0.17s", rot: "-12deg", br: "54% 46% 18% 14%", fx: "43% 82%" },
+        ].map(({ left, w, h, dur, del, rot, br, fx }, i) => (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left,
+              width: w,
+              height: h,
+              background: `radial-gradient(ellipse at ${fx}, rgba(220,30,0,0.75) 0%, rgba(180,10,0,0.45) 50%, transparent 85%)`,
+              borderRadius: br,
+              rotate: rot,
+              transformOrigin: "bottom center",
+              animation: `fire-tongue ${dur} ${del} ease-in-out infinite`,
+              filter: "blur(2px)",
+            }}
+          />
+        ))}
+
+        {/* wide base — short, broad, anchors fire to ground */}
+        {[
+          { left: "-3%",  w: 200, h: 95,  dur: "1.70s", del: "0s",    rot:  "2deg", br: "55% 45% 48% 52%" },
+          { left: "8%",   w: 220, h: 105, dur: "1.55s", del: "0.18s", rot: "-3deg", br: "48% 52% 44% 56%" },
+          { left: "19%",  w: 210, h: 90,  dur: "1.80s", del: "0.09s", rot:  "4deg", br: "60% 40% 52% 48%" },
+          { left: "30%",  w: 215, h: 100, dur: "1.62s", del: "0.24s", rot: "-2deg", br: "44% 56% 50% 50%" },
+          { left: "41%",  w: 225, h: 88,  dur: "1.74s", del: "0.06s", rot:  "3deg", br: "52% 48% 46% 54%" },
+          { left: "52%",  w: 225, h: 88,  dur: "1.68s", del: "0.15s", rot: "-4deg", br: "46% 54% 54% 46%" },
+          { left: "63%",  w: 215, h: 100, dur: "1.58s", del: "0.21s", rot:  "2deg", br: "56% 44% 48% 52%" },
+          { left: "74%",  w: 210, h: 90,  dur: "1.76s", del: "0.10s", rot: "-3deg", br: "42% 58% 52% 48%" },
+          { left: "85%",  w: 220, h: 105, dur: "1.52s", del: "0.27s", rot:  "5deg", br: "50% 50% 44% 56%" },
+          { left: "96%",  w: 200, h: 95,  dur: "1.72s", del: "0.03s", rot: "-2deg", br: "58% 42% 50% 50%" },
+        ].map(({ left, w, h, dur, del, rot, br }, i) => (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left,
+              width: w,
+              height: h,
+              background: "radial-gradient(ellipse at 50% 95%, rgba(160,8,0,0.80) 0%, rgba(200,20,0,0.45) 55%, transparent 85%)",
+              borderRadius: br,
+              rotate: rot,
+              transformOrigin: "bottom center",
+              animation: `fire-core ${dur} ${del} ease-in-out infinite`,
+              filter: "blur(7px)",
+            }}
+          />
+        ))}
       </div>
     </>
   );
