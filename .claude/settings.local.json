@@ -1,11 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "PowerShell(npm run *)"
+      "PowerShell(npm run *)",
+      "mcp__supabase__execute_sql",
+      "mcp__supabase__get_project_url",
+      "mcp__plugin_context-mode_context-mode__ctx_batch_execute"
     ]
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "supabase"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }
