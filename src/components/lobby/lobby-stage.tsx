@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Crosshair, DoorOpen, Gift, Swords, Target, Trophy } from "lucide-react";
 import { LobbyCanvas } from "@/components/lobby/lobby-canvas";
+import { LobbyFireEffect } from "@/components/lobby/lobby-fire-effect";
 import { LobbyHud } from "@/components/lobby/lobby-hud";
 import { LobbyInventory, type LobbyLoadout } from "@/components/lobby/lobby-inventory";
 import { getLobbyLoadoutStorageKey } from "@/lib/lobby/loadout-storage";
@@ -88,7 +89,8 @@ function LobbyLoadoutLayer({
 
   return (
     <>
-      <LobbyCanvas effect={lobbyEffect?.effect ?? null} color={lobbyEffect?.color ?? null} />
+      <LobbyCanvas />
+      {lobbyEffect?.effect === "fire" && <LobbyFireEffect />}
       {/* leg contact shadow — SVG path shaped like standing legs */}
       <svg
         aria-hidden
