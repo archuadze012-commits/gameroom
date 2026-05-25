@@ -28,7 +28,7 @@ export function LobbyFireEffect() {
           position: "absolute",
           left: 0,
           right: 0,
-          bottom: -70,
+          bottom: -90,
           height: 70,
           background:
             "linear-gradient(to top, rgba(180,10,0,0.75) 0%, rgba(200,20,0,0.30) 60%, transparent 100%)",
@@ -47,7 +47,7 @@ export function LobbyFireEffect() {
           position: "absolute",
           left: -40,
           right: -40,
-          bottom: -115,
+          bottom: -145,
           height: 0,
           filter: "blur(6px)",
           mixBlendMode: "screen",
