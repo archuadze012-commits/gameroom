@@ -49,7 +49,7 @@ export function LobbyCanvas({ className }: Props) {
       app.stage.addChild(layer);
 
       {
-        // Default ambient sparkles
+        // Ambient sparkles — denser on left/right edges, faster speed
         const sparkleColors = [0xa78bfa, 0x22d3ee, 0xf5a524, 0xff4d6d];
 
         type Sparkle = {
@@ -59,26 +59,44 @@ export function LobbyCanvas({ className }: Props) {
           life: number;
           maxLife: number;
           alpha: number;
+          zone: "left" | "right" | "center";
         };
 
         const sparkles: Sparkle[] = [];
 
         const resetSparkle = (s: Sparkle, randomizeLife = false) => {
-          s.gfx.x = Math.random() * app.screen.width;
-          s.gfx.y = app.screen.height * (0.2 + Math.random() * 0.62);
-          s.vx = (Math.random() - 0.5) * 0.14;
-          s.vy = -0.07 - Math.random() * 0.14;
-          s.maxLife = 3.5 + Math.random() * 3.5;
+          const w = app.screen.width;
+          if (s.zone === "left") {
+            s.gfx.x = w * (Math.random() * 0.22);
+          } else if (s.zone === "right") {
+            s.gfx.x = w * (0.78 + Math.random() * 0.22);
+          } else {
+            s.gfx.x = w * (0.22 + Math.random() * 0.56);
+          }
+          s.gfx.y = app.screen.height * (0.2 + Math.random() * 0.65);
+          // edges move faster and drift inward slightly
+          const edgeSpeed = s.zone !== "center" ? 1.8 : 1.0;
+          s.vx = (Math.random() - 0.5) * 0.28 * edgeSpeed + (s.zone === "left" ? 0.04 : s.zone === "right" ? -0.04 : 0);
+          s.vy = (-0.14 - Math.random() * 0.26) * edgeSpeed;
+          s.maxLife = 2.2 + Math.random() * 2.8;
           s.life = randomizeLife ? Math.random() * s.maxLife : 0;
-          s.alpha = 0.1 + Math.random() * 0.22;
+          s.alpha = s.zone !== "center" ? 0.18 + Math.random() * 0.28 : 0.08 + Math.random() * 0.18;
         };
 
-        for (let i = 0; i < 18; i++) {
+        // 14 edge sparkles per side, 10 center = 38 total
+        const zones: Array<"left" | "right" | "center"> = [
+          ...Array(14).fill("left"),
+          ...Array(14).fill("right"),
+          ...Array(10).fill("center"),
+        ];
+
+        for (let i = 0; i < zones.length; i++) {
+          const zone = zones[i];
           const gfx = new Graphics();
-          const size = 0.8 + Math.random() * 1.7;
-          gfx.circle(0, 0, size).fill({ color: sparkleColors[i % sparkleColors.length], alpha: 1 });
+          const sz = zone !== "center" ? 0.9 + Math.random() * 2.0 : 0.7 + Math.random() * 1.5;
+          gfx.circle(0, 0, sz).fill({ color: sparkleColors[i % sparkleColors.length], alpha: 1 });
           gfx.blendMode = "add";
-          const s: Sparkle = { gfx, vx: 0, vy: 0, life: 0, maxLife: 1, alpha: 0.18 };
+          const s: Sparkle = { gfx, vx: 0, vy: 0, life: 0, maxLife: 1, alpha: 0.18, zone };
           resetSparkle(s, true);
           sparkles.push(s);
           layer.addChild(gfx);
