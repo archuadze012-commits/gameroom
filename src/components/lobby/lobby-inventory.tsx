@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Package, X, Check, User, Crosshair, Shirt, Dices, Save, Lock } from "lucide-react";
+import { Package, X, Check, User, Dices, Save, Lock } from "lucide-react";
 import { LobbyItemTooltip } from "@/components/lobby/lobby-item-tooltip";
 
 export type LobbyInventoryTier = "common" | "rare" | "epic" | "legendary";
@@ -20,19 +20,6 @@ const CHARACTERS: LobbyInventoryItem[] = [
 
 const OWNED_CHARACTER_IDS = new Set(["leo"]);
 
-const WEAPONS: LobbyInventoryItem[] = [
-  { id: "akm",   name: "AKM",    tier: "common" },
-  { id: "m416",  name: "M416",   tier: "rare" },
-  { id: "scarl", name: "SCAR-L", tier: "epic" },
-  { id: "awm",   name: "AWM",    tier: "legendary" },
-];
-
-const CLOTHING: LobbyInventoryItem[] = [
-  { id: "camo",     name: "კამუფლაჟი",     tier: "common" },
-  { id: "tactical", name: "ტაქტიკური",     tier: "rare" },
-  { id: "stealth",  name: "ჩუმი",          tier: "epic" },
-  { id: "festive",  name: "სადღესასწაულო",  tier: "legendary" },
-];
 
 const TIER_RING: Record<LobbyInventoryTier, string> = {
   common:    "ring-[var(--gr-text-mute)]",
@@ -55,18 +42,14 @@ const TIER_LABEL: Record<LobbyInventoryTier, string> = {
   legendary: "ლეგენდარული",
 };
 
-export type LobbyInventoryTab = "characters" | "weapons" | "clothing";
+export type LobbyInventoryTab = "characters";
 
 export type LobbyLoadout = {
   character: string;
-  weapon: string;
-  clothing: string;
 };
 
 const TABS: { id: LobbyInventoryTab; label: string; icon: typeof User; items: LobbyInventoryItem[] }[] = [
-  { id: "characters", label: "გმირები",    icon: User,      items: CHARACTERS },
-  { id: "weapons",    label: "იარაღი",    icon: Crosshair, items: WEAPONS },
-  { id: "clothing",   label: "ტანსაცმელი", icon: Shirt,     items: CLOTHING },
+  { id: "characters", label: "გმირები", icon: User, items: CHARACTERS },
 ];
 
 const cutSm = "polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%)";
@@ -86,8 +69,6 @@ function getSelectedFromLoadout(initialLoadout?: LobbyLoadout) {
     characters: initialLoadout?.character && OWNED_CHARACTER_IDS.has(initialLoadout.character)
       ? initialLoadout.character
       : "leo",
-    weapons: initialLoadout?.weapon ?? "m416",
-    clothing: initialLoadout?.clothing ?? "tactical",
   };
 }
 
@@ -114,8 +95,6 @@ function getInitialSelected(
 
     return {
       characters: savedCharacter,
-      weapons: parsed.weapon ?? fallback.weapons,
-      clothing: parsed.clothing ?? fallback.clothing,
     };
   } catch {
     window.localStorage.removeItem(storageKey);
@@ -144,8 +123,6 @@ export function LobbyInventory({
   const applySelection = (next: Record<LobbyInventoryTab, string>, changedTab: LobbyInventoryTab, item: LobbyInventoryItem) => {
     const loadout = {
       character: next.characters,
-      weapon: next.weapons,
-      clothing: next.clothing,
     };
 
     setSelected(next);
@@ -177,8 +154,6 @@ export function LobbyInventory({
           const next = { ...current, [entry.id]: item.id };
           const loadout = {
             character: next.characters,
-            weapon: next.weapons,
-            clothing: next.clothing,
           };
 
           onLoadoutChange?.(loadout);
@@ -202,8 +177,6 @@ export function LobbyInventory({
       storageKey,
       JSON.stringify({
         character: selected.characters,
-        weapon: selected.weapons,
-        clothing: selected.clothing,
       }),
     );
   };

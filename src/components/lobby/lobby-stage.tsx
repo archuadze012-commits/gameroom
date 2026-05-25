@@ -41,8 +41,6 @@ type Props = {
 
 const DEFAULT_LOADOUT: LobbyLoadout = {
   character: "leo",
-  weapon: "m416",
-  clothing: "tactical",
 };
 
 const CHARACTER_URL = "/characters/gameroom-vanguard.png";
