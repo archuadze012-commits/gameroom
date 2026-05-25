@@ -237,6 +237,37 @@ export function LobbyFireEffect() {
           />
         ))}
 
+        {/* blue accent flames — scattered, mix into red for cool contrast */}
+        {[
+          { left: "3%",   w: 50, h: 185, dur: "1.48s", del: "0.11s", rot:  "-7deg", br: "50% 50% 20% 28%", fx: "48% 85%" },
+          { left: "14%",  w: 44, h: 165, dur: "1.62s", del: "0.27s", rot:   "9deg", br: "42% 58% 26% 18%", fx: "55% 82%" },
+          { left: "26%",  w: 48, h: 150, dur: "1.36s", del: "0.04s", rot:  "-5deg", br: "58% 42% 18% 30%", fx: "44% 87%" },
+          { left: "36%",  w: 40, h: 138, dur: "1.54s", del: "0.20s", rot:  "11deg", br: "46% 54% 30% 16%", fx: "52% 83%" },
+          { left: "48%",  w: 46, h: 130, dur: "1.44s", del: "0.08s", rot:  "-4deg", br: "54% 46% 22% 24%", fx: "47% 86%" },
+          { left: "58%",  w: 40, h: 138, dur: "1.58s", del: "0.24s", rot:   "6deg", br: "44% 56% 28% 20%", fx: "53% 83%" },
+          { left: "68%",  w: 48, h: 150, dur: "1.38s", del: "0.13s", rot: "-10deg", br: "56% 44% 16% 30%", fx: "43% 87%" },
+          { left: "79%",  w: 44, h: 165, dur: "1.66s", del: "0.06s", rot:   "8deg", br: "48% 52% 24% 22%", fx: "57% 82%" },
+          { left: "90%",  w: 50, h: 185, dur: "1.42s", del: "0.18s", rot:  "-6deg", br: "52% 48% 20% 26%", fx: "46% 85%" },
+        ].map(({ left, w, h, dur, del, rot, br, fx }, i) => (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left,
+              width: w,
+              height: h,
+              background: `radial-gradient(ellipse at ${fx}, rgba(80,180,255,0.70) 0%, rgba(40,120,255,0.45) 42%, rgba(20,60,200,0.20) 68%, transparent 88%)`,
+              borderRadius: br,
+              rotate: rot,
+              transformOrigin: "bottom center",
+              animation: `fire-tongue ${dur} ${del} ease-in-out infinite`,
+              filter: "blur(3px)",
+              mixBlendMode: "screen",
+            }}
+          />
+        ))}
+
         {/* wide base — short, broad, anchors fire to ground */}
         {[
           { left: "-3%",  w: 200, h: 95,  dur: "1.70s", del: "0s",    rot:  "2deg", br: "55% 45% 48% 52%" },
