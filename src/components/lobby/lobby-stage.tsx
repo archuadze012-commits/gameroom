@@ -90,7 +90,6 @@ function LobbyLoadoutLayer({
   return (
     <>
       <LobbyCanvas />
-      {lobbyEffect?.effect === "fire" && <LobbyFireEffect />}
       {/* leg contact shadow — SVG path shaped like standing legs */}
       <svg
         aria-hidden
@@ -138,6 +137,7 @@ function LobbyLoadoutLayer({
         className="lobby-character"
         draggable={false}
       />
+      {lobbyEffect?.effect === "fire" && <LobbyFireEffect />}
       <LobbyInventory
         key={storageKey ?? "guest-lobby"}
         initialLoadout={loadout}
