@@ -166,6 +166,38 @@ export function LobbyFireEffect() {
             }}
           />
         ))}
+
+        {/* corner boosters — extra dense red flames for left and right corners */}
+        {[
+          // left corner cluster
+          { left: "-2%",  w: 110, h: 240, dur: "1.18s", del: "0s",    rot: "-6deg",  br: "54% 46% 30% 28%", fx: "50% 88%" },
+          { left: "3%",   w: 100, h: 255, dur: "1.32s", del: "0.09s", rot:  "3deg",  br: "46% 54% 22% 36%", fx: "44% 86%" },
+          { left: "8%",   w: 95,  h: 238, dur: "1.24s", del: "0.18s", rot: "-4deg",  br: "60% 40% 34% 24%", fx: "56% 90%" },
+          { left: "13%",  w: 90,  h: 222, dur: "1.38s", del: "0.06s", rot:  "7deg",  br: "42% 58% 26% 38%", fx: "48% 87%" },
+          { left: "18%",  w: 85,  h: 205, dur: "1.14s", del: "0.14s", rot: "-2deg",  br: "52% 48% 40% 20%", fx: "53% 85%" },
+          // right corner cluster
+          { left: "79%",  w: 85,  h: 205, dur: "1.20s", del: "0.11s", rot:  "2deg",  br: "48% 52% 20% 40%", fx: "47% 85%" },
+          { left: "84%",  w: 90,  h: 222, dur: "1.34s", del: "0.05s", rot: "-7deg",  br: "58% 42% 38% 26%", fx: "52% 87%" },
+          { left: "89%",  w: 95,  h: 238, dur: "1.26s", del: "0.19s", rot:  "4deg",  br: "40% 60% 24% 34%", fx: "44% 90%" },
+          { left: "94%",  w: 100, h: 255, dur: "1.16s", del: "0.08s", rot: "-3deg",  br: "54% 46% 36% 22%", fx: "56% 86%" },
+          { left: "99%",  w: 110, h: 240, dur: "1.40s", del: "0.15s", rot:  "6deg",  br: "44% 56% 28% 32%", fx: "50% 88%" },
+        ].map(({ left, w, h, dur, del, rot, br, fx }, i) => (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left,
+              width: w,
+              height: h,
+              background: `radial-gradient(ellipse at ${fx}, rgba(200,15,0,0.90) 0%, rgba(230,45,0,0.60) 42%, transparent 82%)`,
+              borderRadius: br,
+              rotate: rot,
+              transformOrigin: "bottom center",
+              animation: `fire-tongue ${dur} ${del} ease-in-out infinite`,
+            }}
+          />
+        ))}
       </div>
     </>
   );
