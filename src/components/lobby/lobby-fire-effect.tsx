@@ -197,6 +197,20 @@ export function LobbyFireEffect() {
             filter: "blur(3px)", mixBlendMode: "screen" }} />
         ))}
 
+        {/* center-right fill — extra flames for sparse mid zone */}
+        {[
+          { left: "46%", w: 80,  h: 200, dur: "1.28s", del: "0.07s", rot:  "-3deg", br: "52% 48% 28% 34%", fx: "50% 88%" },
+          { left: "51%", w: 90,  h: 220, dur: "1.44s", del: "0.21s", rot:   "5deg", br: "44% 56% 32% 22%", fx: "46% 86%" },
+          { left: "57%", w: 85,  h: 210, dur: "1.36s", del: "0.12s", rot:  "-6deg", br: "58% 42% 24% 38%", fx: "54% 89%" },
+          { left: "63%", w: 92,  h: 225, dur: "1.52s", del: "0.28s", rot:   "4deg", br: "46% 54% 36% 20%", fx: "48% 87%" },
+          { left: "68%", w: 78,  h: 205, dur: "1.40s", del: "0.09s", rot:  "-8deg", br: "54% 46% 20% 32%", fx: "52% 85%" },
+        ].map(({ left, w, h, dur, del, rot, br, fx }, i) => (
+          <div key={i} style={{ position: "absolute", bottom: 0, left, width: w, height: h,
+            background: `radial-gradient(ellipse at ${fx}, rgba(190,15,0,0.88) 0%, rgba(220,40,0,0.58) 44%, transparent 82%)`,
+            borderRadius: br, rotate: rot, transformOrigin: "bottom center",
+            animation: `fire-tongue ${dur} ${del} ease-in-out infinite` }} />
+        ))}
+
         {/* wide base — short, broad, anchors fire to ground */}
         {[
           { left: "-3%", w: 200, h: 95,  dur: "1.70s", del: "0s",    rot:  "2deg", br: "55% 45% 48% 52%" },
