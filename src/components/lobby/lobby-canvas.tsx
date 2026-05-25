@@ -48,9 +48,9 @@ function makeSparkles(
 }
 
 const ALL_SPARKLES: SparkDef[] = [
-  ...makeSparkles(80,   0,  0,  38, 55, true),   // left edge
-  ...makeSparkles(80, 300, 62, 100, 55, true),   // right edge
-  ...makeSparkles(60, 600, 12,  88, 30, false),  // center
+  ...makeSparkles(80,   0,  0,  38,  8, true),   // left edge
+  ...makeSparkles(80, 300, 62, 100,  8, true),   // right edge
+  ...makeSparkles(60, 600, 12,  88,  6, false),  // center
 ];
 
 type Props = { className?: string };
