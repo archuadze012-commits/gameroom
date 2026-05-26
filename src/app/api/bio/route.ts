@@ -1,22 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { rateLimit } from "@/lib/rate-limit";
+import { requireRateLimitedUser } from "@/lib/api/guards";
+import { readJsonObject } from "@/lib/api/json";
 
 export async function POST(request: NextRequest) {
-  const auth = await createSupabaseServerClient();
-  const { data: { user } } = await auth.auth.getUser();
-  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  if (!rateLimit(`bio:${user.id}`, 10, 60_000)) {
-    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
-  }
+  const guard = await requireRateLimitedUser(request, "ai:bio", 10, 60_000);
+  if (!guard.ok) return guard.response;
 
   if (!process.env.GROQ_API_KEY) return NextResponse.json({ error: "no_key" }, { status: 500 });
 
-  let body: { role?: string; games?: string[]; voiceChat?: boolean };
-  try { body = await request.json(); } catch { return NextResponse.json({ error: "bad_request" }, { status: 400 }); }
+  const body = await readJsonObject<{ role?: string; games?: string[]; voiceChat?: boolean }>(request, 8 * 1024);
+  if (!body.ok) return body.response;
 
-  const games = (body.games ?? []).join(", ") || "áƒ¡áƒ®áƒ•áƒáƒ“áƒáƒ¡áƒ®áƒ•áƒ";
-  const voice = body.voiceChat ? "voice chat-áƒ˜áƒ—" : "voice chat-áƒ˜áƒ¡ áƒ’áƒáƒ áƒ”áƒ¨áƒ”";
+  const games =
+    (Array.isArray(body.data.games) ? body.data.games : [])
+      .filter((game): game is string => typeof game === "string")
+      .slice(0, 10)
+      .map((game) => game.slice(0, 80))
+      .join(", ") || "áƒ¡áƒ®áƒ•áƒáƒ“áƒáƒ¡áƒ®áƒ•áƒ";
+  const voice = body.data.voiceChat ? "voice chat-áƒ˜áƒ—" : "voice chat-áƒ˜áƒ¡ áƒ’áƒáƒ áƒ”áƒ¨áƒ”";
 
   try {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {

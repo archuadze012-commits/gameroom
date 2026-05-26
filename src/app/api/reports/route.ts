@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
+import { readJsonObject } from "@/lib/api/json";
 
 export async function POST(request: NextRequest) {
   const user = await getSession().catch(() => null);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const body = await request.json().catch(() => ({}));
-  const targetType = typeof body.targetType === "string" ? body.targetType : null;
-  const targetId = typeof body.targetId === "string" ? body.targetId : null;
-  const reason = typeof body.reason === "string" ? body.reason.slice(0, 500) : "";
+  const body = await readJsonObject(request, 4 * 1024);
+  if (!body.ok) return body.response;
+
+  const targetType = typeof body.data.targetType === "string" ? body.data.targetType : null;
+  const targetId = typeof body.data.targetId === "string" ? body.data.targetId : null;
+  const reason = typeof body.data.reason === "string" ? body.data.reason.slice(0, 500) : "";
 
   if (!targetType || !targetId || !reason.trim()) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });

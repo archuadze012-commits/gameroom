@@ -1,22 +1,12 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import dynamic from "next/dynamic";
 import "./globals.css";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { Toaster } from "@/components/ui/sonner";
 import { after } from "next/server";
 import { updateLastSeen } from "@/lib/update-last-seen";
-
-const ChatbotWidget = dynamic(() =>
-  import("@/components/chatbot-widget").then((m) => m.ChatbotWidget)
-);
-const MobileBottomNav = dynamic(() =>
-  import("@/components/layout/mobile-bottom-nav").then((m) => m.MobileBottomNav)
-);
-const PWAInstallFloater = dynamic(() =>
-  import("@/components/pwa-install-floater").then((m) => m.PWAInstallFloater)
-);
+import { ClientChrome } from "@/components/layout/client-chrome";
 
 const firaGO = localFont({
   src: [
@@ -67,9 +57,7 @@ export default async function RootLayout({
         <SiteHeader />
         <main className="flex-1 pb-16 xl:pb-0">{children}</main>
         <SiteFooter />
-        <ChatbotWidget />
-        <MobileBottomNav />
-        <PWAInstallFloater delay={15000} locale="ka" />
+        <ClientChrome />
         <Toaster richColors position="top-right" />
       </body>
     </html>

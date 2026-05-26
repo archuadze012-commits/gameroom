@@ -1,12 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { requireRateLimitedUser } from "@/lib/api/guards";
+import { readJsonObject } from "@/lib/api/json";
+
+type ChatMessage = { role?: unknown; content?: unknown };
+
 export async function POST(request: NextRequest) {
+  const guard = await requireRateLimitedUser(request, "ai:chatbot", 20, 60_000);
+  if (!guard.ok) return guard.response;
+
   if (!process.env.GROQ_API_KEY) return NextResponse.json({ error: "no_key" }, { status: 500 });
 
-  let body: { messages?: { role: string; content: string }[] };
-  try { body = await request.json(); } catch { return NextResponse.json({ error: "bad_request" }, { status: 400 }); }
+  const body = await readJsonObject<{ messages?: ChatMessage[] }>(request, 24 * 1024);
+  if (!body.ok) return body.response;
 
-  const history = (body.messages ?? []).slice(-10);
+  const history = (body.data.messages ?? [])
+    .filter(
+      (message): message is { role: "user" | "assistant"; content: string } =>
+        (message.role === "user" || message.role === "assistant") &&
+        typeof message.content === "string",
+    )
+    .slice(-10)
+    .map((message) => ({
+      role: message.role,
+      content: message.content.slice(0, 1000),
+    }));
 
   try {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {

@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { requireRateLimitedUser } from "@/lib/api/guards";
+import { readJsonObject } from "@/lib/api/json";
+
 export async function POST(request: NextRequest) {
+  const guard = await requireRateLimitedUser(request, "ai:smart-replies", 30, 60_000);
+  if (!guard.ok) return guard.response;
+
   if (!process.env.GROQ_API_KEY) return NextResponse.json({ replies: [] });
 
-  let body: { lastMessage?: string };
-  try { body = await request.json(); } catch { return NextResponse.json({ replies: [] }); }
+  const body = await readJsonObject<{ lastMessage?: string }>(request, 4 * 1024);
+  if (!body.ok) return NextResponse.json({ replies: [] });
 
-  const lastMessage = (body.lastMessage ?? "").trim().slice(0, 500);
+  const lastMessage = (body.data.lastMessage ?? "").trim().slice(0, 500);
   if (!lastMessage) return NextResponse.json({ replies: [] });
 
   try {

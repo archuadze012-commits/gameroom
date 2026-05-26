@@ -2,19 +2,40 @@ import { NextRequest, NextResponse } from "next/server";
 
 type Participant = { name: string; rank?: string; winRate?: number };
 
+import { requireRateLimitedUser } from "@/lib/api/guards";
+import { readJsonObject } from "@/lib/api/json";
+
 export async function POST(request: NextRequest) {
+  const guard = await requireRateLimitedUser(request, "ai:bracket-generate", 10, 60_000);
+  if (!guard.ok) return guard.response;
+
   if (!process.env.GROQ_API_KEY) return NextResponse.json({ error: "no_key" }, { status: 500 });
 
-  let body: { participants?: Participant[]; format?: string; game?: string };
-  try { body = await request.json(); } catch { return NextResponse.json({ error: "bad_request" }, { status: 400 }); }
+  const body = await readJsonObject<{ participants?: Participant[]; format?: string; game?: string }>(
+    request,
+    16 * 1024,
+  );
+  if (!body.ok) return body.response;
 
-  const { participants, format = "Single Elimination", game } = body;
+  const { participants, format = "Single Elimination", game } = body.data;
   if (!participants?.length || participants.length < 2) {
     return NextResponse.json({ error: "not_enough_participants" }, { status: 400 });
   }
+  if (participants.length > 64) {
+    return NextResponse.json({ error: "too_many_participants" }, { status: 400 });
+  }
 
   const participantText = participants
-    .map((p, i) => `${i + 1}. ${p.name}${p.rank ? ` (${p.rank})` : ""}${p.winRate !== undefined ? ` win-rate: ${p.winRate}%` : ""}`)
+    .map((p, i) => {
+      const name = String(p.name ?? "").trim().slice(0, 80);
+      const rank = p.rank ? String(p.rank).trim().slice(0, 40) : "";
+      const winRate =
+        typeof p.winRate === "number" && Number.isFinite(p.winRate)
+          ? Math.max(0, Math.min(100, Math.round(p.winRate)))
+          : undefined;
+
+      return `${i + 1}. ${name}${rank ? ` (${rank})` : ""}${winRate !== undefined ? ` win-rate: ${winRate}%` : ""}`;
+    })
     .join("\n");
 
   try {
