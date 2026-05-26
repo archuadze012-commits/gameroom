@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/admin";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export async function GET() {
   const auth = await requirePermission("view_analytics");
   if (!auth.ok) return NextResponse.json({ error: "forbidden" }, { status: auth.status });
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const now = new Date();
   const day = 24 * 60 * 60 * 1000;
   const t24 = new Date(now.getTime() - day).toISOString();

@@ -20,6 +20,18 @@ export type EventBox = {
   items: BoxItem[];
 };
 
+export type OpenedBoxItem = {
+  id: string;
+  name: string;
+  tier: ItemTier;
+  item_type: ItemType;
+  image_url: string | null;
+};
+
 export type OpenBoxResult =
-  | { success: true; item: { id: string; name: string; tier: ItemTier; item_type: ItemType; image_url: string | null } }
+  | { success: true; item: OpenedBoxItem }
+  | { success: false; error: "insufficient_funds" | "box_not_found" | "not_authenticated" | "unknown" };
+
+export type OpenBoxBundleResult =
+  | { success: true; items: OpenedBoxItem[]; paidOpens: number; totalOpens: number; bonusAwarded: number }
   | { success: false; error: "insufficient_funds" | "box_not_found" | "not_authenticated" | "unknown" };

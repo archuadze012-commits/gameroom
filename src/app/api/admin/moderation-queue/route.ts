@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { readJsonObject } from "@/lib/api/json";
 import { requirePermission, logAdminAction } from "@/lib/admin";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(request: NextRequest) {
   const auth = await requirePermission("moderate_queue");
@@ -8,7 +9,7 @@ export async function GET(request: NextRequest) {
 
   const status = request.nextUrl.searchParams.get("status") ?? "pending";
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("moderation_queue")
     .select("id, content_type, content_id, content_snapshot, ai_score, ai_reason, status, created_at, profiles!moderation_queue_author_id_fkey(username, display_name)")
@@ -24,7 +25,9 @@ export async function PATCH(request: NextRequest) {
   const auth = await requirePermission("moderate_queue");
   if (!auth.ok) return NextResponse.json({ error: "forbidden" }, { status: auth.status });
 
-  const body = await request.json().catch(() => ({}));
+  const parsed = await readJsonObject(request);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
   const itemId = typeof body.id === "string" ? body.id : null;
   const action = typeof body.action === "string" ? body.action : null;
 
@@ -32,7 +35,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const newStatus = action === "approve" ? "approved" : "rejected";
 
   const { data: item } = await supabase

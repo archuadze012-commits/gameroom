@@ -5,7 +5,9 @@ import { mockGames } from "@/lib/mock-data";
 import { getSession } from "@/lib/auth";
 import { getGameShopItems } from "@/lib/shop/queries";
 import { getWallet } from "@/lib/wallet/queries";
+import { getActiveBoxes } from "@/lib/events/queries";
 import { ShopGrid } from "@/components/shop/shop-grid";
+import { ShopCrates } from "@/components/shop/shop-crates";
 import { LobbyCurrencyStrip } from "@/components/lobby/lobby-currency-strip";
 import { DisplayHeading } from "@/components/ui/display-heading";
 
@@ -21,9 +23,10 @@ export default async function GameShopPage({ params }: { params: Promise<{ slug:
   if (!game) notFound();
 
   const user = await getSession().catch(() => null);
-  const [items, wallet] = await Promise.all([
+  const [items, wallet, boxes] = await Promise.all([
     getGameShopItems(user?.id ?? null, slug),
     user ? getWallet(user.id) : Promise.resolve({ nc_balance: 0, pro_balance: 0 }),
+    getActiveBoxes(),
   ]);
 
   return (
@@ -58,6 +61,7 @@ export default async function GameShopPage({ params }: { params: Promise<{ slug:
         </header>
 
         <ShopGrid items={items} hasSession={!!user} variant="game" />
+        <ShopCrates boxes={boxes} hasSession={!!user} />
       </div>
     </div>
   );

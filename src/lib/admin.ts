@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { createSupabaseServerClient } from "./supabase/server";
+import { createSupabaseAdminClient } from "./supabase/admin";
 import { getSession } from "./auth";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
@@ -75,7 +76,7 @@ export async function logAdminAction(params: {
   metadata?: Record<string, unknown>;
 }): Promise<void> {
   try {
-    const supabase = await createSupabaseServerClient();
+    const supabase = createSupabaseAdminClient();
     await supabase.from("admin_actions").insert({
       actor_id: params.actorId,
       action: params.action,

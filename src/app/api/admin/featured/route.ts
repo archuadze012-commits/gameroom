@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { readJsonObject } from "@/lib/api/json";
 import { requirePermission, logAdminAction } from "@/lib/admin";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export async function GET() {
-  const supabase = await createSupabaseServerClient();
+  const auth = await requirePermission("manage_pins");
+  if (!auth.ok) return NextResponse.json({ error: "forbidden" }, { status: auth.status });
+
+  const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("featured_content")
     .select("*")
@@ -17,7 +21,9 @@ export async function POST(request: NextRequest) {
   const auth = await requirePermission("manage_pins");
   if (!auth.ok) return NextResponse.json({ error: "forbidden" }, { status: auth.status });
 
-  const body = await request.json().catch(() => ({}));
+  const parsed = await readJsonObject(request);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
   const featureType = typeof body.featureType === "string" ? body.featureType : null;
   const targetId = typeof body.targetId === "string" ? body.targetId : null;
   const position = typeof body.position === "number" ? body.position : 0;
@@ -26,7 +32,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("featured_content")
     .insert({ feature_type: featureType, target_id: targetId, position, created_by: auth.userId })
@@ -51,7 +57,7 @@ export async function DELETE(request: NextRequest) {
   const id = request.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const { error } = await supabase.from("featured_content").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

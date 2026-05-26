@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { readJsonObject } from "@/lib/api/json";
 import { requirePermission, logAdminAction } from "@/lib/admin";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 // Sends an email blast via Resend. Requires RESEND_API_KEY env var.
 // Falls back to a "stub" mode (logs & saves to audit) if no API key set.
@@ -8,7 +9,9 @@ export async function POST(request: NextRequest) {
   const auth = await requirePermission("broadcast_email");
   if (!auth.ok) return NextResponse.json({ error: "forbidden" }, { status: auth.status });
 
-  const body = await request.json().catch(() => ({}));
+  const parsed = await readJsonObject(request, 80 * 1024);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
   const subject = typeof body.subject === "string" ? body.subject.trim().slice(0, 200) : "";
   const html = typeof body.html === "string" ? body.html.trim().slice(0, 50000) : "";
   const segment = typeof body.segment === "string" ? body.segment : "all";
@@ -18,7 +21,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Build recipient list
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   let query = supabase.from("profiles").select("email").not("email", "is", null).eq("banned", false);
   if (segment === "verified") query = query.eq("is_verified", true);
   if (segment === "active") {

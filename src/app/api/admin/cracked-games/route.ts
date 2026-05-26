@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { readJsonObject } from "@/lib/api/json";
 import { requirePermission, logAdminAction } from "@/lib/admin";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type SysReqRow = { os: string; cpu: string; ram: string; gpu: string; storage: string };
 
@@ -36,12 +37,9 @@ export async function POST(request: NextRequest) {
   const auth = await requirePermission("manage_content");
   if (!auth.ok) return NextResponse.json({ error: "forbidden" }, { status: auth.status });
 
-  let body: Body;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "bad_request" }, { status: 400 });
-  }
+  const parsed = await readJsonObject<Body>(request, 128 * 1024);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   if (!body.title?.trim() || !body.description?.trim()) {
     return NextResponse.json({ error: "title_and_description_required" }, { status: 400 });
@@ -70,7 +68,7 @@ export async function POST(request: NextRequest) {
     updated_at: new Date().toISOString(),
   };
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("cracked_games")
     .upsert(row, { onConflict: "id" })
@@ -94,7 +92,10 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
-  const supabase = await createSupabaseServerClient();
+  const auth = await requirePermission("manage_content");
+  if (!auth.ok) return NextResponse.json({ error: "forbidden" }, { status: auth.status });
+
+  const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("cracked_games")
     .select("*")

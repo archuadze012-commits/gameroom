@@ -12,9 +12,8 @@ import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getMockHud } from "@/lib/lobby/mock-hud";
 import { getWallet, getDailyBonusAvailable } from "@/lib/wallet/queries";
-import { getActiveBoxes } from "@/lib/events/queries";
-import { LobbyEvents } from "@/components/lobby/lobby-events";
 import { getEquippedItems } from "@/lib/shop/equip-queries";
+import { getLobbyLoadout } from "@/lib/lobby/loadout-queries";
 
 export const dynamicParams = true;
 
@@ -88,14 +87,40 @@ export default async function GameLobbyPage({
 
   let hudData = null;
   let lobbyEffect: { effect: string; color?: string } | null = null;
+  let ownedDbCharacters: { id: string; name: string; tier: string; image_url: string | null; metadata: Record<string, unknown> }[] = [];
+  let ownedWeapons: { id: string; name: string; tier: string; image_url: string | null }[] = [];
+  let lobbyInitialLoadout: { character?: string; lobby?: string; effect?: string; nameCard?: string } | null = null;
+  let hasDbLoadout = false;
 
   if (lobbyUserId) {
     const hud = getMockHud(username ?? displayName ?? lobbyUserId);
-    const [wallet, dailyBonusAvailable, equippedItems] = await Promise.all([
+    const [wallet, dailyBonusAvailable, equippedItems, charRows, weaponRows, savedLoadout] = await Promise.all([
       getWallet(lobbyUserId),
       getDailyBonusAvailable(lobbyUserId),
       getEquippedItems(lobbyUserId),
+      supabase
+        .from("user_purchases")
+        .select("shop_items!inner(id, name, tier, image_url, metadata)")
+        .eq("user_id", lobbyUserId)
+        .eq("shop_items.category", "character")
+        .then((r) => r.data ?? []),
+      supabase
+        .from("user_purchases")
+        .select("shop_items!inner(id, name, tier, image_url)")
+        .eq("user_id", lobbyUserId)
+        .eq("shop_items.category", "weapon")
+        .limit(4)
+        .then((r) => r.data ?? []),
+      getLobbyLoadout(lobbyUserId, slug),
     ]);
+    ownedDbCharacters = charRows.map((row) => {
+      const item = ((row as unknown) as { shop_items: { id: string; name: string; tier: string; image_url: string | null; metadata: Record<string, unknown> } }).shop_items;
+      return item;
+    });
+    ownedWeapons = weaponRows.map((row) => {
+      const item = ((row as unknown) as { shop_items: { id: string; name: string; tier: string; image_url: string | null } }).shop_items;
+      return item;
+    });
 
     hudData = {
       ...hud,
@@ -117,9 +142,18 @@ export default async function GameLobbyPage({
     if (lobbyEffectItem) {
       lobbyEffect = lobbyEffectItem.metadata as { effect: string; color?: string };
     }
-  }
 
-  const boxes = await getActiveBoxes();
+    if (savedLoadout) {
+      lobbyInitialLoadout = savedLoadout;
+      hasDbLoadout = true;
+    } else {
+      const equippedCharItem = equippedItems.find((i) => i.category === "character");
+      lobbyInitialLoadout = {
+        character: (equippedCharItem?.metadata.character_id as string | undefined),
+        effect: lobbyEffectItem ? "fx_fire" : undefined,
+      };
+    }
+  }
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
@@ -182,6 +216,10 @@ export default async function GameLobbyPage({
               hudData={hudData}
               currentUserId={canPersistLobby ? user?.id ?? null : null}
               lobbyEffect={lobbyEffect}
+              ownedDbCharacters={ownedDbCharacters}
+              ownedWeapons={ownedWeapons}
+              initialLoadout={lobbyInitialLoadout ?? undefined}
+              hasDbLoadout={hasDbLoadout}
             />
 
             {/* atmospheric integration */}
@@ -210,10 +248,6 @@ export default async function GameLobbyPage({
           </ChevronButton>
         </div>
 
-        {/* events / crate opening */}
-        <div className="lobby-chrome">
-          <LobbyEvents boxes={boxes} hasSession={!!user} />
-        </div>
       </div>
     </div>
   );

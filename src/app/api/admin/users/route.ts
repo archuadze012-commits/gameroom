@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { readJsonObject } from "@/lib/api/json";
 import { requirePermission, logAdminAction } from "@/lib/admin";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { UserRole } from "@/lib/types";
 
-function anonClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { persistSession: false } },
-  );
-}
+const USER_ROLES = new Set<UserRole>(["user", "moderator", "organizer", "streamer", "esports", "admin"]);
 
 export async function GET(request: NextRequest) {
   const auth = await requirePermission("manage_users");
@@ -19,7 +13,7 @@ export async function GET(request: NextRequest) {
   const format = request.nextUrl.searchParams.get("format");
 
   try {
-    const { data, error } = await anonClient()
+    const { data, error } = await createSupabaseAdminClient()
       .from("profiles")
       .select("id, username, display_name, avatar_url, role, banned, ban_reason, ban_expires_at, is_verified, created_at, email")
       .order("created_at");
@@ -76,22 +70,27 @@ export async function PATCH(request: NextRequest) {
   const auth = await requirePermission("manage_users");
   if (!auth.ok) return NextResponse.json({ error: "forbidden" }, { status: auth.status });
 
-  let body: {
+  const parsed = await readJsonObject<{
     userId?: string;
     role?: UserRole;
     banned?: boolean;
     banReason?: string;
     banMinutes?: number;
     isVerified?: boolean;
-  };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "bad_request" }, { status: 400 });
-  }
+  }>(request);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   if (!body.userId)
     return NextResponse.json({ error: "userId required" }, { status: 400 });
+  if (body.role !== undefined && !USER_ROLES.has(body.role))
+    return NextResponse.json({ error: "invalid_role" }, { status: 400 });
+  if (body.banned !== undefined && typeof body.banned !== "boolean")
+    return NextResponse.json({ error: "invalid_banned" }, { status: 400 });
+  if (body.isVerified !== undefined && typeof body.isVerified !== "boolean")
+    return NextResponse.json({ error: "invalid_is_verified" }, { status: 400 });
+  if (body.banMinutes !== undefined && (!Number.isFinite(body.banMinutes) || body.banMinutes < 0))
+    return NextResponse.json({ error: "invalid_ban_minutes" }, { status: 400 });
 
   const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (body.role !== undefined) update.role = body.role;
@@ -105,7 +104,7 @@ export async function PATCH(request: NextRequest) {
   if (body.isVerified !== undefined) update.is_verified = body.isVerified;
 
   try {
-    const supabase = await createSupabaseServerClient();
+    const supabase = createSupabaseAdminClient();
     const { error } = await supabase
       .from("profiles")
       .update(update)

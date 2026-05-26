@@ -74,7 +74,7 @@ export function LoginForm() {
         <Separator className="flex-1" />
       </div>
 
-      <form action={signInWithPasswordAction} method="post" className="space-y-3">
+      <form action={signInWithPasswordAction} className="space-y-3">
         <input type="hidden" name="next" value={next} />
         <div className="space-y-1.5">
           <Label htmlFor="email">ელფოსტა</Label>

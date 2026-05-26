@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { readJsonObject } from "@/lib/api/json";
 import { requirePermission, logAdminAction } from "@/lib/admin";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export async function GET() {
-  const supabase = await createSupabaseServerClient();
+  const auth = await requirePermission("manage_pins");
+  if (!auth.ok) return NextResponse.json({ error: "forbidden" }, { status: auth.status });
+
+  const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("pinned_content")
     .select("*")
@@ -16,7 +20,9 @@ export async function POST(request: NextRequest) {
   const auth = await requirePermission("manage_pins");
   if (!auth.ok) return NextResponse.json({ error: "forbidden" }, { status: auth.status });
 
-  const body = await request.json().catch(() => ({}));
+  const parsed = await readJsonObject(request);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
   const contentType = typeof body.contentType === "string" ? body.contentType : null;
   const contentId = typeof body.contentId === "string" ? body.contentId : null;
 
@@ -24,7 +30,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from("pinned_content")
     .insert({ content_type: contentType, content_id: contentId, pinned_by: auth.userId })
@@ -49,7 +55,7 @@ export async function DELETE(request: NextRequest) {
   const pinId = request.nextUrl.searchParams.get("id");
   if (!pinId) return NextResponse.json({ error: "id required" }, { status: 400 });
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const { error } = await supabase.from("pinned_content").delete().eq("id", pinId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

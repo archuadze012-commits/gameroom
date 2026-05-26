@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { requirePermission, logAdminAction } from "@/lib/admin";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export async function DELETE(
   _request: NextRequest,
@@ -10,7 +10,7 @@ export async function DELETE(
   if (!auth.ok) return NextResponse.json({ error: "forbidden" }, { status: auth.status });
 
   const { id } = await params;
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
 
   // Delete from DB (no-op if it's a mock-only game)
   await supabase.from("cracked_games").delete().eq("id", id);

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { ShopItem, ShopTier } from "@/types/shop";
 import { purchaseShopItem } from "@/lib/shop/actions";
 import { equipItem, unequipCategory } from "@/lib/shop/equip-actions";
+import { LobbyFireEffect } from "@/components/lobby/lobby-fire-effect";
 
 const TIER_BG: Record<ShopTier, string> = {
   common:    "from-slate-800/60 to-slate-900/80",
@@ -18,6 +19,18 @@ const TIER_RING: Record<ShopTier, string> = {
   rare:      "ring-blue-500/40",
   epic:      "ring-violet-500/50",
   legendary: "ring-amber-400/60",
+};
+const HERO_BG: Record<ShopTier, string> = {
+  common:    "linear-gradient(160deg,#475569 0%,#1e293b 40%,#0f172a 100%)",
+  rare:      "linear-gradient(160deg,#1d4ed8 0%,#1e3a8a 40%,#172554 100%)",
+  epic:      "linear-gradient(160deg,#7c3aed 0%,#6d28d9 40%,#3b0764 100%)",
+  legendary: "linear-gradient(160deg,#f97316 0%,#ea580c 40%,#92400e 100%)",
+};
+const HERO_RING: Record<ShopTier, string> = {
+  common:    "ring-slate-400/50 hover:ring-slate-300/70",
+  rare:      "ring-blue-400/50 hover:ring-blue-300/70",
+  epic:      "ring-violet-400/50 hover:ring-violet-300/70",
+  legendary: "ring-orange-400/50 hover:ring-orange-300/70",
 };
 const TIER_BADGE: Record<ShopTier, string> = {
   common:    "bg-slate-600/40 text-slate-300",
@@ -74,6 +87,32 @@ function ItemPreview({ item }: { item: ShopItem }) {
   }
 
   if (item.category === "lobby_effect") {
+    if (meta.effect === "fire_lobby") {
+      return (
+        <div className="relative w-full overflow-hidden" style={{ height: 112 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/lobbies/pubg-mobile-optimized.jpg"
+            alt=""
+            draggable={false}
+            className="absolute inset-0 h-full w-full object-cover object-center"
+          />
+          <span
+            style={{
+              position: "absolute",
+              width: 600,
+              height: 300,
+              bottom: 0,
+              left: "50%",
+              transform: "translateX(-50%) scale(0.30)",
+              transformOrigin: "bottom center",
+            }}
+          >
+            <LobbyFireEffect />
+          </span>
+        </div>
+      );
+    }
     return (
       <div
         className="h-12 w-12 rounded-full tier-glow-pulse"
@@ -107,6 +146,19 @@ function ItemPreview({ item }: { item: ShopItem }) {
   }
 
   if (item.category === "character") {
+    if (item.image_url) {
+      return (
+        <div className="relative w-full overflow-hidden" style={{ height: 160 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={item.image_url}
+            alt={item.name}
+            draggable={false}
+            className="absolute inset-0 h-full w-full object-cover object-top"
+          />
+        </div>
+      );
+    }
     return (
       <div className="flex h-16 w-16 items-center justify-center bg-gradient-to-br from-white/5 to-white/[0.02] ring-1 ring-white/10"
         style={{ clipPath: "polygon(0 0,calc(100%-8px) 0,100% 8px,100% 100%,0 100%)" }}>
@@ -167,6 +219,104 @@ export function ShopItemCard({ item, hasSession }: { item: ShopItem; hasSession:
     });
   }
 
+  /* ── Hero card (character with image) ── */
+  if (item.category === "character" && item.image_url) {
+    return (
+      <div
+        className={`group relative self-start overflow-hidden ring-1 transition hover:ring-2 hover:brightness-105 ${HERO_RING[item.tier]}`}
+        style={{
+          clipPath: "polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,0 100%)",
+          background: HERO_BG[item.tier],
+          aspectRatio: "3/4",
+        }}
+      >
+        {/* full-bleed character image */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={item.image_url}
+          alt={item.name}
+          draggable={false}
+          className="absolute inset-0 h-full w-full object-cover object-top"
+        />
+
+        {/* bottom gradient overlay */}
+        <div
+          aria-hidden
+          className="absolute inset-x-0 bottom-0 h-3/5"
+          style={{ background: "linear-gradient(to top,rgba(0,0,0,0.92) 0%,rgba(0,0,0,0.65) 50%,transparent 100%)" }}
+        />
+
+        {/* tier badge */}
+        <span className={`absolute left-0 top-0 z-10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em] ${TIER_BADGE[item.tier]}`}>
+          {TIER_LABEL[item.tier]}
+        </span>
+
+        {/* status badge */}
+        {item.equipped ? (
+          <span className="absolute right-2 top-1 z-10 flex items-center gap-1 text-[9px] font-bold text-amber-300">
+            <Sparkles className="h-3 w-3" /> აქტიური
+          </span>
+        ) : item.owned ? (
+          <span className="absolute right-2 top-1 z-10 flex items-center gap-1 text-[9px] font-bold text-emerald-400">
+            <Check className="h-3 w-3" /> შეძენილი
+          </span>
+        ) : null}
+
+        {/* bottom info */}
+        <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col gap-2 p-3">
+          <div>
+            <p className="font-display text-[16px] font-black uppercase leading-none tracking-tight text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
+              {item.name}
+            </p>
+            {item.description && (
+              <p className="mt-0.5 line-clamp-1 text-[9px] leading-snug text-white/60">
+                {item.description}
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between gap-2">
+            <span className={`text-[13px] font-black tabular-nums drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] ${CURRENCY_COLOR[item.cost_currency]}`}>
+              {item.cost_amount} {CURRENCY_LABEL[item.cost_currency]}
+            </span>
+
+            {item.owned ? (
+              <button
+                type="button"
+                onClick={handleEquip}
+                disabled={isPending}
+                className={`flex h-7 items-center gap-1 px-2.5 text-[9px] font-black uppercase tracking-[0.1em] ring-1 transition [clip-path:polygon(0_0,calc(100%-6px)_0,100%_6px,100%_100%,0_100%)] ${
+                  item.equipped
+                    ? "bg-[color-mix(in_srgb,var(--gr-violet)_20%,transparent)] text-[var(--gr-violet-hi)] ring-[var(--gr-violet-hi)]/50"
+                    : "bg-black/50 text-white/80 ring-white/20 hover:ring-white/40"
+                }`}
+              >
+                {item.equipped ? <><Sparkles className="h-3 w-3" /> აქტიური</> : "გამოყენება"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handlePurchase}
+                disabled={isPending}
+                className="h-7 px-3 text-[10px] font-black uppercase tracking-[0.12em] text-black transition hover:brightness-110 active:scale-95 disabled:opacity-50 [clip-path:polygon(0_0,calc(100%-7px)_0,100%_7px,100%_100%,0_100%)]"
+                style={{ background: "linear-gradient(180deg,#f5c842 0%,#e6a800 55%,#c87f00 100%)" }}
+              >
+                {isPending ? "..." : "ყიდვა"}
+              </button>
+            )}
+          </div>
+
+          {feedback && (
+            <p className={`text-[10px] font-bold ${feedback.type === "success" ? "text-emerald-400" : "text-red-400"}`}>
+              {feedback.msg}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Standard card ── */
   return (
     <div
       className={`group relative flex flex-col bg-gradient-to-br ${TIER_BG[item.tier]} ring-1 ${TIER_RING[item.tier]} transition hover:ring-2 hover:brightness-110`}
@@ -189,7 +339,9 @@ export function ShopItemCard({ item, hasSession }: { item: ShopItem; hasSession:
       ) : null}
 
       {/* preview area */}
-      <div className="flex h-28 items-center justify-center px-3 pt-4">
+      <div className={`flex items-end justify-center overflow-hidden ${
+        item.metadata?.effect === "fire_lobby" ? "h-28 p-0" : "h-28 px-3 pt-4"
+      }`}>
         <ItemPreview item={item} />
       </div>
 

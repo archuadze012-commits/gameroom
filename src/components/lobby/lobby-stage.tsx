@@ -4,11 +4,18 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Crosshair, DoorOpen, Gift, Swords, Target, Trophy } from "lucide-react";
-import { LobbyCanvas } from "@/components/lobby/lobby-canvas";
+import dynamic from "next/dynamic";
+
+const LobbyCanvas = dynamic(
+  () => import("@/components/lobby/lobby-canvas").then((m) => ({ default: m.LobbyCanvas })),
+  { ssr: false },
+);
 import { LobbyFireEffect } from "@/components/lobby/lobby-fire-effect";
 import { LobbyHud } from "@/components/lobby/lobby-hud";
 import { LobbyInventory, type LobbyLoadout } from "@/components/lobby/lobby-inventory";
+import { LobbyWeaponStand } from "@/components/lobby/lobby-weapon-stand";
 import { getLobbyLoadoutStorageKey } from "@/lib/lobby/loadout-storage";
+import { saveLobbyLoadout } from "@/lib/lobby/loadout-actions";
 import type { LobbyHudData } from "@/types/lobby";
 
 type ModeKey = "classic" | "ultimate-royale" | "1v1" | "practice" | "rooms" | "giveaway" | "tournaments";
@@ -30,6 +37,10 @@ const MODES: ModeDef[] = [
   { key: "tournaments", label: "ტურნირები", href: "/tournaments", icon: Trophy },
 ];
 
+type DbCharacter = { id: string; name: string; tier: string; image_url: string | null; metadata: Record<string, unknown> };
+
+type WeaponItem = { id: string; name: string; tier: string; image_url: string | null };
+
 type Props = {
   gameName: string;
   gameSlug: string;
@@ -37,15 +48,22 @@ type Props = {
   hudData?: LobbyHudData | null;
   currentUserId?: string | null;
   lobbyEffect?: { effect: string; color?: string } | null;
+  ownedDbCharacters?: DbCharacter[];
+  ownedWeapons?: WeaponItem[];
+  initialLoadout?: Partial<LobbyLoadout>;
+  hasDbLoadout?: boolean;
 };
 
 const DEFAULT_LOADOUT: LobbyLoadout = {
   character: "leo",
+  lobby:     "lobby_svaneti",
+  effect:    "fx_none",
+  nameCard:  "nc_default",
 };
 
 const CHARACTER_URL = "/characters/gameroom-vanguard.png";
 
-export function LobbyStage({ gameName, gameSlug, imageUrl, hudData = null, currentUserId = null, lobbyEffect = null }: Props) {
+export function LobbyStage({ gameName, gameSlug, imageUrl, hudData = null, currentUserId = null, lobbyEffect = null, ownedDbCharacters = [], ownedWeapons = [], initialLoadout, hasDbLoadout = false }: Props) {
   const loadoutStorageKey = currentUserId ? getLobbyLoadoutStorageKey(gameSlug, currentUserId) : undefined;
 
   return (
@@ -66,7 +84,12 @@ export function LobbyStage({ gameName, gameSlug, imageUrl, hudData = null, curre
         characterUrl={CHARACTER_URL}
         persistEnabled={Boolean(currentUserId)}
         storageKey={loadoutStorageKey}
+        gameSlug={gameSlug}
         lobbyEffect={lobbyEffect}
+        ownedDbCharacters={ownedDbCharacters}
+        ownedWeapons={ownedWeapons}
+        initialLoadout={initialLoadout}
+        hasDbLoadout={hasDbLoadout}
       />
     </div>
   );
@@ -76,18 +99,60 @@ function LobbyLoadoutLayer({
   characterUrl,
   persistEnabled,
   storageKey,
+  gameSlug,
   lobbyEffect,
+  ownedDbCharacters,
+  ownedWeapons,
+  initialLoadout,
+  hasDbLoadout,
 }: {
   characterUrl: string;
   persistEnabled: boolean;
   storageKey?: string;
+  gameSlug: string;
   lobbyEffect?: { effect: string; color?: string } | null;
+  ownedDbCharacters?: DbCharacter[];
+  ownedWeapons?: WeaponItem[];
+  initialLoadout?: Partial<LobbyLoadout>;
+  hasDbLoadout: boolean;
 }) {
-  const [loadout, setLoadout] = useState<LobbyLoadout>(DEFAULT_LOADOUT);
+  const [loadout, setLoadout] = useState<LobbyLoadout>(() =>
+    initialLoadout ? { ...DEFAULT_LOADOUT, ...initialLoadout } : DEFAULT_LOADOUT
+  );
+
+  useEffect(() => {
+    if (!persistEnabled || !storageKey) return;
+    try {
+      const saved = window.localStorage.getItem(storageKey);
+      if (!saved) return;
+      const parsed = JSON.parse(saved) as Partial<LobbyLoadout>;
+      const resolved = {
+        character: parsed.character ?? DEFAULT_LOADOUT.character,
+        lobby:     parsed.lobby     ?? DEFAULT_LOADOUT.lobby,
+        effect:    parsed.effect    ?? DEFAULT_LOADOUT.effect,
+        nameCard:  parsed.nameCard  ?? DEFAULT_LOADOUT.nameCard,
+      };
+      setLoadout(resolved);
+      if (!hasDbLoadout && gameSlug) {
+        saveLobbyLoadout(gameSlug, resolved);
+      }
+    } catch {
+      // ignore malformed data
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [persistEnabled, storageKey]);
+
+  const dbCharMap = new Map(
+    (ownedDbCharacters ?? []).map((c) => [
+      (c.metadata.character_id as string) ?? c.id,
+      c.image_url ?? undefined,
+    ]),
+  );
+  const activeCharUrl = dbCharMap.get(loadout.character) ?? characterUrl;
 
   return (
     <>
-      <LobbyCanvas />
+      {(lobbyEffect?.effect === "fire_lobby" || loadout.effect === "fx_fire") && <LobbyCanvas />}
       {/* leg contact shadow — SVG path shaped like standing legs */}
       <svg
         aria-hidden
@@ -129,20 +194,26 @@ function LobbyLoadoutLayer({
       </svg>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={characterUrl}
+        src={activeCharUrl}
         alt=""
         aria-hidden="true"
         className="lobby-character"
+        style={loadout.character !== "leo" ? { left: "49.5%" } : undefined}
         draggable={false}
       />
-      {lobbyEffect?.effect === "fire" && <LobbyFireEffect />}
-      <LobbyInventory
-        key={storageKey ?? "guest-lobby"}
-        initialLoadout={loadout}
-        onLoadoutChange={setLoadout}
-        persistEnabled={persistEnabled}
-        storageKey={storageKey}
-      />
+      {(lobbyEffect?.effect === "fire_lobby" || loadout.effect === "fx_fire") && <LobbyFireEffect />}
+      <LobbyWeaponStand weapons={ownedWeapons} />
+      {persistEnabled && (
+        <LobbyInventory
+          key={storageKey ?? "guest-lobby"}
+          initialLoadout={loadout}
+          onLoadoutChange={setLoadout}
+          persistEnabled={persistEnabled}
+          storageKey={storageKey}
+          gameSlug={gameSlug}
+          ownedDbCharacters={ownedDbCharacters}
+        />
+      )}
     </>
   );
 }

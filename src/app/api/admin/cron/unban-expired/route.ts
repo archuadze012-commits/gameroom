@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-// Called by Vercel cron. Sweeps expired bans and mutes.
-export async function POST(request: NextRequest) {
+async function sweepExpiredBansAndMutes(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   const secret = process.env.CRON_SECRET;
-  if (secret && authHeader !== `Bearer ${secret}`) {
+  if (!secret || authHeader !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  const supabase = await createSupabaseServerClient();
+
+  const supabase = createSupabaseAdminClient();
   const now = new Date().toISOString();
 
   const { error: banErr, count: banCount } = await supabase
@@ -29,3 +29,8 @@ export async function POST(request: NextRequest) {
     unmuted: muteCount ?? 0,
   });
 }
+
+// Vercel Cron invokes configured paths with GET. POST remains for explicit
+// authenticated maintenance calls.
+export const GET = sweepExpiredBansAndMutes;
+export const POST = sweepExpiredBansAndMutes;

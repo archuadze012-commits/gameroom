@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Package, Gift } from "lucide-react";
-import type { EventBox, ItemTier, OpenBoxResult } from "@/types/events";
-import { openBox } from "@/lib/events/actions";
+import type { EventBox, ItemTier, OpenBoxBundleResult, OpenBoxResult } from "@/types/events";
+import { openBox, openBoxBundle } from "@/lib/events/actions";
 import { LobbyBoxOpenModal } from "@/components/lobby/lobby-box-open-modal";
 import { useRouter } from "next/navigation";
 
@@ -45,6 +45,12 @@ function BoxCard({ box, hasSession }: { box: EventBox; hasSession: boolean }) {
 
   async function handleOpen(): Promise<OpenBoxResult> {
     const result = await openBox(box.id);
+    if (result.success) router.refresh();
+    return result;
+  }
+
+  async function handleOpenBundle(): Promise<OpenBoxBundleResult> {
+    const result = await openBoxBundle(box.id, 10, 12);
     if (result.success) router.refresh();
     return result;
   }
@@ -108,8 +114,12 @@ function BoxCard({ box, hasSession }: { box: EventBox; hasSession: boolean }) {
       {modalOpen && (
         <LobbyBoxOpenModal
           boxName={box.name}
+          boxItems={box.items}
+          costAmount={box.cost_amount}
+          costCurrency={box.cost_currency}
           onClose={() => setModalOpen(false)}
           onOpen={handleOpen}
+          onOpenBundle={handleOpenBundle}
         />
       )}
     </>
