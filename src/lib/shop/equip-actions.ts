@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type EquipResult =
@@ -8,8 +9,15 @@ export type EquipResult =
   | { success: false; error: string };
 
 export async function equipItem(itemId: string): Promise<EquipResult> {
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.rpc("equip_item", { p_item_id: itemId });
+  const auth = await createSupabaseServerClient();
+  const { data: { user } } = await auth.auth.getUser();
+  if (!user) return { success: false, error: "not_authenticated" };
+
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase.rpc("equip_item_as", {
+    p_user_id: user.id,
+    p_item_id: itemId,
+  });
 
   if (error) return { success: false, error: "unknown" };
 
@@ -21,8 +29,15 @@ export async function equipItem(itemId: string): Promise<EquipResult> {
 }
 
 export async function unequipCategory(category: string): Promise<EquipResult> {
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.rpc("unequip_category", { p_category: category });
+  const auth = await createSupabaseServerClient();
+  const { data: { user } } = await auth.auth.getUser();
+  if (!user) return { success: false, error: "not_authenticated" };
+
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase.rpc("unequip_category_as", {
+    p_user_id: user.id,
+    p_category: category,
+  });
 
   if (error) return { success: false, error: "unknown" };
 
