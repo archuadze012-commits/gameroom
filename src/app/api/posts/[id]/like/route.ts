@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { awardXp } from "@/lib/gamification";
 
 export async function POST(
   _request: NextRequest,
@@ -26,7 +27,7 @@ export async function POST(
         .eq("id", id)
         .maybeSingle();
       if (post?.author_id && post.author_id !== user.id) {
-        await supabase.rpc("award_xp", { p_user_id: post.author_id, p_amount: 1 });
+        await awardXp(post.author_id, 1);
       }
     } catch {}
   }
