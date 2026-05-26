@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { awardXp } from "@/lib/gamification";
 
@@ -11,9 +12,10 @@ export async function POST(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data, error } = await supabase.rpc("toggle_post_like", {
-    p_post_id: id,
+  const admin = createSupabaseAdminClient();
+  const { data, error } = await admin.rpc("toggle_post_like_as", {
     p_user_id: user.id,
+    p_post_id: id,
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

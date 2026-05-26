@@ -1,12 +1,20 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { PurchaseResult } from "@/types/shop";
 
 export async function purchaseShopItem(itemId: string): Promise<PurchaseResult> {
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.rpc("purchase_shop_item", { p_item_id: itemId });
+  const auth = await createSupabaseServerClient();
+  const { data: { user } } = await auth.auth.getUser();
+  if (!user) return { success: false, error: "not_authenticated" };
+
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase.rpc("purchase_shop_item_as", {
+    p_user_id: user.id,
+    p_item_id: itemId,
+  });
 
   if (error) return { success: false, error: "unknown" };
 

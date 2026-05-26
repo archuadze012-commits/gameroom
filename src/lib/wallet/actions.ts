@@ -9,8 +9,14 @@ export type ClaimResult =
   | { success: false; error: "already_claimed" | "not_authenticated" | "unknown" };
 
 export async function claimDailyBonus(): Promise<ClaimResult> {
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.rpc("claim_daily_bonus");
+  const auth = await createSupabaseServerClient();
+  const { data: { user } } = await auth.auth.getUser();
+  if (!user) return { success: false, error: "not_authenticated" };
+
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase.rpc("claim_daily_bonus_as", {
+    p_user_id: user.id,
+  });
 
   if (error) return { success: false, error: "unknown" };
 

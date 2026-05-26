@@ -1,11 +1,19 @@
 "use server";
 
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { OpenBoxBundleResult, OpenBoxResult, OpenedBoxItem } from "@/types/events";
 
 async function spinOpen(boxId: string): Promise<OpenBoxResult> {
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.rpc("open_box", { p_box_id: boxId });
+  const auth = await createSupabaseServerClient();
+  const { data: { user } } = await auth.auth.getUser();
+  if (!user) return { success: false, error: "not_authenticated" };
+
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase.rpc("open_box_as", {
+    p_user_id: user.id,
+    p_box_id: boxId,
+  });
 
   if (error) return { success: false, error: "unknown" };
 
@@ -35,8 +43,13 @@ export async function openBoxBundle(
   paidOpens = 10,
   totalOpens = 12,
 ): Promise<OpenBoxBundleResult> {
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.rpc("open_box_bundle", {
+  const auth = await createSupabaseServerClient();
+  const { data: { user } } = await auth.auth.getUser();
+  if (!user) return { success: false, error: "not_authenticated" };
+
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase.rpc("open_box_bundle_as", {
+    p_user_id: user.id,
     p_box_id: boxId,
     p_paid_opens: paidOpens,
     p_total_opens: totalOpens,
