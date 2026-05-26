@@ -2,16 +2,29 @@ import { NextRequest, NextResponse } from "next/server";
 
 type MatchResult = { player1: string; player2: string; score1: number; score2: number; winner: string };
 
+import { requireRateLimitedUser } from "@/lib/api/guards";
+import { readJsonObject } from "@/lib/api/json";
+
 export async function POST(request: NextRequest) {
+  const guard = await requireRateLimitedUser(request, "ai:tournament-summary", 10, 60_000);
+  if (!guard.ok) return guard.response;
+
   if (!process.env.GROQ_API_KEY) return NextResponse.json({ error: "no_key" }, { status: 500 });
 
-  let body: { tournamentName?: string; game?: string; matches?: MatchResult[] };
-  try { body = await request.json(); } catch { return NextResponse.json({ error: "bad_request" }, { status: 400 }); }
+  const body = await readJsonObject<{ tournamentName?: string; game?: string; matches?: MatchResult[] }>(
+    request,
+    16 * 1024,
+  );
+  if (!body.ok) return body.response;
 
-  const { tournamentName, game, matches } = body;
+  const { tournamentName, game, matches } = body.data;
   if (!matches?.length) return NextResponse.json({ error: "no_matches" }, { status: 400 });
 
-  const completed = matches.filter((m) => m.winner);
+  if (matches.length > 64) {
+    return NextResponse.json({ error: "too_many_matches" }, { status: 400 });
+  }
+
+  const completed = matches.filter((m) => m.winner).slice(0, 64);
   const matchText = completed
     .map((m) => `${m.player1} vs ${m.player2}: ${m.score1}-${m.score2} â†’ ${m.winner}`)
     .join("\n");

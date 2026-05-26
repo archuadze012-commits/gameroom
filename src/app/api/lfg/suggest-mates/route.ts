@@ -1,15 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+import { requireRateLimitedUser } from "@/lib/api/guards";
+import { readJsonObject } from "@/lib/api/json";
+
 type LfgPost = { id: string; title: string; description: string | null; rank: string | null };
 
 export async function POST(request: NextRequest) {
+  const guard = await requireRateLimitedUser(request, "ai:lfg-suggest-mates", 10, 60_000);
+  if (!guard.ok) return guard.response;
+
   if (!process.env.GROQ_API_KEY) return NextResponse.json({ suggestions: [] });
 
-  let body: { postId?: string; gameSlug?: string; title?: string; description?: string };
-  try { body = await request.json(); } catch { return NextResponse.json({ suggestions: [] }); }
+  const body = await readJsonObject<{ postId?: string; gameSlug?: string; title?: string; description?: string }>(
+    request,
+    8 * 1024,
+  );
+  if (!body.ok) return NextResponse.json({ suggestions: [] });
 
-  const { postId, gameSlug, title, description } = body;
+  const { postId, gameSlug, title, description } = body.data;
   if (!postId || !gameSlug) return NextResponse.json({ suggestions: [] });
 
   // fetch other recent LFG posts for the same game

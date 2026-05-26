@@ -1,0 +1,5 @@
+artifacts
+dev.err.log
+dev.out.log
+.agents
+.codex

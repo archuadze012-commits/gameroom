@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { requireRateLimitedUser } from "@/lib/api/guards";
+import { readJsonObject } from "@/lib/api/json";
+
 export async function POST(request: NextRequest) {
+  const guard = await requireRateLimitedUser(request, "ai:skill-assess", 10, 60_000);
+  if (!guard.ok) return guard.response;
+
   if (!process.env.GROQ_API_KEY) return NextResponse.json({ error: "no_key" }, { status: 500 });
 
-  let body: { game?: string; rank?: string; description?: string };
-  try { body = await request.json(); } catch { return NextResponse.json({ error: "bad_request" }, { status: 400 }); }
+  const body = await readJsonObject<{ game?: string; rank?: string; description?: string }>(request, 8 * 1024);
+  if (!body.ok) return body.response;
 
-  const game = (body.game ?? "").trim();
-  const rank = (body.rank ?? "").trim();
-  const description = (body.description ?? "").trim().slice(0, 300);
+  const game = (body.data.game ?? "").trim().slice(0, 80);
+  const rank = (body.data.rank ?? "").trim().slice(0, 80);
+  const description = (body.data.description ?? "").trim().slice(0, 300);
 
   if (!game) return NextResponse.json({ error: "game_required" }, { status: 400 });
 

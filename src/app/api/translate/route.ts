@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { requireRateLimitedUser } from "@/lib/api/guards";
+import { readJsonObject } from "@/lib/api/json";
+
 export async function POST(request: NextRequest) {
+  const guard = await requireRateLimitedUser(request, "ai:translate", 30, 60_000);
+  if (!guard.ok) return guard.response;
+
   if (!process.env.GROQ_API_KEY) return NextResponse.json({ error: "no_key" }, { status: 500 });
 
-  let body: { text?: string; targetLang?: string };
-  try { body = await request.json(); } catch { return NextResponse.json({ error: "bad_request" }, { status: 400 }); }
+  const body = await readJsonObject<{ text?: string; targetLang?: string }>(request, 8 * 1024);
+  if (!body.ok) return body.response;
 
-  const text = (body.text ?? "").trim().slice(0, 1000);
+  const text = (body.data.text ?? "").trim().slice(0, 1000);
   if (!text) return NextResponse.json({ error: "empty" }, { status: 400 });
-  const target = body.targetLang ?? "áƒ¥áƒáƒ áƒ—áƒ£áƒšáƒ˜";
+  const target = (body.data.targetLang ?? "áƒ¥áƒáƒ áƒ—áƒ£áƒšáƒ˜").slice(0, 32);
 
   try {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {

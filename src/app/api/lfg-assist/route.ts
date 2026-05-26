@@ -1,24 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { rateLimit } from "@/lib/rate-limit";
+import { requireRateLimitedUser } from "@/lib/api/guards";
+import { readJsonObject } from "@/lib/api/json";
 
 export async function POST(request: NextRequest) {
-  const auth = await createSupabaseServerClient();
-  const { data: { user } } = await auth.auth.getUser();
-  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  if (!rateLimit(`lfg-assist:${user.id}`, 10, 60_000)) {
-    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
-  }
+  const guard = await requireRateLimitedUser(request, "ai:lfg-assist", 10, 60_000);
+  if (!guard.ok) return guard.response;
 
   if (!process.env.GROQ_API_KEY) return NextResponse.json({ error: "no_key" }, { status: 500 });
 
-  let body: { prompt?: string; game?: string };
-  try { body = await request.json(); } catch { return NextResponse.json({ error: "bad_request" }, { status: 400 }); }
+  const body = await readJsonObject<{ prompt?: string; game?: string }>(request, 8 * 1024);
+  if (!body.ok) return body.response;
 
-  const prompt = (body.prompt ?? "").trim();
+  const prompt = (body.data.prompt ?? "").trim().slice(0, 1000);
   if (!prompt) return NextResponse.json({ error: "empty" }, { status: 400 });
 
-  const game = body.game ? `áƒ—áƒáƒ›áƒáƒ¨áƒ˜: ${body.game}` : "";
+  const game = body.data.game ? `áƒ—áƒáƒ›áƒáƒ¨áƒ˜: ${body.data.game.slice(0, 80)}` : "";
 
   try {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {

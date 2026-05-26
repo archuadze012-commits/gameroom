@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { moderateText } from "@/lib/moderate";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
+import { readJsonObject } from "@/lib/api/json";
 
 export async function POST(request: NextRequest) {
   const auth = await createSupabaseServerClient();
@@ -11,10 +12,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
 
-  let body: { message?: string; text?: string };
-  try { body = await request.json(); } catch { return NextResponse.json({ toxic: false, ok: true }); }
+  const body = await readJsonObject<{ message?: string; text?: string }>(request, 4 * 1024);
+  if (!body.ok) return NextResponse.json({ toxic: false, ok: true });
 
-  const content = ((body.message ?? body.text ?? "")).trim();
+  const content = ((body.data.message ?? body.data.text ?? "")).trim().slice(0, 1000);
   if (!content) return NextResponse.json({ toxic: false, ok: true });
 
   const result = await moderateText(content);
