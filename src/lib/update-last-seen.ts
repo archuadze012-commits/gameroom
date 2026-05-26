@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "./supabase/server";
 import { getSession } from "./auth";
+import { awardXp } from "./gamification";
 
 export async function updateLastSeen() {
   try {
@@ -21,7 +22,7 @@ export async function updateLastSeen() {
       // Award +5 XP and bump streak
       const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
       const newStreak = lastAward === yesterday ? (profile?.daily_streak_count ?? 0) + 1 : 1;
-      await supabase.rpc("award_xp", { p_user_id: session.id, p_amount: 5 });
+      await awardXp(session.id, 5);
       await supabase
         .from("profiles")
         .update({

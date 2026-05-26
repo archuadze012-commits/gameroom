@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { moderateText } from "@/lib/moderate";
+import { awardXp } from "@/lib/gamification";
 
 export async function POST(request: NextRequest) {
   const user = await getSession().catch(() => null);
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
 
   // award XP for posting LFG
   try {
-    await supabase.rpc("award_xp", { p_user_id: user.id, p_amount: 5 });
+    await awardXp(user.id, 5);
   } catch {}
 
   return NextResponse.json(data, { status: 201 });

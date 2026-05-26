@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type ClaimResult =
@@ -40,8 +41,21 @@ export async function adminGrantCurrency(
     return { success: false, error: "invalid_amount" };
   }
 
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.rpc("admin_grant_currency", {
+  const auth = await createSupabaseServerClient();
+  const { data: { user } } = await auth.auth.getUser();
+  if (!user) return { success: false, error: "unauthorized" };
+
+  const { data: profile } = await auth
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profile?.role !== "admin") return { success: false, error: "unauthorized" };
+
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await supabase.rpc("admin_grant_currency_as", {
+    p_admin_id: user.id,
     p_user_id: targetUserId,
     p_currency: currency,
     p_amount: amount,
