@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { Heart, MessageCircle, Search, MessageSquare, Bell, Gamepad2, ShoppingBag, Rocket, Users, Trophy, Flame } from "lucide-react";
 import { mockGames } from "@/lib/mock-data";
 import { HomeNotificationsWidget } from "@/components/home-notifications-widget";

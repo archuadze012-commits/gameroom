@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 type MatchResult = { player1: string; player2: string; score1: number; score2: number; winner: string };
 
