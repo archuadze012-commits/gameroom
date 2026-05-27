@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   if (!process.env.GROQ_API_KEY) return NextResponse.json({ error: "no_key" }, { status: 500 });
