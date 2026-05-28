@@ -1,0 +1,74 @@
+"use server";
+
+import { z } from "zod";
+import { revalidatePath } from "next/cache";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/auth";
+import { awardXp } from "@/lib/gamification";
+import { type FeedPost } from "./page";
+
+const createPostSchema = z.object({
+  content: z.string().min(1, "ტექსტი აუცილებელია").max(2000, "პოსტი ზედმეტად გრძელია"),
+  mediaUrls: z.array(z.string()).max(4).optional(),
+});
+
+export type PostActionState = {
+  success: boolean;
+  message?: string;
+  errors?: Record<string, string[]>;
+  newPost?: FeedPost;
+};
+
+export async function createPostAction(
+  prevState: PostActionState,
+  formData: FormData
+): Promise<PostActionState> {
+  const user = await getSession();
+  if (!user) {
+    return { success: false, message: "ავტორიზაცია აუცილებელია" };
+  }
+
+  const rawData = {
+    content: formData.get("content"),
+    mediaUrls: formData.getAll("mediaUrls") as string[],
+  };
+
+  const validated = createPostSchema.safeParse(rawData);
+
+  if (!validated.success) {
+    return {
+      success: false,
+      errors: validated.error.flatten().fieldErrors,
+      message: "გთხოვთ შეავსოთ ყველა ველი სწორად",
+    };
+  }
+
+  const { data: body } = validated;
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("posts")
+    .insert({
+      author_id: user.id,
+      content: body.content.trim(),
+      media_urls: body.mediaUrls,
+    })
+    .select("id, content, media_urls, likes_count, created_at, profiles!posts_author_id_fkey(username, display_name, avatar_url, is_verified, role)")
+    .single();
+
+  if (error) {
+    console.error("[createPostAction]", error);
+    return { success: false, message: "პოსტის გამოქვეყნება ვერ მოხერხდა" };
+  }
+
+  await awardXp(user.id, 10).catch(() => {});
+
+  revalidatePath("/feed");
+  revalidatePath("/");
+
+  return {
+    success: true,
+    message: "პოსტი გამოქვეყნდა!",
+    newPost: data as unknown as FeedPost,
+  };
+}

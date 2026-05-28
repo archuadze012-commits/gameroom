@@ -229,15 +229,21 @@ export function LobbyBoxOpenModal({
     setPhase("loading");
     setBundleResult(null);
 
-    const res = await onOpen();
-    setResult(res);
+    try {
+      const res = await onOpen();
+      setResult(res);
 
-    if (!res.success) {
+      if (!res.success) {
+        setPhase("idle");
+        return;
+      }
+
+      startSpinSequence([res.item], { paidOpens: 1, totalOpens: 1, bonusAwarded: 0 });
+    } catch (err) {
+      console.error("handleOpenSingle error:", err);
+      setResult({ success: false, error: "unknown" });
       setPhase("idle");
-      return;
     }
-
-    startSpinSequence([res.item], { paidOpens: 1, totalOpens: 1, bonusAwarded: 0 });
   }
 
   async function handleOpenBundle() {
@@ -245,19 +251,25 @@ export function LobbyBoxOpenModal({
     setPhase("loading");
     setResult(null);
 
-    const res = await onOpenBundle();
-    setBundleResult(res);
+    try {
+      const res = await onOpenBundle();
+      setBundleResult(res);
 
-    if (!res.success) {
+      if (!res.success) {
+        setPhase("idle");
+        return;
+      }
+
+      startSpinSequence(res.items, {
+        paidOpens: res.paidOpens,
+        totalOpens: res.totalOpens,
+        bonusAwarded: res.bonusAwarded,
+      });
+    } catch (err) {
+      console.error("handleOpenBundle error:", err);
+      setBundleResult({ success: false, error: "unknown" });
       setPhase("idle");
-      return;
     }
-
-    startSpinSequence(res.items, {
-      paidOpens: res.paidOpens,
-      totalOpens: res.totalOpens,
-      bonusAwarded: res.bonusAwarded,
-    });
   }
 
   useEffect(() => {
@@ -265,9 +277,13 @@ export function LobbyBoxOpenModal({
 
     let startTimer: ReturnType<typeof setTimeout> | undefined;
     let doneTimer: ReturnType<typeof setTimeout> | undefined;
+    let rafId: number;
 
-    const raf = requestAnimationFrame(() => {
-      if (!stripRef.current || !containerRef.current) return;
+    const animate = () => {
+      if (!stripRef.current || !containerRef.current) {
+        rafId = requestAnimationFrame(animate);
+        return;
+      }
 
       const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 900 : SPIN_MS;
       const cw = containerRef.current.offsetWidth;
@@ -285,10 +301,12 @@ export function LobbyBoxOpenModal({
       }, 40);
 
       doneTimer = setTimeout(() => setPhase("done"), duration + 120);
-    });
+    };
+
+    rafId = requestAnimationFrame(animate);
 
     return () => {
-      cancelAnimationFrame(raf);
+      cancelAnimationFrame(rafId);
       if (startTimer) clearTimeout(startTimer);
       if (doneTimer) clearTimeout(doneTimer);
     };

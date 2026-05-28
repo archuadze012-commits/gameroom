@@ -1,8 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const REACTIONS = [
+  {
+    key: "heart",
+    label: "❤️",
+    sub: "Heart",
+    base: "border-rose-500/30 text-rose-400 bg-rose-500/5 hover:border-rose-400/60 hover:bg-rose-500/15 hover:shadow-rose-500/20",
+    active: "border-rose-400 bg-rose-500/25 text-rose-300 shadow-rose-500/30",
+  },
   {
     key: "gg",
     label: "GG",
@@ -11,18 +18,11 @@ const REACTIONS = [
     active: "border-emerald-400 bg-emerald-500/25 text-emerald-300 shadow-emerald-500/30",
   },
   {
-    key: "w",
-    label: "W",
-    sub: "Win",
-    base: "border-amber-500/30 text-amber-400 bg-amber-500/5 hover:border-amber-400/60 hover:bg-amber-500/15 hover:shadow-amber-500/20",
-    active: "border-amber-400 bg-amber-500/25 text-amber-300 shadow-amber-500/30",
-  },
-  {
-    key: "clutch",
-    label: "Clutch",
-    sub: "1v5",
-    base: "border-rose-500/30 text-rose-400 bg-rose-500/5 hover:border-rose-400/60 hover:bg-rose-500/15 hover:shadow-rose-500/20",
-    active: "border-rose-400 bg-rose-500/25 text-rose-300 shadow-rose-500/30",
+    key: "pro",
+    label: "PRO",
+    sub: "Pro Gamer",
+    base: "border-blue-500/30 text-blue-400 bg-blue-500/5 hover:border-blue-400/60 hover:bg-blue-500/15 hover:shadow-blue-500/20",
+    active: "border-blue-400 bg-blue-500/25 text-blue-300 shadow-blue-500/30",
   },
   {
     key: "noob",
@@ -31,34 +31,39 @@ const REACTIONS = [
     base: "border-violet-500/30 text-violet-400 bg-violet-500/5 hover:border-violet-400/60 hover:bg-violet-500/15 hover:shadow-violet-500/20",
     active: "border-violet-400 bg-violet-500/25 text-violet-300 shadow-violet-500/30",
   },
-  {
-    key: "goat",
-    label: "GOAT",
-    sub: "Greatest",
-    base: "border-cyan-500/30 text-cyan-400 bg-cyan-500/5 hover:border-cyan-400/60 hover:bg-cyan-500/15 hover:shadow-cyan-500/20",
-    active: "border-cyan-400 bg-cyan-500/25 text-cyan-300 shadow-cyan-500/30",
-  },
-  {
-    key: "cringe",
-    label: "Cringe",
-    sub: "Yikes",
-    base: "border-slate-500/30 text-slate-400 bg-slate-500/5 hover:border-slate-400/60 hover:bg-slate-500/15 hover:shadow-slate-500/20",
-    active: "border-slate-400 bg-slate-500/25 text-slate-300 shadow-slate-500/30",
-  },
 ] as const;
 
 type ReactionKey = (typeof REACTIONS)[number]["key"];
 
 type Props = {
   postId: string;
-  initialCounts: Record<string, number>;
-  initialMine: string[];
+  initialCounts?: Record<string, number>;
+  initialMine?: string[];
+  hideHeading?: boolean;
 };
 
-export function PostReactions({ postId, initialCounts, initialMine }: Props) {
-  const [counts, setCounts] = useState<Record<string, number>>(initialCounts);
-  const [mine, setMine] = useState<Set<string>>(new Set(initialMine));
+export function PostReactions({ postId, initialCounts, initialMine, hideHeading = false }: Props) {
+  const [counts, setCounts] = useState<Record<string, number>>(initialCounts ?? {});
+  const [mine, setMine] = useState<Set<string>>(new Set(initialMine ?? []));
   const [pending, setPending] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!initialCounts) {
+      let active = true;
+      fetch(`/api/posts/${postId}/reactions`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (active && data) {
+            setCounts(data.counts ?? {});
+            setMine(new Set(data.mine ?? []));
+          }
+        })
+        .catch(() => {});
+      return () => {
+        active = false;
+      };
+    }
+  }, [postId, initialCounts]);
 
   async function toggle(key: ReactionKey) {
     if (pending) return;
@@ -83,7 +88,9 @@ export function PostReactions({ postId, initialCounts, initialMine }: Props) {
 
   return (
     <div className="space-y-2">
-      <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/60">React</p>
+      {!hideHeading && (
+        <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/60">React</p>
+      )}
       <div className="flex flex-wrap gap-2">
         {REACTIONS.map((r) => {
           const active = mine.has(r.key);

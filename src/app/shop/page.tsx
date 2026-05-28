@@ -74,23 +74,69 @@ export default async function ShopPage({
                 <Link
                   key={game.slug}
                   href={`/shop/${game.slug}`}
-                  className="group relative flex flex-col items-center gap-2.5 bg-[var(--gr-bg-1)] p-4 ring-1 ring-[var(--gr-border)] transition hover:ring-[var(--gr-border-hi)] hover:brightness-110"
-                  style={{ clipPath: cutSm }}
+                  className="group relative isolate block overflow-hidden transition-all duration-300 group-hover:[--game-btn-border:rgba(236,72,153,0.85)]"
+                  style={{
+                    clipPath: "polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,0 100%)",
+                    background: "var(--game-btn-border, rgba(167,139,250,0.55))",
+                    padding: 1,
+                  }}
                 >
-                  {game.iconUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={game.iconUrl} alt={game.nameKa} className="h-12 w-12 rounded-lg object-cover" />
-                  ) : (
-                    <span className="text-3xl">{game.emoji}</span>
-                  )}
-                  <p className="text-center font-display text-[11px] font-extrabold uppercase leading-tight tracking-tight text-white">
-                    {game.nameKa}
-                  </p>
+                  {/* inner */}
+                  <div
+                    className="relative flex flex-col items-center gap-2.5 overflow-hidden px-4 py-5"
+                    style={{
+                      clipPath: "polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,0 100%)",
+                      background: "linear-gradient(160deg,var(--gr-bg-1) 0%,var(--gr-bg-0) 100%)",
+                    }}
+                  >
+                    {/* permanent violet top-line */}
+                    <span
+                      aria-hidden
+                      className="absolute left-0 top-0 z-10 h-[2px] w-full"
+                      style={{ background: "linear-gradient(90deg,transparent,rgba(167,139,250,0.8),transparent)" }}
+                    />
+                    {/* magenta laser on hover */}
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute left-0 top-0 z-10 h-[2px] w-full
+                                 translate-x-[-100%] opacity-0
+                                 group-hover:translate-x-[100%] group-hover:opacity-100
+                                 group-hover:transition-transform group-hover:duration-700"
+                      style={{ background: "linear-gradient(90deg,transparent,rgba(236,72,153,0.9),transparent)" }}
+                    />
+                    {/* subtle violet glow always */}
+                    <div
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0"
+                      style={{ background: "radial-gradient(ellipse at 50% 0%,rgba(167,139,250,0.10) 0%,transparent 65%)" }}
+                    />
+                    {/* magenta glow on hover */}
+                    <div
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                      style={{ background: "radial-gradient(ellipse at 50% 0%,rgba(236,72,153,0.13) 0%,transparent 65%)" }}
+                    />
+
+                    {game.iconUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={game.iconUrl}
+                        alt={game.nameKa}
+                        className="relative z-[2] h-12 w-12 rounded-lg object-cover ring-1 ring-white/10 transition-transform duration-300 group-hover:scale-110"
+                      />
+                    ) : (
+                      <span className="relative z-[2] text-3xl transition-transform duration-300 group-hover:scale-110">{game.emoji}</span>
+                    )}
+                    <p className="relative z-[2] text-center font-display text-[11px] font-extrabold uppercase leading-tight tracking-tight text-white">
+                      {game.nameKa}
+                    </p>
+                  </div>
                 </Link>
               ))}
             </div>
           </section>
         )}
+
 
         {/* global / owned items */}
         {displayItems.length > 0 ? (

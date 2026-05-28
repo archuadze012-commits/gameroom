@@ -5,10 +5,22 @@ import { getRequestOriginFromHeaders } from "@/lib/url";
 
 export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname;
-  const protectedPrefixes = ["/settings", "/lfg/new", "/admin"];
-  const requiresAuth = protectedPrefixes.some((p) => path.startsWith(p));
 
-  if (!requiresAuth) {
+  // Allowlist of public routes
+  const publicPaths = [
+    "/auth/login",
+    "/auth/signup",
+    "/auth/callback",
+    "/auth/confirm",
+    "/api/auth/callback",
+    "/api/auth/confirm",
+  ];
+
+  // The landing page is allowed for guests (we just made it attractive for them)
+  const isHome = path === "/";
+  const isPublic = publicPaths.some((p) => path === p) || path.startsWith("/api/auth");
+
+  if (isHome || isPublic) {
     return NextResponse.next({ request });
   }
 

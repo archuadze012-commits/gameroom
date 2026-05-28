@@ -19,7 +19,7 @@ export function AdminDeleteButton({ gameId }: { gameId: string }) {
         throw new Error(e?.error || "შეცდომა");
       }
       toast.success("თამაში წაიშალა");
-      router.push("/tamashebi");
+      router.push("/free-pc-games");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "შეცდომა");
       setDeleting(false);

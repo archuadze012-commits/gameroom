@@ -4,9 +4,11 @@ import { PageHeader } from "@/components/page-header";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Pill } from "@/components/ui/pill";
 import { ChevronButton } from "@/components/ui/chevron-button";
-import { mockGames, mockTournaments } from "@/lib/mock-data";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { format } from "date-fns";
 
 export const metadata = { title: "ჩემპიონატები" };
+export const dynamic = "force-dynamic";
 
 const statusTone: Record<string, "online" | "amber" | "live" | "neutral"> = {
   open:      "online",
@@ -21,14 +23,63 @@ const statusLabel: Record<string, string> = {
   completed: "დასრულდა",
 };
 
+const formatLabels: Record<string, string> = {
+  single_elim: "Single Elimination",
+  double_elim: "Double Elimination",
+  round_robin: "Round Robin",
+};
+
 const cutMd = "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)";
 const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.5))";
 
-export default function TournamentsPage() {
+export default async function TournamentsPage() {
+  const supabase = await createSupabaseServerClient();
+
+  const { data: dbTournaments } = await supabase
+    .from("tournaments")
+    .select(`
+      id,
+      name,
+      slug,
+      description,
+      banner_url,
+      format,
+      max_participants,
+      prize_pool,
+      starts_at,
+      status,
+      games:game_id (
+        slug,
+        name_ka,
+        emoji
+      ),
+      tournament_participants (
+        id
+      )
+    `)
+    .neq("status", "draft")
+    .order("starts_at", { ascending: true });
+
+  const tournaments = (dbTournaments || []).map((t: any) => {
+    const participantsCount = t.tournament_participants?.length || 0;
+    return {
+      id: t.id,
+      slug: t.slug,
+      name: t.name,
+      banner: t.banner_url || "from-violet-500/40 via-primary/20 to-transparent",
+      format: formatLabels[t.format] || t.format,
+      status: t.status,
+      prizePool: t.prize_pool || "0 GEL",
+      participants: { current: participantsCount, max: t.max_participants || 8 },
+      startsAt: t.starts_at ? format(new Date(t.starts_at), "yyyy-MM-dd HH:mm") : "გამოცხადდება",
+      game: t.games ? { nameKa: t.games.name_ka, emoji: t.games.emoji } : null,
+    };
+  });
+
   const grouped = {
-    live: mockTournaments.filter((t) => t.status === "live"),
-    upcoming: mockTournaments.filter((t) => t.status === "open" || t.status === "checkin"),
-    completed: mockTournaments.filter((t) => t.status === "completed"),
+    live: tournaments.filter((t) => t.status === "live"),
+    upcoming: tournaments.filter((t) => t.status === "open" || t.status === "checkin"),
+    completed: tournaments.filter((t) => t.status === "completed"),
   };
 
   return (
@@ -66,7 +117,7 @@ function Section({
   eyebrow: string;
   title: string;
   tone: "live" | "amber" | "mute";
-  tournaments: typeof mockTournaments;
+  tournaments: any[];
 }) {
   if (tournaments.length === 0) return null;
   const eyebrowTone = tone === "live" ? "magenta" : tone === "amber" ? "amber" : "mute";
@@ -80,7 +131,7 @@ function Section({
       </div>
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         {tournaments.map((t) => {
-          const game = mockGames.find((g) => g.slug === t.gameSlug);
+          const game = t.game;
           const sTone = statusTone[t.status] ?? "neutral";
           const sLabel = statusLabel[t.status] ?? t.status;
           const fillPct = Math.min(100, Math.round((t.participants.current / t.participants.max) * 100));

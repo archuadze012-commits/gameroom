@@ -74,16 +74,26 @@ export function HomeNotificationsWidget() {
       {items.map((n) => {
         const card = (
           <div
-            className="group flex items-start gap-3 bg-[var(--gr-bg-1)] px-4 py-3 ring-1 ring-[var(--gr-border)] transition-all duration-200 hover:-translate-y-0.5 hover:ring-[var(--gr-violet-hi)] gr-sweep"
-            style={{ clipPath: "polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%)" }}
+            className="relative isolate transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)] group"
+            style={{ background: 'var(--card-border-hover, transparent)', padding: 1, clipPath: "polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%)" }}
           >
-            <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md bg-[var(--gr-violet)]/15 text-[var(--gr-violet-hi)] ring-1 ring-[var(--gr-violet)]/30">
+            <div
+              className="relative flex items-start gap-3 bg-[var(--gr-bg-1)] px-4 py-3"
+              style={{ clipPath: "polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%)" }}
+            >
+              {/* Hover Effects */}
+              <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
+            <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
+
+            <span className="relative z-10 mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md bg-[var(--gr-violet)]/15 text-[var(--gr-violet-hi)] ring-1 ring-[var(--gr-violet)]/30">
               <Users className="h-3.5 w-3.5" />
             </span>
-            <div className="min-w-0 flex-1">
+            <div className="relative z-10 min-w-0 flex-1">
               <p className="text-[12.5px] font-semibold text-[var(--gr-text)] group-hover:text-[var(--gr-violet-hi)]">{n.title}</p>
               <p className="mt-0.5 line-clamp-1 text-[11.5px] text-[var(--gr-text-mute)]">{n.body}</p>
             </div>
+          </div>
           </div>
         );
         return n.link ? (

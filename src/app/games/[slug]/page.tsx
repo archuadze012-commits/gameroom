@@ -17,6 +17,7 @@ import {
   MapPin,
   Rocket,
   Gift,
+  Headphones,
 } from "lucide-react";
 import { GameIcon } from "@/components/game-icon";
 import { mockGames, mockLfgPosts, mockTournaments, type MockGame } from "@/lib/mock-data";
@@ -302,34 +303,66 @@ export default async function GamePage({
                   რუმები, ტურნირები და გათამაშებები
                 </DisplayHeading>
               </div>
-              <Link href="/clans" className="mb-4 block">
-                <article
-                  className="group relative isolate"
-                  style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
-                >
-                  <div
-                    className="relative overflow-hidden bg-[var(--gr-bg-1)] px-5 py-5 transition-transform duration-300 group-hover:scale-[1.005] sm:px-6"
-                    style={{ clipPath: cutSm }}
+              <div className="mb-6 grid gap-4 sm:grid-cols-2">
+                <Link href="/clans" className="block">
+                  <article
+                    className="group relative isolate h-full"
+                    style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
                   >
-                    <span aria-hidden className="absolute left-0 top-0 z-10 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-violet-500/20 via-fuchsia-500/10 to-cyan-500/20" />
-                    <div className="absolute inset-y-0 right-0 w-28 bg-[linear-gradient(180deg,rgba(34,211,238,0.5),rgba(139,92,246,0.12))] [clip-path:polygon(28%_0,100%_0,100%_100%,0_100%)]" />
-                    <div className="relative z-[1] flex items-center justify-between gap-4">
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--gr-violet-hi)]/85">
-                          CLAN HUB
-                        </p>
-                        <h3 className="mt-2 font-display text-[24px] font-extrabold uppercase tracking-tight text-[var(--gr-text)]">
-                          კლანის გვერდი
-                        </h3>
-                      </div>
-                      <div className="rounded-full border border-white/12 bg-white/[0.04] p-4 shadow-[0_0_30px_rgba(139,92,246,0.24)] backdrop-blur-sm transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
-                        <Shield className="h-9 w-9 text-white/95 drop-shadow-[0_0_18px_rgba(34,211,238,0.4)]" />
+                    <div
+                      className="relative overflow-hidden bg-[var(--gr-bg-1)] px-5 py-5 h-full transition-transform duration-300 group-hover:scale-[1.005] sm:px-6"
+                      style={{ clipPath: cutSm }}
+                    >
+                      <span aria-hidden className="absolute left-0 top-0 z-10 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-violet-500/20 via-fuchsia-500/10 to-cyan-500/20" />
+                      <div className="absolute inset-y-0 right-0 w-28 bg-[linear-gradient(180deg,rgba(34,211,238,0.5),rgba(139,92,246,0.12))] [clip-path:polygon(28%_0,100%_0,100%_100%,0_100%)]" />
+                      <div className="relative z-[1] flex items-center justify-between gap-4 h-full">
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--gr-violet-hi)]/85">
+                            CLAN HUB
+                          </p>
+                          <h3 className="mt-2 font-display text-[24px] font-extrabold uppercase tracking-tight text-[var(--gr-text)]">
+                            კლანის გვერდი
+                          </h3>
+                        </div>
+                        <div className="rounded-full border border-white/12 bg-white/[0.04] p-4 shadow-[0_0_30px_rgba(139,92,246,0.24)] backdrop-blur-sm transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
+                          <Shield className="h-9 w-9 text-white/95 drop-shadow-[0_0_18px_rgba(34,211,238,0.4)]" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </article>
-              </Link>
+                  </article>
+                </Link>
+
+                <Link href={`/games/${game.slug}/discordvoicechannels`} className="block">
+                  <article
+                    className="group relative isolate h-full"
+                    style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
+                  >
+                    <div
+                      className="relative overflow-hidden bg-[var(--gr-bg-1)] px-5 py-5 h-full transition-transform duration-300 group-hover:scale-[1.005] sm:px-6"
+                      style={{ clipPath: cutSm }}
+                    >
+                      <span aria-hidden className="absolute left-0 top-0 z-10 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-violet-500/20 via-fuchsia-500/10 to-cyan-500/20" />
+                      <div className="absolute inset-y-0 right-0 w-28 bg-[linear-gradient(180deg,rgba(34,211,238,0.5),rgba(139,92,246,0.12))] [clip-path:polygon(28%_0,100%_0,100%_100%,0_100%)]" />
+                      <div className="relative z-[1] flex items-center justify-between gap-4 h-full">
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--gr-violet-hi)]/85">
+                            DISCORD VOICE
+                          </p>
+                          <h3 className="mt-2 font-display text-[24px] font-extrabold uppercase tracking-tight text-[var(--gr-text)]">
+                            ხმოვანი ოთახები
+                          </h3>
+                        </div>
+                        <div className="rounded-full border border-white/12 bg-white/[0.04] p-4 shadow-[0_0_30px_rgba(139,92,246,0.24)] backdrop-blur-sm transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">
+                          <Headphones className="h-9 w-9 text-white/95 drop-shadow-[0_0_18px_rgba(34,211,238,0.4)]" />
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                </Link>
+              </div>
+
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <PromoCard
                   href="/lfg?mode=classic"
@@ -362,7 +395,7 @@ export default async function GamePage({
                   accent="from-emerald-500/25 to-cyan-500/10"
                 />
                 <PromoCard
-                  href="/tamashebi"
+                  href="/free-pc-games"
                   title="გათამაშებები"
                   icon={<Gift />}
                   accent="from-cyan-500/25 to-fuchsia-500/10"

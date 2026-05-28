@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { createLfgAction, type LfgActionState } from "./actions";
 
 type GameOption = { slug: string; nameKa: string; emoji: string };
 
@@ -24,7 +25,6 @@ const GAME_MODES: Record<string, string[]> = {
 
 export function NewLfgForm({ games }: { games: GameOption[] }) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [game, setGame] = useState("");
   const [selectedModes, setSelectedModes] = useState<string[]>([]);
@@ -36,6 +36,26 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
   const [slots, setSlots] = useState("4");
   const [voice, setVoice] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
+
+  const initialState: LfgActionState = { success: false };
+  const [state, formAction, isPending] = useActionState(createLfgAction, initialState);
+
+  useEffect(() => {
+    if (state.message) {
+      if (state.success) {
+        toast.success(state.message);
+        const modeSlug = selectedModes.includes("1 vs 1")
+          ? "1v1"
+          : selectedModes.includes("Classic")
+          ? "classic"
+          : null;
+        router.push(modeSlug ? `/lfg?mode=${modeSlug}` : "/lfg");
+        router.refresh();
+      } else {
+        toast.error(state.message);
+      }
+    }
+  }, [state, router, selectedModes]);
 
   const handleAiAssist = async () => {
     if (!aiPrompt.trim()) {
@@ -64,62 +84,18 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
     setGenerating(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!game) {
-      toast.error("აარჩიე თამაში");
-      return;
-    }
-    if (!GAME_MODES[game] && !title.trim()) {
-      toast.error("სათაური შეიყვანე");
-      return;
-    }
-    if (GAME_MODES[game] && !selectedModes.includes("1 vs 1") && !ranked) {
-      toast.error("აირჩიე: Ranked თუ არა?");
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await fetch("/api/lfg", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          gameSlug: game,
-          title,
-          description,
-          rank: rank || undefined,
-          slotsTotal: parseInt(slots) || 4,
-          voiceRequired: voice,
-          modes: selectedModes.length > 0 ? selectedModes : undefined,
-          ranked: ranked || undefined,
-          weapons: weapons.length > 0 ? weapons : undefined,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.error || "unknown");
-      }
-      toast.success("ლოკალი გამოქვეყნდა!");
-      const modeSlug = selectedModes.includes("1 vs 1")
-        ? "1v1"
-        : selectedModes.includes("Classic")
-        ? "classic"
-        : null;
-      router.push(modeSlug ? `/lfg?mode=${modeSlug}` : "/lfg");
-      router.refresh();
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "";
-      if (msg === "content_blocked") {
-        toast.error("კონტენტი დაიბლოკა — შეუსაბამო ტექსტი");
-      } else {
-        toast.error(`ლოკალი ვერ გამოქვეყნდა${msg ? ` — ${msg}` : ""}`);
-      }
-      setLoading(false);
-    }
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form action={formAction} className="space-y-5">
+      {/* Hidden inputs for controlled fields */}
+      <input type="hidden" name="gameSlug" value={game} />
+      <input type="hidden" name="ranked" value={ranked} />
+      {selectedModes.map((m) => (
+        <input key={m} type="hidden" name="modes" value={m} />
+      ))}
+      {weapons.map((w) => (
+        <input key={w} type="hidden" name="weapons" value={w} />
+      ))}
+
       {/* AI Quick Fill */}
       <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
         <p className="flex items-center gap-1.5 text-sm font-medium text-primary">
@@ -136,7 +112,7 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
             type="button"
             variant="outline"
             onClick={handleAiAssist}
-            disabled={generating}
+            disabled={generating || isPending}
             className="shrink-0"
           >
             {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : "შევსება"}
@@ -147,7 +123,18 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
 
       <div className="space-y-1.5">
         <Label htmlFor="game">თამაში *</Label>
-        <Select name="game" required value={game} onValueChange={(v) => { setGame(v ?? ""); setSelectedModes([]); setRanked(""); setWeapons([]); }}>
+        <Select
+          name="game_select"
+          required
+          value={game}
+          onValueChange={(v) => {
+            setGame(v ?? "");
+            setSelectedModes([]);
+            setRanked("");
+            setWeapons([]);
+          }}
+          disabled={isPending}
+        >
           <SelectTrigger id="game">
             <SelectValue placeholder="აარჩიე თამაში" />
           </SelectTrigger>
@@ -159,6 +146,9 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
             ))}
           </SelectContent>
         </Select>
+        {state.errors?.gameSlug && (
+          <p className="text-xs text-destructive">{state.errors.gameSlug[0]}</p>
+        )}
       </div>
 
       {GAME_MODES[game] && (
@@ -172,6 +162,7 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
                   <button
                     key={mode}
                     type="button"
+                    disabled={isPending}
                     onClick={() => {
                       const next = active ? selectedModes.filter((m) => m !== mode) : [...selectedModes, mode];
                       setSelectedModes(next);
@@ -198,6 +189,7 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
                   <button
                     key={w}
                     type="button"
+                    disabled={isPending}
                     onClick={() => setWeapons((prev) => prev.includes(w) ? prev.filter((x) => x !== w) : [...prev, w])}
                     className={`rounded-md px-3 py-1.5 text-sm font-medium border transition-all ${
                       weapons.includes(w)
@@ -217,6 +209,7 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
                   <button
                     key={opt}
                     type="button"
+                    disabled={isPending}
                     onClick={() => setRanked(opt)}
                     className={`rounded-md px-3 py-1.5 text-sm font-medium border transition-all ${
                       ranked === opt
@@ -244,7 +237,11 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
             placeholder="მაგ. Squad 3+1 → Erangel ranked"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            disabled={isPending}
           />
+          {state.errors?.title && (
+            <p className="text-xs text-destructive">{state.errors.title[0]}</p>
+          )}
         </div>
       )}
 
@@ -257,24 +254,37 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
           placeholder="დაწერე რა ტიპის მოთამაშეებს ეძებ, რა საათებში თამაშობ, რა მოლოდინი გაქვს."
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+          disabled={isPending}
         />
+        {state.errors?.description && (
+          <p className="text-xs text-destructive">{state.errors.description[0]}</p>
+        )}
       </div>
 
       {!selectedModes.includes("1 vs 1") && (
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="rank">რანკი</Label>
-            <Input id="rank" placeholder="მაგ. Crown II+" value={rank} onChange={(e) => setRank(e.target.value)} />
+            <Input
+              id="rank"
+              name="rank"
+              placeholder="მაგ. Crown II+"
+              value={rank}
+              onChange={(e) => setRank(e.target.value)}
+              disabled={isPending}
+            />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="slots">ადგილების რაოდენობა</Label>
+            <Label htmlFor="slotsTotal">ადგილების რაოდენობა</Label>
             <Input
-              id="slots"
+              id="slotsTotal"
+              name="slotsTotal"
               type="number"
               min={1}
               max={10}
               value={slots}
               onChange={(e) => setSlots(e.target.value)}
+              disabled={isPending}
             />
           </div>
         </div>
@@ -283,22 +293,24 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
       <div className="flex items-center gap-2">
         <input
           type="checkbox"
-          id="voice"
+          id="voiceRequired"
+          name="voiceRequired"
           checked={voice}
           onChange={(e) => setVoice(e.target.checked)}
+          disabled={isPending}
           className="h-4 w-4 rounded border-border bg-background accent-primary"
         />
-        <Label htmlFor="voice" className="font-normal">
+        <Label htmlFor="voiceRequired" className="font-normal">
           🎙 Voice chat აუცილებელია
         </Label>
       </div>
 
       <div className="flex justify-end gap-2 pt-2">
-        <Button type="button" variant="ghost" onClick={() => router.back()}>
+        <Button type="button" variant="ghost" onClick={() => router.back()} disabled={isPending}>
           გაუქმება
         </Button>
-        <Button type="submit" disabled={loading}>
-          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button type="submit" disabled={isPending}>
+          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           დაპოსტვა
         </Button>
       </div>

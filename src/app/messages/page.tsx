@@ -104,53 +104,68 @@ export default async function MessagesPage() {
             {items.map((c) => {
               const name = c.other?.display_name ?? c.other?.username ?? "user";
               return (
-                <Link key={c.id} href={`/messages/${c.id}`} className="block">
-                  <article
-                    className={`group relative flex items-center gap-3 bg-[var(--gr-bg-1)] p-3 transition-all duration-200 hover:-translate-y-0.5 gr-sweep ${
-                      c.unread > 0
-                        ? "ring-1 ring-[var(--gr-violet)]/40 hover:ring-[var(--gr-violet-hi)]"
-                        : "ring-1 ring-[var(--gr-border)] hover:ring-[var(--gr-border-hi)]"
-                    }`}
-                    style={{ clipPath: cutSm }}
+                <Link key={c.id} href={`/messages/${c.id}`} className="group block transition-transform hover:-translate-y-0.5 duration-300">
+                  <div
+                    className="relative isolate transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)]"
+                    style={{
+                      background: c.unread > 0 
+                        ? 'var(--card-border-hover, rgba(139,92,246,0.55))' 
+                        : 'var(--card-border-hover, rgba(255,255,255,0.15))',
+                      padding: 1,
+                      clipPath: cutSm
+                    }}
                   >
-                    {c.unread > 0 && (
-                      <span aria-hidden className="absolute left-0 top-0 h-full w-[3px] bg-[var(--gr-violet)] shadow-[0_0_10px_rgba(139,92,246,0.7)]" />
-                    )}
-                    <UserAvatar
-                      username={c.other?.username ?? "user"}
-                      displayName={c.other?.display_name ?? undefined}
-                      avatarUrl={c.other?.avatar_url}
-                      size="md"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="truncate font-semibold text-[var(--gr-text)] group-hover:text-[var(--gr-violet-hi)]">
-                          {name}
-                        </span>
-                        {c.lastMessage && (
-                          <span className="ml-auto shrink-0 text-[10px] uppercase tracking-[0.1em] text-[var(--gr-text-dim)]">
-                            {new Date(c.lastMessage.created_at).toLocaleString("ka-GE", {
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
-                        )}
+                    <article
+                      className="relative flex items-center gap-3 bg-[var(--gr-bg-1)] p-3 overflow-hidden"
+                      style={{ clipPath: cutSm }}
+                    >
+                      {/* Hover Effects */}
+                      <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
+                      <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
+
+                      {c.unread > 0 && (
+                        <span aria-hidden className="absolute left-0 top-0 h-full w-[3px] bg-[var(--gr-violet)] shadow-[0_0_10px_rgba(139,92,246,0.7)] z-[6]" />
+                      )}
+                      
+                      <div className="relative z-10 flex items-center gap-3 w-full">
+                        <UserAvatar
+                          username={c.other?.username ?? "user"}
+                          displayName={c.other?.display_name ?? undefined}
+                          avatarUrl={c.other?.avatar_url}
+                          size="md"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate font-semibold text-[var(--gr-text)] group-hover:text-[var(--gr-violet-hi)]">
+                              {name}
+                            </span>
+                            {c.lastMessage && (
+                              <span className="ml-auto shrink-0 text-[10px] uppercase tracking-[0.1em] text-[var(--gr-text-dim)]">
+                                {new Date(c.lastMessage.created_at).toLocaleString("ka-GE", {
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-0.5 flex items-center gap-2">
+                            <p className={`truncate text-[12.5px] ${c.unread > 0 ? "text-[var(--gr-text)]" : "text-[var(--gr-text-mute)]"}`}>
+                              {c.lastMessage?.sender_id === user.id ? "შენ: " : ""}
+                              {c.lastMessage?.body ?? "ცარიელი მიმოწერა"}
+                            </p>
+                            {c.unread > 0 && (
+                              <Pill tone="accent" className="ml-auto shrink-0">
+                                {c.unread}
+                              </Pill>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="mt-0.5 flex items-center gap-2">
-                        <p className={`truncate text-[12.5px] ${c.unread > 0 ? "text-[var(--gr-text)]" : "text-[var(--gr-text-mute)]"}`}>
-                          {c.lastMessage?.sender_id === user.id ? "შენ: " : ""}
-                          {c.lastMessage?.body ?? "ცარიელი მიმოწერა"}
-                        </p>
-                        {c.unread > 0 && (
-                          <Pill tone="accent" className="ml-auto shrink-0">
-                            {c.unread}
-                          </Pill>
-                        )}
-                      </div>
-                    </div>
-                  </article>
+                    </article>
+                  </div>
                 </Link>
               );
             })}

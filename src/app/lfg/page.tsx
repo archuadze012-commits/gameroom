@@ -54,14 +54,12 @@ export default async function LfgPage({
     favoriteSlugs = (profile?.favorite_game_slugs as string[] | null) ?? [];
   }
 
-  const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
   let query = supabase
     .from("lfg_posts")
     .select(
       "id, game_slug, title, description, rank, region, slots_total, voice_required, created_at, profiles!lfg_posts_author_id_fkey(username, display_name, avatar_url)"
     )
     .is("deleted_at", null)
-    .gt("created_at", tenMinAgo)
     .order("created_at", { ascending: false })
     .limit(100);
 
@@ -70,7 +68,9 @@ export default async function LfgPage({
   if (params.region) query = query.eq("region", params.region);
   if (params.voice === "1") query = query.eq("voice_required", true);
 
-  const { data } = await query;
+  const { data, error } = await query;
+  if (error) console.error("LFG Query Error:", error);
+  console.log("LFG Page fetched posts count:", data?.length, "Session:", !!session);
   const posts = (data ?? []) as unknown as LfgRow[];
 
   return (

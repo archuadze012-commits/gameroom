@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getRequestOriginFromHeaders } from "@/lib/url";
+import { signupRateLimit } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin: requestOrigin } = new URL(request.url);
@@ -56,6 +57,24 @@ export async function GET(request: NextRequest) {
           .maybeSingle();
 
         if (!existing) {
+          // ── IP Rate Limit: max 2 new signups per IP per day ────────
+          const clientIp =
+            request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+            request.headers.get("x-real-ip") ??
+            "unknown";
+          const allowed = signupRateLimit(clientIp);
+          if (!allowed) {
+            console.warn(
+              `[auth/callback] signup rate-limited for IP ${clientIp}`
+            );
+            return NextResponse.redirect(
+              `${origin}/auth/login?error=${encodeURIComponent(
+                "დღეში მაქსიმუმ 2 ახალი ანგარიშის რეგისტრაცია შესაძლებელია ერთი IP მისამართიდან. სცადე ხვალ."
+              )}`
+            );
+          }
+          // ────────────────────────────────────────────────────────────
+
           await supabase.from("profiles").insert({
             id: user.id,
             username: savedUsername ?? fallbackUsername,

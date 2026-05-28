@@ -89,25 +89,53 @@ export default async function GamesCatalogPage() {
               {favGames.map((g) => (
                 <article
                   key={g.slug}
-                  className="group relative isolate transition-transform duration-200 hover:-translate-y-1"
-                  style={{ background: cardBorder, padding: 1, clipPath: cutLg }}
+                  className="group relative isolate transition-all duration-300 hover:-translate-y-1 hover:[--card-border-hover:rgba(220,38,38,0.8)]"
+                  style={{ background: 'var(--card-border-hover, ' + cardBorder + ')', padding: 1, clipPath: cutLg }}
                 >
-                  <div className="relative h-64 overflow-hidden bg-[var(--gr-bg-1)] gr-sweep" style={{ clipPath: cutLg }}>
+                  <div className="relative h-52 overflow-hidden bg-[var(--gr-bg-1)]" style={{ clipPath: cutLg }}>
+                    {/* Top Glow Border */}
+                    <span aria-hidden className="absolute left-0 top-0 z-10 h-[1.5px] w-full bg-[var(--gr-grad-violet)]" />
+
+                    {/* Game Cover Background */}
                     {g.coverUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={g.coverUrl} alt={g.nameKa} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                      <img 
+                        src={g.coverUrl} 
+                        alt={g.nameKa} 
+                        className="absolute inset-0 h-full w-full object-cover opacity-98 transition-transform duration-500 group-hover:opacity-100" 
+                      />
                     ) : (
-                      <div className={`absolute inset-0 bg-gradient-to-br ${g.accent}`} />
+                      <div className={`absolute inset-0 bg-gradient-to-br ${g.accent} opacity-20`} />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)] via-[var(--gr-bg-0)]/40 to-transparent" />
-                    <Link href={`/games/${g.slug}`} className="absolute inset-0 z-0" aria-label={g.nameKa} />
-                    <div className="absolute right-3 top-3 z-10 pointer-events-auto">
-                      <FavoriteGameButton slug={g.slug} />
+
+                    {/* Ambient Gradients */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-cyan-500/5 opacity-40" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-[var(--gr-bg-0)]/70 via-[var(--gr-bg-0)]/15 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)]/80 via-[var(--gr-bg-0)]/5 to-transparent" />
+
+                    {/* Atmosphere Circle */}
+                    <div aria-hidden className="absolute -left-8 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full bg-white/5 blur-xl transition-transform duration-500 group-hover:scale-125" />
+
+                    {/* Laser lines left */}
+                    <div aria-hidden className="absolute inset-y-0 left-[7.5%] w-[1px] bg-[var(--gr-violet)]/40 shadow-[0_0_12px_rgba(139,92,246,0.5)]" />
+                    <div aria-hidden className="absolute inset-y-0 left-[5.5%] w-[2px] bg-[var(--gr-violet)]/55 shadow-[0_0_15px_rgba(139,92,246,0.6)]" />
+
+                    {/* Colored accent block on the left edge */}
+                    <div aria-hidden className="absolute left-0 top-0 h-full w-[6%] bg-[linear-gradient(180deg,rgba(34,211,238,0.9),rgba(139,92,246,0.25))] [clip-path:polygon(0_0,68%_0,100%_100%,0_100%)] opacity-80" />
+
+                    <Link href={`/games/${g.slug}`} className="absolute inset-0 z-10" aria-label={g.nameKa} />
+                    
+                    {/* Bottom Details (Game Name) */}
+                    <div className="absolute bottom-4 left-[6.5%] right-4 z-20">
+                      <h3 className="font-display text-[18px] font-bold uppercase tracking-tight text-white transition-colors group-hover:text-[var(--gr-violet-hi)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]">
+                        {g.nameKa}
+                      </h3>
                     </div>
-                    <div className="pointer-events-none absolute bottom-0 left-0 right-0 p-4">
-                      <h3 className="font-display text-[18px] font-bold uppercase tracking-tight text-white transition-colors group-hover:text-[var(--gr-violet-hi)]">{g.nameKa}</h3>
-                      <p className="mt-0.5 text-[11px] uppercase tracking-[0.12em] text-white/60">{g.players.toLocaleString("en-US")} მოთამაშე</p>
-                    </div>
+
+                    {/* Hover Effects (Button Style) */}
+                    <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
+                    <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
                   </div>
                 </article>
               ))}
@@ -128,70 +156,57 @@ export default async function GamesCatalogPage() {
             return (
               <article
                   key={g.slug}
-                  className="group relative isolate transition-transform duration-200 hover:-translate-y-1"
-                  style={{ background: cardBorder, padding: 1, clipPath: cutLg }}
+                  className="group relative isolate transition-all duration-300 hover:-translate-y-1 hover:[--card-border-hover:rgba(220,38,38,0.8)]"
+                  style={{ background: 'var(--card-border-hover, ' + cardBorder + ')', padding: 1, clipPath: cutLg }}
                 >
                   <div
-                    className="relative h-64 overflow-hidden bg-[var(--gr-bg-1)] gr-sweep"
+                    className="relative h-52 overflow-hidden bg-[var(--gr-bg-1)]"
                     style={{ clipPath: cutLg }}
                   >
+                    {/* Top Glow Border */}
+                    <span aria-hidden className="absolute left-0 top-0 z-10 h-[1.5px] w-full bg-[var(--gr-grad-violet)]" />
+
+                    {/* Game Cover Background */}
                     {g.coverUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={g.coverUrl}
                         alt={g.nameKa}
-                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        className="absolute inset-0 h-full w-full object-cover opacity-98 transition-transform duration-500 group-hover:opacity-100"
                       />
                     ) : (
-                      <div className={`absolute inset-0 bg-gradient-to-br ${g.accent}`} />
+                      <div className={`absolute inset-0 bg-gradient-to-br ${g.accent} opacity-20`} />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)] via-[var(--gr-bg-0)]/40 to-transparent" />
 
-                    {/* rank badge */}
-                    <div className="absolute left-3 top-3">
-                      <span
-                        className={`grid h-7 w-7 place-items-center text-[12px] font-bold tabular-nums ${rankBg}`}
-                        style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%)" }}
-                      >
-                        {i + 1}
-                      </span>
-                    </div>
+                    {/* Ambient Gradients */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-cyan-500/5 opacity-40" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-[var(--gr-bg-0)]/70 via-[var(--gr-bg-0)]/15 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)]/80 via-[var(--gr-bg-0)]/5 to-transparent" />
+
+                    {/* Atmosphere Circle */}
+                    <div aria-hidden className="absolute -left-8 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full bg-white/5 blur-xl transition-transform duration-500 group-hover:scale-125" />
+
+                    {/* Laser lines left */}
+                    <div aria-hidden className="absolute inset-y-0 left-[7.5%] w-[1px] bg-[var(--gr-violet)]/40 shadow-[0_0_12px_rgba(139,92,246,0.5)]" />
+                    <div aria-hidden className="absolute inset-y-0 left-[5.5%] w-[2px] bg-[var(--gr-violet)]/55 shadow-[0_0_15px_rgba(139,92,246,0.6)]" />
+
+                    {/* Colored accent block on the left edge */}
+                    <div aria-hidden className="absolute left-0 top-0 h-full w-[6%] bg-[linear-gradient(180deg,rgba(34,211,238,0.9),rgba(139,92,246,0.25))] [clip-path:polygon(0_0,68%_0,100%_100%,0_100%)] opacity-80" />
 
                     {/* stretched link behind everything */}
-                    <Link href={`/games/${g.slug}`} className="absolute inset-0 z-0" aria-label={g.nameKa} />
+                    <Link href={`/games/${g.slug}`} className="absolute inset-0 z-10" aria-label={g.nameKa} />
 
-                    {/* favourite button — top right, above stretched link */}
-                    <div className="absolute right-3 top-3 z-10 pointer-events-auto">
-                      <FavoriteGameButton slug={g.slug} />
+                    {/* Bottom Details (Game Name) */}
+                    <div className="absolute bottom-4 left-[6.5%] right-4 z-20">
+                      <h3 className="font-display text-[18px] font-bold uppercase tracking-tight text-white transition-colors group-hover:text-[var(--gr-violet-hi)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]">
+                        {g.nameKa}
+                      </h3>
                     </div>
 
-                    {/* bottom content */}
-                    <div className="pointer-events-none absolute bottom-0 left-0 right-0 p-4">
-                      <div className="flex items-end justify-between gap-3">
-                        <div className="min-w-0">
-                          <h3 className="font-display text-[18px] font-bold uppercase tracking-tight text-white transition-colors group-hover:text-[var(--gr-violet-hi)]">
-                            {g.nameKa}
-                          </h3>
-                          <p className="mt-0.5 text-[11px] uppercase tracking-[0.12em] text-white/60">
-                            {g.players.toLocaleString("en-US")} მოთამაშე
-                          </p>
-                        </div>
-                        <div className="flex flex-col items-end gap-1.5">
-                          <Pill tone="accent" icon={<Heart className="h-3 w-3 fill-current" />}>
-                            {g.favoritedBy}
-                          </Pill>
-                          <Pill tone="online" icon={<Radio className="h-3 w-3" />}>
-                            {g.online}
-                          </Pill>
-                        </div>
-                      </div>
-                      {g.liveLfg > 0 && (
-                        <div className="mt-2 flex items-center gap-1.5 text-[11px] text-[var(--gr-amber)]">
-                          <UsersIcon className="h-3 w-3" />
-                          <span className="tabular-nums">{g.liveLfg}</span> LIVE ლოკალი
-                        </div>
-                      )}
-                    </div>
+                    {/* Hover Effects (Button Style) */}
+                    <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
+                    <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
                   </div>
                 </article>
             );

@@ -4,10 +4,14 @@ import { ArrowLeft, Pin, MessageCircle, Eye, Plus } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { ChevronButton } from "@/components/ui/chevron-button";
 import { Pill } from "@/components/ui/pill";
-import { mockForumCategories, mockForumThreads } from "@/lib/mock-data";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { formatDistanceToNow } from "date-fns";
+import { ka } from "date-fns/locale";
 import { getForumTheme } from "@/lib/forum-themes";
 
 const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
+
+export const dynamic = "force-dynamic";
 
 export default async function ForumCategoryPage({
   params,
@@ -15,10 +19,51 @@ export default async function ForumCategoryPage({
   params: Promise<{ category: string }>;
 }) {
   const { category } = await params;
-  const cat = mockForumCategories.find((c) => c.slug === category);
+  const supabase = await createSupabaseServerClient();
+
+  // Fetch category
+  const { data: cat } = await supabase
+    .from("forum_categories")
+    .select("id, name, slug, description")
+    .eq("slug", category)
+    .single();
+
   if (!cat) notFound();
+
+  // Fetch threads belonging to the category
+  const { data: dbThreads } = await supabase
+    .from("forum_threads")
+    .select(`
+      id,
+      title,
+      slug,
+      pinned,
+      views,
+      last_reply_at,
+      created_at,
+      profiles:author_id (
+        username
+      ),
+      forum_posts (
+        id
+      )
+    `)
+    .eq("category_id", cat.id)
+    .order("pinned", { ascending: false })
+    .order("last_reply_at", { ascending: false });
+
   const theme = getForumTheme(category);
-  const threads = mockForumThreads[category] ?? [];
+  const threads = (dbThreads || []).map((t: any) => ({
+    id: t.id,
+    slug: t.slug,
+    title: t.title,
+    pinned: t.pinned,
+    author: t.profiles?.username || "Anonymous",
+    lastReplyAgo: formatDistanceToNow(new Date(t.last_reply_at || t.created_at), { addSuffix: true, locale: ka }),
+    replies: Math.max(0, (t.forum_posts?.length || 0) - 1),
+    views: t.views,
+  }));
+
   const pinned = threads.filter((t) => t.pinned);
   const regular = threads.filter((t) => !t.pinned);
 
@@ -48,41 +93,73 @@ export default async function ForumCategoryPage({
         <div className="mt-10 space-y-2">
           {[...pinned, ...regular].map((thread) => (
             <Link key={thread.slug} href={`/forum/${cat.slug}/${thread.slug}`} className="block">
-              <article
-                className={`group relative bg-[var(--gr-bg-1)] p-4 transition-all duration-200 hover:-translate-y-0.5 gr-sweep ${
-                  thread.pinned
-                    ? "ring-1 ring-[var(--gr-amber)]/30 hover:ring-[var(--gr-amber)]/60"
-                    : "ring-1 ring-[var(--gr-border)] hover:ring-[var(--gr-border-hi)]"
-                }`}
-                style={{ clipPath: cutSm }}
+              {/* Outer border wrapper */}
+              <div
+                className="group relative isolate transition-all duration-300 hover:-translate-y-0.5 hover:[--card-border:rgba(236,72,153,0.85)]"
+                style={{
+                  clipPath: cutSm,
+                  background: thread.pinned
+                    ? "var(--card-border, rgba(245,165,36,0.55))"
+                    : "var(--card-border, rgba(167,139,250,0.55))",
+                  padding: 1,
+                }}
               >
-                {thread.pinned && (
-                  <span aria-hidden className="absolute left-0 top-0 h-full w-[3px] bg-[var(--gr-amber)] shadow-[0_0_10px_rgba(245,165,36,0.6)]" />
-                )}
-                <div className="flex items-center gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      {thread.pinned && (
-                        <Pill tone="amber" icon={<Pin className="h-3 w-3" />}>pinned</Pill>
-                      )}
-                      <h3 className="truncate font-display text-[15px] font-bold uppercase tracking-tight text-[var(--gr-text)] group-hover:text-[var(--gr-violet-hi)]">
-                        {thread.title}
-                      </h3>
+                {/* Inner card */}
+                <div
+                  className="relative overflow-hidden bg-[var(--gr-bg-1)] p-4"
+                  style={{ clipPath: cutSm }}
+                >
+                  {/* Permanent top accent line */}
+                  <span aria-hidden className="absolute left-0 top-0 z-10 h-[2px] w-full"
+                    style={{ background: thread.pinned
+                      ? "linear-gradient(90deg,transparent,rgba(245,165,36,0.8),transparent)"
+                      : "linear-gradient(90deg,transparent,rgba(167,139,250,0.8),transparent)" }} />
+                  {/* Magenta laser sweeper on hover */}
+                  <span aria-hidden
+                    className="pointer-events-none absolute left-0 top-0 z-10 h-[2px] w-full translate-x-[-100%] opacity-0
+                               group-hover:translate-x-[100%] group-hover:opacity-100
+                               group-hover:transition-transform group-hover:duration-700"
+                    style={{ background: "linear-gradient(90deg,transparent,rgba(236,72,153,0.9),transparent)" }} />
+                  {/* Subtle glow always */}
+                  <div aria-hidden className="pointer-events-none absolute inset-0"
+                    style={{ background: thread.pinned
+                      ? "radial-gradient(ellipse at 50% 0%,rgba(245,165,36,0.09) 0%,transparent 65%)"
+                      : "radial-gradient(ellipse at 50% 0%,rgba(167,139,250,0.09) 0%,transparent 65%)" }} />
+                  {/* Magenta glow on hover */}
+                  <div aria-hidden
+                    className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                    style={{ background: "radial-gradient(ellipse at 50% 0%,rgba(236,72,153,0.11) 0%,transparent 65%)" }} />
+
+                  {/* Pinned amber left border */}
+                  {thread.pinned && (
+                    <span aria-hidden className="absolute left-0 top-0 z-20 h-full w-[3px] bg-[var(--gr-amber)] shadow-[0_0_10px_rgba(245,165,36,0.6)]" />
+                  )}
+
+                  <div className="flex items-center gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        {thread.pinned && (
+                          <Pill tone="amber" icon={<Pin className="h-3 w-3" />}>pinned</Pill>
+                        )}
+                        <h3 className="truncate font-display text-[15px] font-bold uppercase tracking-tight text-[var(--gr-text)] group-hover:text-[var(--gr-violet-hi)]">
+                          {thread.title}
+                        </h3>
+                      </div>
+                      <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-[var(--gr-text-dim)]">
+                        {thread.author} · {thread.lastReplyAgo}
+                      </p>
                     </div>
-                    <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-[var(--gr-text-dim)]">
-                      {thread.author} · {thread.lastReplyAgo}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <Pill tone={theme.accent === "amber" ? "amber" : theme.accent === "magenta" ? "violet" : theme.accent} icon={<MessageCircle className="h-3 w-3" />}>
-                      {thread.replies}
-                    </Pill>
-                    <Pill tone="neutral" icon={<Eye className="h-3 w-3" />} className="hidden sm:inline-flex">
-                      {thread.views}
-                    </Pill>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Pill tone={theme.accent === "amber" ? "amber" : theme.accent === "magenta" ? "violet" : theme.accent} icon={<MessageCircle className="h-3 w-3" />}>
+                        {thread.replies}
+                      </Pill>
+                      <Pill tone="neutral" icon={<Eye className="h-3 w-3" />} className="hidden sm:inline-flex">
+                        {thread.views}
+                      </Pill>
+                    </div>
                   </div>
                 </div>
-              </article>
+              </div>
             </Link>
           ))}
         </div>
@@ -91,6 +168,4 @@ export default async function ForumCategoryPage({
   );
 }
 
-export function generateStaticParams() {
-  return mockForumCategories.map((c) => ({ category: c.slug }));
-}
+

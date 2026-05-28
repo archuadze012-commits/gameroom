@@ -113,7 +113,7 @@ export function PostContent({ content, mediaUrls, authorRole, authorVerified }: 
 
   return (
     <div className="space-y-3">
-      <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+      <p className="text-[14.5px] leading-relaxed whitespace-pre-wrap break-words">
         {parts.map((p, i) =>
           typeof p === "string" ? (
             <span key={i}>{p}</span>

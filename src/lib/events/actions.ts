@@ -9,29 +9,34 @@ async function spinOpen(boxId: string): Promise<OpenBoxResult> {
   const { data: { user } } = await auth.auth.getUser();
   if (!user) return { success: false, error: "not_authenticated" };
 
-  const supabase = createSupabaseAdminClient();
-  const { data, error } = await supabase.rpc("open_box_as", {
-    p_user_id: user.id,
-    p_box_id: boxId,
-  });
+  try {
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase.rpc("open_box_as", {
+      p_user_id: user.id,
+      p_box_id: boxId,
+    });
 
-  if (error) return { success: false, error: "unknown" };
+    if (error) return { success: false, error: "unknown" };
 
-  const result = data as {
-    success: boolean;
-    error?: string;
-    item?: OpenedBoxItem;
-  };
+    const result = data as {
+      success: boolean;
+      error?: string;
+      item?: OpenedBoxItem;
+    };
 
-  if (!result.success) {
-    const e = result.error;
-    if (e === "insufficient_funds" || e === "box_not_found" || e === "not_authenticated") {
-      return { success: false, error: e };
+    if (!result.success) {
+      const e = result.error;
+      if (e === "insufficient_funds" || e === "box_not_found" || e === "not_authenticated") {
+        return { success: false, error: e };
+      }
+      return { success: false, error: "unknown" };
     }
+
+    return { success: true, item: result.item as OpenedBoxItem };
+  } catch (err) {
+    console.error("spinOpen error:", err);
     return { success: false, error: "unknown" };
   }
-
-  return { success: true, item: result.item as OpenedBoxItem };
 }
 
 export async function openBox(boxId: string): Promise<OpenBoxResult> {
@@ -47,37 +52,42 @@ export async function openBoxBundle(
   const { data: { user } } = await auth.auth.getUser();
   if (!user) return { success: false, error: "not_authenticated" };
 
-  const supabase = createSupabaseAdminClient();
-  const { data, error } = await supabase.rpc("open_box_bundle_as", {
-    p_user_id: user.id,
-    p_box_id: boxId,
-    p_paid_opens: paidOpens,
-    p_total_opens: totalOpens,
-  });
+  try {
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase.rpc("open_box_bundle_as", {
+      p_user_id: user.id,
+      p_box_id: boxId,
+      p_paid_opens: paidOpens,
+      p_total_opens: totalOpens,
+    });
 
-  if (error) return { success: false, error: "unknown" };
+    if (error) return { success: false, error: "unknown" };
 
-  const result = data as
-    | {
-        success: true;
-        items: OpenedBoxItem[];
-        paidOpens: number;
-        totalOpens: number;
-        bonusAwarded: number;
+    const result = data as
+      | {
+          success: true;
+          items: OpenedBoxItem[];
+          paidOpens: number;
+          totalOpens: number;
+          bonusAwarded: number;
+        }
+      | {
+          success: false;
+          error?: string;
+        };
+
+    if (!result.success) {
+      const rpcError = result.error;
+      if (rpcError === "insufficient_funds" || rpcError === "box_not_found" || rpcError === "not_authenticated") {
+        return { success: false, error: rpcError };
       }
-    | {
-        success: false;
-        error?: string;
-      };
 
-  if (!result.success) {
-    const rpcError = result.error;
-    if (rpcError === "insufficient_funds" || rpcError === "box_not_found" || rpcError === "not_authenticated") {
-      return { success: false, error: rpcError };
+      return { success: false, error: "unknown" };
     }
 
+    return result;
+  } catch (err) {
+    console.error("openBoxBundle error:", err);
     return { success: false, error: "unknown" };
   }
-
-  return result;
 }

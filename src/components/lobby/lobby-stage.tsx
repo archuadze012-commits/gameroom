@@ -33,7 +33,7 @@ const MODES: ModeDef[] = [
   { key: "1v1", label: "1v1", href: "/lfg?mode=1v1", icon: Swords },
   { key: "practice", label: "პრაქტიკული თამაშები", href: "/lfg?mode=practice", icon: Target },
   { key: "rooms", label: "რუმები", href: "/rooms/new?game=pubg-mobile", icon: DoorOpen },
-  { key: "giveaway", label: "გათამაშება", href: "/tamashebi", icon: Gift },
+  { key: "giveaway", label: "გათამაშება", href: "/free-pc-games", icon: Gift },
   { key: "tournaments", label: "ტურნირები", href: "/tournaments", icon: Trophy },
 ];
 
