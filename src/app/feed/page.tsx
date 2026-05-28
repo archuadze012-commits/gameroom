@@ -66,7 +66,7 @@ export default async function FeedPage() {
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
-      <div className="container relative mx-auto max-w-2xl px-4 py-10 lg:py-14">
+      <div className="container relative mx-auto max-w-6xl px-4 py-10 lg:py-14">
         <FeedClient
           currentUser={{
             id: user.id,

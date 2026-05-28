@@ -46,7 +46,6 @@ export default async function LfgDetailPage({
   const { id } = await params;
 
   const supabase = await createSupabaseServerClient();
-  const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
   const { data } = await supabase
     .from("lfg_posts")
     .select(
@@ -54,7 +53,6 @@ export default async function LfgDetailPage({
     )
     .eq("id", id)
     .is("deleted_at", null)
-    .gt("created_at", tenMinAgo)
     .maybeSingle();
 
   if (!data) notFound();

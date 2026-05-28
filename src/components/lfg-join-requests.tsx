@@ -7,6 +7,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ka } from "date-fns/locale";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type Response = {
@@ -30,6 +31,26 @@ export function LfgJoinRequests({
   initialResponses: Response[];
 }) {
   const [responses, setResponses] = useState<Response[]>(initialResponses);
+  const [isProcessing, setIsProcessing] = useState<string | null>(null);
+
+  async function handleAction(responseId: string, action: "accept" | "reject") {
+    setIsProcessing(responseId);
+    try {
+      const res = await fetch(`/api/lfg/${postId}/respond`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ responseId, action }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || "შეცდომა მოხდა");
+      }
+    } catch (e) {
+      alert("შეცდომა კავშირისას");
+    } finally {
+      setIsProcessing(null);
+    }
+  }
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
@@ -123,6 +144,28 @@ export function LfgJoinRequests({
                     <p className="mt-1 whitespace-pre-line text-sm text-foreground/90">
                       {r.message}
                     </p>
+                  )}
+                  {r.status === "pending" && (
+                    <div className="mt-3 flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className="h-8 gap-1 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
+                        disabled={isProcessing === r.id}
+                        onClick={() => handleAction(r.id, "accept")}
+                      >
+                        <Check className="h-3.5 w-3.5" /> მიღება
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 gap-1 border-destructive/40 text-destructive hover:bg-destructive/10"
+                        disabled={isProcessing === r.id}
+                        onClick={() => handleAction(r.id, "reject")}
+                      >
+                        <X className="h-3.5 w-3.5" /> უარყოფა
+                      </Button>
+                    </div>
                   )}
                 </div>
               </li>

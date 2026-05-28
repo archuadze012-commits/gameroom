@@ -88,7 +88,7 @@ export default async function CrackedGamePage({
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8 space-y-6">
       <Link
-        href="/tamashebi"
+        href="/free-pc-games"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-3.5 w-3.5" /> თამაშები

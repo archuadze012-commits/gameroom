@@ -23,12 +23,6 @@ export function HomeFavoriteLobbies({ favoriteSlugs }: { favoriteSlugs: string[]
             ჩემი თამაშები
           </h2>
         </div>
-        <Link
-          href="/games"
-          className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gr-violet-hi)] hover:text-[var(--gr-violet)]"
-        >
-          ყველა →
-        </Link>
       </div>
 
       {lobbies.length === 1 ? (

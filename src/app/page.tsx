@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Heart, MessageCircle, Search, MessageSquare, Bell, Gamepad2, ShoppingBag, Rocket, Users, Trophy, Flame } from "lucide-react";
-import { mockGames } from "@/lib/mock-data";
+import { Heart, MessageCircle, Search, MessageSquare, Bell, Gamepad2, ShoppingBag, Rocket, Users, Trophy, Flame, Monitor, Smartphone } from "lucide-react";
+import { mockGames, crackedGames } from "@/lib/mock-data";
 import { HomeNotificationsWidget } from "@/components/home-notifications-widget";
+import { HomeSearchWidget } from "@/components/home-search-widget";
 import { getSession } from "@/lib/auth";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -12,6 +13,9 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { DisplayHeading } from "@/components/ui/display-heading";
 import { ChevronButton } from "@/components/ui/chevron-button";
 import { Pill } from "@/components/ui/pill";
+import { getSiteContentValue } from "@/lib/site-content";
+import { Separator } from "@/components/ui/separator";
+import { PostReactions } from "@/app/feed/[id]/post-reactions";
 
 type HomePost = {
   id: string;
@@ -40,18 +44,27 @@ const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,2
 
 export default async function HomePage() {
   const user = await getSession().catch(() => null);
+  const guestHero = await getSiteContentValue("home.guest.hero", {
+    headline: "ყველაფერი, რის გამოც თამაშები გიყვარს",
+    logoUrl: "/logo.png",
+  });
 
   let recentPosts: HomePost[] = [];
   try {
     const supabase = await createSupabaseServerClient();
-    const { data: postsData } = await supabase
+    const { data: postsData, error } = await supabase
       .from("posts")
       .select("id, content, media_urls, likes_count, created_at, profiles!posts_author_id_fkey(username, display_name, avatar_url)")
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(8);
+      
+    if (error) {
+      console.error("[HomePage] Supabase fetch error:", error);
+    }
     recentPosts = (postsData ?? []) as unknown as HomePost[];
-  } catch {
+  } catch (e) {
+    console.error("[HomePage] Exception during fetch:", e);
     recentPosts = [];
   }
 
@@ -68,18 +81,15 @@ export default async function HomePage() {
 
           {!user ? (
             <div className="mx-auto max-w-3xl text-center">
-              <Eyebrow tone="amber" className="justify-center inline-flex">ქართული გეიმერების სახლი</Eyebrow>
-              <DisplayHeading as="h1" size="display" className="mt-5">
-                იპოვე გუნდი ან მოწინააღმდეგე წამებში
+              <div className="flex justify-center mb-6">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={String(guestHero.logoUrl ?? "/logo.png")} alt="Gameroom" className="w-24 h-24 rounded-2xl" />
+              </div>
+              <DisplayHeading as="h1" size="lg">
+                {String(guestHero.headline ?? "ყველაფერი, რის გამოც თამაშები გიყვარს")}
               </DisplayHeading>
-              <p className="mx-auto mt-6 max-w-2xl text-balance text-[15px] leading-relaxed text-[var(--gr-text-mute)]">
-                შექმენი ან იპოვე გუნდი და ითამაშე შენი საყვარელი თამაშები ქართველებთან ერთად
-              </p>
-              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <ChevronButton href="/auth/signup" variant="violet" size="lg">
-                  <Rocket className="h-4 w-4" /> დარეგისტრირდი
-                </ChevronButton>
-                <div className="w-full sm:w-auto"><GoogleSignInButton className="w-full sm:w-auto" /></div>
+              <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+                <GoogleSignInButton className="w-full sm:w-auto min-w-[280px]" />
               </div>
             </div>
           ) : (
@@ -87,42 +97,58 @@ export default async function HomePage() {
               {/* quick nav */}
               <div className="mt-6 hidden md:grid md:grid-cols-5 gap-3">
                 {QUICK_NAV.map(({ icon: Icon, label, href }) => (
-                  <Link
+                  <div
                     key={href}
-                    href={href}
-                    className="group relative bg-[var(--gr-bg-1)] p-4 transition-transform hover:-translate-y-0.5 gr-sweep"
-                    style={{ clipPath: cutClipSm }}
+                    className="relative isolate transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)]"
+                    style={{ background: 'var(--card-border-hover, transparent)', padding: 1, clipPath: cutClipSm }}
                   >
-                    <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
-                    <div className="flex flex-col items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-[var(--gr-text-mute)] group-hover:text-[var(--gr-text)]">
-                      <span className="grid h-10 w-10 place-items-center rounded-lg bg-[var(--gr-violet)]/12 text-[var(--gr-violet-hi)] ring-1 ring-[var(--gr-violet)]/30">
-                        <Icon className="h-5 w-5" />
-                      </span>
-                      {label}
-                    </div>
-                  </Link>
+                    <Link
+                      href={href}
+                      className="group relative bg-[var(--gr-bg-1)] p-4 block h-full w-full"
+                      style={{ clipPath: cutClipSm }}
+                    >
+                      {/* Hover Effects */}
+                      <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
+                      <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
+
+                      <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
+                      <div className="relative z-10 flex flex-col items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-[var(--gr-text-mute)] group-hover:text-[var(--gr-text)]">
+                        <span className="grid h-10 w-10 place-items-center rounded-lg bg-[var(--gr-violet)]/12 text-[var(--gr-violet-hi)] ring-1 ring-[var(--gr-violet)]/30">
+                          <Icon className="h-5 w-5" />
+                        </span>
+                        {label}
+                      </div>
+                    </Link>
+                  </div>
                 ))}
               </div>
               {/* primary CTA - posts-style card */}
               <div
-                className="relative isolate mt-4"
-                style={{ background: cardBorder, padding: 1, clipPath: cutClipMd }}
+                className="group relative isolate mt-4 transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)]"
+                style={{ background: 'var(--card-border-hover, ' + cardBorder + ')', padding: 1, clipPath: cutClipMd }}
               >
                 <div
                   className="relative overflow-hidden bg-[var(--gr-bg-1)] p-6 sm:p-7"
                   style={{ clipPath: cutClipMd }}
                 >
+                  {/* Hover Effects */}
+                  <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
+                  <div className="absolute inset-0 ring-1 ring-inset ring-transparent group-hover:ring-red-600/80 transition-shadow z-[5] pointer-events-none" />
+                  <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
+
                   <span
                     aria-hidden
                     className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]"
                   />
-                  <DisplayHeading as="h2" size="md" className="text-center">
+                  <DisplayHeading as="h2" size="md" className="text-center relative z-10">
                     იპოვე გუნდი ან მოწინააღმდეგე წამებში
                   </DisplayHeading>
-                  <p className="mx-auto mt-3 max-w-2xl text-center text-[14px] leading-relaxed text-[var(--gr-text-mute)]">
+                  <p className="mx-auto mt-3 max-w-2xl text-center text-[14px] leading-relaxed text-[var(--gr-text-mute)] relative z-10">
                     შექმენი ან იპოვე გუნდი და ითამაშე შენი საყვარელი თამაშები ქართველებთან ერთად
                   </p>
-                  <div className="mt-5 flex justify-center">
+                  <div className="mt-5 flex justify-center relative z-10">
                     <ChevronButton
                       href="/lfg"
                       variant="ghost"
@@ -134,144 +160,231 @@ export default async function HomePage() {
                   </div>
                 </div>
               </div>
-              <HomeNotificationsWidget />
             </div>
           )}
         </section>
 
         {/* â”€â”€ GAMES STRIP (mobile + tablet) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-        <section className="hidden">
-          <div className="mb-4 flex items-end justify-between">
-            <div>
-              <Eyebrow tone="violet">თამაშები</Eyebrow>
-              <DisplayHeading as="h2" size="md" className="mt-2">
-                ითამაშე ნებისმიერი
-              </DisplayHeading>
-            </div>
-            <Link href="/games" className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--gr-violet-hi)] hover:text-[var(--gr-violet)]">
-              ყველა →
-            </Link>
-          </div>
-
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-            {mockGames.map((game) => (
-              <Link key={game.slug} href={`/games/${game.slug}`} className="group flex-none w-28">
-                <div className="relative isolate" style={{ background: cardBorder, padding: 1, clipPath: cutClipSm }}>
-                  <div className="relative aspect-[3/4] w-full overflow-hidden bg-[var(--gr-bg-1)] gr-sweep" style={{ clipPath: cutClipSm }}>
-                    {game.coverUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={game.coverUrl} alt={game.nameKa} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-3xl">{game.emoji}</div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)] via-[var(--gr-bg-0)]/30 to-transparent" />
-                  </div>
-                </div>
-                <p className="mt-2 truncate text-center text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--gr-text-mute)]">{game.nameKa}</p>
-              </Link>
-            ))}
-          </div>
-
-          <Link
-            href="/shop"
-            className="mt-4 flex w-full items-center justify-center gap-2 bg-[var(--gr-bg-1)] py-3 text-[12px] font-semibold uppercase tracking-[0.14em] text-[var(--gr-violet-hi)] ring-1 ring-[var(--gr-border)] transition-colors hover:ring-[var(--gr-violet-hi)] hover:text-[var(--gr-violet)]"
-            style={{ clipPath: cutClipSm }}
-          >
-            <ShoppingBag className="h-4 w-4" /> შოპი
-          </Link>
-        </section>
-
-        {/* â”€â”€ POSTS FEED â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {!user && (
-          <section className="hidden xl:block">
-            <Link
-              href="/shop"
-              className="flex w-full items-center justify-center gap-2 bg-[var(--gr-bg-1)] py-3 text-[12px] font-semibold uppercase tracking-[0.14em] text-[var(--gr-violet-hi)] ring-1 ring-[var(--gr-border)] transition-colors hover:ring-[var(--gr-violet-hi)] hover:text-[var(--gr-violet)]"
-              style={{ clipPath: cutClipSm }}
-            >
-              <ShoppingBag className="h-4 w-4" /> შოპი
-            </Link>
-          </section>
-        )}
+          <section className="grid gap-10 lg:grid-cols-2">
+            {/* Left: Games */}
+            <div className="space-y-6">
+              <div className="flex items-end justify-between">
+                <div>
+                  <DisplayHeading as="h2" size="md" className="mt-2">
+                    თამაშები
+                  </DisplayHeading>
+                </div>
+                <Link
+                  href="/auth/login?next=%2Fgames"
+                  className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--gr-violet-hi)] transition-colors hover:text-[var(--gr-violet)]"
+                >
+                  ყველა
+                </Link>
+              </div>
 
-        <section>
-
-          {recentPosts.length === 0 ? (
-            <div
-              className="relative bg-[var(--gr-bg-1)] py-12 text-center text-[14px] text-[var(--gr-text-mute)] ring-1 ring-[var(--gr-border)]"
-              style={{ clipPath: cutClipMd }}
-            >
-              <Flame className="mx-auto mb-2 h-5 w-5 text-[var(--gr-amber)]" />
-              ჯერ არცერთი პოსტი არ არის. გახდი პირველი ვინც დაწერს!
-            </div>
-          ) : (
-            <div className="grid gap-4 xl:grid-cols-2">
-              {recentPosts.map((p) => {
-                const author = p.profiles;
-                const name = author?.display_name ?? author?.username ?? "მომხმარებელი";
-                const initial = name.slice(0, 1).toUpperCase();
-                const created = (() => {
-                  try {
-                    return formatDistanceToNow(new Date(p.created_at), { addSuffix: true, locale: ka });
-                  } catch {
-                    return "";
-                  }
-                })();
-                return (
-                  <Link key={p.id} href="/feed" className="group block">
-                    <div
-                      className="relative isolate"
-                      style={{ background: cardBorder, padding: 1, clipPath: cutClipSm }}
-                    >
-                      <div
-                        className="relative bg-[var(--gr-bg-1)] p-4 gr-sweep"
-                        style={{ clipPath: cutClipSm }}
-                      >
-                        <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
-                        <div className="flex items-start gap-3">
-                      <Avatar className="h-9 w-9 shrink-0 border border-[var(--gr-border-hi)]">
-                        <AvatarImage src={author?.avatar_url ?? undefined} alt={name} />
-                        <AvatarFallback className="bg-[var(--gr-violet)]/15 text-xs text-[var(--gr-violet-hi)]">
-                          {initial}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 text-[13px]">
-                          <span className="font-semibold text-[var(--gr-text)]">{name}</span>
-                          {created && <span className="text-[11px] text-[var(--gr-text-dim)]">· {created}</span>}
-                        </div>
-                        <p className="mt-1 line-clamp-3 whitespace-pre-line text-[13px] text-[var(--gr-text)]/90">
-                          {p.content}
-                        </p>
-                        {p.media_urls && p.media_urls.length > 0 && (
-                          <div className={`mt-2 grid gap-2 ${p.media_urls.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
-                            {p.media_urls.slice(0, 4).map((url, i) => (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                key={i}
-                                src={url}
-                                alt=""
-                                className="max-h-[420px] w-full rounded-md border border-[var(--gr-border)] bg-[var(--gr-bg-2)] object-contain"
-                              />
-                            ))}
-                          </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {mockGames.slice(0, 4).map((game) => (
+                  <Link key={game.slug} href={`/games/${game.slug}`} className="group block">
+                    <div className="relative isolate transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)]" style={{ background: 'var(--card-border-hover, ' + cardBorder + ')', padding: 1, clipPath: cutClipSm }}>
+                      <div className="relative h-24 overflow-hidden bg-[var(--gr-bg-1)]" style={{ clipPath: cutClipSm }}>
+                        {game.coverUrl && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={game.coverUrl} alt={game.nameKa} className="absolute inset-0 h-full w-full object-cover opacity-40 transition-opacity group-hover:opacity-60" />
                         )}
-                        <div className="mt-3 flex items-center gap-2">
-                          <Pill tone="accent" icon={<Heart className="h-3 w-3" />}>{p.likes_count}</Pill>
-                          <Pill tone="neutral" icon={<MessageCircle className="h-3 w-3" />}>კომენტარი</Pill>
+                        <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-1)] via-transparent to-transparent" />
+                        <div className="relative flex h-full items-end p-3 px-4">
+                          <h4 className="font-display text-[13px] font-bold uppercase tracking-tight text-[var(--gr-text)] drop-shadow-md">{game.nameKa}</h4>
                         </div>
-                      </div>
-                    </div>
+                        {/* Hover Effects (Button Style) */}
+                        <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
+                            <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
                       </div>
                     </div>
                   </Link>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          )}
-        </section>
 
-        {/* â”€â”€ BOTTOM CTA ROW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            {/* Right: Free PC Games */}
+            <div className="space-y-6">
+              <div className="flex items-end justify-between">
+                <div>
+                  <DisplayHeading as="h2" size="md" className="mt-2">
+                    PC თამაშები უფასოდ
+                  </DisplayHeading>
+                </div>
+                <Link
+                  href="/auth/login?next=%2Ffree-pc-games"
+                  className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--gr-violet-hi)] transition-colors hover:text-[var(--gr-violet)]"
+                >
+                  ყველა
+                </Link>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                {crackedGames.slice(0, 4).map((game) => (
+                  <Link key={game.id} href={`/free-pc-games/${game.id}`} className="group block">
+                    <div className="relative isolate transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)]" style={{ background: 'var(--card-border-hover, ' + cardBorder + ')', padding: 1, clipPath: cutClipSm }}>
+                      <div className="relative h-24 overflow-hidden bg-[var(--gr-bg-1)]" style={{ clipPath: cutClipSm }}>
+                        {game.coverUrl && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={game.coverUrl} alt={game.title} className="absolute inset-0 h-full w-full object-cover opacity-40 transition-opacity group-hover:opacity-60" />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-1)] via-transparent to-transparent" />
+                        <div className="relative flex h-full items-end justify-between p-3 px-4 z-10">
+                          <h4 className="font-display text-[13px] font-bold uppercase tracking-tight text-[var(--gr-text)] drop-shadow-md">{game.title}</h4>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-bold text-[var(--gr-amber)] drop-shadow-md">{game.rating}</span>
+                          </div>
+                        </div>
+                        {/* Hover Effects (Button Style) */}
+                        <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
+                            <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* â”€â”€ POSTS FEED â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* ── POSTS FEED ────────────────────────────── */}
+        {user && (
+          <section className="grid gap-6 lg:grid-cols-12">
+            <div className="lg:col-span-8 space-y-4">
+              {recentPosts.length === 0 ? (
+                <div
+                  className="relative bg-[var(--gr-bg-1)] py-12 text-center text-[14px] text-[var(--gr-text-mute)] ring-1 ring-[var(--gr-border)]"
+                  style={{ clipPath: cutClipMd }}
+                >
+                  <Flame className="mx-auto mb-2 h-5 w-5 text-[var(--gr-amber)]" />
+                  ჯერ არცერთი პოსტი არ არის. გახდი პირველი ვინც დაწერს!
+                </div>
+              ) : (
+                <div className="grid gap-4 grid-cols-1">
+                  {recentPosts.map((p) => {
+                    const author = p.profiles;
+                    const name = author?.display_name ?? author?.username ?? "მომხმარებელი";
+                    const initial = name.slice(0, 1).toUpperCase();
+                    const created = (() => {
+                      try {
+                        return formatDistanceToNow(new Date(p.created_at), { addSuffix: true, locale: ka });
+                      } catch {
+                        return "";
+                      }
+                    })();
+                    return (
+                      <div key={p.id} className="group block relative">
+                        <div
+                          className="relative isolate transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)]"
+                          style={{ background: 'var(--card-border-hover, ' + cardBorder + ')', padding: 1, clipPath: cutClipSm }}
+                        >
+                          <div
+                            className="relative bg-[var(--gr-bg-1)] overflow-hidden"
+                            style={{ clipPath: cutClipSm }}
+                          >
+                            {/* Card Link Overlay — sits at z-[1] so content at z-[2]+ can be interactive */}
+                            <Link href={`/profile/${author?.username ?? "user"}/${p.id}`} className="absolute inset-0 z-[1]" aria-label="პოსტის გახსნა" />
+
+                            {/* Hover Effects */}
+                            <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
+                            <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
+                            <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
+
+                            <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)] z-[6]" />
+                            
+                            <div className="relative z-[2] flex flex-col">
+                              {/* Author & Content */}
+                              <div className="p-4 pb-0 flex items-start gap-3">
+                                {author?.username ? (
+                                  <Link href={`/profile/${author.username}`} className="relative z-[3]">
+                                    <Avatar className="h-10 w-10 shrink-0 border border-[var(--gr-border-hi)] hover:opacity-85 transition-opacity">
+                                      <AvatarImage src={author?.avatar_url ?? undefined} alt={name} />
+                                      <AvatarFallback className="bg-[var(--gr-violet)]/15 text-sm text-[var(--gr-violet-hi)]">
+                                        {initial}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                  </Link>
+                                ) : (
+                                  <Avatar className="h-10 w-10 shrink-0 border border-[var(--gr-border-hi)]">
+                                    <AvatarImage src={author?.avatar_url ?? undefined} alt={name} />
+                                    <AvatarFallback className="bg-[var(--gr-violet)]/15 text-sm text-[var(--gr-violet-hi)]">
+                                      {initial}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-2">
+                                    {author?.username ? (
+                                      <Link href={`/profile/${author.username}`} className="relative z-[3] text-[15px] font-semibold text-[var(--gr-text)] hover:text-primary transition-colors">
+                                        {name}
+                                      </Link>
+                                    ) : (
+                                      <span className="text-[15px] font-semibold text-[var(--gr-text)]">{name}</span>
+                                    )}
+                                    {created && <span className="text-[11.5px] text-[var(--gr-text-dim)]">· {created}</span>}
+                                  </div>
+                                  <p className="mt-1 line-clamp-3 whitespace-pre-line text-[14.5px] text-[var(--gr-text)]/90 pointer-events-none select-none">
+                                    {p.content}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Full-bleed Photo */}
+                              {p.media_urls && p.media_urls.length > 0 && (
+                                <div className="mt-3 w-full border-y border-[var(--gr-border)] bg-[var(--gr-bg-2)] overflow-hidden pointer-events-none">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={p.media_urls[0]}
+                                    alt=""
+                                    className="w-full h-auto block opacity-100"
+                                  />
+                                </div>
+                              )}
+
+                              {/* Reactions */}
+                              <div className="px-4 py-1 relative z-[3] mt-2">
+                                <PostReactions postId={p.id} hideHeading />
+                              </div>
+
+                              <Separator className="border-border/40 mx-4 my-1" />
+
+                              {/* Comments — inherits card click via overlay, pill is just visual */}
+                              <div className="p-4 pt-2 flex items-center gap-2 relative z-[3]">
+                                <Link href={`/profile/${author?.username ?? "user"}/${p.id}#comments`} className="relative z-[3]">
+                                  <Pill tone="neutral" icon={<MessageCircle className="h-3 w-3" />}>კომენტარები</Pill>
+                                </Link>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            
+            {/* Sidebar Column */}
+            <div className="lg:col-span-4 space-y-6">
+              <HomeNotificationsWidget />
+              <div className="rounded-md border border-[var(--gr-border)] bg-[var(--gr-bg-1)] p-5 relative overflow-hidden">
+                <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
+                <h3 className="font-display text-[12px] font-bold uppercase tracking-[0.18em] text-[var(--gr-text-mute)] mb-4">
+                  მოთამაშეების ძებნა
+                </h3>
+                <HomeSearchWidget />
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ── BOTTOM CTA ROW ──────────────────────────────── */}
         <section className="grid gap-4 xl:grid-cols-3">
           {[
             { href: "/games", icon: Gamepad2, eyebrow: "კატალოგი", title: "თამაშები", desc: "ნახე ყველა მხარდაჭერილი თამაში." },
@@ -282,22 +395,27 @@ export default async function HomePage() {
             return (
               <Link key={item.href} href={item.href} className="group block">
                 <div
-                  className="relative isolate"
-                  style={{ background: cardBorder, padding: 1, clipPath: cutClipMd }}
+                  className="relative isolate transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)]"
+                  style={{ background: 'var(--card-border-hover, ' + cardBorder + ')', padding: 1, clipPath: cutClipMd }}
                 >
                   <div
-                    className="relative bg-[var(--gr-bg-1)] p-5 gr-sweep"
+                    className="relative bg-[var(--gr-bg-1)] p-5 overflow-hidden"
                     style={{ clipPath: cutClipMd }}
                   >
-                    <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
-                    <Icon className="h-6 w-6 text-[var(--gr-violet-hi)]" />
-                    <div className="mt-3">
+                    <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)] z-10" />
+                    <Icon className="relative z-10 h-6 w-6 text-[var(--gr-violet-hi)]" />
+                    <div className="relative z-10 mt-3">
                       <Eyebrow tone="amber">{item.eyebrow}</Eyebrow>
                       <h3 className="mt-1.5 font-display text-[18px] font-bold uppercase text-[var(--gr-text)]">
                         {item.title}
                       </h3>
                       <p className="mt-1.5 text-[12.5px] text-[var(--gr-text-mute)]">{item.desc}</p>
                     </div>
+
+                    {/* Hover Effects (Button Style) */}
+                    <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
+                    <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
                   </div>
                 </div>
               </Link>
@@ -308,4 +426,3 @@ export default async function HomePage() {
     </div>
   );
 }
-

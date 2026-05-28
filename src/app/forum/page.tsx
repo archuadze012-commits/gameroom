@@ -8,24 +8,92 @@ import { ForumTabs } from "@/components/forum/forum-tabs";
 import { TrendingStrip } from "@/components/forum/trending-strip";
 import { CategoryCard } from "@/components/forum/category-card";
 import { ForumSidebar } from "@/components/forum/forum-sidebar";
-import { mockForumCategories, mockForumThreads } from "@/lib/mock-data";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { formatDistanceToNow } from "date-fns";
+import { ka } from "date-fns/locale";
 
 export const metadata = { title: "ფორუმი" };
+export const dynamic = "force-dynamic";
 
-export default function ForumPage() {
+export default async function ForumPage() {
+  const supabase = await createSupabaseServerClient();
+
+  // Fetch categories with threads and posts
+  const { data: dbCategories } = await supabase
+    .from("forum_categories")
+    .select(`
+      id,
+      name,
+      slug,
+      description,
+      position,
+      forum_threads (
+        id,
+        title,
+        slug,
+        last_reply_at,
+        created_at,
+        pinned,
+        views,
+        profiles:author_id (
+          username
+        ),
+        forum_posts (
+          id
+        )
+      )
+    `)
+    .order("position", { ascending: true });
+
+  const categories = (dbCategories || []).map((cat: any) => {
+    const threads = cat.forum_threads || [];
+    const threadCount = threads.length;
+    const postCount = threads.reduce((sum: number, t: any) => sum + (t.forum_posts?.length || 0), 0);
+
+    // Find the last active thread
+    const sortedThreads = [...threads].sort(
+      (a, b) => new Date(b.last_reply_at || b.created_at).getTime() - new Date(a.last_reply_at || a.created_at).getTime()
+    );
+    const lastT = sortedThreads[0];
+
+    const lastThread = lastT
+      ? {
+          title: lastT.title,
+          author: lastT.profiles?.username || "Anonymous",
+          ago: formatDistanceToNow(new Date(lastT.last_reply_at || lastT.created_at), { addSuffix: true, locale: ka }),
+        }
+      : {
+          title: "თემები არ არის",
+          author: "სისტემა",
+          ago: "",
+        };
+
+    return {
+      id: cat.id,
+      slug: cat.slug,
+      name: cat.name,
+      description: cat.description,
+      threadCount,
+      postCount,
+      lastThread,
+      threads, // keep the array for trending calculations
+    };
+  });
+
   // Build a "trending" strip from the hottest thread in each category.
-  const trending = mockForumCategories.flatMap((cat) => {
-    const threads = mockForumThreads[cat.slug] ?? [];
-    const top = [...threads].sort((a, b) => b.replies - a.replies)[0];
+  const trending = categories.flatMap((cat) => {
+    const threads = cat.threads || [];
+    const top = [...threads].sort((a, b) => (b.forum_posts?.length || 0) - (a.forum_posts?.length || 0))[0];
     if (!top) return [];
     return [{
       href: `/forum/${cat.slug}/${top.slug}`,
       title: top.title,
-      replies: top.replies,
+      replies: Math.max(0, (top.forum_posts?.length || 0) - 1),
       categorySlug: cat.slug,
       categoryName: cat.name,
     }];
   });
+
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
@@ -77,7 +145,7 @@ export default function ForumPage() {
               <ForumTabs />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              {mockForumCategories.map((cat) => (
+              {categories.map((cat) => (
                 <CategoryCard key={cat.slug} category={cat} />
               ))}
             </div>

@@ -47,8 +47,8 @@ function timeAgo(iso: string) {
   return `${Math.floor(diff / 86400)} დღის წინ`;
 }
 
-const NOTIF_META: Record<NotificationType, { label: string; icon: React.ComponentType<{ className?: string }>; tone: "cyan" | "online" | "violet" | "amber" | "neutral" }> = {
-  lfg_response:       { label: "ლოკალი",      icon: Users,         tone: "cyan" },
+const NOTIF_META: Record<NotificationType, { label: string; icon: React.ComponentType<{ className?: string }>; tone: "cyan" | "online" | "violet" | "amber" | "neutral" | "magenta" }> = {
+  lfg_response:       { label: "ლოკალი",      icon: Users,         tone: "magenta" },
   lfg_accepted:       { label: "ლოკალი",      icon: UserCheck,     tone: "online" },
   forum_reply:        { label: "ფორუმი",      icon: MessageSquare, tone: "violet" },
   news_comment:       { label: "სიახლე",      icon: MessageSquare, tone: "violet" },
@@ -158,8 +158,7 @@ export default function AnnouncementsPage() {
       <div className="container relative mx-auto max-w-3xl px-4 py-10 lg:py-14">
         <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <Eyebrow tone="amber">შეტყობინებები</Eyebrow>
-            <DisplayHeading as="h1" size="lg" className="mt-3 flex items-center gap-3">
+            <DisplayHeading as="h1" size="lg" className="mt-1 flex items-center gap-3">
               უწყებები
               {unreadCount > 0 && <Pill tone="accent">{unreadCount > 99 ? "99+" : unreadCount}</Pill>}
             </DisplayHeading>
@@ -221,37 +220,55 @@ export default function AnnouncementsPage() {
                 const Icon = meta.icon;
                 const unread = !n.read_at;
                 const card = (
-                  <article
-                    key={n.id}
-                    onClick={() => markNotifRead(n.id)}
-                    className={`group relative cursor-pointer bg-[var(--gr-bg-1)] p-4 transition-all duration-200 hover:-translate-y-0.5 hover:bg-[var(--gr-bg-2)] hover:ring-[var(--gr-violet-hi)] gr-sweep ${unread ? "ring-1 ring-[var(--gr-violet)]/40" : "ring-1 ring-[var(--gr-border)]"}`}
-                    style={{ clipPath: cutSm }}
+                  <div
+                    className="relative isolate transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)]"
+                    style={{
+                      background: unread 
+                        ? 'var(--card-border-hover, rgba(139,92,246,0.55))' 
+                        : 'var(--card-border-hover, rgba(255,255,255,0.15))',
+                      padding: 1,
+                      clipPath: cutSm
+                    }}
                   >
-                    {unread && (
-                      <span aria-hidden className="absolute left-0 top-0 h-full w-[3px] bg-[var(--gr-violet)] shadow-[0_0_10px_rgba(139,92,246,0.7)]" />
-                    )}
-                    <div className="flex gap-3">
-                      <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-md bg-[var(--gr-bg-2)]">
-                        <Icon className="h-4 w-4 text-[var(--gr-violet-hi)]" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className={`text-[13.5px] leading-snug text-[var(--gr-text)] ${unread ? "font-semibold" : "font-medium"}`}>
-                            {n.title}
-                          </p>
-                          <Pill tone={meta.tone}>{meta.label}</Pill>
+                    <article
+                      className="relative cursor-pointer bg-[var(--gr-bg-1)] p-4 overflow-hidden"
+                      style={{ clipPath: cutSm }}
+                    >
+                      {/* Hover Effects */}
+                      <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
+                      <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
+
+                      {unread && (
+                        <span aria-hidden className="absolute left-0 top-0 h-full w-[3px] bg-[var(--gr-violet)] shadow-[0_0_10px_rgba(139,92,246,0.7)] z-[6]" />
+                      )}
+                      <div className="relative z-10 flex gap-3">
+                        <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-md bg-[var(--gr-bg-2)]">
+                          <Icon className="h-4 w-4 text-[var(--gr-violet-hi)]" />
                         </div>
-                        {n.body && <p className="mt-1 text-[12px] text-[var(--gr-text-mute)] line-clamp-2">{n.body}</p>}
-                        <p className="mt-1.5 text-[10.5px] uppercase tracking-[0.12em] text-[var(--gr-text-dim)]">{timeAgo(n.created_at)}</p>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className={`text-[13.5px] leading-snug text-[var(--gr-text)] ${unread ? "font-semibold" : "font-medium"}`}>
+                              {n.title}
+                            </p>
+                            <Pill tone={meta.tone}>{meta.label}</Pill>
+                          </div>
+                          {n.body && <p className="mt-1 text-[12px] text-[var(--gr-text-mute)] line-clamp-2">{n.body}</p>}
+                          <p className="mt-1.5 text-[10.5px] uppercase tracking-[0.12em] text-[var(--gr-text-dim)]">{timeAgo(n.created_at)}</p>
+                        </div>
                       </div>
-                    </div>
-                  </article>
+                    </article>
+                  </div>
                 );
                 return n.link ? (
-                  <a key={n.id} href={n.link} onClick={() => markNotifRead(n.id)}>
+                  <a key={n.id} href={n.link} onClick={() => markNotifRead(n.id)} className="group block transition-transform hover:-translate-y-0.5 duration-300">
                     {card}
                   </a>
-                ) : card;
+                ) : (
+                  <div key={n.id} onClick={() => markNotifRead(n.id)} className="group block transition-transform hover:-translate-y-0.5 duration-300">
+                    {card}
+                  </div>
+                );
               }
 
               const a = item.data;
@@ -259,31 +276,51 @@ export default function AnnouncementsPage() {
               const Icon = sev.icon;
               const unread = !readAnnouncementIds.has(a.id);
               return (
-                <article
+                <div
                   key={a.id}
                   onClick={() => markAnnouncementRead(a.id)}
-                  className={`group relative bg-[var(--gr-bg-1)] p-4 transition-all duration-200 hover:-translate-y-0.5 hover:ring-[var(--gr-violet-hi)] gr-sweep ${unread ? "ring-1 ring-[var(--gr-violet)]/40" : "ring-1 ring-[var(--gr-border)]"}`}
-                  style={{ clipPath: cutSm }}
+                  className="group block transition-transform hover:-translate-y-0.5 duration-300"
                 >
-                  {unread && (
-                    <span aria-hidden className="absolute left-0 top-0 h-full w-[3px] bg-[var(--gr-violet)] shadow-[0_0_10px_rgba(139,92,246,0.7)]" />
-                  )}
-                  <div className="flex gap-3">
-                    <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-md bg-[var(--gr-bg-2)]">
-                      <Icon className="h-4 w-4 text-[var(--gr-amber)]" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className={`text-[13.5px] leading-snug text-[var(--gr-text)] ${unread ? "font-semibold" : "font-medium"}`}>
-                          {a.title}
-                        </p>
-                        <Pill tone={sev.tone}>{sev.label}</Pill>
+                  <div
+                    className="relative isolate transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)]"
+                    style={{
+                      background: unread 
+                        ? 'var(--card-border-hover, rgba(139,92,246,0.55))' 
+                        : 'var(--card-border-hover, rgba(255,255,255,0.15))',
+                      padding: 1,
+                      clipPath: cutSm
+                    }}
+                  >
+                    <article
+                      className="relative cursor-pointer bg-[var(--gr-bg-1)] p-4 overflow-hidden"
+                      style={{ clipPath: cutSm }}
+                    >
+                      {/* Hover Effects */}
+                      <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
+                      <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
+
+                      {unread && (
+                        <span aria-hidden className="absolute left-0 top-0 h-full w-[3px] bg-[var(--gr-violet)] shadow-[0_0_10px_rgba(139,92,246,0.7)] z-[6]" />
+                      )}
+                      <div className="relative z-10 flex gap-3">
+                        <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-md bg-[var(--gr-bg-2)]">
+                          <Icon className="h-4 w-4 text-[var(--gr-amber)]" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className={`text-[13.5px] leading-snug text-[var(--gr-text)] ${unread ? "font-semibold" : "font-medium"}`}>
+                              {a.title}
+                            </p>
+                            <Pill tone={sev.tone}>{sev.label}</Pill>
+                          </div>
+                          <p className="mt-1 text-[12px] text-[var(--gr-text-mute)] line-clamp-2">{a.body}</p>
+                          <p className="mt-1.5 text-[10.5px] uppercase tracking-[0.12em] text-[var(--gr-text-dim)]">{timeAgo(a.created_at)}</p>
+                        </div>
                       </div>
-                      <p className="mt-1 text-[12px] text-[var(--gr-text-mute)] line-clamp-2">{a.body}</p>
-                      <p className="mt-1.5 text-[10.5px] uppercase tracking-[0.12em] text-[var(--gr-text-dim)]">{timeAgo(a.created_at)}</p>
-                    </div>
+                    </article>
                   </div>
-                </article>
+                </div>
               );
             })}
           </div>

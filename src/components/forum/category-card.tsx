@@ -37,7 +37,7 @@ export function CategoryCard({ category, contributors = Math.round(category.thre
     >
       {/* inner surface */}
       <div
-        className="relative h-full bg-[var(--gr-bg-1)] p-5 gr-sweep"
+        className="group/inner relative h-full bg-[var(--gr-bg-1)] p-5 gr-sweep"
         style={{ clipPath: clip }}
       >
         {/* faint card gradient overlay */}
@@ -45,6 +45,16 @@ export function CategoryCard({ category, contributors = Math.round(category.thre
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10 bg-[var(--gr-grad-card)]"
         />
+        {/* Magenta laser sweeper on hover */}
+        <span aria-hidden
+          className="pointer-events-none absolute left-0 top-0 z-10 h-[2px] w-full translate-x-[-100%] opacity-0
+                     group-hover:translate-x-[100%] group-hover:opacity-100
+                     group-hover:transition-transform group-hover:duration-700"
+          style={{ background: "linear-gradient(90deg,transparent,rgba(236,72,153,0.9),transparent)" }} />
+        {/* Magenta glow on hover */}
+        <div aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          style={{ background: "radial-gradient(ellipse at 50% 0%,rgba(236,72,153,0.11) 0%,transparent 65%)" }} />
 
         {/* percent badge in cut corner */}
         <div className="absolute right-0 top-0">
@@ -92,22 +102,47 @@ export function CategoryCard({ category, contributors = Math.round(category.thre
         </ul>
 
         {/* latest reply capsule — kills the dead horizontal space */}
-        <Link
-          href={`/forum/${category.slug}`}
-          className="mt-4 flex items-center gap-3 border border-[var(--gr-border)] bg-[var(--gr-bg-2)]/70 px-3 py-2.5 transition-colors hover:border-[var(--gr-border-hi)] hover:bg-[var(--gr-bg-2)]"
-          style={{ clipPath: "polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%)" }}
+        <div
+          className="group/capsule relative isolate mt-4 transition-all duration-300 hover:[--capsule-border:rgba(236,72,153,0.85)]"
+          style={{
+            clipPath: "polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%)",
+            background: "var(--capsule-border, rgba(167,139,250,0.55))",
+            padding: 1,
+          }}
         >
-          <UserAvatar username={category.lastThread.author} size="sm" className="h-7 w-7" />
-          <div className="min-w-0 flex-1">
-            <p className="line-clamp-1 text-[12.5px] font-medium text-[var(--gr-text)] group-hover:text-[var(--gr-violet-hi)]">
-              {category.lastThread.title}
-            </p>
-            <p className="text-[10.5px] text-[var(--gr-text-dim)]">
-              {category.lastThread.author} · {category.lastThread.ago}
-            </p>
-          </div>
-          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[var(--gr-text-mute)]" />
-        </Link>
+          <Link
+            href={`/forum/${category.slug}`}
+            className="relative flex items-center gap-3 overflow-hidden bg-[var(--gr-bg-2)]/70 px-3 py-2.5 transition-colors hover:bg-[var(--gr-bg-2)]"
+            style={{ clipPath: "polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%)" }}
+          >
+            {/* Top accent line */}
+            <span aria-hidden className="absolute left-0 top-0 z-10 h-[2px] w-full"
+              style={{ background: "linear-gradient(90deg,transparent,rgba(167,139,250,0.8),transparent)" }} />
+            {/* Magenta laser sweeper on hover */}
+            <span aria-hidden
+              className="pointer-events-none absolute left-0 top-0 z-10 h-[2px] w-full translate-x-[-100%] opacity-0
+                         group-hover/capsule:translate-x-[100%] group-hover/capsule:opacity-100
+                         group-hover/capsule:transition-transform group-hover/capsule:duration-700"
+              style={{ background: "linear-gradient(90deg,transparent,rgba(236,72,153,0.9),transparent)" }} />
+            {/* Subtle violet glow always */}
+            <div aria-hidden className="pointer-events-none absolute inset-0"
+              style={{ background: "radial-gradient(ellipse at 50% 0%,rgba(167,139,250,0.09) 0%,transparent 65%)" }} />
+            {/* Magenta glow on hover */}
+            <div aria-hidden
+              className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover/capsule:opacity-100"
+              style={{ background: "radial-gradient(ellipse at 50% 0%,rgba(236,72,153,0.11) 0%,transparent 65%)" }} />
+            <UserAvatar username={category.lastThread.author} size="sm" className="h-7 w-7" />
+            <div className="min-w-0 flex-1">
+              <p className="line-clamp-1 text-[12.5px] font-medium text-[var(--gr-text)] group-hover:text-[var(--gr-violet-hi)]">
+                {category.lastThread.title}
+              </p>
+              <p className="text-[10.5px] text-[var(--gr-text-dim)]">
+                {category.lastThread.author} · {category.lastThread.ago}
+              </p>
+            </div>
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[var(--gr-text-mute)]" />
+          </Link>
+        </div>
 
         {/* explore link */}
         <Link

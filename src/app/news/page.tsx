@@ -1,19 +1,63 @@
 import Link from "next/link";
 import { Newspaper, Clock } from "lucide-react";
-import { mockGames, mockNews } from "@/lib/mock-data";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { DisplayHeading } from "@/components/ui/display-heading";
 import { Pill } from "@/components/ui/pill";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { format } from "date-fns";
+
 
 export const metadata = { title: "სიახლეები" };
+export const dynamic = "force-dynamic";
 
 const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
 const cutMd = "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)";
 const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.55))";
 
-export default function NewsPage() {
-  const [featured, ...rest] = mockNews;
-  const featuredGame = featured ? mockGames.find((g) => g.slug === featured.gameSlug) : undefined;
+
+export default async function NewsPage() {
+  const supabase = await createSupabaseServerClient();
+
+  const { data: dbNews } = await supabase
+    .from("news_articles")
+    .select(`
+      id,
+      title,
+      slug,
+      cover_url,
+      excerpt,
+      body,
+      published_at,
+      profiles:author_id (
+        username
+      ),
+      games:game_id (
+        slug,
+        name_ka,
+        emoji
+      )
+    `)
+    .eq("status", "published")
+    .order("published_at", { ascending: false });
+
+  const news = (dbNews || []).map((n: any) => {
+    const readMinutes = Math.max(1, Math.ceil((n.body?.length || 0) / 800));
+    return {
+      id: n.id,
+      title: n.title,
+      slug: n.slug,
+      excerpt: n.excerpt,
+      cover: n.cover_url || "from-violet-500/30 to-violet-500/5",
+      publishedAt: n.published_at ? format(new Date(n.published_at), "yyyy-MM-dd") : "",
+      author: n.profiles?.username || "Admin",
+      readMinutes,
+      gameSlug: n.games?.slug,
+      game: n.games ? { nameKa: n.games.name_ka, emoji: n.games.emoji } : null,
+    };
+  });
+
+  const [featured, ...rest] = news;
+  const featuredGame = featured ? featured.game : undefined;
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
@@ -73,7 +117,7 @@ export default function NewsPage() {
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {rest.map((n) => {
-            const game = mockGames.find((g) => g.slug === n.gameSlug);
+            const game = n.game;
             return (
               <Link key={n.slug} href={`/news/${n.slug}`} className="group block">
                 <div

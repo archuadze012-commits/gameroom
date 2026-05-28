@@ -189,46 +189,6 @@ export default function CrackedGamesPage() {
   return (
     <div className="container mx-auto px-4 py-10 space-y-12">
 
-      {/* Top — Games (mockGames horizontal strip of 5) */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <Gamepad2 className="h-5 w-5 text-primary" />
-          <h2 className="text-2xl font-bold tracking-tight">თამაშები</h2>
-          <Link href="/games">
-            <Button variant="outline" size="sm" className="border-border/60 text-muted-foreground hover:text-foreground">
-              სხვა თამაშები
-            </Button>
-          </Link>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          აარჩიე შენი მთავარი თამაში და იპოვე გუნდი
-        </p>
-        <div
-          ref={scrollRef}
-          className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide select-none"
-          style={{ cursor: "grab" }}
-          onMouseDown={onMouseDown}
-          onMouseMove={onMouseMove}
-          onMouseUp={stopDrag}
-          onMouseLeave={stopDrag}
-          onClick={onClick}
-          onDragStart={(e) => e.preventDefault()}
-        >
-          {topGames.map((g) => (
-            <div key={g.slug} className="shrink-0 w-48">
-            <RosterGameCard
-              slug={g.slug}
-              nameKa={g.nameKa}
-              players={g.players}
-              online={g.online}
-              coverUrl={g.coverUrl}
-              accent={g.accent}
-            />
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Bottom — Cracked Games */}
       <div>
         <h2 className="text-2xl font-bold tracking-tight">PC თამაშები უფასოდ</h2>
@@ -259,7 +219,7 @@ export default function CrackedGamesPage() {
         </p>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((game) => (
-            <Link key={game.id} href={`/tamashebi/${game.id}`}>
+            <Link key={game.id} href={`/free-pc-games/${game.id}`}>
               <GameCard game={game} />
             </Link>
           ))}
@@ -269,35 +229,62 @@ export default function CrackedGamesPage() {
   );
 }
 
+const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
+const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.55))";
+
 function GameCard({ game }: { game: (typeof crackedGames)[0] }) {
   return (
-    <Card className="group relative overflow-hidden border-border/60 transition-all hover:border-primary/40 hover:shadow-md hover:shadow-primary/5 aspect-video">
-      {game.coverUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={game.coverUrl}
-          alt={game.title}
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-      ) : (
-        <div className={`absolute inset-0 bg-gradient-to-br ${game.accent}`} />
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+    <article
+      className="group relative isolate h-32 overflow-hidden transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)]"
+      style={{ background: 'var(--card-border-hover, ' + cardBorder + ')', padding: 1, clipPath: cutSm }}
+    >
+      <div
+        className="relative h-full w-full bg-[var(--gr-bg-1)] transition-transform duration-300"
+        style={{ clipPath: cutSm }}
+      >
+        {/* Top Glow Border */}
+        <span aria-hidden className="absolute left-0 top-0 z-10 h-[1.5px] w-full bg-[var(--gr-grad-violet)]" />
 
-      <div className="absolute bottom-0 left-0 right-0 p-3 space-y-1.5">
-        <div className="flex items-end justify-between gap-2">
-          <h3 className="font-bold text-sm leading-tight text-white">{game.title}</h3>
-          <div className="flex items-center gap-1 text-amber-400 shrink-0">
-            <Star className="h-3 w-3 fill-amber-400" />
-            <span className="text-xs font-bold">{game.rating}</span>
-          </div>
+        {/* Game Cover Background */}
+        {game.coverUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={game.coverUrl}
+            alt={game.title}
+            className="absolute inset-0 h-full w-full object-cover opacity-98 transition-transform duration-500 group-hover:opacity-100"
+          />
+        ) : (
+          <div className={`absolute inset-0 bg-gradient-to-br ${game.accent} opacity-20`} />
+        )}
+        
+        {/* Ambient Gradients */}
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-cyan-500/5 opacity-40" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--gr-bg-0)]/70 via-[var(--gr-bg-0)]/15 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)]/80 via-[var(--gr-bg-0)]/5 to-transparent" />
+
+        {/* Atmosphere Circle */}
+        <div aria-hidden className="absolute -left-8 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full bg-white/5 blur-xl transition-transform duration-500 group-hover:scale-125" />
+
+        {/* Laser lines left */}
+        <div aria-hidden className="absolute inset-y-0 left-[7.5%] w-[1px] bg-[var(--gr-violet)]/40 shadow-[0_0_12px_rgba(139,92,246,0.5)]" />
+        <div aria-hidden className="absolute inset-y-0 left-[5.5%] w-[2px] bg-[var(--gr-violet)]/55 shadow-[0_0_15px_rgba(139,92,246,0.6)]" />
+
+        {/* Colored accent block on the left edge */}
+        <div aria-hidden className="absolute left-0 top-0 h-full w-[6%] bg-[linear-gradient(180deg,rgba(34,211,238,0.9),rgba(139,92,246,0.25))] [clip-path:polygon(0_0,68%_0,100%_100%,0_100%)] opacity-80" />
+
+        {/* Bottom Details (Title) */}
+        <div className="absolute bottom-2.5 left-[6.5%] right-2.5 z-10">
+          <h4 className="font-display text-[13px] font-extrabold uppercase leading-[1.1] tracking-tight text-[var(--gr-text)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] group-hover:text-[var(--gr-violet-hi)] transition-colors line-clamp-2" title={game.title}>
+            {game.title}
+          </h4>
         </div>
-        <div className="flex flex-wrap gap-1">
-          {game.genre.map((g) => (
-            <Badge key={g} variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-black/40 text-white border-white/10 backdrop-blur-sm">{g}</Badge>
-          ))}
-        </div>
+
+        {/* Hover Effects (Button Style) */}
+        <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
+        <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
+
       </div>
-    </Card>
+    </article>
   );
 }

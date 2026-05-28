@@ -35,3 +35,17 @@ export function rateLimit(key: string, limit: number, windowMs: number): boolean
   b.count++;
   return true;
 }
+
+// ---------------------------------------------------------------------------
+// Pre-built helpers
+// ---------------------------------------------------------------------------
+
+const ONE_DAY_MS = 86_400_000;
+
+/**
+ * Rate-limit new signups: max 2 new accounts per IP address per 24 hours.
+ * Returns `true` if the signup is allowed, `false` if rate-limited.
+ */
+export function signupRateLimit(ip: string): boolean {
+  return rateLimit(`signup:${ip}`, 2, ONE_DAY_MS);
+}

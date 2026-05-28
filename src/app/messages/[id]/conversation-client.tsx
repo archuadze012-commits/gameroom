@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useActionState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Send, Loader2, Globe, Sparkles, Trash2 } from "lucide-react";
@@ -11,6 +11,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { VerifiedBadge } from "@/components/verified-badge";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { sendMessageAction, deleteConversationAction, type SendMessageState } from "../actions";
 
 type Msg = {
   id: string;
@@ -43,13 +44,26 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
   const [messages, setMessages] = useState<Msg[]>([]);
   const [loading, setLoading] = useState(true);
   const [input, setInput] = useState("");
-  const [sending, setSending] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [isDeleting, startDeleteTransition] = useTransition();
   const [smartReplies, setSmartReplies] = useState<string[]>([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [translating, setTranslating] = useState<Record<string, boolean>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const initialSendState: SendMessageState = { success: false };
+  const [sendState, sendFormAction, isSending] = useActionState(sendMessageAction, initialSendState);
+
+  // Handle send action response
+  useEffect(() => {
+    if (sendState.success && sendState.newMsg) {
+      setMessages((prev) => [...prev, sendState.newMsg]);
+      setInput("");
+      setSmartReplies([]);
+    } else if (sendState.message && !sendState.success) {
+      toast.error(sendState.message);
+    }
+  }, [sendState]);
 
   const fetchSmartReplies = useCallback(async (lastMsg: string) => {
     setLoadingReplies(true);
@@ -86,8 +100,10 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
   // Realtime subscription
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
+    const channelName = `dm:${conversationId}-${Math.random().toString(36).slice(2, 11)}`;
+    
     const channel = supabase
-      .channel(`dm:${conversationId}`)
+      .channel(channelName)
       .on("postgres_changes", {
         event: "INSERT",
         schema: "public",
@@ -104,6 +120,7 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
         try { await fetch(`/api/conversations/${conversationId}/messages`); } catch {}
       })
       .subscribe();
+      
     return () => { supabase.removeChannel(channel); };
   }, [conversationId, currentUserId, fetchSmartReplies]);
 
@@ -112,39 +129,29 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages.length]);
 
-  const send = async (e: React.FormEvent | null, overrideText?: string) => {
-    if (e) e.preventDefault();
-    const text = (overrideText ?? input).trim();
-    if (!text || sending) return;
-    setSending(true);
-    setSmartReplies([]);
-    try {
-      const res = await fetch(`/api/conversations/${conversationId}/messages`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body: text }),
-      });
-      if (!res.ok) throw new Error();
-      const newMsg: Msg = await res.json();
-      setMessages((prev) => [...prev, newMsg]);
-      setInput("");
-    } catch {
-      toast.error("ვერ გაიგზავნა");
-    } finally {
-      setSending(false);
-    }
+  const handleSmartReply = (reply: string) => {
+    const formData = new FormData();
+    formData.append("conversationId", conversationId);
+    formData.append("body", reply);
+    // Programmatically dispatch the action using startTransition to bypass the form
+    // In React 19, startTransition can wrap Server Actions
+    import("react").then(({ startTransition: reactStartTransition }) => {
+       reactStartTransition(() => {
+           sendFormAction(formData);
+       });
+    });
   };
 
-  const deleteConversation = async () => {
+  const deleteConversation = () => {
     if (!confirm("მიმოწერა წაიშლება სამუდამოდ. დარწმუნებული ხარ?")) return;
-    setDeleting(true);
-    try {
-      await fetch(`/api/conversations/${conversationId}`, { method: "DELETE" });
-      router.push("/messages");
-    } catch {
-      toast.error("ვერ წაიშალა");
-      setDeleting(false);
-    }
+    startDeleteTransition(async () => {
+      const res = await deleteConversationAction(conversationId);
+      if (res.success) {
+        router.push("/messages");
+      } else {
+        toast.error(res.message || "ვერ წაიშალა");
+      }
+    });
   };
 
   const translate = async (msgId: string, body: string) => {
@@ -185,11 +192,11 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
           variant="ghost"
           size="icon"
           onClick={deleteConversation}
-          disabled={deleting}
+          disabled={isDeleting}
           className="shrink-0 text-muted-foreground hover:text-destructive"
           title="მიმოწერის წაშლა"
         >
-          {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+          {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
         </Button>
       </div>
 
@@ -253,8 +260,9 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
             : smartReplies.map((r) => (
               <button
                 key={r}
-                onClick={() => send(null, r)}
+                onClick={() => handleSmartReply(r)}
                 className="shrink-0 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs text-primary hover:bg-primary/15 transition-colors"
+                disabled={isSending}
               >
                 {r}
               </button>
@@ -265,16 +273,19 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
 
       {/* composer */}
       <CardContent className="p-0">
-        <form onSubmit={send} className="flex items-center gap-2 border-t border-border/60 p-3">
+        <form action={sendFormAction} className="flex items-center gap-2 border-t border-border/60 p-3">
+          <input type="hidden" name="conversationId" value={conversationId} />
           <Input
+            name="body"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="დაწერე მესიჯი..."
             className="bg-background/40"
             autoFocus
+            disabled={isSending}
           />
-          <Button type="submit" disabled={!input.trim() || sending}>
-            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          <Button type="submit" disabled={!input.trim() || isSending}>
+            {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
         </form>
       </CardContent>

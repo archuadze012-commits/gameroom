@@ -14,10 +14,12 @@ export function LfgFilters({ favoriteSlugs = [] }: { favoriteSlugs?: string[] })
   const router = useRouter();
   const params = useSearchParams();
 
-  const games =
-    favoriteSlugs.length > 0
-      ? mockGames.filter((g) => favoriteSlugs.includes(g.slug))
-      : mockGames;
+  const games = [...mockGames].sort((a, b) => {
+    const aFav = favoriteSlugs.includes(a.slug) ? 1 : 0;
+    const bFav = favoriteSlugs.includes(b.slug) ? 1 : 0;
+    if (aFav !== bFav) return bFav - aFav;
+    return b.favoritedBy - a.favoritedBy;
+  });
 
   const update = useCallback(
     (key: string, value: string | null) => {
@@ -51,7 +53,7 @@ export function LfgFilters({ favoriteSlugs = [] }: { favoriteSlugs?: string[] })
 
       <div className="space-y-5">
         <FilterGroup label="თამაში">
-          {[...games].sort((a, b) => b.favoritedBy - a.favoritedBy).map((g) => (
+          {games.map((g) => (
             <FilterButton
               key={g.slug}
               icon={<GameIcon game={g} size="sm" />}

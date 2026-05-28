@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-const ALLOWED = ["gg", "w", "clutch", "noob", "goat", "cringe"];
+const ALLOWED = ["gg", "w", "clutch", "noob", "goat", "cringe", "heart", "pro"];
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

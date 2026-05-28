@@ -1,63 +1,113 @@
-import { Search, Shield } from "lucide-react";
-import { Eyebrow } from "@/components/ui/eyebrow";
-import { DisplayHeading } from "@/components/ui/display-heading";
-import { ChevronButton } from "@/components/ui/chevron-button";
-import { ClansHub } from "@/components/clans/clans-hub";
+import Link from "next/link";
+import { Plus, Users, ShieldAlert, Trophy } from "lucide-react";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getSession } from "@/lib/auth";
 
-export const metadata = { title: "კლანები" };
+export const dynamic = "force-dynamic";
 
-const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
-const cutMd = "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)";
-const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.5))";
+export default async function ClansPage() {
+  const supabase = await createSupabaseServerClient();
+  const sessionUser = await getSession().catch(() => null);
 
-export default function ClansPage() {
+  const { data: clans } = await supabase
+    .from("clans")
+    .select(`
+      id,
+      name,
+      slug,
+      tag,
+      description,
+      avatar_url,
+      xp,
+      level,
+      status,
+      clan_members(count)
+    `)
+    .order("xp", { ascending: false });
+
+  // Check if current user is in a clan
+  let userClan = null;
+  if (sessionUser) {
+    const { data: member } = await supabase
+      .from("clan_members")
+      .select("clans(slug)")
+      .eq("user_id", sessionUser.id)
+      .maybeSingle();
+    userClan = member?.clans;
+  }
+
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
-      <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
+    <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <PageHeader
+        eyebrow="გუნდები & კლანები"
+        title="გაერთიანდი და ითამაშე გუნდურად"
+        description="მოძებნე შენთვის შესაფერისი კლანი ან შექმენი ახალი, გაზარდეთ XP ერთად და მიიღეთ მონაწილეობა კლანურ ტურნირებში."
+        actions={
+          userClan ? (
+            <Button asChild>
+              <Link href={`/clans/${(userClan as any).slug}`}>ჩემი კლანი</Link>
+            </Button>
+          ) : (
+            <Button asChild>
+              <Link href="/clans/new"><Plus className="mr-2 h-4 w-4" /> კლანის შექმნა</Link>
+            </Button>
+          )
+        }
+      />
 
-      <div className="container relative mx-auto space-y-10 px-4 py-10 lg:py-14">
-        <section className="relative isolate overflow-hidden" style={{ background: cardBorder, padding: 1, clipPath: cutMd }}>
-          <div className="relative overflow-hidden bg-[var(--gr-bg-1)] px-6 py-8 sm:px-8 lg:px-10" style={{ clipPath: cutMd }}>
-            <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
-            <div className="absolute inset-0 bg-gradient-to-br from-violet-500/22 via-fuchsia-500/10 to-cyan-500/18" />
-            <div aria-hidden className="absolute right-12 top-8 h-48 w-24 rotate-12 bg-[var(--gr-cyan-glow)]/12 blur-3xl [clip-path:polygon(30%_0,100%_0,70%_100%,0_100%)]" />
-            <div aria-hidden className="absolute bottom-0 right-0 h-full w-[34%] bg-[linear-gradient(180deg,rgba(34,211,238,0.48),rgba(139,92,246,0.08))] [clip-path:polygon(24%_0,100%_0,100%_100%,0_100%)]" />
-
-            <div className="relative z-[1] grid gap-8 lg:grid-cols-[1fr_360px] lg:items-center">
-              <div>
-                <Eyebrow tone="magenta">CLAN HUB</Eyebrow>
-                <DisplayHeading as="h1" size="display" className="mt-3">
-                  კლანების სივრცე
-                </DisplayHeading>
-                <p className="mt-5 max-w-2xl text-[15px] leading-relaxed text-[var(--gr-text-mute)]">
-                  შექმენი საკუთარი კლანი, მართე წევრები ერთ პანელში და finder-ში მხოლოდ რეალური, ნამდვილად შექმნილი კლანები აჩვენე.
-                </p>
-                <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                  <ChevronButton href="#my-clan" variant="violet" size="lg">
-                    <Shield className="h-4 w-4" /> კლანის შექმნა
-                  </ChevronButton>
-                  <ChevronButton href="#clan-finder" variant="ghost" size="lg">
-                    <Search className="h-4 w-4" /> კლანების ძებნა
-                  </ChevronButton>
-                </div>
-              </div>
-
-              <div className="relative">
-                <div className="absolute inset-0 bg-[var(--gr-violet)]/20 blur-3xl" />
-                <div className="relative bg-[var(--gr-bg-0)]/72 p-5 ring-1 ring-white/10 backdrop-blur-md" style={{ clipPath: cutSm }}>
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--gr-text-dim)]">როგორ მუშაობს</p>
-                  <div className="mt-4 space-y-3 text-[13px] leading-relaxed text-[var(--gr-text-mute)]">
-                    <p>1. შექმენი კლანი `ჩემი კლანი` ბლოკიდან.</p>
-                    <p>2. დაარეგულირე TAG, სერვერი, მოტო და რეკრუტინგი.</p>
-                    <p>3. მართე წევრები, განაცხადები და მოწვევები ერთ ადგილას.</p>
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {(clans || []).map((clan: any) => (
+          <Link key={clan.id} href={`/clans/${clan.slug}`}>
+            <Card className="h-full border-border/60 transition-colors hover:border-primary/40 hover:bg-secondary/20">
+              <CardContent className="p-5 flex flex-col gap-4">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-12 w-12 border border-primary/20">
+                    <AvatarImage src={clan.avatar_url} />
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                      {clan.tag}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-lg truncate flex items-center gap-2">
+                      {clan.name}
+                      <span className="text-xs font-mono text-muted-foreground px-1.5 py-0.5 rounded-md bg-secondary">
+                        [{clan.tag}]
+                      </span>
+                    </h3>
+                    <p className="text-xs text-muted-foreground capitalize">{clan.status}</p>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
-        <ClansHub />
+                <p className="text-sm text-muted-foreground line-clamp-2 h-10">
+                  {clan.description || "აღწერის გარეშე"}
+                </p>
+
+                <div className="flex items-center justify-between pt-2 border-t border-border/40 text-sm">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Users className="h-4 w-4" />
+                    <span>{clan.clan_members[0].count}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-amber-500 font-medium">
+                    <Trophy className="h-4 w-4" />
+                    <span>LVL {clan.level}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+
+        {(!clans || clans.length === 0) && (
+          <div className="col-span-full py-20 text-center flex flex-col items-center">
+            <ShieldAlert className="h-12 w-12 text-muted-foreground/30 mb-4" />
+            <h3 className="text-lg font-bold text-muted-foreground">ჯერ არცერთი კლანი არ შექმნილა</h3>
+            <p className="text-sm text-muted-foreground/70 mt-1">იყავი პირველი ვინც შექმნის გუნდს!</p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -50,16 +50,20 @@ export async function SiteHeader() {
         aria-hidden
         className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[var(--gr-violet)]/40 to-transparent"
       />
-      <div className="container mx-auto flex h-16 items-center gap-6 px-4">
-        <Link href="/" className="flex items-center gap-2.5 mx-auto xl:mx-0">
-          <Image src="/logo.png" alt="Gameroom" width={36} height={36} className="rounded-lg" />
-          <span className="font-display text-[18px] font-extrabold uppercase tracking-tight text-[var(--gr-text)]">
-            Game<span className="text-[var(--gr-violet)]">room</span>
-          </span>
-        </Link>
+      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        {session ? (
+          <Link href="/" className="flex items-center gap-3">
+            <Image src="/logo.png" alt="Gameroom" width={48} height={48} className="rounded-lg" />
+            <span className="font-display text-[22px] font-extrabold uppercase tracking-tight text-[var(--gr-text)]">
+              Game<span className="text-[var(--gr-violet)]">room</span>
+            </span>
+          </Link>
+        ) : (
+          <span />
+        )}
 
         <nav className="hidden flex-1 items-center gap-1 xl:flex">
-          {navLinks.map((link) => (
+          {session && navLinks.map((link) => (
             <Link key={link.href} href={link.href} className={navLinkClass}>
               {link.label}
               <span
@@ -96,8 +100,12 @@ export async function SiteHeader() {
         </nav>
 
         <div className="ml-auto hidden xl:flex items-center gap-2">
-          <div className="hidden xl:flex"><AnnouncementsLink /></div>
-          <UserMenu />
+          {session && (
+            <>
+              <div className="hidden xl:flex"><AnnouncementsLink /></div>
+              <UserMenu />
+            </>
+          )}
           <MobileNav isAdmin={isAdmin} profileHref={profileHref} />
         </div>
       </div>

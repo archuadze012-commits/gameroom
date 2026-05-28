@@ -5,7 +5,7 @@ import { Search, Users, Gamepad2, Download, Star, ShieldCheck, Shield, Trophy, M
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { mockGames, crackedGames } from "@/lib/mock-data";
-import { PlayerCard } from "@/components/player-card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GameIcon } from "@/components/game-icon";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { DisplayHeading } from "@/components/ui/display-heading";
@@ -215,9 +215,89 @@ export default function SearchPage() {
               {playerResults.length === 0 ? (
                 <EmptyResult label="მოთამაშე ვერ მოიძებნა" />
               ) : (
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                   {playerResults.map((user) => (
-                    <PlayerCard key={user.username} user={user} />
+                    <Link key={user.username} href={`/profile/${user.username}`} className="group block">
+                      <article
+                        className="relative isolate h-32 overflow-hidden transition-all duration-300"
+                        style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
+                      >
+                        <div
+                          className="relative h-full w-full bg-[var(--gr-bg-1)] transition-transform duration-300"
+                          style={{ clipPath: cutSm }}
+                        >
+                          {/* Top Border Glow */}
+                          <span aria-hidden className="absolute left-0 top-0 z-10 h-[1.5px] w-full bg-[var(--gr-grad-violet)]" />
+
+                          {/* Accent Backgrounds */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/15 to-cyan-500/5 opacity-80" />
+                          <div className="absolute inset-0 bg-gradient-to-r from-[var(--gr-bg-0)] via-[var(--gr-bg-0)]/30 to-transparent" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)] via-[var(--gr-bg-0)]/25 to-transparent" />
+
+                          {/* Atmosphere Circle */}
+                          <div aria-hidden className="absolute -left-8 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full bg-white/5 blur-xl transition-transform duration-500 group-hover:scale-125" />
+
+                          {/* Laser lines left */}
+                          <div aria-hidden className="absolute inset-y-0 left-[22%] w-[1px] bg-[var(--gr-violet)]/40 shadow-[0_0_12px_rgba(139,92,246,0.5)]" />
+                          <div aria-hidden className="absolute inset-y-0 left-[18%] w-[2px] bg-[var(--gr-violet)]/55 shadow-[0_0_15px_rgba(139,92,246,0.6)]" />
+
+                          {/* Colored accent block on the left edge */}
+                          <div aria-hidden className="absolute left-0 top-0 h-full w-[18%] bg-[linear-gradient(180deg,rgba(34,211,238,0.9),rgba(139,92,246,0.25))] [clip-path:polygon(0_0,68%_0,100%_100%,0_100%)] opacity-80" />
+
+                          {/* Floating Avatar Circular Container on the left panel */}
+                          <div className="absolute inset-y-0 left-[10%] z-[1] flex items-center justify-center">
+                            <div className="relative">
+                              <div className="rounded-full border border-white/12 bg-white/[0.04] p-1 shadow-[0_0_20px_rgba(139,92,246,0.25)] backdrop-blur-sm transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+                                <div className="h-18 w-18 overflow-hidden rounded-full border border-white/10">
+                                  {user.avatarUrl ? (
+                                    <img
+                                      src={user.avatarUrl}
+                                      alt={user.displayName ?? user.username}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="flex h-full w-full items-center justify-center bg-[var(--gr-violet)]/20 text-2xl font-black text-[var(--gr-violet-hi)]">
+                                      {(user.displayName ?? user.username).slice(0, 1).toUpperCase()}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              {user.isVerified && (
+                                <span className="absolute -bottom-1 -right-1 rounded-full bg-[var(--gr-bg-1)] p-0.5 shadow ring-1 ring-[var(--gr-border-hi)]">
+                                  <ShieldCheck className="h-4 w-4 text-[var(--gr-violet-hi)] fill-[var(--gr-violet-hi)]/20" />
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Top Details (Online Status Pill & Role Badge) */}
+                          <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 z-10">
+                            <span 
+                              className="h-2 w-2 rounded-full shadow-[0_0_6px_rgba(34,197,94,0.6)] shrink-0 animate-pulse" 
+                              style={{ backgroundColor: user.isOnline ? "var(--gr-lime)" : "var(--gr-amber)" }}
+                            />
+                            {user.role && user.role !== "user" && (
+                              <span className="text-[9px] font-black tracking-wider uppercase text-[var(--gr-text-mute)] bg-white/5 border border-white/10 px-1.5 py-0.5 rounded">
+                                {user.role}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Center Details next to avatar (Display Name only, no @username) */}
+                          <div className="absolute top-1/2 -translate-y-1/2 left-[33%] right-3.5 z-10 text-center">
+                            <h4 className="font-display text-[19px] font-extrabold uppercase leading-[1.2] tracking-tight text-[var(--gr-text)] drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.6)] group-hover:text-[var(--gr-violet-hi)] transition-colors line-clamp-2">
+                              {user.displayName ?? user.username}
+                            </h4>
+                          </div>
+
+                          {/* Hover Effects (Button Style) */}
+                          <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
+                          <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
+                          <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
+                        </div>
+
+                      </article>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -235,43 +315,60 @@ export default function SearchPage() {
           {gameResults.length === 0 ? (
             <EmptyResult label="თამაში ვერ მოიძებნა" />
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {gameResults.map((g) => (
                 <Link key={g.slug} href={`/games/${g.slug}`} className="group block">
-                  <div
-                    className="relative isolate"
-                    style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
+                  <article
+                    className="group relative isolate h-32 overflow-hidden transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)]"
+                    style={{ background: 'var(--card-border-hover, ' + cardBorder + ')', padding: 1, clipPath: cutSm }}
                   >
                     <div
-                      className="relative h-40 overflow-hidden bg-[var(--gr-bg-1)] gr-sweep"
+                      className="relative h-full w-full bg-[var(--gr-bg-1)] transition-transform duration-300"
                       style={{ clipPath: cutSm }}
                     >
-                      <span aria-hidden className="absolute left-0 top-0 z-10 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
+                      {/* Top Border Glow */}
+                      <span aria-hidden className="absolute left-0 top-0 z-10 h-[1.5px] w-full bg-[var(--gr-grad-violet)]" />
+
+                      {/* Game Cover Background */}
                       {g.coverUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={g.coverUrl}
                           alt={g.nameKa}
-                          className="absolute inset-0 h-full w-full object-cover"
+                          className="absolute inset-0 h-full w-full object-cover opacity-98 transition-transform duration-500 group-hover:opacity-100"
                         />
                       ) : (
-                        <div className={`absolute inset-0 bg-gradient-to-br ${g.accent}`} />
+                        <div className={`absolute inset-0 bg-gradient-to-br ${g.accent} opacity-20`} />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)] via-[var(--gr-bg-0)]/40 to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between gap-2 p-3">
-                        <div className="flex min-w-0 items-center gap-2">
-                          <GameIcon game={g} size="sm" />
-                          <div className="min-w-0">
-                            <p className="truncate font-semibold leading-tight text-[var(--gr-text)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">
-                              {g.nameKa}
-                            </p>
-                            <p className="text-[11px] text-[var(--gr-text)]/65">{g.players.toLocaleString("en-US")} მოთამაშე</p>
-                          </div>
-                        </div>
-                        <Pill tone="online" pulse>{g.online}</Pill>
+                      
+                      {/* Ambient Gradients */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-cyan-500/5 opacity-40" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-[var(--gr-bg-0)]/70 via-[var(--gr-bg-0)]/15 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)]/80 via-[var(--gr-bg-0)]/5 to-transparent" />
+
+                      {/* Atmosphere Circle */}
+                      <div aria-hidden className="absolute -left-8 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full bg-white/5 blur-xl transition-transform duration-500 group-hover:scale-125" />
+
+                      {/* Laser lines left */}
+                      <div aria-hidden className="absolute inset-y-0 left-[7.5%] w-[1px] bg-[var(--gr-violet)]/40 shadow-[0_0_12px_rgba(139,92,246,0.5)]" />
+                      <div aria-hidden className="absolute inset-y-0 left-[5.5%] w-[2px] bg-[var(--gr-violet)]/55 shadow-[0_0_15px_rgba(139,92,246,0.6)]" />
+
+                      {/* Colored accent block on the left edge */}
+                      <div aria-hidden className="absolute left-0 top-0 h-full w-[6%] bg-[linear-gradient(180deg,rgba(34,211,238,0.9),rgba(139,92,246,0.25))] [clip-path:polygon(0_0,68%_0,100%_100%,0_100%)] opacity-80" />
+
+                      {/* Bottom Details (Game Name) */}
+                      <div className="absolute bottom-2.5 left-[6.5%] right-2.5 z-10">
+                        <h4 className="font-display text-[14px] font-extrabold uppercase leading-[1.1] tracking-tight text-[var(--gr-text)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] group-hover:text-[var(--gr-violet-hi)] transition-colors line-clamp-2">
+                          {g.nameKa}
+                        </h4>
                       </div>
+
+                      {/* Hover Effects (Button Style) */}
+                      <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
+                      <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
                     </div>
-                  </div>
+                  </article>
                 </Link>
               ))}
             </div>
@@ -288,47 +385,60 @@ export default function SearchPage() {
           {crackedResults.length === 0 ? (
             <EmptyResult label="Cracked game ვერ მოიძებნა" />
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {crackedResults.map((g) => (
-                <Link key={g.id} href={`/tamashebi/${g.id}`} className="group block">
-                  <div
-                    className="relative isolate"
-                    style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
+                <Link key={g.id} href={`/free-pc-games/${g.id}`} className="group block">
+                  <article
+                    className="group relative isolate h-32 overflow-hidden transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)]"
+                    style={{ background: 'var(--card-border-hover, ' + cardBorder + ')', padding: 1, clipPath: cutSm }}
                   >
                     <div
-                      className="relative h-full bg-[var(--gr-bg-1)] p-4 gr-sweep"
+                      className="relative h-full w-full bg-[var(--gr-bg-1)] transition-transform duration-300"
                       style={{ clipPath: cutSm }}
                     >
-                      <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
-                      <div className={`pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br ${g.accent} opacity-25`} />
-                      <div className="flex h-full flex-col gap-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <span className="text-3xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)]">{g.emoji}</span>
-                          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--gr-amber)]/15 px-2 py-0.5 text-[12px] font-bold text-[var(--gr-amber)] ring-1 ring-[var(--gr-amber)]/40">
-                            <Star className="h-3 w-3 fill-[var(--gr-amber)]" />
-                            {g.rating}
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-display text-[15px] font-bold uppercase tracking-tight text-[var(--gr-text)] leading-tight">{g.title}</h3>
-                          <p className="mt-0.5 text-[11px] text-[var(--gr-text-dim)]">{g.releaseYear}</p>
-                          <p className="mt-2 line-clamp-2 text-[12px] leading-relaxed text-[var(--gr-text-mute)]">
-                            {g.description}
-                          </p>
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {g.genre.map((genre) => (
-                            <Pill key={genre} tone="violet">{genre}</Pill>
-                          ))}
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {g.platform.map((p) => (
-                            <Pill key={p} tone="neutral">{p}</Pill>
-                          ))}
-                        </div>
+                      {/* Top Border Glow */}
+                      <span aria-hidden className="absolute left-0 top-0 z-10 h-[1.5px] w-full bg-[var(--gr-grad-violet)]" />
+
+                      {/* Game Cover Background */}
+                      {g.coverUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={g.coverUrl}
+                          alt={g.title}
+                          className="absolute inset-0 h-full w-full object-cover opacity-98 transition-transform duration-500 group-hover:opacity-100"
+                        />
+                      ) : (
+                        <div className={`absolute inset-0 bg-gradient-to-br ${g.accent} opacity-20`} />
+                      )}
+                      
+                      {/* Ambient Gradients */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-cyan-500/5 opacity-40" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-[var(--gr-bg-0)]/70 via-[var(--gr-bg-0)]/15 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)]/80 via-[var(--gr-bg-0)]/5 to-transparent" />
+
+                      {/* Atmosphere Circle */}
+                      <div aria-hidden className="absolute -left-8 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full bg-white/5 blur-xl transition-transform duration-500 group-hover:scale-125" />
+
+                      {/* Laser lines left */}
+                      <div aria-hidden className="absolute inset-y-0 left-[7.5%] w-[1px] bg-[var(--gr-violet)]/40 shadow-[0_0_12px_rgba(139,92,246,0.5)]" />
+                      <div aria-hidden className="absolute inset-y-0 left-[5.5%] w-[2px] bg-[var(--gr-violet)]/55 shadow-[0_0_15px_rgba(139,92,246,0.6)]" />
+
+                      {/* Colored accent block on the left edge */}
+                      <div aria-hidden className="absolute left-0 top-0 h-full w-[6%] bg-[linear-gradient(180deg,rgba(34,211,238,0.9),rgba(139,92,246,0.25))] [clip-path:polygon(0_0,68%_0,100%_100%,0_100%)] opacity-80" />
+
+                      {/* Bottom Details (Title) */}
+                      <div className="absolute bottom-2.5 left-[6.5%] right-2.5 z-10">
+                        <h4 className="font-display text-[13px] font-extrabold uppercase leading-[1.1] tracking-tight text-[var(--gr-text)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] group-hover:text-[var(--gr-violet-hi)] transition-colors line-clamp-2" title={g.title}>
+                          {g.title}
+                        </h4>
                       </div>
+
+                      {/* Hover Effects (Button Style) */}
+                      <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
+                      <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
                     </div>
-                  </div>
+                  </article>
                 </Link>
               ))}
             </div>

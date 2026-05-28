@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { after } from "next/server";
 import { updateLastSeen } from "@/lib/update-last-seen";
 import { ClientChrome } from "@/components/layout/client-chrome";
+import { getSession } from "@/lib/auth";
 
 const firaGO = localFont({
   src: [
@@ -48,6 +49,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   after(() => updateLastSeen());
+  const user = await getSession().catch(() => null);
+
   return (
     <html
       lang="ka"
@@ -57,7 +60,7 @@ export default async function RootLayout({
         <SiteHeader />
         <main className="flex-1 pb-16 xl:pb-0">{children}</main>
         <SiteFooter />
-        <ClientChrome />
+        <ClientChrome isAuthenticated={!!user} />
         <Toaster richColors position="top-right" />
       </body>
     </html>

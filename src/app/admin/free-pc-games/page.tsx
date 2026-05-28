@@ -314,7 +314,7 @@ export default function AdminCrackedGamesPage() {
     <div className="container mx-auto max-w-4xl px-4 py-8 space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <Link href="/tamashebi" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-2">
+          <Link href="/free-pc-games" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-2">
             <ArrowLeft className="h-3.5 w-3.5" /> თამაშები
           </Link>
           <h1 className="text-2xl font-bold">ადმინ პანელი</h1>
@@ -554,7 +554,7 @@ export default function AdminCrackedGamesPage() {
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Link href={`/tamashebi/${g.id}`} className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2">
+                    <Link href={`/free-pc-games/${g.id}`} className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2">
                       ნახვა
                     </Link>
                     <Button

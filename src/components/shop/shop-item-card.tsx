@@ -1,197 +1,170 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, Lock, ShoppingCart, Sparkles } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { ShopItem, ShopTier } from "@/types/shop";
 import { purchaseShopItem } from "@/lib/shop/actions";
 import { equipItem, unequipCategory } from "@/lib/shop/equip-actions";
 import { LobbyFireEffect } from "@/components/lobby/lobby-fire-effect";
 
-const TIER_BG: Record<ShopTier, string> = {
-  common:    "from-slate-800/60 to-slate-900/80",
-  rare:      "from-blue-900/50 to-blue-950/80",
-  epic:      "from-violet-900/50 to-fuchsia-950/80",
-  legendary: "from-amber-900/30 to-orange-950/60",
+/* ─── Tier colours ──────────────────────────────────────── */
+const TIER_BORDER_DEFAULT: Record<ShopTier, string> = {
+  common:    "rgba(148,163,184,0.45)",
+  rare:      "rgba(96,165,250,0.50)",
+  epic:      "rgba(167,139,250,0.55)",
+  legendary: "rgba(251,191,36,0.60)",
 };
-const TIER_RING: Record<ShopTier, string> = {
-  common:    "ring-slate-600/40",
-  rare:      "ring-blue-500/40",
-  epic:      "ring-violet-500/50",
-  legendary: "ring-amber-400/60",
+const TIER_TOP_GRAD: Record<ShopTier, string> = {
+  common:    "linear-gradient(90deg,transparent,rgba(148,163,184,0.7),transparent)",
+  rare:      "linear-gradient(90deg,transparent,rgba(96,165,250,0.8),transparent)",
+  epic:      "linear-gradient(90deg,transparent,rgba(167,139,250,0.9),transparent)",
+  legendary: "linear-gradient(90deg,transparent,rgba(251,191,36,0.95),transparent)",
 };
-const HERO_BG: Record<ShopTier, string> = {
-  common:    "linear-gradient(160deg,#475569 0%,#1e293b 40%,#0f172a 100%)",
-  rare:      "linear-gradient(160deg,#1d4ed8 0%,#1e3a8a 40%,#172554 100%)",
-  epic:      "linear-gradient(160deg,#7c3aed 0%,#6d28d9 40%,#3b0764 100%)",
-  legendary: "linear-gradient(160deg,#f97316 0%,#ea580c 40%,#92400e 100%)",
+const TIER_INNER_BG: Record<ShopTier, string> = {
+  common:    "linear-gradient(155deg,#1e293b 0%,#0f172a 100%)",
+  rare:      "linear-gradient(155deg,#1e3a8a 0%,#172554 100%)",
+  epic:      "linear-gradient(155deg,#3b0764 0%,#1e1b4b 100%)",
+  legendary: "linear-gradient(155deg,#78350f 0%,#1c1003 100%)",
 };
-const HERO_RING: Record<ShopTier, string> = {
-  common:    "ring-slate-400/50 hover:ring-slate-300/70",
-  rare:      "ring-blue-400/50 hover:ring-blue-300/70",
-  epic:      "ring-violet-400/50 hover:ring-violet-300/70",
-  legendary: "ring-orange-400/50 hover:ring-orange-300/70",
+const TIER_GLOW_COLOR: Record<ShopTier, string> = {
+  common:    "rgba(148,163,184,0.12)",
+  rare:      "rgba(96,165,250,0.12)",
+  epic:      "rgba(167,139,250,0.14)",
+  legendary: "rgba(251,191,36,0.14)",
 };
-const TIER_BADGE: Record<ShopTier, string> = {
-  common:    "bg-slate-600/40 text-slate-300",
-  rare:      "bg-blue-600/30 text-blue-300",
-  epic:      "bg-violet-600/30 text-violet-300",
-  legendary: "bg-amber-500/25 text-amber-300",
+const TIER_BADGE_STYLE: Record<ShopTier, { bg: string; color: string }> = {
+  common:    { bg: "rgba(100,116,139,0.4)",  color: "#cbd5e1" },
+  rare:      { bg: "rgba(59,130,246,0.28)",  color: "#93c5fd" },
+  epic:      { bg: "rgba(139,92,246,0.30)",  color: "#c4b5fd" },
+  legendary: { bg: "rgba(245,158,11,0.30)",  color: "#fcd34d" },
 };
 const TIER_LABEL: Record<ShopTier, string> = {
   common: "Common", rare: "Rare", epic: "Epic", legendary: "Legendary",
 };
 const CURRENCY_COLOR: Record<string, string> = {
-  nc:  "text-[#C8D4DC]",
-  pro: "text-[var(--gr-amber)]",
+  nc: "#C8D4DC",
+  pro: "var(--gr-amber)",
 };
 const CURRENCY_LABEL: Record<string, string> = { nc: "NC", pro: "Pro" };
 
+const CUT = "polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%)";
+const CUT_SM = "polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)";
+
+/* magenta hover values — same trick as post cards */
+const MAGENTA_BORDER = "rgba(236,72,153,0.85)";
+const MAGENTA_LASER  = "linear-gradient(90deg,transparent,rgba(236,72,153,0.9),transparent)";
+
+/* ─── Item preview ─────────────────────────────────────── */
 function ItemPreview({ item }: { item: ShopItem }) {
   const meta = item.metadata;
 
-  if (item.category === "badge" && meta.emoji) {
-    return <span className="text-4xl">{meta.emoji as string}</span>;
-  }
+  if (item.category === "badge" && meta.emoji)
+    return <span className="text-4xl drop-shadow-[0_0_14px_rgba(255,255,255,0.45)]">{meta.emoji as string}</span>;
 
-  if (item.category === "profile_frame" && meta.color) {
+  if (item.category === "profile_frame" && meta.color)
     return (
       <div
-        className="h-16 w-16 rounded-full ring-[3px] tier-glow-pulse"
+        className="h-16 w-16 rounded-full"
         style={{
-          boxShadow: `0 0 24px ${meta.color as string}60, inset 0 0 12px ${meta.color as string}30`,
-          borderColor: meta.color as string,
           border: `3px solid ${meta.color as string}`,
+          boxShadow: `0 0 22px ${meta.color as string}80, inset 0 0 10px ${meta.color as string}30`,
         }}
       />
     );
-  }
 
-  if (item.category === "name_frame" && meta.gradient) {
+  if (item.category === "name_frame" && meta.gradient)
     return (
       <span className={`bg-gradient-to-r ${meta.gradient as string} bg-clip-text font-display text-xl font-extrabold uppercase text-transparent`}>
         Player
       </span>
     );
-  }
 
   if (item.category === "chat_flair") {
-    if (meta.gradient) {
-      return (
-        <span className={`bg-gradient-to-r ${meta.gradient as string} bg-clip-text font-bold text-transparent`}>
-          Username
-        </span>
-      );
-    }
+    if (meta.gradient)
+      return <span className={`bg-gradient-to-r ${meta.gradient as string} bg-clip-text font-bold text-transparent`}>Username</span>;
     return <span className="font-bold" style={{ color: meta.color as string }}>Username</span>;
   }
 
   if (item.category === "lobby_effect") {
-    if (meta.effect === "fire_lobby") {
+    if (meta.effect === "fire_lobby")
       return (
         <div className="relative w-full overflow-hidden" style={{ height: 112 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/lobbies/pubg-mobile-optimized.jpg"
-            alt=""
-            draggable={false}
-            className="absolute inset-0 h-full w-full object-cover object-center"
-          />
-          <span
-            style={{
-              position: "absolute",
-              width: 600,
-              height: 300,
-              bottom: 0,
-              left: "50%",
-              transform: "translateX(-50%) scale(0.30)",
-              transformOrigin: "bottom center",
-            }}
-          >
+          <img src="/lobbies/pubg-mobile-optimized.jpg" alt="" draggable={false}
+            className="absolute inset-0 h-full w-full object-cover" />
+          <span style={{ position: "absolute", width: 600, height: 300, bottom: 0, left: "50%",
+            transform: "translateX(-50%) scale(0.30)", transformOrigin: "bottom center" }}>
             <LobbyFireEffect />
           </span>
         </div>
       );
-    }
     return (
-      <div
-        className="h-12 w-12 rounded-full tier-glow-pulse"
-        style={{ background: `radial-gradient(circle, ${meta.color as string}60 0%, transparent 70%)` }}
-      />
+      <div className="h-12 w-12 rounded-full"
+        style={{ background: `radial-gradient(circle, ${meta.color as string}60 0%, transparent 70%)` }} />
     );
   }
 
-  if (item.category === "name_card" && meta.emoji) {
+  if (item.category === "name_card" && meta.emoji)
     return (
       <div className="flex flex-col items-center gap-1.5">
         <span className="text-3xl">{meta.emoji as string}</span>
-        <div className="flex h-10 w-20 items-center justify-center bg-gradient-to-br from-blue-900/50 to-blue-950/80 ring-1 ring-blue-500/30"
-          style={{ clipPath: "polygon(0 0,calc(100%-6px) 0,100% 6px,100% 100%,0 100%)" }}>
+        <div className="flex h-10 w-20 items-center justify-center"
+          style={{ background: "linear-gradient(135deg,#1e3a8a,#172554)", clipPath: CUT_SM }}>
           <span className="text-[8px] font-black uppercase tracking-[0.12em] text-blue-300/80">Name Card</span>
         </div>
       </div>
     );
-  }
 
-  if (item.category === "cover" && meta.gradient) {
-    return (
-      <div className={`h-12 w-full rounded-sm bg-gradient-to-r ${meta.gradient as string} ring-1 ring-white/10`} />
-    );
-  }
+  if (item.category === "cover" && meta.gradient)
+    return <div className={`h-12 w-full rounded-sm bg-gradient-to-r ${meta.gradient as string} ring-1 ring-white/10`} />;
 
-  if (item.category === "profile_theme" && meta.bg) {
-    return (
-      <div className={`h-16 w-24 rounded-sm bg-gradient-to-br ${meta.bg as string} ring-1 ring-white/10`} />
-    );
-  }
+  if (item.category === "profile_theme" && meta.bg)
+    return <div className={`h-16 w-24 rounded-sm bg-gradient-to-br ${meta.bg as string} ring-1 ring-white/10`} />;
 
   if (item.category === "character") {
-    if (item.image_url) {
+    if (item.image_url)
       return (
         <div className="relative w-full overflow-hidden" style={{ height: 160 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={item.image_url}
-            alt={item.name}
-            draggable={false}
-            className="absolute inset-0 h-full w-full object-cover object-top"
-          />
+          <img src={item.image_url} alt={item.name} draggable={false}
+            className="absolute inset-0 h-full w-full object-cover object-top" />
         </div>
       );
-    }
     return (
-      <div className="flex h-16 w-16 items-center justify-center bg-gradient-to-br from-white/5 to-white/[0.02] ring-1 ring-white/10"
-        style={{ clipPath: "polygon(0 0,calc(100%-8px) 0,100% 8px,100% 100%,0 100%)" }}>
+      <div className="flex h-16 w-16 items-center justify-center"
+        style={{ background: "rgba(255,255,255,0.04)", clipPath: CUT }}>
         <span className="text-2xl">🎭</span>
       </div>
     );
   }
 
-  return <ShoppingCart className="h-10 w-10 text-[var(--gr-text-dim)]" />;
+  return <span className="text-4xl opacity-30">🛒</span>;
 }
 
+/* ─── Card ─────────────────────────────────────────────── */
 export function ShopItemCard({ item, hasSession }: { item: ShopItem; hasSession: boolean }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null);
 
+  const borderDefault = TIER_BORDER_DEFAULT[item.tier];
+  const topGrad       = TIER_TOP_GRAD[item.tier];
+  const innerBg       = TIER_INNER_BG[item.tier];
+  const glowColor     = TIER_GLOW_COLOR[item.tier];
+  const badge         = TIER_BADGE_STYLE[item.tier];
+  const isHero        = item.category === "character" && !!item.image_url;
+
   function handleEquip() {
     if (isPending) return;
     startTransition(async () => {
       if (item.equipped) {
-        const result = await unequipCategory(item.category);
-        if (result.success) {
-          setFeedback({ type: "success", msg: "მოხსნილია" });
-          router.refresh();
-        }
+        const r = await unequipCategory(item.category);
+        if (r.success) { setFeedback({ type: "success", msg: "მოხსნილია" }); router.refresh(); }
       } else {
-        const result = await equipItem(item.id);
-        if (result.success) {
-          setFeedback({ type: "success", msg: "გამოყენებულია!" });
-          router.refresh();
-        } else {
-          setFeedback({ type: "error", msg: result.error === "not_owned" ? "ჯერ შეიძინე" : "შეცდომა" });
-        }
+        const r = await equipItem(item.id);
+        if (r.success) { setFeedback({ type: "success", msg: "გამოყენებულია!" }); router.refresh(); }
+        else { setFeedback({ type: "error", msg: r.error === "not_owned" ? "ჯერ შეიძინე" : "შეცდომა" }); }
       }
       setTimeout(() => setFeedback(null), 2500);
     });
@@ -201,82 +174,148 @@ export function ShopItemCard({ item, hasSession }: { item: ShopItem; hasSession:
     if (!hasSession) { router.push("/auth/login"); return; }
     if (item.owned || isPending) return;
     startTransition(async () => {
-      const result = await purchaseShopItem(item.id);
-      if (result.success) {
-        setFeedback({ type: "success", msg: `${result.item_name} შეძენილია!` });
+      const r = await purchaseShopItem(item.id);
+      if (r.success) {
+        setFeedback({ type: "success", msg: `${r.item_name} შეძენილია!` });
         router.refresh();
       } else {
         const msgs: Record<string, string> = {
           insufficient_funds: "არასაკმარისი ბალანსი",
-          already_owned:      "უკვე გაქვს",
-          not_authenticated:  "გაიარე ავტორიზაცია",
-          item_not_found:     "ნივთი ვერ მოიძებნა",
-          unknown:            "შეცდომა",
+          already_owned: "უკვე გაქვს",
+          not_authenticated: "გაიარე ავტორიზაცია",
+          item_not_found: "ნივთი ვერ მოიძებნა",
+          unknown: "შეცდომა",
         };
-        setFeedback({ type: "error", msg: msgs[result.error] ?? "შეცდომა" });
+        setFeedback({ type: "error", msg: msgs[r.error] ?? "შეცდომა" });
       }
       setTimeout(() => setFeedback(null), 3000);
     });
   }
 
-  /* ── Hero card (character with image) ── */
-  if (item.category === "character" && item.image_url) {
-    return (
+  return (
+    /* ── outer border wrapper — same trick as post cards ──
+       CSS var flips to magenta on group-hover              */
+    <div
+      className="group relative isolate transition-all duration-300
+                 group-hover:[--shop-border:rgba(236,72,153,0.85)]"
+      style={{
+        clipPath: CUT,
+        background: `var(--shop-border, ${borderDefault})`,
+        padding: 1,
+      }}
+    >
+      {/* ── inner card ── */}
       <div
-        className={`group relative self-start overflow-hidden ring-1 transition hover:ring-2 hover:brightness-105 ${HERO_RING[item.tier]}`}
-        style={{
-          clipPath: "polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,0 100%)",
-          background: HERO_BG[item.tier],
-          aspectRatio: "3/4",
-        }}
+        className="relative flex h-full flex-col overflow-hidden"
+        style={{ clipPath: CUT, background: innerBg }}
       >
-        {/* full-bleed character image */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={item.image_url}
-          alt={item.name}
-          draggable={false}
-          className="absolute inset-0 h-full w-full object-cover object-top"
+        {/* permanent tier top-line */}
+        <span
+          aria-hidden
+          className="absolute left-0 top-0 z-10 h-[2px] w-full"
+          style={{ background: topGrad }}
         />
 
-        {/* bottom gradient overlay */}
+        {/* laser sweeper on hover */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute left-0 top-0 z-10 h-[2px] w-full
+                     translate-x-[-100%] opacity-0
+                     group-hover:translate-x-[100%] group-hover:opacity-100
+                     group-hover:transition-transform group-hover:duration-700"
+          style={{ background: MAGENTA_LASER }}
+        />
+
+        {/* tier glow (always subtle) */}
         <div
           aria-hidden
-          className="absolute inset-x-0 bottom-0 h-3/5"
-          style={{ background: "linear-gradient(to top,rgba(0,0,0,0.92) 0%,rgba(0,0,0,0.65) 50%,transparent 100%)" }}
+          className="pointer-events-none absolute inset-0 z-[2]"
+          style={{ background: `radial-gradient(ellipse at 50% 0%,${glowColor} 0%,transparent 65%)` }}
+        />
+
+        {/* magenta glow on hover */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-[2] opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          style={{ background: "radial-gradient(ellipse at 50% 0%,rgba(236,72,153,0.10) 0%,transparent 65%)" }}
         />
 
         {/* tier badge */}
-        <span className={`absolute left-0 top-0 z-10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em] ${TIER_BADGE[item.tier]}`}>
+        <span
+          className="absolute left-0 top-0 z-20 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em]"
+          style={{ background: badge.bg, color: badge.color }}
+        >
           {TIER_LABEL[item.tier]}
         </span>
 
         {/* status badge */}
         {item.equipped ? (
-          <span className="absolute right-2 top-1 z-10 flex items-center gap-1 text-[9px] font-bold text-amber-300">
-            <Sparkles className="h-3 w-3" /> აქტიური
+          <span className="absolute right-2 top-1 z-20 flex items-center gap-0.5 text-[9px] font-bold" style={{ color: "#c4b5fd" }}>
+            <Sparkles className="h-2.5 w-2.5" /> აქტიური
           </span>
         ) : item.owned ? (
-          <span className="absolute right-2 top-1 z-10 flex items-center gap-1 text-[9px] font-bold text-emerald-400">
-            <Check className="h-3 w-3" /> შეძენილი
+          <span className="absolute right-2 top-1 z-20 flex items-center gap-0.5 text-[9px] font-bold text-emerald-400">
+            <Check className="h-2.5 w-2.5" /> შეძენილი
           </span>
         ) : null}
 
-        {/* bottom info */}
-        <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col gap-2 p-3">
+        {/* ── preview ── */}
+        {isHero ? (
+          <div className="relative overflow-hidden" style={{ aspectRatio: "3/4" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={item.image_url!}
+              alt={item.name}
+              draggable={false}
+              className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+            />
+            <div
+              aria-hidden
+              className="absolute inset-x-0 bottom-0 h-2/3"
+              style={{ background: "linear-gradient(to top,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0.55) 50%,transparent 100%)" }}
+            />
+          </div>
+        ) : (
+          <div
+            className={`relative z-[3] flex items-end justify-center overflow-hidden ${
+              item.metadata?.effect === "fire_lobby" ? "h-28 p-0" : "h-28 px-3 pt-8"
+            }`}
+          >
+            <ItemPreview item={item} />
+          </div>
+        )}
+
+        {/* ── info + actions ── */}
+        <div
+          className={`relative z-[3] flex flex-1 flex-col gap-2 p-3 ${
+            isHero ? "absolute inset-x-0 bottom-0" : "pt-2"
+          }`}
+        >
           <div>
-            <p className="font-display text-[16px] font-black uppercase leading-none tracking-tight text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]">
+            <p
+              className={`font-display font-extrabold uppercase leading-tight tracking-tight text-white ${
+                isHero ? "text-[15px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]" : "text-[12px]"
+              }`}
+            >
               {item.name}
             </p>
             {item.description && (
-              <p className="mt-0.5 line-clamp-1 text-[9px] leading-snug text-white/60">
+              <p
+                className={`mt-0.5 line-clamp-2 leading-snug ${
+                  isHero ? "text-[9px] text-white/60" : "text-[10px] text-[var(--gr-text-dim)]"
+                }`}
+              >
                 {item.description}
               </p>
             )}
           </div>
 
-          <div className="flex items-center justify-between gap-2">
-            <span className={`text-[13px] font-black tabular-nums drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] ${CURRENCY_COLOR[item.cost_currency]}`}>
+          {/* price + action */}
+          <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+            <span
+              className="text-[13px] font-black tabular-nums"
+              style={{ color: CURRENCY_COLOR[item.cost_currency] }}
+            >
               {item.cost_amount} {CURRENCY_LABEL[item.cost_currency]}
             </span>
 
@@ -285,11 +324,15 @@ export function ShopItemCard({ item, hasSession }: { item: ShopItem; hasSession:
                 type="button"
                 onClick={handleEquip}
                 disabled={isPending}
-                className={`flex h-7 items-center gap-1 px-2.5 text-[9px] font-black uppercase tracking-[0.1em] ring-1 transition [clip-path:polygon(0_0,calc(100%-6px)_0,100%_6px,100%_100%,0_100%)] ${
-                  item.equipped
-                    ? "bg-[color-mix(in_srgb,var(--gr-violet)_20%,transparent)] text-[var(--gr-violet-hi)] ring-[var(--gr-violet-hi)]/50"
-                    : "bg-black/50 text-white/80 ring-white/20 hover:ring-white/40"
-                }`}
+                className="flex h-7 items-center gap-1 px-2.5 text-[9px] font-black uppercase tracking-[0.1em] transition-all duration-200 disabled:opacity-50"
+                style={{
+                  clipPath: CUT_SM,
+                  background: item.equipped
+                    ? "color-mix(in srgb, #8b5cf6 22%, transparent)"
+                    : "rgba(255,255,255,0.07)",
+                  color: item.equipped ? "#c4b5fd" : "#e2e8f0",
+                  outline: `1px solid ${item.equipped ? "rgba(196,181,253,0.45)" : "rgba(255,255,255,0.13)"}`,
+                }}
               >
                 {item.equipped ? <><Sparkles className="h-3 w-3" /> აქტიური</> : "გამოყენება"}
               </button>
@@ -298,8 +341,11 @@ export function ShopItemCard({ item, hasSession }: { item: ShopItem; hasSession:
                 type="button"
                 onClick={handlePurchase}
                 disabled={isPending}
-                className="h-7 px-3 text-[10px] font-black uppercase tracking-[0.12em] text-black transition hover:brightness-110 active:scale-95 disabled:opacity-50 [clip-path:polygon(0_0,calc(100%-7px)_0,100%_7px,100%_100%,0_100%)]"
-                style={{ background: "linear-gradient(180deg,#f5c842 0%,#e6a800 55%,#c87f00 100%)" }}
+                className="h-7 px-3 text-[10px] font-black uppercase tracking-[0.12em] text-black transition hover:brightness-110 active:scale-95 disabled:opacity-50"
+                style={{
+                  clipPath: CUT_SM,
+                  background: "linear-gradient(180deg,#f5c842 0%,#e6a800 55%,#c87f00 100%)",
+                }}
               >
                 {isPending ? "..." : "ყიდვა"}
               </button>
@@ -312,89 +358,6 @@ export function ShopItemCard({ item, hasSession }: { item: ShopItem; hasSession:
             </p>
           )}
         </div>
-      </div>
-    );
-  }
-
-  /* ── Standard card ── */
-  return (
-    <div
-      className={`group relative flex flex-col bg-gradient-to-br ${TIER_BG[item.tier]} ring-1 ${TIER_RING[item.tier]} transition hover:ring-2 hover:brightness-110`}
-      style={{ clipPath: "polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%)" }}
-    >
-      {/* tier badge */}
-      <span className={`absolute left-0 top-0 z-10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em] ${TIER_BADGE[item.tier]}`}>
-        {TIER_LABEL[item.tier]}
-      </span>
-
-      {/* status badge */}
-      {item.equipped ? (
-        <span className="absolute right-3 top-1 z-10 flex items-center gap-1 text-[9px] font-bold text-[var(--gr-violet-hi)]">
-          <Sparkles className="h-3 w-3" /> აქტიური
-        </span>
-      ) : item.owned ? (
-        <span className="absolute right-3 top-1 z-10 flex items-center gap-1 text-[9px] font-bold text-emerald-400">
-          <Check className="h-3 w-3" /> შეძენილი
-        </span>
-      ) : null}
-
-      {/* preview area */}
-      <div className={`flex items-end justify-center overflow-hidden ${
-        item.metadata?.effect === "fire_lobby" ? "h-28 p-0" : "h-28 px-3 pt-4"
-      }`}>
-        <ItemPreview item={item} />
-      </div>
-
-      {/* info */}
-      <div className="flex flex-1 flex-col gap-2 p-3 pt-1">
-        <div>
-          <p className="font-display text-[13px] font-extrabold uppercase leading-tight tracking-tight text-white">
-            {item.name}
-          </p>
-          {item.description && (
-            <p className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-[var(--gr-text-dim)]">
-              {item.description}
-            </p>
-          )}
-        </div>
-
-        {/* price + buy */}
-        <div className="mt-auto flex items-center justify-between gap-2 pt-1">
-          <span className={`text-[13px] font-black tabular-nums ${CURRENCY_COLOR[item.cost_currency]}`}>
-            {item.cost_amount} {CURRENCY_LABEL[item.cost_currency]}
-          </span>
-
-          {item.owned ? (
-            <button
-              type="button"
-              onClick={handleEquip}
-              disabled={isPending}
-              className={`flex h-7 items-center gap-1 px-2.5 text-[9px] font-black uppercase tracking-[0.1em] ring-1 transition [clip-path:polygon(0_0,calc(100%-6px)_0,100%_6px,100%_100%,0_100%)] ${
-                item.equipped
-                  ? "bg-[color-mix(in_srgb,var(--gr-violet)_20%,transparent)] text-[var(--gr-violet-hi)] ring-[var(--gr-violet-hi)]/50"
-                  : "bg-[var(--gr-bg-2)] text-[var(--gr-text-dim)] ring-[var(--gr-border)] hover:text-[var(--gr-text)] hover:ring-[var(--gr-border-hi)]"
-              }`}
-            >
-              {item.equipped ? <><Sparkles className="h-3 w-3" /> აქტიური</> : "გამოყენება"}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handlePurchase}
-              disabled={isPending}
-              className="h-7 px-3 text-[10px] font-black uppercase tracking-[0.12em] text-black transition hover:brightness-110 active:scale-95 disabled:opacity-50 [clip-path:polygon(0_0,calc(100%-7px)_0,100%_7px,100%_100%,0_100%)]"
-              style={{ background: "linear-gradient(180deg,#f5c842 0%,#e6a800 55%,#c87f00 100%)" }}
-            >
-              {isPending ? "..." : "ყიდვა"}
-            </button>
-          )}
-        </div>
-
-        {feedback && (
-          <p className={`text-[10px] font-bold ${feedback.type === "success" ? "text-emerald-400" : "text-red-400"}`}>
-            {feedback.msg}
-          </p>
-        )}
       </div>
     </div>
   );

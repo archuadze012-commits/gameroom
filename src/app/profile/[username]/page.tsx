@@ -72,7 +72,9 @@ export default async function ProfilePage({
 
   const mockUser = mockUsers.find((u) => u.username === username);
   const displayName = dbProfile?.display_name ?? mockUser?.displayName ?? username;
+  
   const userPosts = mockLfgPosts.filter((p) => p.authorName === username).slice(0, 5);
+
   const feedPosts = mockFeedPosts.filter((p) => p.authorName === username);
 
   let badgeCodes: string[] = [];

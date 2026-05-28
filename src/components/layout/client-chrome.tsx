@@ -18,7 +18,7 @@ const PWAInstallFloater = dynamic(() =>
   { ssr: false },
 );
 
-export function ClientChrome() {
+export function ClientChrome({ isAuthenticated }: { isAuthenticated?: boolean }) {
   const [showChatbot, setShowChatbot] = useState(false);
   const [showPwaPrompt, setShowPwaPrompt] = useState(false);
 
@@ -35,7 +35,7 @@ export function ClientChrome() {
   return (
     <>
       <MobileBottomNav />
-      {showChatbot ? <ChatbotWidget /> : null}
+      {showChatbot && isAuthenticated ? <ChatbotWidget /> : null}
       {showPwaPrompt ? <PWAInstallFloater delay={0} locale="ka" /> : null}
     </>
   );

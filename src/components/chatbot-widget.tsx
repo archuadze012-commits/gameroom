@@ -116,7 +116,62 @@ export function ChatbotWidget() {
   // Initial load + realtime
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
-    let channel: ReturnType<typeof supabase.channel> | null = null;
+    // Use a unique name for this mount to avoid "already subscribed" errors in Strict Mode
+    const channelName = `messenger-bubble-${Math.random().toString(36).slice(2, 11)}`;
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "conversation_messages",
+        },
+        async (payload) => {
+          const msg = payload.new as {
+            id: string;
+            conversation_id: string;
+            sender_id: string;
+            body: string;
+            created_at: string;
+          };
+          if (msg.sender_id === userIdRef.current) return;
+
+          // If the matching convo is currently open in the bubble, append directly
+          if (
+            openRef.current &&
+            openedConvoRef.current?.id === msg.conversation_id
+          ) {
+            setMessages((prev) =>
+              prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]
+            );
+          }
+
+          // Refresh list (unread counts, last message)
+          loadConversations();
+
+          // Show preview only when widget is closed
+          if (!openRef.current) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("username, display_name, avatar_url")
+              .eq("id", msg.sender_id)
+              .maybeSingle();
+
+            const senderName =
+              profile?.display_name ?? profile?.username ?? "ვინმე";
+
+            showPreview({
+              conversationId: msg.conversation_id,
+              senderName,
+              senderAvatar: profile?.avatar_url ?? null,
+              body: msg.body,
+            });
+          }
+        }
+      )
+      .subscribe();
 
     async function init() {
       const {
@@ -125,66 +180,12 @@ export function ChatbotWidget() {
       if (!user) return;
       userIdRef.current = user.id;
       loadConversations();
-
-      channel = supabase
-        .channel("messenger-bubble")
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "conversation_messages",
-          },
-          async (payload) => {
-            const msg = payload.new as {
-              id: string;
-              conversation_id: string;
-              sender_id: string;
-              body: string;
-              created_at: string;
-            };
-            if (msg.sender_id === userIdRef.current) return;
-
-            // If the matching convo is currently open in the bubble, append directly
-            if (
-              openRef.current &&
-              openedConvoRef.current?.id === msg.conversation_id
-            ) {
-              setMessages((prev) =>
-                prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]
-              );
-            }
-
-            // Refresh list (unread counts, last message)
-            loadConversations();
-
-            // Show preview only when widget is closed
-            if (!openRef.current) {
-              const { data: profile } = await supabase
-                .from("profiles")
-                .select("username, display_name, avatar_url")
-                .eq("id", msg.sender_id)
-                .maybeSingle();
-
-              const senderName =
-                profile?.display_name ?? profile?.username ?? "ვინმე";
-
-              showPreview({
-                conversationId: msg.conversation_id,
-                senderName,
-                senderAvatar: profile?.avatar_url ?? null,
-                body: msg.body,
-              });
-            }
-          }
-        )
-        .subscribe();
     }
 
     init();
 
     return () => {
-      if (channel) supabase.removeChannel(channel);
+      supabase.removeChannel(channel);
     };
   }, [loadConversations]);
 

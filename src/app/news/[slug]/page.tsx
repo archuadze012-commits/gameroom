@@ -1,16 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar, Clock, User, MessageCircle } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Textarea } from "@/components/ui/textarea";
-import { mockGames, mockNews } from "@/lib/mock-data";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { DisplayHeading } from "@/components/ui/display-heading";
-import { ChevronButton } from "@/components/ui/chevron-button";
 import { Pill } from "@/components/ui/pill";
 
 const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
 const cutMd = "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)";
+
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/auth";
+import { formatDistanceToNow } from "date-fns";
+import { ka } from "date-fns/locale";
+import { NewsCommentsClient } from "./news-comments-client";
+
+export const dynamic = "force-dynamic";
 
 export default async function NewsArticlePage({
   params,
@@ -18,25 +22,63 @@ export default async function NewsArticlePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const article = mockNews.find((n) => n.slug === slug);
+  const supabase = await createSupabaseServerClient();
+  const sessionUser = await getSession().catch(() => null);
+
+  // Fetch article
+  const { data: article } = await supabase
+    .from("news_articles")
+    .select(`
+      id,
+      title,
+      slug,
+      cover_url,
+      excerpt,
+      body,
+      published_at,
+      author_id,
+      profiles:author_id (
+        username
+      ),
+      games:game_id (
+        slug,
+        name_ka,
+        emoji
+      )
+    `)
+    .eq("slug", slug)
+    .single();
+
   if (!article) notFound();
-  const game = mockGames.find((g) => g.slug === article.gameSlug);
+  const game = Array.isArray(article.games) ? article.games[0] : (article.games as any);
 
-  const mockBody = `მთლიანი სტატია მოგვიანებით აქ ჩაიწერება — ეს არის demo content.
+  const readMinutes = Math.max(1, Math.ceil((article.body?.length || 0) / 800));
+  const formattedDate = article.published_at
+    ? formatDistanceToNow(new Date(article.published_at), { addSuffix: true, locale: ka })
+    : "";
 
-განახლების მთავარი მომენტები:
+  // Fetch comments
+  const { data: dbComments } = await supabase
+    .from("news_comments")
+    .select(`
+      id,
+      body,
+      created_at,
+      profiles:user_id (
+        username
+      )
+    `)
+    .eq("article_id", article.id)
+    .order("created_at", { ascending: false });
 
-- ახალი მენიუ, რომელიც გვაძლევს უფრო სწრაფ ნავიგაციას მთავარ რეჟიმებს შორის.
-- შემცირებული input lag (≈ 12ms), რაც განსაკუთრებით იგრძნობა ranked მატჩებში.
-- ხელახლა აწყობილი matchmaking ალგორითმი — უფრო ბალანსირებული მოწინააღმდეგეები.
-- ახალი skin-ების კოლექცია "Spring 2026".
+  const comments = (dbComments || []).map((c: any) => ({
+    id: c.id,
+    name: c.profiles?.username || "Anonymous",
+    ago: formatDistanceToNow(new Date(c.created_at), { addSuffix: true, locale: ka }),
+    body: c.body,
+  }));
 
-ჩვენი აზრით ეს არის წლის ერთ-ერთი ყველაზე მნიშვნელოვანი განახლება და დიდი წინგადადგმული ნაბიჯი მთლიანი მობილური სიმულატორული ჟანრისთვის.`;
-
-  const mockComments = [
-    { name: "Beka", ago: "2 სთ წინ", body: "ძალიან კარგი განახლება! matchmaking-ზე ნამდვილად იგრძნობა." },
-    { name: "Lasha10", ago: "5 სთ წინ", body: "input lag ნამდვილად შემცირდა, თვალით ჩანს." },
-  ];
+  const coverGradient = article.cover_url || "from-violet-500/40 to-violet-500/0";
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
@@ -56,7 +98,7 @@ export default async function NewsArticlePage({
           className="relative mb-8 overflow-hidden ring-1 ring-[var(--gr-border)]"
           style={{ clipPath: cutMd }}
         >
-          <div className={`h-56 w-full bg-gradient-to-br md:h-72 ${article.cover}`} />
+          <div className={`h-56 w-full bg-gradient-to-br md:h-72 ${coverGradient}`} />
           <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)] via-transparent to-transparent" />
           <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
         </div>
@@ -64,80 +106,38 @@ export default async function NewsArticlePage({
         <header className="space-y-4">
           <Eyebrow tone="amber">სტატია</Eyebrow>
           {game && (
-            <Pill tone="violet">{game.emoji} {game.nameKa}</Pill>
+            <Pill tone="violet">{game.emoji} {game.name_ka}</Pill>
           )}
           <DisplayHeading as="h1" size="lg" className="!text-[28px] sm:!text-[36px]">
             {article.title}
           </DisplayHeading>
           <div className="flex flex-wrap items-center gap-3 text-[12px] uppercase tracking-[0.14em] text-[var(--gr-text-dim)]">
-            <span className="inline-flex items-center gap-1.5"><User className="h-3.5 w-3.5" /> {article.author}</span>
+            <span className="inline-flex items-center gap-1.5"><User className="h-3.5 w-3.5" /> {
+              (() => {
+                const p = article.profiles;
+                return (Array.isArray(p) ? p[0]?.username : (p as any)?.username) || "Admin";
+              })()
+            }</span>
             <span>·</span>
-            <span className="inline-flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> {article.publishedAt}</span>
+            <span className="inline-flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> {formattedDate}</span>
             <span>·</span>
-            <span className="inline-flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {article.readMinutes} წთ კითხვა</span>
+            <span className="inline-flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {readMinutes} წთ კითხვა</span>
           </div>
         </header>
 
         <div className="mt-6 h-px w-full bg-[var(--gr-border)]" />
 
         <div className="prose prose-invert mt-6 max-w-none whitespace-pre-line text-[15px] leading-[1.75] text-[var(--gr-text)]/90">
-          {mockBody}
+          {article.body}
         </div>
 
-        <section className="mt-16">
-          <div className="mb-5 flex items-center gap-2">
-            <MessageCircle className="h-5 w-5 text-[var(--gr-violet-hi)]" />
-            <Eyebrow tone="violet">დისკუსია</Eyebrow>
-            <span className="text-[12px] text-[var(--gr-text-mute)]">({mockComments.length})</span>
-          </div>
-
-          {/* compose */}
-          <div
-            className="relative mb-4 bg-[var(--gr-bg-1)] p-4 ring-1 ring-[var(--gr-border)]"
-            style={{ clipPath: cutSm }}
-          >
-            <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
-            <Textarea
-              placeholder="დაწერე კომენტარი..."
-              rows={3}
-              className="resize-none border-[var(--gr-border-hi)] bg-[var(--gr-bg-2)] text-[var(--gr-text)] placeholder:text-[var(--gr-text-dim)] focus-visible:ring-[var(--gr-violet-hi)]"
-            />
-            <div className="mt-3 flex justify-end">
-              <ChevronButton variant="violet" size="sm">გამოქვეყნება</ChevronButton>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {mockComments.map((c, i) => (
-              <div
-                key={i}
-                className="relative bg-[var(--gr-bg-1)] p-4 ring-1 ring-[var(--gr-border)]"
-                style={{ clipPath: cutSm }}
-              >
-                <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)] opacity-70" />
-                <div className="flex items-start gap-3">
-                  <Avatar className="h-9 w-9 shrink-0 border border-[var(--gr-border-hi)]">
-                    <AvatarFallback className="bg-[var(--gr-violet)]/15 text-xs text-[var(--gr-violet-hi)]">
-                      {c.name.slice(0, 1)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 text-[12px]">
-                      <span className="font-semibold text-[var(--gr-text)]">@{c.name}</span>
-                      <span className="text-[var(--gr-text-dim)]">· {c.ago}</span>
-                    </div>
-                    <p className="mt-1 text-[13.5px] leading-relaxed text-[var(--gr-text)]/90">{c.body}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        <NewsCommentsClient
+          articleId={article.id}
+          articleSlug={article.slug}
+          initialComments={comments}
+          currentUser={sessionUser}
+        />
       </article>
     </div>
   );
-}
-
-export function generateStaticParams() {
-  return mockNews.map((n) => ({ slug: n.slug }));
 }
