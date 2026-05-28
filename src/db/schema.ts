@@ -16,11 +16,11 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 
-// Reference to Supabase auth schema (read-only from app perspective)
-const authSchema = pgSchema("auth");
-export const authUsers = authSchema.table("users", {
-  id: uuid("id").primaryKey(),
-});
+// Reference to Supabase auth schema commented out for standalone Postgres
+// const authSchema = pgSchema("auth");
+// export const authUsers = authSchema.table("users", {
+//   id: uuid("id").primaryKey(),
+// });
 
 // ---------- Enums ----------
 
@@ -89,9 +89,7 @@ export const clanRequestStatusEnum = pgEnum("clan_request_status", ["pending", "
 export const profiles = pgTable(
   "profiles",
   {
-    id: uuid("id")
-      .primaryKey()
-      .references(() => authUsers.id, { onDelete: "cascade" }),
+    id: uuid("id").primaryKey(),
     username: varchar("username", { length: 32 }).notNull(),
     displayName: varchar("display_name", { length: 64 }),
     avatarUrl: text("avatar_url"),
@@ -406,9 +404,7 @@ export const userEquipped = pgTable(
 export const userLobbyLoadouts = pgTable(
   "user_lobby_loadouts",
   {
-    userId: uuid("user_id")
-      .notNull()
-      .references(() => authUsers.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").notNull(),
     gameSlug: text("game_slug").notNull(),
     loadout: jsonb("loadout").default({}).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
