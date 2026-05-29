@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export type LoadoutData = {
   character?: string;
@@ -11,7 +11,7 @@ export async function getLobbyLoadout(
   userId: string,
   gameSlug: string,
 ): Promise<LoadoutData | null> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const { data } = await supabase
     .from("user_lobby_loadouts")
     .select("loadout")

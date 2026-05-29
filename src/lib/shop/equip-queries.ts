@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export type EquippedItem = {
   category: string;
@@ -7,7 +7,7 @@ export type EquippedItem = {
 };
 
 export async function getEquippedItems(userId: string): Promise<EquippedItem[]> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const { data } = await supabase
     .from("user_equipped")
     .select("category, item_id, shop_items(metadata)")
@@ -23,7 +23,7 @@ export async function getEquippedItems(userId: string): Promise<EquippedItem[]> 
 }
 
 export async function getEquippedItemIds(userId: string): Promise<Set<string>> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const { data } = await supabase
     .from("user_equipped")
     .select("item_id")

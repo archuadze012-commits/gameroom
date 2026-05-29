@@ -146,7 +146,7 @@ export default async function ForumCategoryPage({
                         </h3>
                       </div>
                       <div className="mt-2 flex flex-wrap items-center gap-3">
-                        <Pill tone="base" className="px-2 py-0.5 text-[10px]">
+                        <Pill tone="neutral" className="px-2 py-0.5 text-[10px]">
                            @{thread.author}
                         </Pill>
                         <div className="text-[11px] uppercase tracking-[0.12em] text-[var(--gr-text-dim)]">
