@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSession } from "@/lib/auth";
 import { awardXp } from "@/lib/gamification";
 import { sendPushToUser } from "@/lib/push";
@@ -59,7 +60,7 @@ export async function POST(
     const commenterName = user.user_metadata?.username || user.email?.split("@")[0] || "ვიღაცამ";
 
     // 1. Save to notifications table
-    await supabase.from("notifications").insert({
+    await createSupabaseAdminClient().from("notifications").insert({
       user_id: article.author_id,
       type: "news_comment",
       title: "ახალი კომენტარი სიახლეზე 📰",

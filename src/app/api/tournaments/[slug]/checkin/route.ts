@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 
@@ -46,7 +47,7 @@ export async function POST(
   }
 
   // Create notification
-  await supabase.from("notifications").insert({
+  await createSupabaseAdminClient().from("notifications").insert({
     user_id: user.id,
     type: "tournament_checkin",
     title: "Check-in დადასტურებულია! 🏆",

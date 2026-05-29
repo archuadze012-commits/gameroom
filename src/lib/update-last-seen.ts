@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "./supabase/server";
+import { createSupabaseAdminClient } from "./supabase/admin";
 import { getSession } from "./auth";
 import { awardXp } from "./gamification";
 
@@ -7,7 +7,7 @@ export async function updateLastSeen() {
     const session = await getSession().catch(() => null);
     if (!session?.id) return;
 
-    const supabase = await createSupabaseServerClient();
+    const supabase = createSupabaseAdminClient();
     const today = new Date().toISOString().slice(0, 10);
 
     // Check if we should award daily login XP

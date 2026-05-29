@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getRequestOriginFromHeaders } from "@/lib/url";
 import { signupRateLimit } from "@/lib/rate-limit";
 
@@ -42,6 +43,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       const user = data.user;
+      const admin = createSupabaseAdminClient();
       const savedUsername = user.user_metadata?.username as string | undefined;
       const emailPrefix = (user.email?.split("@")[0] ?? "user")
         .replace(/[^a-zA-Z0-9_]/g, "")
@@ -75,7 +77,7 @@ export async function GET(request: NextRequest) {
           }
           // ────────────────────────────────────────────────────────────
 
-          await supabase.from("profiles").insert({
+          await admin.from("profiles").insert({
             id: user.id,
             username: savedUsername ?? fallbackUsername,
             display_name:
@@ -87,7 +89,7 @@ export async function GET(request: NextRequest) {
           });
         } else {
           hasProfile = true;
-          await supabase.from("profiles").update({
+          await admin.from("profiles").update({
             avatar_url: (user.user_metadata?.avatar_url as string | undefined) ?? null,
             email: user.email ?? null,
             updated_at: new Date().toISOString(),
