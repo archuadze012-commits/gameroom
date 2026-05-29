@@ -14,10 +14,7 @@ import { EditModeProvider } from "@/components/admin/edit-mode-context";
 const firaGO = localFont({
   src: [
     { path: "./fonts/firago/FiraGO-Regular.ttf", weight: "400", style: "normal" },
-    { path: "./fonts/firago/FiraGO-Medium.ttf", weight: "500", style: "normal" },
-    { path: "./fonts/firago/FiraGO-SemiBold.ttf", weight: "600", style: "normal" },
     { path: "./fonts/firago/FiraGO-Bold.ttf", weight: "700", style: "normal" },
-    { path: "./fonts/firago/FiraGO-ExtraBold.ttf", weight: "800", style: "normal" },
   ],
   variable: "--font-firago",
   display: "swap",
