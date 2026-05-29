@@ -3,15 +3,52 @@ import { Rocket } from "lucide-react";
 import { mockGames, type MockGame } from "@/lib/mock-data";
 import { GameIcon } from "@/components/game-icon";
 import { Pill } from "@/components/ui/pill";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
 
-// Games that have a dedicated 3D lobby route.
 const LOBBY_GAMES = new Set<string>(["pubg-mobile"]);
 
-export function ProfileGameRows({ slugs, username }: { slugs: string[]; username: string }) {
+export async function ProfileGameRows({ slugs, username }: { slugs: string[]; username: string }) {
+  if (slugs.length === 0) {
+    return (
+      <p
+        className="border border-dashed border-[var(--gr-border-hi)] bg-[var(--gr-bg-2)]/40 py-8 text-center text-[13px] text-[var(--gr-text-mute)]"
+        style={{ clipPath: cutSm }}
+      >
+        ჯერ არცერთი თამაში არ არის არჩეული.
+      </p>
+    );
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { data: dbGames } = await supabase
+    .from("games")
+    .select("slug, name_ka, name_en, description, accent, emoji, icon_url, cover_url")
+    .in("slug", slugs);
+
+  const dbMap = new Map<string, MockGame>(
+    (dbGames ?? []).map((g) => [
+      g.slug,
+      {
+        slug: g.slug,
+        nameKa: g.name_ka,
+        nameEn: g.name_en,
+        description: g.description,
+        accent: g.accent,
+        emoji: g.emoji,
+        iconUrl: g.icon_url ?? undefined,
+        coverUrl: g.cover_url ?? undefined,
+        players: 0,
+        online: 0,
+        liveLfg: 0,
+        favoritedBy: 0,
+      },
+    ])
+  );
+
   const games = slugs
-    .map((s) => mockGames.find((g) => g.slug === s))
+    .map((s) => dbMap.get(s) ?? mockGames.find((g) => g.slug === s))
     .filter(Boolean) as MockGame[];
 
   if (games.length === 0) {
@@ -36,7 +73,6 @@ export function ProfileGameRows({ slugs, username }: { slugs: string[]; username
             className="group relative flex items-center gap-3 bg-[var(--gr-bg-1)] p-3 ring-1 ring-[var(--gr-border)] transition-all duration-200 hover:-translate-y-0.5 hover:ring-[var(--gr-violet-hi)] gr-sweep"
             style={{ clipPath: cutSm }}
           >
-            {/* row-wide game-page link, behind everything */}
             <Link
               href={`/games/${g.slug}`}
               aria-label={g.nameKa}
