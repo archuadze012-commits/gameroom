@@ -18,7 +18,12 @@ const PWAInstallFloater = dynamic(() =>
   { ssr: false },
 );
 
-export function ClientChrome({ isAuthenticated }: { isAuthenticated?: boolean }) {
+const AdminEditBar = dynamic(() =>
+  import("@/components/admin/admin-edit-bar").then((m) => m.AdminEditBar),
+  { ssr: false },
+);
+
+export function ClientChrome({ isAuthenticated, canEdit = false }: { isAuthenticated?: boolean; canEdit?: boolean }) {
   const [showChatbot, setShowChatbot] = useState(false);
   const [showPwaPrompt, setShowPwaPrompt] = useState(false);
 
@@ -37,6 +42,7 @@ export function ClientChrome({ isAuthenticated }: { isAuthenticated?: boolean })
       <MobileBottomNav />
       {showChatbot && isAuthenticated ? <ChatbotWidget /> : null}
       {showPwaPrompt ? <PWAInstallFloater delay={0} locale="ka" /> : null}
+      {canEdit ? <AdminEditBar /> : null}
     </>
   );
 }

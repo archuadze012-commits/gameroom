@@ -49,7 +49,7 @@ export default async function LfgDetailPage({
   const { data } = await supabase
     .from("lfg_posts")
     .select(
-      "id, author_id, game_slug, title, description, rank, region, slots_total, voice_required, created_at, profiles!lfg_posts_author_id_fkey(username, display_name, avatar_url, role, is_verified)"
+      "id, author_id, game_slug, title, description, rank, region, slots_total, voice_required, created_at, profiles(username, display_name, avatar_url, role, is_verified)"
     )
     .eq("id", id)
     .is("deleted_at", null)

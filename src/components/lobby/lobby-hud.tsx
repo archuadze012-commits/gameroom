@@ -21,7 +21,7 @@ export function LobbyHud({ data }: LobbyHudProps) {
           <LobbyPlayerCard player={data.player} />
         </div>
         <div className="flex flex-col items-end gap-2 justify-self-end max-[640px]:items-start max-[640px]:justify-self-start max-[640px]:w-full">
-          <LobbyCurrencyStrip currencies={data.currencies} />
+          {data.currencies && <LobbyCurrencyStrip currencies={data.currencies} />}
           <div className="flex items-center gap-2">
             <LobbyDailyBonus available={data.dailyBonusAvailable} />
           <Link

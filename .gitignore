@@ -49,3 +49,9 @@ next-env.d.ts
 .codex/
 .env
 /artifacts/
+
+# scratch / one-off scripts
+/scratch/
+
+# MCP config (contains API tokens)
+.mcp.json

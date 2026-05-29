@@ -6,6 +6,7 @@ import { mockGames, type MockGame } from "@/lib/mock-data";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { FavoriteGameButton } from "@/components/favorite-game-button";
+import { GameCard } from "./game-card";
 
 export const metadata = { title: "თამაშები" };
 export const dynamic = "force-dynamic";
@@ -39,7 +40,6 @@ function dbToGame(g: DbGame): MockGame {
 }
 
 const cutLg = "polygon(0 0, calc(100% - 28px) 0, 100% 28px, 100% 100%, 0 100%)";
-const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.5))";
 
 export default async function GamesCatalogPage() {
   const supabase = await createSupabaseServerClient();
@@ -87,11 +87,7 @@ export default async function GamesCatalogPage() {
             </p>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {favGames.map((g) => (
-                <article
-                  key={g.slug}
-                  className="group relative isolate transition-all duration-300 hover:-translate-y-1 hover:[--card-border-hover:rgba(220,38,38,0.8)]"
-                  style={{ background: 'var(--card-border-hover, ' + cardBorder + ')', padding: 1, clipPath: cutLg }}
-                >
+                <GameCard key={g.slug} clipPath={cutLg}>
                   <div className="relative h-52 overflow-hidden bg-[var(--gr-bg-1)]" style={{ clipPath: cutLg }}>
                     {/* Top Glow Border */}
                     <span aria-hidden className="absolute left-0 top-0 z-10 h-[1.5px] w-full bg-[var(--gr-grad-violet)]" />
@@ -99,10 +95,10 @@ export default async function GamesCatalogPage() {
                     {/* Game Cover Background */}
                     {g.coverUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img 
-                        src={g.coverUrl} 
-                        alt={g.nameKa} 
-                        className="absolute inset-0 h-full w-full object-cover opacity-98 transition-transform duration-500 group-hover:opacity-100" 
+                      <img
+                        src={g.coverUrl}
+                        alt={g.nameKa}
+                        className="absolute inset-0 h-full w-full object-cover opacity-98 transition-transform duration-500 group-hover:opacity-100"
                       />
                     ) : (
                       <div className={`absolute inset-0 bg-gradient-to-br ${g.accent} opacity-20`} />
@@ -116,15 +112,15 @@ export default async function GamesCatalogPage() {
                     {/* Atmosphere Circle */}
                     <div aria-hidden className="absolute -left-8 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full bg-white/5 blur-xl transition-transform duration-500 group-hover:scale-125" />
 
-                    {/* Laser lines left */}
-                    <div aria-hidden className="absolute inset-y-0 left-[7.5%] w-[1px] bg-[var(--gr-violet)]/40 shadow-[0_0_12px_rgba(139,92,246,0.5)]" />
-                    <div aria-hidden className="absolute inset-y-0 left-[5.5%] w-[2px] bg-[var(--gr-violet)]/55 shadow-[0_0_15px_rgba(139,92,246,0.6)]" />
+                    {/* Laser lines — instant on/off */}
+                    <div aria-hidden className="absolute inset-y-0 left-[7.5%] w-[1px] bg-[var(--gr-violet)]/40 shadow-[0_0_12px_rgba(139,92,246,0.5)] opacity-100 group-hover:opacity-0 duration-0" />
+                    <div aria-hidden className="absolute inset-y-0 left-[5.5%] w-[2px] bg-[var(--gr-violet)]/55 shadow-[0_0_15px_rgba(139,92,246,0.6)] opacity-100 group-hover:opacity-0 duration-0" />
 
                     {/* Colored accent block on the left edge */}
-                    <div aria-hidden className="absolute left-0 top-0 h-full w-[6%] bg-[linear-gradient(180deg,rgba(34,211,238,0.9),rgba(139,92,246,0.25))] [clip-path:polygon(0_0,68%_0,100%_100%,0_100%)] opacity-80" />
+                    <div aria-hidden className="absolute left-0 top-0 h-full w-[6%] bg-[linear-gradient(180deg,rgba(34,211,238,0.9),rgba(139,92,246,0.25))] [clip-path:polygon(0_0,68%_0,100%_100%,0_100%)] opacity-80 group-hover:opacity-0 duration-0" />
 
                     <Link href={`/games/${g.slug}`} className="absolute inset-0 z-10" aria-label={g.nameKa} />
-                    
+
                     {/* Bottom Details (Game Name) */}
                     <div className="absolute bottom-4 left-[6.5%] right-4 z-20">
                       <h3 className="font-display text-[18px] font-bold uppercase tracking-tight text-white transition-colors group-hover:text-[var(--gr-violet-hi)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]">
@@ -132,12 +128,10 @@ export default async function GamesCatalogPage() {
                       </h3>
                     </div>
 
-                    {/* Hover Effects (Button Style) */}
-                    <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
-                    <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
-                    <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-red-600/0 group-hover:bg-red-600/[0.06] duration-0 z-[5] pointer-events-none" />
                   </div>
-                </article>
+                </GameCard>
               ))}
             </div>
             <div className="mt-8 mb-4 h-px bg-[var(--gr-border)]" />
@@ -154,11 +148,7 @@ export default async function GamesCatalogPage() {
               "bg-black/60 text-white/80";
 
             return (
-              <article
-                  key={g.slug}
-                  className="group relative isolate transition-all duration-300 hover:-translate-y-1 hover:[--card-border-hover:rgba(220,38,38,0.8)]"
-                  style={{ background: 'var(--card-border-hover, ' + cardBorder + ')', padding: 1, clipPath: cutLg }}
-                >
+              <GameCard key={g.slug} clipPath={cutLg}>
                   <div
                     className="relative h-52 overflow-hidden bg-[var(--gr-bg-1)]"
                     style={{ clipPath: cutLg }}
@@ -186,29 +176,27 @@ export default async function GamesCatalogPage() {
                     {/* Atmosphere Circle */}
                     <div aria-hidden className="absolute -left-8 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full bg-white/5 blur-xl transition-transform duration-500 group-hover:scale-125" />
 
-                    {/* Laser lines left */}
-                    <div aria-hidden className="absolute inset-y-0 left-[7.5%] w-[1px] bg-[var(--gr-violet)]/40 shadow-[0_0_12px_rgba(139,92,246,0.5)]" />
-                    <div aria-hidden className="absolute inset-y-0 left-[5.5%] w-[2px] bg-[var(--gr-violet)]/55 shadow-[0_0_15px_rgba(139,92,246,0.6)]" />
+                    {/* Laser lines — instant off on hover */}
+                    <div aria-hidden className="absolute inset-y-0 left-[7.5%] w-[1px] bg-[var(--gr-violet)]/40 shadow-[0_0_12px_rgba(139,92,246,0.5)] opacity-100 group-hover:opacity-0 duration-0" />
+                    <div aria-hidden className="absolute inset-y-0 left-[5.5%] w-[2px] bg-[var(--gr-violet)]/55 shadow-[0_0_15px_rgba(139,92,246,0.6)] opacity-100 group-hover:opacity-0 duration-0" />
 
                     {/* Colored accent block on the left edge */}
-                    <div aria-hidden className="absolute left-0 top-0 h-full w-[6%] bg-[linear-gradient(180deg,rgba(34,211,238,0.9),rgba(139,92,246,0.25))] [clip-path:polygon(0_0,68%_0,100%_100%,0_100%)] opacity-80" />
+                    <div aria-hidden className="absolute left-0 top-0 h-full w-[6%] bg-[linear-gradient(180deg,rgba(34,211,238,0.9),rgba(139,92,246,0.25))] [clip-path:polygon(0_0,68%_0,100%_100%,0_100%)] opacity-80 group-hover:opacity-0 duration-0" />
 
                     {/* stretched link behind everything */}
                     <Link href={`/games/${g.slug}`} className="absolute inset-0 z-10" aria-label={g.nameKa} />
 
                     {/* Bottom Details (Game Name) */}
                     <div className="absolute bottom-4 left-[6.5%] right-4 z-20">
-                      <h3 className="font-display text-[18px] font-bold uppercase tracking-tight text-white transition-colors group-hover:text-[var(--gr-violet-hi)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]">
+                      <h3 className="font-display text-[18px] font-bold uppercase tracking-tight text-white transition-colors group-hover:text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]">
                         {g.nameKa}
                       </h3>
                     </div>
 
-                    {/* Hover Effects (Button Style) */}
-                    <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
-                    <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
-                    <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-red-600/0 group-hover:bg-red-600/[0.06] duration-0 z-[5] pointer-events-none" />
                   </div>
-                </article>
+                </GameCard>
             );
           })}
         </div>

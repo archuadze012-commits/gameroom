@@ -14,8 +14,8 @@ export function MessagesLink() {
     async function tick() {
       try {
         const supabase = createSupabaseBrowserClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) {
           setUnread(0);
           return;
         }

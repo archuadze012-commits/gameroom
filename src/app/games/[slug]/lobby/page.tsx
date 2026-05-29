@@ -131,11 +131,10 @@ export default async function GameLobbyPage({
         avatarUrl,
         level,
       },
-      currencies: {
-        pro: wallet.pro_balance,
-        nc: wallet.nc_balance,
-      },
-      dailyBonusAvailable,
+      currencies: canPersistLobby
+        ? { pro: wallet.pro_balance, nc: wallet.nc_balance }
+        : null,
+      dailyBonusAvailable: canPersistLobby ? dailyBonusAvailable : false,
     };
 
     const lobbyEffectItem = equippedItems.find((i) => i.category === "lobby_effect");

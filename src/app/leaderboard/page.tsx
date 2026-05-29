@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Trophy, Crown, Medal, Award } from "lucide-react";
+import { Trophy, Crown, Medal, Coins } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { UserAvatar } from "@/components/user-avatar";
 import { VerifiedBadge } from "@/components/verified-badge";
@@ -17,51 +17,28 @@ const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,2
 export default async function LeaderboardPage() {
   const supabase = await createSupabaseServerClient();
 
+  // 1. Fetch Top XP
   const { data: topXp } = await supabase
     .from("profiles")
     .select("username, display_name, avatar_url, xp, level, is_verified")
     .eq("banned", false)
     .order("xp", { ascending: false })
-    .limit(50);
+    .limit(20);
 
-  let topFollowed: Array<{
-    username: string;
-    display_name: string | null;
-    avatar_url: string | null;
-    is_verified: boolean;
-    follower_count: number;
-  }> = [];
-  {
-    const { data } = await supabase.from("follows").select("following_id");
-    const map: Record<string, number> = {};
-    (data ?? []).forEach((r: { following_id: string }) => {
-      map[r.following_id] = (map[r.following_id] ?? 0) + 1;
-    });
-    const top = Object.entries(map)
-      .map(([id, count]) => ({ id, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 20);
-    const ids = top.map((t) => t.id);
-    if (ids.length > 0) {
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, username, display_name, avatar_url, is_verified")
-        .in("id", ids);
-      topFollowed = top
-        .map((t) => {
-          const p = (profiles ?? []).find((pp) => pp.id === t.id);
-          if (!p) return null;
-          return {
-            username: p.username,
-            display_name: p.display_name,
-            avatar_url: p.avatar_url,
-            is_verified: !!p.is_verified,
-            follower_count: t.count,
-          };
-        })
-        .filter(Boolean) as typeof topFollowed;
-    }
-  }
+  // 2. Fetch Top Coins (NC Balance)
+  const { data: topWallets } = await supabase
+    .from("wallets")
+    .select("nc_balance, profiles!inner(username, display_name, avatar_url, is_verified)")
+    .order("nc_balance", { ascending: false })
+    .limit(20);
+
+  const topCoins = (topWallets || []).map((w: any) => ({
+    nc_balance: w.nc_balance,
+    ...w.profiles,
+  }));
+
+  // Note: Win Rate requires a DB schema update (adding wins/losses to user_game_profiles)
+  // We'll leave space for it in the UI or address it next.
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
@@ -76,19 +53,20 @@ export default async function LeaderboardPage() {
             <Trophy className="h-5 w-5" />
           </div>
           <div>
-            <Eyebrow tone="amber">რეიტინგი</Eyebrow>
+            <Eyebrow tone="amber">Hall of Fame</Eyebrow>
             <DisplayHeading as="h1" size="lg" className="mt-2">Leaderboard</DisplayHeading>
-            <p className="mt-2 text-[13px] text-[var(--gr-text-mute)]">ყველაზე აქტიური მოთამაშეები</p>
+            <p className="mt-2 text-[13px] text-[var(--gr-text-mute)]">Top players by Experience and Wealth</p>
           </div>
         </header>
 
         <div className="grid gap-6 md:grid-cols-2">
+          {/* XP Leaderboard */}
           <LeaderboardSection
-            eyebrow="XP / Level"
+            eyebrow="Top by XP / Level"
             icon={<Crown className="h-4 w-4" />}
           >
             {(topXp ?? []).length === 0 ? (
-              <p className="p-6 text-center text-[13px] text-[var(--gr-text-mute)]">მონაცემები არ არის.</p>
+              <p className="p-6 text-center text-[13px] text-[var(--gr-text-mute)]">No data yet.</p>
             ) : (
               (topXp ?? []).map((u, i) => (
                 <Link
@@ -114,18 +92,19 @@ export default async function LeaderboardPage() {
             )}
           </LeaderboardSection>
 
+          {/* Coins Leaderboard */}
           <LeaderboardSection
-            eyebrow="ყველაზე გამოწერილი"
-            icon={<Award className="h-4 w-4" />}
+            eyebrow="Top Earners (Coins)"
+            icon={<Coins className="h-4 w-4" />}
           >
-            {topFollowed.length === 0 ? (
-              <p className="p-6 text-center text-[13px] text-[var(--gr-text-mute)]">მონაცემები არ არის.</p>
+            {topCoins.length === 0 ? (
+              <p className="p-6 text-center text-[13px] text-[var(--gr-text-mute)]">No data yet.</p>
             ) : (
-              topFollowed.map((u, i) => (
+              topCoins.map((u, i) => (
                 <Link
                   key={u.username}
                   href={`/profile/${u.username}`}
-                  className="relative flex items-center gap-3 border-b border-[var(--gr-border)] p-3 last:border-0 transition-all duration-200 hover:bg-[var(--gr-bg-2)]/70 hover:pl-4 hover:before:opacity-100 before:absolute before:left-0 before:top-0 before:h-full before:w-[2px] before:bg-[var(--gr-violet)] before:opacity-0 before:transition-opacity gr-sweep"
+                  className="relative flex items-center gap-3 border-b border-[var(--gr-border)] p-3 last:border-0 transition-all duration-200 hover:bg-[var(--gr-bg-2)]/70 hover:pl-4 hover:before:opacity-100 before:absolute before:left-0 before:top-0 before:h-full before:w-[2px] before:bg-[var(--gr-amber)] before:opacity-0 before:transition-opacity gr-sweep"
                 >
                   <RankIcon rank={i + 1} />
                   <UserAvatar username={u.username} avatarUrl={u.avatar_url} size="sm" />
@@ -136,7 +115,9 @@ export default async function LeaderboardPage() {
                     </div>
                     <p className="text-[11px] text-[var(--gr-text-dim)]">@{u.username}</p>
                   </div>
-                  <Pill tone="cyan">{u.follower_count} 👥</Pill>
+                  <div className="text-right">
+                    <Pill tone="amber">{u.nc_balance} NC</Pill>
+                  </div>
                 </Link>
               ))
             )}

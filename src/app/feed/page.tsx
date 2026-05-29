@@ -33,7 +33,7 @@ export default async function FeedPage() {
   if (followingIds.length > 0) {
     const { data } = await supabase
       .from("posts")
-      .select("id, content, media_urls, likes_count, created_at, profiles!posts_author_id_fkey(username, display_name, avatar_url, is_verified, role)")
+      .select("id, content, media_urls, likes_count, created_at, profiles!posts_author_id_profiles_id_fk(username, display_name, avatar_url, is_verified, role)")
       .in("author_id", followingIds)
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
