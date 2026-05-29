@@ -40,22 +40,38 @@ export async function POST(request: NextRequest) {
 
   const slug = body.slug?.trim() || slugify(body.nameKa);
 
+  // Use admin client to bypass RLS
   const supabase = createSupabaseAdminClient();
+
+  const isEditing = !!body.slug?.trim();
+
+  // Match the live schema: accent_color (text), no `accent` column.
+  const payload: Record<string, unknown> = {
+    slug,
+    name_ka: body.nameKa.trim(),
+    name_en: body.nameEn?.trim() || body.nameKa.trim(),
+    description: body.description?.trim() || "",
+    emoji: body.emoji?.trim() || null,
+    icon_url: body.iconUrl?.trim() || null,
+    cover_url: body.coverUrl?.trim() || null,
+  };
+  if (body.accent?.trim()) payload.accent_color = body.accent.trim();
+  // Only set defaults on create so editing doesn't clobber active/position
+  if (!isEditing) {
+    payload.active = true;
+    payload.position = 0;
+    if (!payload.accent_color) payload.accent_color = "#a855f7";
+  }
+
   const { data, error } = await supabase
     .from("games")
-    .upsert({
-      slug,
-      name_ka: body.nameKa.trim(),
-      name_en: body.nameEn?.trim() || body.nameKa.trim(),
-      description: body.description?.trim() || "",
-      accent: body.accent?.trim() || "from-indigo-500/30 to-indigo-500/5",
-      emoji: body.emoji?.trim() || "🎮",
-      icon_url: body.iconUrl?.trim() || null,
-      cover_url: body.coverUrl?.trim() || null,
-    }, { onConflict: "slug" })
+    .upsert(payload, { onConflict: "slug" })
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("[admin/games POST]", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
   return NextResponse.json(data, { status: 201 });
 }

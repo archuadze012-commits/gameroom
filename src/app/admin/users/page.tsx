@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Ban, ShieldCheck, Shield, MonitorPlay, Trophy, Gamepad2, User, Loader2, RefreshCw, BadgeCheck, Download, Clock, History } from "lucide-react";
+import { Ban, ShieldCheck, Shield, MonitorPlay, Trophy, Gamepad2, User, Loader2, RefreshCw, BadgeCheck, Download, Clock, History, PenLine } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,11 @@ const ROLE_CONFIG: Record<UserRole, { label: string; className: string; icon: Re
   organizer: { label: "ორგანიზატორი",     className: "border-yellow-500/40 text-yellow-400",icon: <Trophy className="h-3 w-3" /> },
   esports:   { label: "კიბერსპორტსმენი", className: "border-cyan-500/40 text-cyan-400",    icon: <Gamepad2 className="h-3 w-3" /> },
   streamer:  { label: "სტრიმერი",         className: "border-violet-500/40 text-violet-400",icon: <MonitorPlay className="h-3 w-3" /> },
+  journalist:{ label: "ჟურნალისტი",       className: "border-pink-500/40 text-pink-400",    icon: <PenLine className="h-3 w-3" /> },
   user:      { label: "მომხმარებელი",     className: "border-slate-500/40 text-slate-400",  icon: <User className="h-3 w-3" /> },
 };
 
-const ALL_ROLES: UserRole[] = ["user", "moderator", "organizer", "streamer", "esports", "admin"];
+const ALL_ROLES: UserRole[] = ["user", "moderator", "organizer", "streamer", "esports", "journalist", "admin"];
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUserRow[]>([]);

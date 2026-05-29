@@ -1,4 +1,4 @@
-import { ShieldCheck, Shield, Trophy, MonitorPlay, Gamepad2 } from "lucide-react";
+import { ShieldCheck, Shield, Trophy, MonitorPlay, Gamepad2, PenLine } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { UserRole } from "@/lib/types";
 
@@ -32,6 +32,11 @@ const ROLE_CONFIG: Record<
     label: "კიბერსპორტსმენი",
     icon: <Gamepad2 className="mr-1 h-3.5 w-3.5" />,
     className: "border-cyan-500/40 bg-cyan-500/10 text-cyan-400",
+  },
+  journalist: {
+    label: "ჟურნალისტი",
+    icon: <PenLine className="mr-1 h-3.5 w-3.5" />,
+    className: "border-pink-500/40 bg-pink-500/10 text-pink-400",
   },
 };
 

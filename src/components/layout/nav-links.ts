@@ -1,7 +1,7 @@
 export const navLinks = [
   { href: "/search", label: "ძებნა" },
 
-  { href: "/forum", label: "ფორუმი" },
+  { href: "/articles", label: "სტატიები" },
   { href: "/leaderboard", label: "Leaderboard" },
 ];
 

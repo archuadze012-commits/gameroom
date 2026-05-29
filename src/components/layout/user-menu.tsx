@@ -52,22 +52,22 @@ export async function UserMenu() {
             </button>
           }
         />
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent align="end" className="w-56" style={{ background: "rgba(8,6,15,0.95)", border: "1px solid rgba(236,72,153,0.35)", boxShadow: "0 0 24px rgba(236,72,153,0.2), 0 8px 32px rgba(0,0,0,0.6)" }}>
           <DropdownMenuGroup>
             <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col">
-                <span className="text-sm font-medium">{displayName}</span>
-                <span className="text-xs text-muted-foreground">{user.email}</span>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-sm font-bold" style={{ color: "#ffffff", textShadow: "0 0 8px rgba(236,72,153,0.9), 0 0 18px rgba(236,72,153,0.5)" }}>{displayName}</span>
+                <span className="text-xs" style={{ color: "rgba(255,255,255,0.6)", textShadow: "0 0 6px rgba(236,72,153,0.6)" }}>{user.email}</span>
               </div>
             </DropdownMenuLabel>
           </DropdownMenuGroup>
-          <DropdownMenuSeparator />
+          <DropdownMenuSeparator style={{ background: "rgba(236,72,153,0.25)" }} />
           <DropdownMenuGroup>
-            <DropdownMenuItem render={<Link href={`/profile/${displayName}`}>ჩემი პროფილი</Link>} />
-            <DropdownMenuItem render={<Link href="/settings">პარამეტრები</Link>} />
-            <DropdownMenuItem render={<Link href="/lfg/new">ლოკალის დაპოსტვა</Link>} />
+            <DropdownMenuItem render={<Link href={`/profile/${displayName}`} style={{ color: "#ffffff", textShadow: "0 0 7px rgba(236,72,153,0.8), 0 0 16px rgba(236,72,153,0.45)" }}>ჩემი პროფილი</Link>} />
+            <DropdownMenuItem render={<Link href="/settings" style={{ color: "#ffffff", textShadow: "0 0 7px rgba(236,72,153,0.8), 0 0 16px rgba(236,72,153,0.45)" }}>პარამეტრები</Link>} />
+            <DropdownMenuItem render={<Link href="/lfg/new" style={{ color: "#ffffff", textShadow: "0 0 7px rgba(236,72,153,0.8), 0 0 16px rgba(236,72,153,0.45)" }}>ლოკალის დაპოსტვა</Link>} />
           </DropdownMenuGroup>
-          <DropdownMenuSeparator />
+          <DropdownMenuSeparator style={{ background: "rgba(236,72,153,0.25)" }} />
           <DropdownMenuGroup>
             <DropdownMenuItem render={<LogoutButton />} />
           </DropdownMenuGroup>

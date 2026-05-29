@@ -104,12 +104,22 @@ export function AvatarUpload({ username, displayName, avatarUrl, isOwner }: Avat
         />
       )}
       <div className="relative inline-block">
-        <Avatar className="h-24 w-24 border-4 border-background">
-          <AvatarImage src={src} alt={displayName} />
-          <AvatarFallback className="bg-primary/15 text-2xl font-bold text-primary">
-            {initial}
-          </AvatarFallback>
-        </Avatar>
+        <div
+          className="h-24 w-24 border-4 border-background rounded-full overflow-hidden bg-primary/15 flex items-center justify-center"
+          style={{ flexShrink: 0 }}
+        >
+          {src && src !== "/default-avatar.svg" ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={src}
+              alt={displayName}
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+            />
+          ) : (
+            <span className="text-2xl font-bold text-primary">{initial}</span>
+          )}
+        </div>
         {isOwner && (
           <>
             <button

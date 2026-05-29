@@ -36,12 +36,24 @@ export function UserAvatar({ username, displayName, avatarUrl, size = "md", clas
     return () => window.removeEventListener("storage", read);
   }, [username, avatarUrl]);
 
+  const px = size === "sm" ? 32 : size === "lg" ? 56 : 40;
+
   return (
-    <Avatar className={`${sizeMap[size]} border border-border ${className ?? ""}`}>
-      {src && <AvatarImage src={src} alt={displayName ?? username} />}
-      <AvatarFallback className="bg-primary/15 text-primary font-semibold">
-        {initials}
-      </AvatarFallback>
-    </Avatar>
+    <div
+      className={`border border-border rounded-full overflow-hidden bg-primary/15 flex items-center justify-center shrink-0 ${className ?? ""}`}
+      style={{ width: px, height: px }}
+    >
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={displayName ?? username}
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+        />
+      ) : (
+        <span className="text-primary font-semibold text-sm">{initials}</span>
+      )}
+    </div>
   );
 }

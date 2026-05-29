@@ -9,7 +9,17 @@ import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const navLinkClass =
-  "group relative rounded-md px-3 py-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-[var(--gr-text-mute)] transition-colors hover:text-[var(--gr-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gr-violet-hi)]";
+  "group relative rounded-md px-3 py-2 text-[12px] font-semibold uppercase tracking-[0.14em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gr-violet-hi)]";
+
+const navLinkStyle = {
+  color: "#ffffff",
+  textShadow: "0 0 8px rgba(236,72,153,0.9), 0 0 18px rgba(236,72,153,0.55), 0 0 32px rgba(236,72,153,0.3)",
+};
+
+const adminLinkStyle = {
+  color: "rgba(236,72,153,1)",
+  textShadow: "0 0 8px rgba(236,72,153,1), 0 0 18px rgba(236,72,153,0.8), 0 0 32px rgba(236,72,153,0.5)",
+};
 
 export async function SiteHeader() {
   const session = await getSession().catch(() => null);
@@ -48,14 +58,23 @@ export async function SiteHeader() {
       {/* hairline violet glow under the header */}
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[var(--gr-violet)]/40 to-transparent"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
+        style={{ background: "linear-gradient(90deg,transparent,rgba(236,72,153,0.55),transparent)" }}
       />
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {session ? (
           <Link href="/" className="flex items-center gap-3">
-            <Image src="/logo.png" alt="Gameroom" width={48} height={48} className="rounded-lg" />
-            <span className="font-display text-[22px] font-extrabold uppercase tracking-tight text-[var(--gr-text)]">
-              Game<span className="text-[var(--gr-violet)]">room</span>
+            <Image
+              src="/logo.png"
+              alt="Gameroom"
+              width={48}
+              height={48}
+              className="rounded-lg"
+              style={{ filter: "drop-shadow(0 0 8px rgba(236,72,153,0.9)) drop-shadow(0 0 18px rgba(236,72,153,0.55))" }}
+            />
+            <span className="font-display text-[22px] font-extrabold uppercase tracking-tight">
+              <span style={{ color: "#ffffff", textShadow: "0 0 8px rgba(236,72,153,0.9), 0 0 20px rgba(236,72,153,0.55), 0 0 36px rgba(236,72,153,0.3)" }}>Game</span>
+              <span style={{ color: "rgba(236,72,153,1)", textShadow: "0 0 10px rgba(236,72,153,1), 0 0 22px rgba(236,72,153,0.85), 0 0 42px rgba(236,72,153,0.55)" }}>room</span>
             </span>
           </Link>
         ) : (
@@ -64,21 +83,21 @@ export async function SiteHeader() {
 
         <nav className="hidden flex-1 items-center gap-1 xl:flex">
           {session && navLinks.map((link) => (
-            <Link key={link.href} href={link.href} className={navLinkClass}>
+            <Link key={link.href} href={link.href} className={navLinkClass} style={navLinkStyle}>
               {link.label}
               <span
                 aria-hidden
-                className="pointer-events-none absolute inset-x-3 -bottom-px h-[2px] origin-left scale-x-0 bg-[var(--gr-violet)] shadow-[0_0_10px_rgba(139,92,246,0.6)] transition-transform duration-200 group-hover:scale-x-100"
+                className="pointer-events-none absolute inset-x-3 -bottom-px h-[2px] origin-left scale-x-0 transition-transform duration-200 group-hover:scale-x-100" style={{ background: "rgba(236,72,153,0.9)", boxShadow: "0 0 10px rgba(236,72,153,0.6)" }}
               />
             </Link>
           ))}
           {profileHref && (
-            <Link href={profileHref} className={`${navLinkClass} flex items-center gap-1.5`}>
+            <Link href={profileHref} className={`${navLinkClass} flex items-center gap-1.5`} style={navLinkStyle}>
               <UserIcon className="h-3.5 w-3.5" />
               პროფილი
               <span
                 aria-hidden
-                className="pointer-events-none absolute inset-x-3 -bottom-px h-[2px] origin-left scale-x-0 bg-[var(--gr-violet)] shadow-[0_0_10px_rgba(139,92,246,0.6)] transition-transform duration-200 group-hover:scale-x-100"
+                className="pointer-events-none absolute inset-x-3 -bottom-px h-[2px] origin-left scale-x-0 transition-transform duration-200 group-hover:scale-x-100" style={{ background: "rgba(236,72,153,0.9)", boxShadow: "0 0 10px rgba(236,72,153,0.6)" }}
               />
             </Link>
           )}
@@ -89,9 +108,10 @@ export async function SiteHeader() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`${navLinkClass} flex items-center gap-1.5 !text-[var(--gr-amber)]/80 hover:!text-[var(--gr-amber)]`}
+                  className={`${navLinkClass} flex items-center gap-1.5`}
+                  style={adminLinkStyle}
                 >
-                  <ShieldAlert className="h-3.5 w-3.5" />
+                  <ShieldAlert className="h-3.5 w-3.5" style={{ color: "rgba(236,72,153,1)", filter: "drop-shadow(0 0 5px rgba(236,72,153,0.9))" }} />
                   {link.label}
                 </Link>
               ))}

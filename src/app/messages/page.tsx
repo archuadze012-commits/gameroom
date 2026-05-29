@@ -4,7 +4,6 @@ import { MessageSquare, Inbox } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { UserAvatar } from "@/components/user-avatar";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { DisplayHeading } from "@/components/ui/display-heading";
 import { Pill } from "@/components/ui/pill";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -81,14 +80,18 @@ export default async function MessagesPage() {
       <div className="container relative mx-auto max-w-3xl px-4 py-10 lg:py-14">
         <header className="mb-8 flex items-center gap-3">
           <div
-            className="grid h-12 w-12 place-items-center bg-[var(--gr-violet)]/15 text-[var(--gr-violet-hi)] ring-1 ring-[var(--gr-violet)]/30"
-            style={{ clipPath: cutSm }}
+            className="grid h-12 w-12 place-items-center"
+            style={{
+              clipPath: cutSm,
+              background: "rgba(236,72,153,0.1)",
+              border: "1px solid rgba(236,72,153,0.3)",
+              boxShadow: "0 0 14px rgba(236,72,153,0.3)",
+            }}
           >
-            <Inbox className="h-5 w-5" />
+            <Inbox className="h-5 w-5" style={{ color: "#ffffff", filter: "drop-shadow(0 0 6px rgba(236,72,153,1))" }} />
           </div>
           <div>
-            <Eyebrow tone="violet">პირადი მიმოწერა</Eyebrow>
-            <DisplayHeading as="h1" size="lg" className="mt-2">მესენჯერი</DisplayHeading>
+            <DisplayHeading as="h1" size="lg" style={{ color: "#ffffff", textShadow: "0 0 10px rgba(236,72,153,0.9), 0 0 24px rgba(236,72,153,0.55), 0 0 40px rgba(236,72,153,0.3)" }}>მესენჯერი</DisplayHeading>
           </div>
         </header>
 
@@ -125,7 +128,7 @@ export default async function MessagesPage() {
                       <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
 
                       {c.unread > 0 && (
-                        <span aria-hidden className="absolute left-0 top-0 h-full w-[3px] bg-[var(--gr-violet)] shadow-[0_0_10px_rgba(139,92,246,0.7)] z-[6]" />
+                        <span aria-hidden className="absolute left-0 top-0 h-full w-[3px] z-[6]" style={{ background: "rgba(236,72,153,1)", boxShadow: "0 0 10px rgba(236,72,153,0.8)" }} />
                       )}
                       
                       <div className="relative z-10 flex items-center gap-3 w-full">
@@ -137,11 +140,17 @@ export default async function MessagesPage() {
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="truncate font-semibold text-[var(--gr-text)] group-hover:text-[var(--gr-violet-hi)]">
+                            <span
+                              className="truncate font-semibold"
+                              style={{ color: "#ffffff", textShadow: "0 0 8px rgba(236,72,153,0.9), 0 0 18px rgba(236,72,153,0.5)" }}
+                            >
                               {name}
                             </span>
                             {c.lastMessage && (
-                              <span className="ml-auto shrink-0 text-[10px] uppercase tracking-[0.1em] text-[var(--gr-text-dim)]">
+                              <span
+                                className="ml-auto shrink-0 text-[10px] uppercase tracking-[0.1em]"
+                                style={{ color: "rgba(255,255,255,0.6)", textShadow: "0 0 6px rgba(236,72,153,0.6)" }}
+                              >
                                 {new Date(c.lastMessage.created_at).toLocaleString("ka-GE", {
                                   month: "short",
                                   day: "numeric",
@@ -152,7 +161,10 @@ export default async function MessagesPage() {
                             )}
                           </div>
                           <div className="mt-0.5 flex items-center gap-2">
-                            <p className={`truncate text-[12.5px] ${c.unread > 0 ? "text-[var(--gr-text)]" : "text-[var(--gr-text-mute)]"}`}>
+                            <p
+                              className="truncate text-[12.5px]"
+                              style={{ color: "#ffffff", textShadow: "0 0 6px rgba(236,72,153,0.7), 0 0 14px rgba(236,72,153,0.4)" }}
+                            >
                               {c.lastMessage?.sender_id === user.id ? "შენ: " : ""}
                               {c.lastMessage?.body ?? "ცარიელი მიმოწერა"}
                             </p>
