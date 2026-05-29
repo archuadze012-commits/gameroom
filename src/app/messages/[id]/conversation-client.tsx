@@ -173,16 +173,16 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
   };
 
   return (
-    <Card className="flex h-[calc(100vh-10rem)] flex-col overflow-hidden">
+    <Card className="flex h-[calc(100vh-10rem)] flex-col overflow-hidden" style={{ background: "rgba(8,6,15,0.95)", border: "1px solid rgba(236,72,153,0.3)", boxShadow: "0 0 24px rgba(236,72,153,0.15)" }}>
       {/* header */}
-      <div className="flex items-center gap-3 border-b border-border/60 p-3">
+      <div className="flex items-center gap-3 p-3" style={{ borderBottom: "1px solid rgba(236,72,153,0.2)" }}>
         <Button asChild variant="ghost" size="icon">
-          <Link href="/messages"><ArrowLeft className="h-4 w-4" /></Link>
+          <Link href="/messages"><ArrowLeft className="h-4 w-4" style={{ color: "#ffffff", filter: "drop-shadow(0 0 5px rgba(236,72,153,0.8))" }} /></Link>
         </Button>
         <Link href={`/profile/${other.username}`} className="flex flex-1 items-center gap-3">
           <UserAvatar username={other.username} displayName={other.displayName ?? undefined} avatarUrl={other.avatarUrl} size="sm" />
           <div>
-            <div className="flex items-center gap-1 font-semibold">
+            <div className="flex items-center gap-1 font-semibold" style={{ color: "#ffffff", textShadow: "0 0 8px rgba(236,72,153,0.9), 0 0 18px rgba(236,72,153,0.5)" }}>
               {other.displayName ?? other.username}
               {other.isVerified && <VerifiedBadge className="h-3.5 w-3.5" />}
             </div>
@@ -217,19 +217,37 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
           return (
             <div key={m.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
               <div className={`group relative max-w-[75%] ${isMe ? "" : "flex flex-col gap-1"}`}>
-                <div className={`rounded-2xl px-3 py-2 text-sm ${
-                  isMe
-                    ? "rounded-br-sm bg-primary text-primary-foreground"
-                    : "rounded-bl-sm bg-secondary/60"
-                }`}>
-                  <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                <div
+                  className={`rounded-2xl px-3 py-2 text-sm ${isMe ? "rounded-br-sm" : "rounded-bl-sm bg-secondary/60"}`}
+                  style={isMe ? {
+                    background: "rgba(236,72,153,0.18)",
+                    border: "1px solid rgba(236,72,153,0.45)",
+                    boxShadow: "0 0 14px rgba(236,72,153,0.3), inset 0 0 10px rgba(236,72,153,0.08)",
+                    backdropFilter: "blur(8px)",
+                  } : undefined}
+                >
+                  <p
+                    className="whitespace-pre-wrap break-words"
+                    style={isMe
+                      ? { color: "#ffffff", textShadow: "0 0 6px rgba(236,72,153,0.9), 0 0 14px rgba(236,72,153,0.5)" }
+                      : { color: "rgba(236,72,153,1)", textShadow: "0 0 6px rgba(255,255,255,0.9), 0 0 14px rgba(255,255,255,0.5)" }
+                    }
+                  >
+                    {m.body}
+                  </p>
                   {translations[m.id] && (
                     <p className="mt-1 border-t border-current/20 pt-1 text-xs opacity-80 italic">
                       {translations[m.id]}
                     </p>
                   )}
-                  <div className={`flex items-center justify-between gap-2 mt-0.5`}>
-                    <p className={`text-[10px] ${isMe ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                  <div className="flex items-center justify-between gap-2 mt-0.5">
+                    <p
+                      className="text-[10px]"
+                      style={isMe
+                        ? { color: "rgba(255,255,255,0.6)", textShadow: "0 0 6px rgba(236,72,153,0.6)" }
+                        : { color: "rgba(236,72,153,0.7)", textShadow: "0 0 6px rgba(255,255,255,0.5)" }
+                      }
+                    >
                       {timeOnly(m.created_at)}
                     </p>
                     {!isMe && (
@@ -273,7 +291,7 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
 
       {/* composer */}
       <CardContent className="p-0">
-        <form action={sendFormAction} className="flex items-center gap-2 border-t border-border/60 p-3">
+        <form action={sendFormAction} className="flex items-center gap-2 p-3" style={{ borderTop: "1px solid rgba(236,72,153,0.2)" }}>
           <input type="hidden" name="conversationId" value={conversationId} />
           <Input
             name="body"
@@ -281,11 +299,27 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
             onChange={(e) => setInput(e.target.value)}
             placeholder="დაწერე მესიჯი..."
             className="bg-background/40"
+            style={{ color: "#ffffff", textShadow: "0 0 6px rgba(236,72,153,0.7)" }}
+            onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 2px rgba(236,72,153,0.5), 0 0 14px rgba(236,72,153,0.4)"; e.currentTarget.style.borderColor = "rgba(236,72,153,0.9)"; }}
+            onBlur={(e) => { e.currentTarget.style.boxShadow = ""; e.currentTarget.style.borderColor = ""; }}
             autoFocus
             disabled={isSending}
           />
-          <Button type="submit" disabled={!input.trim() || isSending}>
-            {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          <Button
+            type="submit"
+            disabled={!input.trim() || isSending}
+            style={{
+              background: "rgba(236,72,153,0.18)",
+              border: "1px solid rgba(236,72,153,0.45)",
+              boxShadow: "0 0 14px rgba(236,72,153,0.3), inset 0 0 10px rgba(236,72,153,0.08)",
+              backdropFilter: "blur(8px)",
+              color: "#ffffff",
+            }}
+          >
+            {isSending
+              ? <Loader2 className="h-4 w-4 animate-spin" style={{ filter: "drop-shadow(0 0 5px rgba(236,72,153,0.9))" }} />
+              : <Send className="h-4 w-4" style={{ filter: "drop-shadow(0 0 5px rgba(236,72,153,0.9))" }} />
+            }
           </Button>
         </form>
       </CardContent>

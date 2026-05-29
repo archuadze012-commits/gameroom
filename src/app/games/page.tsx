@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { Heart, Users as UsersIcon, Radio } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
-import { Pill } from "@/components/ui/pill";
 import { mockGames, type MockGame } from "@/lib/mock-data";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSession } from "@/lib/auth";
 import { FavoriteGameButton } from "@/components/favorite-game-button";
 import { GameCard } from "./game-card";
@@ -16,8 +15,8 @@ type DbGame = {
   name_ka: string;
   name_en: string;
   description: string;
-  accent: string;
-  emoji: string;
+  accent_color?: string | null;
+  emoji: string | null;
   icon_url: string | null;
   cover_url: string | null;
 };
@@ -28,8 +27,8 @@ function dbToGame(g: DbGame): MockGame {
     nameKa: g.name_ka,
     nameEn: g.name_en,
     description: g.description,
-    accent: g.accent,
-    emoji: g.emoji,
+    accent: g.accent_color ?? "from-indigo-500/30 to-indigo-500/5",
+    emoji: g.emoji ?? "🎮",
     iconUrl: g.icon_url ?? undefined,
     coverUrl: g.cover_url ?? undefined,
     players: 0,
@@ -41,16 +40,73 @@ function dbToGame(g: DbGame): MockGame {
 
 const cutLg = "polygon(0 0, calc(100% - 28px) 0, 100% 28px, 100% 100%, 0 100%)";
 
+function GameCardInner({ g }: { g: MockGame }) {
+  return (
+    <div className="relative h-52 overflow-hidden bg-[var(--gr-bg-1)]" style={{ clipPath: cutLg }}>
+      {/* top violet glow line */}
+      <span aria-hidden className="absolute left-0 top-0 z-10 h-[1.5px] w-full bg-[var(--gr-grad-violet)]" />
+
+      {/* cover image or fallback */}
+      {g.coverUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={g.coverUrl}
+          alt={g.nameKa}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : (
+        <div className={`absolute inset-0 bg-gradient-to-br ${g.accent} opacity-20`} />
+      )}
+
+      {/* dark gradients for readability */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[var(--gr-bg-0)]/70 via-[var(--gr-bg-0)]/10 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)]/85 via-transparent to-transparent" />
+
+      {/* magenta overlay on hover — instant */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-[5] bg-fuchsia-600/0 duration-0 group-hover:bg-fuchsia-600/[0.08]" />
+
+      {/* white laser sweep on hover */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute left-0 top-0 z-10 h-[2px] w-full translate-x-[-100%] opacity-0
+                   group-hover:translate-x-[100%] group-hover:opacity-100
+                   group-hover:transition-transform group-hover:duration-700"
+        style={{ background: "linear-gradient(90deg,transparent,rgba(255,255,255,0.8),transparent)" }}
+      />
+
+      {/* game name — bottom left */}
+      <div className="absolute bottom-4 left-4 right-4 z-20 flex items-end justify-between gap-2">
+        <h3
+          className="font-display text-[18px] font-bold uppercase tracking-tight duration-0"
+          style={{ color: "#ffffff", textShadow: "0 0 8px rgba(236,72,153,0.9), 0 0 20px rgba(236,72,153,0.55), 0 0 36px rgba(236,72,153,0.3)" }}
+        >
+          {g.nameKa}
+        </h3>
+      </div>
+
+      {/* favorite button — top right, visible on hover */}
+      <div className="absolute right-3 top-3 z-30 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+        <FavoriteGameButton slug={g.slug} />
+      </div>
+
+      {/* stretched link */}
+      <Link href={`/games/${g.slug}`} className="absolute inset-0 z-20" aria-label={g.nameKa} />
+    </div>
+  );
+}
+
 export default async function GamesCatalogPage() {
   const supabase = await createSupabaseServerClient();
+  const admin = createSupabaseAdminClient();
+
   const [{ data: dbGames }, session] = await Promise.all([
-    supabase.from("games").select("*"),
+    admin.from("games").select("*"),
     getSession().catch(() => null),
   ]);
 
   let favSlugs: string[] = [];
   if (session) {
-    const { data: profile } = await supabase
+    const { data: profile } = await admin
       .from("profiles")
       .select("favorite_game_slugs")
       .eq("id", session.id)
@@ -79,127 +135,31 @@ export default async function GamesCatalogPage() {
           description="ყველა მხარდაჭერილი თამაში — შეარჩიე და გაიცანი მისი კომუნიტი."
         />
 
-        {/* ── FAVOURITES ── */}
+        {/* favourites section */}
         {favGames.length > 0 && (
           <div className="mt-10">
-            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--gr-text-dim)]">
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: "rgba(236,72,153,1)", textShadow: "0 0 8px rgba(236,72,153,1), 0 0 18px rgba(236,72,153,0.7)" }}>
               ჩემი ფავორიტები
             </p>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {favGames.map((g) => (
-                <GameCard key={g.slug} clipPath={cutLg}>
-                  <div className="relative h-52 overflow-hidden bg-[var(--gr-bg-1)]" style={{ clipPath: cutLg }}>
-                    {/* Top Glow Border */}
-                    <span aria-hidden className="absolute left-0 top-0 z-10 h-[1.5px] w-full bg-[var(--gr-grad-violet)]" />
-
-                    {/* Game Cover Background */}
-                    {g.coverUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={g.coverUrl}
-                        alt={g.nameKa}
-                        className="absolute inset-0 h-full w-full object-cover opacity-98 transition-transform duration-500 group-hover:opacity-100"
-                      />
-                    ) : (
-                      <div className={`absolute inset-0 bg-gradient-to-br ${g.accent} opacity-20`} />
-                    )}
-
-                    {/* Ambient Gradients */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-cyan-500/5 opacity-40" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-[var(--gr-bg-0)]/70 via-[var(--gr-bg-0)]/15 to-transparent" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)]/80 via-[var(--gr-bg-0)]/5 to-transparent" />
-
-                    {/* Atmosphere Circle */}
-                    <div aria-hidden className="absolute -left-8 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full bg-white/5 blur-xl transition-transform duration-500 group-hover:scale-125" />
-
-                    {/* Laser lines — instant on/off */}
-                    <div aria-hidden className="absolute inset-y-0 left-[7.5%] w-[1px] bg-[var(--gr-violet)]/40 shadow-[0_0_12px_rgba(139,92,246,0.5)] opacity-100 group-hover:opacity-0 duration-0" />
-                    <div aria-hidden className="absolute inset-y-0 left-[5.5%] w-[2px] bg-[var(--gr-violet)]/55 shadow-[0_0_15px_rgba(139,92,246,0.6)] opacity-100 group-hover:opacity-0 duration-0" />
-
-                    {/* Colored accent block on the left edge */}
-                    <div aria-hidden className="absolute left-0 top-0 h-full w-[6%] bg-[linear-gradient(180deg,rgba(34,211,238,0.9),rgba(139,92,246,0.25))] [clip-path:polygon(0_0,68%_0,100%_100%,0_100%)] opacity-80 group-hover:opacity-0 duration-0" />
-
-                    <Link href={`/games/${g.slug}`} className="absolute inset-0 z-10" aria-label={g.nameKa} />
-
-                    {/* Bottom Details (Game Name) */}
-                    <div className="absolute bottom-4 left-[6.5%] right-4 z-20">
-                      <h3 className="font-display text-[18px] font-bold uppercase tracking-tight text-white transition-colors group-hover:text-[var(--gr-violet-hi)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]">
-                        {g.nameKa}
-                      </h3>
-                    </div>
-
-                    {/* Hover overlay */}
-                    <div className="absolute inset-0 bg-red-600/0 group-hover:bg-red-600/[0.06] duration-0 z-[5] pointer-events-none" />
-                  </div>
+                <GameCard key={g.slug}>
+                  <GameCardInner g={g} />
                 </GameCard>
               ))}
             </div>
-            <div className="mt-8 mb-4 h-px bg-[var(--gr-border)]" />
+            <div className="mb-4 mt-8 h-px bg-[var(--gr-border)]" />
           </div>
         )}
 
         <div className="mt-10">
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {otherGames.map((g, i) => {
-            const rankBg =
-              i === 0 ? "bg-[var(--gr-amber)] text-[#1a0e00]" :
-              i === 1 ? "bg-[var(--gr-violet-hi)] text-[#0a0014]" :
-              i === 2 ? "bg-[var(--gr-magenta)] text-white" :
-              "bg-black/60 text-white/80";
-
-            return (
-              <GameCard key={g.slug} clipPath={cutLg}>
-                  <div
-                    className="relative h-52 overflow-hidden bg-[var(--gr-bg-1)]"
-                    style={{ clipPath: cutLg }}
-                  >
-                    {/* Top Glow Border */}
-                    <span aria-hidden className="absolute left-0 top-0 z-10 h-[1.5px] w-full bg-[var(--gr-grad-violet)]" />
-
-                    {/* Game Cover Background */}
-                    {g.coverUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={g.coverUrl}
-                        alt={g.nameKa}
-                        className="absolute inset-0 h-full w-full object-cover opacity-98 transition-transform duration-500 group-hover:opacity-100"
-                      />
-                    ) : (
-                      <div className={`absolute inset-0 bg-gradient-to-br ${g.accent} opacity-20`} />
-                    )}
-
-                    {/* Ambient Gradients */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-cyan-500/5 opacity-40" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-[var(--gr-bg-0)]/70 via-[var(--gr-bg-0)]/15 to-transparent" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)]/80 via-[var(--gr-bg-0)]/5 to-transparent" />
-
-                    {/* Atmosphere Circle */}
-                    <div aria-hidden className="absolute -left-8 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full bg-white/5 blur-xl transition-transform duration-500 group-hover:scale-125" />
-
-                    {/* Laser lines — instant off on hover */}
-                    <div aria-hidden className="absolute inset-y-0 left-[7.5%] w-[1px] bg-[var(--gr-violet)]/40 shadow-[0_0_12px_rgba(139,92,246,0.5)] opacity-100 group-hover:opacity-0 duration-0" />
-                    <div aria-hidden className="absolute inset-y-0 left-[5.5%] w-[2px] bg-[var(--gr-violet)]/55 shadow-[0_0_15px_rgba(139,92,246,0.6)] opacity-100 group-hover:opacity-0 duration-0" />
-
-                    {/* Colored accent block on the left edge */}
-                    <div aria-hidden className="absolute left-0 top-0 h-full w-[6%] bg-[linear-gradient(180deg,rgba(34,211,238,0.9),rgba(139,92,246,0.25))] [clip-path:polygon(0_0,68%_0,100%_100%,0_100%)] opacity-80 group-hover:opacity-0 duration-0" />
-
-                    {/* stretched link behind everything */}
-                    <Link href={`/games/${g.slug}`} className="absolute inset-0 z-10" aria-label={g.nameKa} />
-
-                    {/* Bottom Details (Game Name) */}
-                    <div className="absolute bottom-4 left-[6.5%] right-4 z-20">
-                      <h3 className="font-display text-[18px] font-bold uppercase tracking-tight text-white transition-colors group-hover:text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]">
-                        {g.nameKa}
-                      </h3>
-                    </div>
-
-                    {/* Hover overlay */}
-                    <div className="absolute inset-0 bg-red-600/0 group-hover:bg-red-600/[0.06] duration-0 z-[5] pointer-events-none" />
-                  </div>
-                </GameCard>
-            );
-          })}
-        </div>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {otherGames.map((g) => (
+              <GameCard key={g.slug}>
+                <GameCardInner g={g} />
+              </GameCard>
+            ))}
+          </div>
         </div>
       </div>
     </div>

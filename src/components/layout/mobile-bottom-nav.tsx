@@ -95,7 +95,7 @@ function useAnnouncementCount() {
 }
 
 const MORE_LINKS = [
-  { href: "/forum", label: "ფორუმი", icon: FileText },
+  { href: "/articles", label: "სტატიები", icon: FileText },
   { href: "/games", label: "თამაშები", icon: Gamepad2 },
   { href: "/lfg", label: "ლოკალი", icon: Users },
   { href: "/tournaments", label: "ჩემპიონატები", icon: Trophy },

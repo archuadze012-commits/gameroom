@@ -7,10 +7,14 @@ import { Input } from "@/components/ui/input";
 import { mockGames, crackedGames } from "@/lib/mock-data";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GameIcon } from "@/components/game-icon";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { DisplayHeading } from "@/components/ui/display-heading";
 import { Pill } from "@/components/ui/pill";
 import type { PublicProfile, UserRole } from "@/lib/types";
+
+const neonText = { color: "#ffffff", textShadow: "0 0 8px rgba(236,72,153,0.9), 0 0 18px rgba(236,72,153,0.55), 0 0 32px rgba(236,72,153,0.3)" } as const;
+const neonMute = { color: "rgba(255,255,255,0.75)", textShadow: "0 0 6px rgba(236,72,153,0.75), 0 0 16px rgba(236,72,153,0.4)" } as const;
+const neonDim  = { color: "rgba(255,255,255,0.55)", textShadow: "0 0 5px rgba(236,72,153,0.55)" } as const;
+const neonMagenta = { color: "rgba(236,72,153,1)", textShadow: "0 0 8px rgba(236,72,153,1), 0 0 18px rgba(236,72,153,0.7)" } as const;
 
 type Tab = "players" | "games" | "cracked";
 type RoleFilter = "all" | Exclude<UserRole, "user">;
@@ -121,26 +125,29 @@ export default function SearchPage() {
 
       <div className="container relative mx-auto px-4 py-10 lg:py-14 space-y-7">
         <div>
-          <Eyebrow tone="amber">ძებნა</Eyebrow>
-          <DisplayHeading as="h1" size="lg" className="mt-3">ძებნა</DisplayHeading>
-          <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-[var(--gr-text-mute)]">
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em]" style={neonMagenta}>ძებნა</p>
+          <DisplayHeading as="h1" size="lg" className="mt-3" style={neonText}>ძებნა</DisplayHeading>
+          <p className="mt-3 max-w-xl text-[14px] leading-relaxed" style={neonMute}>
             იპოვე მოთამაშეები, თამაშები ან PC თამაშები უფასოდ.
           </p>
         </div>
 
         <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--gr-text-mute)]" />
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "#ffffff", filter: "drop-shadow(0 0 5px rgba(236,72,153,0.8))" }} />
           <Input
             autoFocus
             placeholder="username, თამაში, ჟანრი, პლატფორმა..."
-            className="pl-10 h-12 text-base border-[var(--gr-border-hi)] bg-[var(--gr-bg-1)]"
+            className="pl-10 h-12 text-base bg-[var(--gr-bg-1)]"
+            style={{ color: "#ffffff", textShadow: "0 0 6px rgba(236,72,153,0.7)" }}
+            onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 2px rgba(236,72,153,0.5), 0 0 14px rgba(236,72,153,0.4)"; e.currentTarget.style.borderColor = "rgba(236,72,153,0.9)"; }}
+            onBlur={(e) => { e.currentTarget.style.boxShadow = ""; e.currentTarget.style.borderColor = ""; }}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
 
         {/* Tabs — underline slide */}
-        <div className="flex flex-wrap gap-1 border-b border-[var(--gr-border)]">
+        <div className="flex flex-wrap gap-1" style={{ borderBottom: "1px solid rgba(236,72,153,0.2)" }}>
           {tabs.map((t) => {
             const active = tab === t.id;
             return (
@@ -148,15 +155,14 @@ export default function SearchPage() {
                 key={t.id}
                 type="button"
                 onClick={() => setTab(t.id)}
-                className={`relative flex items-center gap-2 px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] transition-colors ${
-                  active ? "text-[var(--gr-text)]" : "text-[var(--gr-text-mute)] hover:text-[var(--gr-text)]"
-                }`}
+                className="relative flex items-center gap-2 px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] transition-colors"
+                style={active ? neonText : neonMute}
               >
                 {t.icon}
                 {t.label}
                 <Pill tone={active ? "accent" : "neutral"}>{t.count}</Pill>
                 {active && (
-                  <span aria-hidden className="absolute inset-x-2 -bottom-px h-[2px] bg-[var(--gr-violet)] shadow-[0_0_10px_rgba(139,92,246,0.6)]" />
+                  <span aria-hidden className="absolute inset-x-2 -bottom-px h-[2px]" style={{ background: "rgba(236,72,153,1)", boxShadow: "0 0 10px rgba(236,72,153,0.8)" }} />
                 )}
               </button>
             );
@@ -167,12 +173,12 @@ export default function SearchPage() {
       {tab === "players" && (
         <div className="space-y-5">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-[var(--gr-text-mute)]">
+            <span className="inline-flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.14em]" style={{ color: "#ffffff", textShadow: "0 0 7px rgba(236,72,153,0.8)" }}>
               <span className="relative grid h-2 w-2 place-items-center">
                 <span className="absolute inset-0 rounded-full bg-[var(--gr-lime)] opacity-60 motion-safe:animate-ping" />
                 <span className="relative h-2 w-2 rounded-full bg-[var(--gr-lime)]" />
               </span>
-              ონლაინი — <span className="text-[var(--gr-lime)]">{onlineCount}</span>
+              ონლაინი — <span style={{ color: "var(--gr-lime)", textShadow: "0 0 8px var(--gr-lime)" }}>{onlineCount}</span>
             </span>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
@@ -183,15 +189,32 @@ export default function SearchPage() {
                 <button
                   key={f.role}
                   onClick={() => setRoleFilter(f.role)}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] transition-colors ${
-                    isActive
-                      ? TONE_ACTIVE[f.tone]
-                      : "bg-[var(--gr-bg-1)] text-[var(--gr-text-mute)] ring-1 ring-[var(--gr-border)] hover:text-[var(--gr-text)] hover:ring-[var(--gr-border-hi)]"
-                  }`}
+                  className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] transition-all duration-200"
+                  style={isActive ? {
+                    background: "rgba(236,72,153,0.18)",
+                    border: "1px solid rgba(236,72,153,0.7)",
+                    boxShadow: "0 0 12px rgba(236,72,153,0.35)",
+                    color: "#ffffff",
+                    textShadow: "0 0 8px rgba(236,72,153,0.9), 0 0 18px rgba(236,72,153,0.5)",
+                  } : {
+                    background: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    color: "rgba(255,255,255,0.6)",
+                    textShadow: "0 0 6px rgba(236,72,153,0.5)",
+                  }}
                 >
                   {f.icon}
                   {f.label}
-                  <span className={`rounded-full px-1.5 text-[10px] tabular-nums ${isActive ? "bg-white/10" : "bg-white/[0.04] text-[var(--gr-text-dim)]"}`}>
+                  <span
+                    className="rounded-full px-1.5 text-[10px] tabular-nums"
+                    style={isActive ? {
+                      background: "rgba(236,72,153,0.25)",
+                      color: "#ffffff",
+                    } : {
+                      background: "rgba(255,255,255,0.05)",
+                      color: "rgba(255,255,255,0.45)",
+                    }}
+                  >
                     {count}
                   </span>
                 </button>
@@ -205,7 +228,7 @@ export default function SearchPage() {
             </div>
           ) : (
             <>
-              <p className="text-[12.5px] text-[var(--gr-text-mute)]">
+              <p className="text-[12.5px]" style={neonDim}>
                 {q
                   ? `${playerResults.length} შედეგი "${query}"-სთვის`
                   : roleFilter === "all"
@@ -219,83 +242,91 @@ export default function SearchPage() {
                   {playerResults.map((user) => (
                     <Link key={user.username} href={`/profile/${user.username}`} className="group block">
                       <article
-                        className="relative isolate h-32 overflow-hidden transition-all duration-300"
-                        style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
+                        className="relative overflow-hidden transition-all duration-300 group-hover:-translate-y-0.5"
+                        style={{
+                          clipPath: cutSm,
+                          background: "rgba(236,72,153,0.35)",
+                          padding: 1,
+                        }}
                       >
                         <div
-                          className="relative h-full w-full bg-[var(--gr-bg-1)] transition-transform duration-300"
+                          className="relative flex items-center gap-3 p-3 bg-[var(--gr-bg-1)]"
                           style={{ clipPath: cutSm }}
                         >
-                          {/* Top Border Glow */}
-                          <span aria-hidden className="absolute left-0 top-0 z-10 h-[1.5px] w-full bg-[var(--gr-grad-violet)]" />
+                          {/* magenta glow bg on hover */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-[rgba(236,72,153,0.12)] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none z-[1]" />
+                          {/* laser sweep */}
+                          <div aria-hidden className="pointer-events-none absolute left-0 top-0 z-[2] h-[2px] w-full translate-x-[-100%] bg-gradient-to-r from-transparent via-white/60 to-transparent group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700" />
 
-                          {/* Accent Backgrounds */}
-                          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/15 to-cyan-500/5 opacity-80" />
-                          <div className="absolute inset-0 bg-gradient-to-r from-[var(--gr-bg-0)] via-[var(--gr-bg-0)]/30 to-transparent" />
-                          <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)] via-[var(--gr-bg-0)]/25 to-transparent" />
-
-                          {/* Atmosphere Circle */}
-                          <div aria-hidden className="absolute -left-8 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full bg-white/5 blur-xl transition-transform duration-500 group-hover:scale-125" />
-
-                          {/* Laser lines left */}
-                          <div aria-hidden className="absolute inset-y-0 left-[22%] w-[1px] bg-[var(--gr-violet)]/40 shadow-[0_0_12px_rgba(139,92,246,0.5)]" />
-                          <div aria-hidden className="absolute inset-y-0 left-[18%] w-[2px] bg-[var(--gr-violet)]/55 shadow-[0_0_15px_rgba(139,92,246,0.6)]" />
-
-                          {/* Colored accent block on the left edge */}
-                          <div aria-hidden className="absolute left-0 top-0 h-full w-[18%] bg-[linear-gradient(180deg,rgba(34,211,238,0.9),rgba(139,92,246,0.25))] [clip-path:polygon(0_0,68%_0,100%_100%,0_100%)] opacity-80" />
-
-                          {/* Floating Avatar Circular Container on the left panel */}
-                          <div className="absolute inset-y-0 left-[10%] z-[1] flex items-center justify-center">
-                            <div className="relative">
-                              <div className="rounded-full border border-white/12 bg-white/[0.04] p-1 shadow-[0_0_20px_rgba(139,92,246,0.25)] backdrop-blur-sm transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
-                                <div className="h-18 w-18 overflow-hidden rounded-full border border-white/10">
-                                  {user.avatarUrl ? (
-                                    <img
-                                      src={user.avatarUrl}
-                                      alt={user.displayName ?? user.username}
-                                      className="h-full w-full object-cover"
-                                    />
-                                  ) : (
-                                    <div className="flex h-full w-full items-center justify-center bg-[var(--gr-violet)]/20 text-2xl font-black text-[var(--gr-violet-hi)]">
-                                      {(user.displayName ?? user.username).slice(0, 1).toUpperCase()}
-                                    </div>
-                                  )}
+                          {/* Avatar */}
+                          <div className="relative z-[3] shrink-0">
+                            <div
+                              className="transition-transform duration-300 group-hover:scale-105"
+                              style={{
+                                width: 56, height: 56, borderRadius: "50%",
+                                border: "2px solid rgba(236,72,153,0.6)",
+                                boxShadow: "0 0 12px rgba(236,72,153,0.4)",
+                                overflow: "hidden",
+                                background: "rgba(236,72,153,0.1)",
+                                flexShrink: 0,
+                              }}
+                            >
+                              {user.avatarUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={user.avatarUrl}
+                                  alt={user.displayName ?? user.username}
+                                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                                />
+                              ) : (
+                                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 900, color: "#ffffff", textShadow: "0 0 8px rgba(236,72,153,1)" }}>
+                                  {(user.displayName ?? user.username).slice(0, 1).toUpperCase()}
                                 </div>
-                              </div>
-                              {user.isVerified && (
-                                <span className="absolute -bottom-1 -right-1 rounded-full bg-[var(--gr-bg-1)] p-0.5 shadow ring-1 ring-[var(--gr-border-hi)]">
-                                  <ShieldCheck className="h-4 w-4 text-[var(--gr-violet-hi)] fill-[var(--gr-violet-hi)]/20" />
-                                </span>
                               )}
                             </div>
-                          </div>
-
-                          {/* Top Details (Online Status Pill & Role Badge) */}
-                          <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 z-10">
-                            <span 
-                              className="h-2 w-2 rounded-full shadow-[0_0_6px_rgba(34,197,94,0.6)] shrink-0 animate-pulse" 
-                              style={{ backgroundColor: user.isOnline ? "var(--gr-lime)" : "var(--gr-amber)" }}
+                            {/* online dot */}
+                            <span
+                              className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[var(--gr-bg-1)]"
+                              style={{
+                                backgroundColor: user.isOnline ? "var(--gr-lime)" : "rgba(255,255,255,0.2)",
+                                boxShadow: user.isOnline ? "0 0 6px var(--gr-lime)" : "none",
+                              }}
                             />
-                            {user.role && user.role !== "user" && (
-                              <span className="text-[9px] font-black tracking-wider uppercase text-[var(--gr-text-mute)] bg-white/5 border border-white/10 px-1.5 py-0.5 rounded">
-                                {user.role}
+                            {/* verified */}
+                            {user.isVerified && (
+                              <span className="absolute -top-0.5 -right-0.5 rounded-full p-0.5" style={{ background: "rgba(236,72,153,1)", boxShadow: "0 0 8px rgba(236,72,153,0.8)" }}>
+                                <ShieldCheck className="h-3 w-3 text-white" />
                               </span>
                             )}
                           </div>
 
-                          {/* Center Details next to avatar (Display Name only, no @username) */}
-                          <div className="absolute top-1/2 -translate-y-1/2 left-[33%] right-3.5 z-10 text-center">
-                            <h4 className="font-display text-[19px] font-extrabold uppercase leading-[1.2] tracking-tight text-[var(--gr-text)] drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.6)] group-hover:text-[var(--gr-violet-hi)] transition-colors line-clamp-2">
+                          {/* Info */}
+                          <div className="relative z-[3] min-w-0 flex-1">
+                            <h4
+                              className="font-display text-[15px] font-extrabold uppercase leading-tight tracking-tight truncate"
+                              style={neonText}
+                            >
                               {user.displayName ?? user.username}
                             </h4>
+                            <p className="text-[11px] truncate mt-0.5" style={neonMute}>
+                              @{user.username}
+                            </p>
+                            {user.role && user.role !== "user" && (
+                              <span
+                                className="mt-1 inline-block text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5"
+                                style={{
+                                  color: "rgba(236,72,153,1)",
+                                  textShadow: "0 0 6px rgba(236,72,153,0.9)",
+                                  border: "1px solid rgba(236,72,153,0.4)",
+                                  borderRadius: 3,
+                                  background: "rgba(236,72,153,0.08)",
+                                }}
+                              >
+                                {user.role}
+                              </span>
+                            )}
                           </div>
-
-                          {/* Hover Effects (Button Style) */}
-                          <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
-                          <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
-                          <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
                         </div>
-
                       </article>
                     </Link>
                   ))}
@@ -309,7 +340,7 @@ export default function SearchPage() {
       {/* Games */}
       {tab === "games" && (
         <div className="space-y-4">
-          <p className="text-[12.5px] text-[var(--gr-text-mute)]">
+          <p className="text-[12.5px]" style={neonDim}>
             {q ? `${gameResults.length} შედეგი "${query}"-სთვის` : `სულ ${gameResults.length} თამაში`}
           </p>
           {gameResults.length === 0 ? (
@@ -358,7 +389,7 @@ export default function SearchPage() {
 
                       {/* Bottom Details (Game Name) */}
                       <div className="absolute bottom-2.5 left-[6.5%] right-2.5 z-10">
-                        <h4 className="font-display text-[14px] font-extrabold uppercase leading-[1.1] tracking-tight text-[var(--gr-text)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] group-hover:text-[var(--gr-violet-hi)] transition-colors line-clamp-2">
+                        <h4 className="font-display text-[14px] font-extrabold uppercase leading-[1.1] tracking-tight transition-colors line-clamp-2" style={neonText}>
                           {g.nameKa}
                         </h4>
                       </div>
@@ -379,7 +410,7 @@ export default function SearchPage() {
       {/* Cracked Games */}
       {tab === "cracked" && (
         <div className="space-y-4">
-          <p className="text-[12.5px] text-[var(--gr-text-mute)]">
+          <p className="text-[12.5px]" style={neonDim}>
             {q ? `${crackedResults.length} შედეგი "${query}"-სთვის` : `სულ ${crackedResults.length} cracked game`}
           </p>
           {crackedResults.length === 0 ? (
@@ -428,7 +459,7 @@ export default function SearchPage() {
 
                       {/* Bottom Details (Title) */}
                       <div className="absolute bottom-2.5 left-[6.5%] right-2.5 z-10">
-                        <h4 className="font-display text-[13px] font-extrabold uppercase leading-[1.1] tracking-tight text-[var(--gr-text)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] group-hover:text-[var(--gr-violet-hi)] transition-colors line-clamp-2" title={g.title}>
+                        <h4 className="font-display text-[13px] font-extrabold uppercase leading-[1.1] tracking-tight transition-colors line-clamp-2" style={neonText} title={g.title}>
                           {g.title}
                         </h4>
                       </div>
@@ -457,8 +488,8 @@ function EmptyResult({ label }: { label: string }) {
       style={{ clipPath: "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)" }}
     >
       <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
-      <Search className="mx-auto mb-3 h-8 w-8 text-[var(--gr-violet-hi)] opacity-60" />
-      <p className="text-[13.5px] text-[var(--gr-text-mute)]">{label}</p>
+      <Search className="mx-auto mb-3 h-8 w-8 opacity-70" style={{ color: "#ffffff", filter: "drop-shadow(0 0 6px rgba(236,72,153,0.9))" }} />
+      <p className="text-[13.5px]" style={{ color: "rgba(255,255,255,0.75)", textShadow: "0 0 6px rgba(236,72,153,0.7)" }}>{label}</p>
     </div>
   );
 }

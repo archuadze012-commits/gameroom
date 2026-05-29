@@ -51,8 +51,11 @@ export function HomeSearchWidget() {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="username, რეგიონი..."
-          className="pl-9 h-9 text-sm"
+          placeholder="username..."
+          className="pl-9 h-9 text-sm focus-visible:ring-[rgba(236,72,153,0.8)] focus-visible:ring-offset-0 focus-visible:border-[rgba(236,72,153,0.9)]"
+          style={{ transition: "box-shadow 0.2s, border-color 0.2s" }}
+          onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 2px rgba(236,72,153,0.5), 0 0 14px rgba(236,72,153,0.4)"; e.currentTarget.style.borderColor = "rgba(236,72,153,0.9)"; }}
+          onBlur={(e) => { e.currentTarget.style.boxShadow = ""; e.currentTarget.style.borderColor = ""; }}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -68,8 +71,11 @@ export function HomeSearchWidget() {
         </div>
       )}
 
-      <Button asChild variant="ghost" size="sm" className="w-full text-muted-foreground hover:text-foreground">
-        <Link href={`/search${q ? `?q=${encodeURIComponent(query)}` : ""}`}>
+      <Button asChild variant="ghost" size="sm" className="w-full">
+        <Link
+          href={`/search${q ? `?q=${encodeURIComponent(query)}` : ""}`}
+          style={{ color: "#ffffff", textShadow: "0 0 8px rgba(236,72,153,0.9), 0 0 18px rgba(236,72,153,0.55)" }}
+        >
           სრული ძებნა <ArrowRight className="ml-1 h-3.5 w-3.5" />
         </Link>
       </Button>

@@ -1,4 +1,4 @@
-export type UserRole = "user" | "moderator" | "organizer" | "streamer" | "esports" | "admin";
+export type UserRole = "user" | "moderator" | "organizer" | "streamer" | "esports" | "admin" | "journalist";
 
 export type PublicProfile = {
   username: string;

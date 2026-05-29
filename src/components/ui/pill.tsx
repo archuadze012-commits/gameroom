@@ -14,7 +14,7 @@ const toneClasses: Record<Tone, string> = {
   violet:  "bg-[color-mix(in_oklab,var(--gr-violet)_18%,transparent)] text-[var(--gr-violet)] ring-1 ring-[color-mix(in_oklab,var(--gr-violet)_40%,transparent)]",
   lime:    "bg-[color-mix(in_oklab,var(--gr-lime)_15%,transparent)] text-[var(--gr-lime)] ring-1 ring-[color-mix(in_oklab,var(--gr-lime)_35%,transparent)]",
   amber:   "bg-[color-mix(in_oklab,var(--gr-amber)_18%,transparent)] text-[var(--gr-amber)] ring-1 ring-[color-mix(in_oklab,var(--gr-amber)_40%,transparent)]",
-  magenta: "bg-[color-mix(in_oklab,var(--gr-magenta)_18%,transparent)] text-[var(--gr-magenta)] ring-1 ring-[color-mix(in_oklab,var(--gr-magenta)_40%,transparent)]",
+  magenta: "bg-[rgba(236,72,153,0.15)] text-white ring-1 ring-[rgba(236,72,153,0.5)] [text-shadow:0_0_7px_rgba(236,72,153,1),0_0_16px_rgba(236,72,153,0.7)]",
 };
 
 type Props = React.HTMLAttributes<HTMLSpanElement> & {

@@ -24,7 +24,8 @@ type CardUser = {
 type Props = { user: CardUser };
 
 const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
-const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.55))";
+const COL = "rgba(236,72,153,0.55)";
+const COL_HOVER = "rgba(236,72,153,0.85)";
 
 // Deterministic gradient per username — consistent backdrop for cards without banners.
 function gradientForUser(username: string): string {
@@ -51,13 +52,26 @@ export function PlayerCard({ user }: Props) {
 
   return (
     <Link href={`/profile/${user.username}`} className="group block">
-      {/* outer 1px magenta/violet gradient border */}
       <div
         className="relative isolate"
-        style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
+        style={{ background: COL, padding: 1, clipPath: cutSm }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = COL_HOVER)}
+        onMouseLeave={(e) => (e.currentTarget.style.background = COL)}
       >
+        {/* top glow line */}
+        <span
+          aria-hidden
+          className="absolute left-0 top-0 z-10 h-[2px] w-full"
+          style={{ background: "linear-gradient(90deg,transparent,rgba(236,72,153,0.9),transparent)" }}
+        />
+        {/* inner radial glow */}
         <div
-          className="relative h-52 overflow-hidden bg-[var(--gr-bg-1)] gr-sweep"
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-10"
+          style={{ background: "radial-gradient(ellipse at 50% 0%,rgba(236,72,153,0.09) 0%,transparent 65%)" }}
+        />
+        <div
+          className="relative h-52 overflow-hidden bg-[var(--gr-bg-1)]"
           style={{ clipPath: cutSm }}
         >
           {/* Banner backdrop */}
@@ -67,9 +81,8 @@ export function PlayerCard({ user }: Props) {
           />
           {/* Dark gradient overlay for legibility */}
           <div className="absolute inset-0 bg-gradient-to-b from-[var(--gr-bg-0)]/30 via-[var(--gr-bg-0)]/45 to-[var(--gr-bg-0)]/90" />
-
-          {/* top gradient hairline */}
-          <span aria-hidden className="absolute left-0 top-0 z-10 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
+          {/* magenta overlay on hover */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 z-[5] bg-fuchsia-600/0 duration-0 group-hover:bg-fuchsia-600/[0.08]" />
 
           {/* Online dot */}
           <div

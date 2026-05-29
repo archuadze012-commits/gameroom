@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, X, Check, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Plus, Pencil, Trash2, X, Check, Loader2, Upload, ImageIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +15,8 @@ type DbGame = {
   name_ka: string;
   name_en: string;
   description: string;
-  accent: string;
-  emoji: string;
+  accent_color?: string | null;
+  emoji: string | null;
   icon_url: string | null;
   cover_url: string | null;
 };
@@ -54,6 +54,61 @@ export default function AdminGamesPage() {
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deletingSlug, setDeletingSlug] = useState<string | null>(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingIcon, setUploadingIcon] = useState(false);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const iconInputRef = useRef<HTMLInputElement>(null);
+
+  async function uploadImage(file: File, kind: "cover" | "icon", slug: string): Promise<string> {
+    const ext = file.name.split(".").pop() ?? "jpg";
+    const path = `games/${kind}-${slug}-${Date.now()}.${ext}`;
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("path", path);
+    const res = await fetch("/api/admin/games/upload", { method: "POST", body: fd });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e?.error || `HTTP ${res.status}`);
+    }
+    const { url } = await res.json();
+    return url;
+  }
+
+  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) { toast.error("ფოტო მაქს. 8MB"); return; }
+    setUploadingCover(true);
+    try {
+      const slug = (editingSlug ?? form.slug) || `game-${Date.now()}`;
+      const url = await uploadImage(file, "cover", slug);
+      set("coverUrl", url);
+      toast.success("Cover ატვირთულია");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "ატვირთვა ვერ მოხერხდა");
+    } finally {
+      setUploadingCover(false);
+      if (coverInputRef.current) coverInputRef.current.value = "";
+    }
+  }
+
+  async function handleIconUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { toast.error("ფოტო მაქს. 2MB"); return; }
+    setUploadingIcon(true);
+    try {
+      const slug = (editingSlug ?? form.slug) || `game-${Date.now()}`;
+      const url = await uploadImage(file, "icon", slug);
+      set("iconUrl", url);
+      toast.success("Icon ატვირთულია");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "ატვირთვა ვერ მოხერხდა");
+    } finally {
+      setUploadingIcon(false);
+      if (iconInputRef.current) iconInputRef.current.value = "";
+    }
+  }
 
   useEffect(() => {
     fetch("/api/admin/games")
@@ -68,12 +123,12 @@ export default function AdminGamesPage() {
 
   function startEdit(g: DbGame) {
     setForm({
-      slug: g.slug,
-      nameKa: g.name_ka,
-      nameEn: g.name_en,
-      description: g.description,
-      accent: g.accent,
-      emoji: g.emoji,
+      slug: g.slug ?? "",
+      nameKa: g.name_ka ?? "",
+      nameEn: g.name_en ?? "",
+      description: g.description ?? "",
+      accent: g.accent_color ?? ACCENT_OPTIONS[7].value,
+      emoji: g.emoji ?? "🎮",
       iconUrl: g.icon_url ?? "",
       coverUrl: g.cover_url ?? "",
     });
@@ -104,7 +159,7 @@ export default function AdminGamesPage() {
           coverUrl: form.coverUrl || undefined,
         }),
       });
-      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.error || "შეცდომა"); }
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.error || `HTTP ${res.status}`); }
       const row: DbGame = await res.json();
       setDbGames((prev) => {
         const filtered = prev.filter((g) => g.slug !== row.slug);
@@ -123,7 +178,7 @@ export default function AdminGamesPage() {
     setDeletingSlug(slug);
     try {
       const res = await fetch(`/api/admin/games/${encodeURIComponent(slug)}`, { method: "DELETE" });
-      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.error || "შეცდომა"); }
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.error || `HTTP ${res.status}`); }
       setDbGames((prev) => prev.filter((g) => g.slug !== slug));
       toast.success("წაშლილია");
     } catch (e) {
@@ -137,7 +192,7 @@ export default function AdminGamesPage() {
     ...dbGames,
     ...mockGames.filter((m) => !dbGames.find((d) => d.slug === m.slug)).map((m) => ({
       slug: m.slug, name_ka: m.nameKa, name_en: m.nameEn,
-      description: m.description, accent: m.accent, emoji: m.emoji,
+      description: m.description, accent_color: m.accent, emoji: m.emoji,
       icon_url: m.iconUrl ?? null, cover_url: m.coverUrl ?? null,
     })),
   ];
@@ -162,33 +217,96 @@ export default function AdminGamesPage() {
 
           <div className="space-y-1.5">
             <label className="text-xs text-muted-foreground">სახელი *</label>
-            <Input placeholder="eFootball" value={form.nameKa} onChange={(e) => set("nameKa", e.target.value)} />
+            <Input placeholder="eFootball" value={form.nameKa ?? ""} onChange={(e) => set("nameKa", e.target.value)} />
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground">Slug (URL)</label>
-              <Input placeholder="efootball" value={form.slug} onChange={(e) => set("slug", e.target.value)} disabled={!!editingSlug} />
+              <Input placeholder="efootball" value={form.slug ?? ""} onChange={(e) => set("slug", e.target.value)} disabled={!!editingSlug} />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground">Emoji</label>
-              <Input placeholder="⚽" value={form.emoji} onChange={(e) => set("emoji", e.target.value)} />
+              <Input placeholder="⚽" value={form.emoji ?? ""} onChange={(e) => set("emoji", e.target.value)} />
             </div>
           </div>
 
           <div className="space-y-1.5">
             <label className="text-xs text-muted-foreground">აღწერა</label>
-            <Textarea placeholder="თამაშის მოკლე აღწერა..." className="min-h-[70px] resize-none" value={form.description} onChange={(e) => set("description", e.target.value)} />
+            <Textarea placeholder="თამაშის მოკლე აღწერა..." className="min-h-[70px] resize-none" value={form.description ?? ""} onChange={(e) => set("description", e.target.value)} />
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <label className="text-xs text-muted-foreground">Icon URL</label>
-              <Input placeholder="/games/efootball.png" value={form.iconUrl} onChange={(e) => set("iconUrl", e.target.value)} />
+          {/* Cover upload */}
+          <div className="space-y-1.5">
+            <label className="text-xs text-muted-foreground">Cover სურათი</label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="https://cdn... ან ატვირთე →"
+                value={form.coverUrl ?? ""}
+                onChange={(e) => set("coverUrl", e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                disabled={uploadingCover}
+                onClick={() => coverInputRef.current?.click()}
+                title="ფაილის ატვირთვა"
+              >
+                {uploadingCover
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <Upload className="h-4 w-4" />}
+              </Button>
+              <input
+                ref={coverInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={handleCoverUpload}
+              />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs text-muted-foreground">Cover URL</label>
-              <Input placeholder="https://cdn..." value={form.coverUrl} onChange={(e) => set("coverUrl", e.target.value)} />
+            {form.coverUrl && (
+              <div className="relative mt-2 h-28 w-full overflow-hidden rounded-md border border-border/60 bg-muted">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={form.coverUrl} alt="cover preview" className="h-full w-full object-cover" />
+              </div>
+            )}
+          </div>
+
+          {/* Icon upload */}
+          <div className="space-y-1.5">
+            <label className="text-xs text-muted-foreground">Icon სურათი</label>
+            <div className="flex gap-2 items-center">
+              <Input
+                placeholder="/games/efootball.png ან ატვირთე →"
+                value={form.iconUrl ?? ""}
+                onChange={(e) => set("iconUrl", e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                disabled={uploadingIcon}
+                onClick={() => iconInputRef.current?.click()}
+                title="ფაილის ატვირთვა"
+              >
+                {uploadingIcon
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <ImageIcon className="h-4 w-4" />}
+              </Button>
+              {form.iconUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={form.iconUrl} alt="icon preview" className="h-9 w-9 rounded-md object-cover border border-border/60 shrink-0" />
+              )}
+              <input
+                ref={iconInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={handleIconUpload}
+              />
             </div>
           </div>
 
