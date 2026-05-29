@@ -20,6 +20,8 @@ import { EditableText } from "@/components/admin/editable-text";
 import { EditableImage } from "@/components/admin/editable-image";
 import { EditableLink } from "@/components/admin/editable-link";
 
+export const dynamic = "force-dynamic";
+
 type HomePost = {
   id: string;
   content: string;
