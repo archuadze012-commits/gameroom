@@ -6,21 +6,31 @@ import { getRequestOriginFromHeaders } from "@/lib/url";
 export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  // Allowlist of public routes
-  const publicPaths = [
-    "/auth/login",
-    "/auth/signup",
-    "/auth/callback",
-    "/auth/confirm",
-    "/api/auth/callback",
-    "/api/auth/confirm",
+  const protectedPathPrefixes = [
+    "/admin",
+    "/feed",
+    "/messages",
+    "/settings",
+    "/articles/new",
+    "/clans/new",
+    "/lfg/new",
+    "/rooms/new",
+    "/free-pc-games/voice-test",
   ];
 
-  // The landing page is allowed for guests (we just made it attractive for them)
-  const isHome = path === "/";
-  const isPublic = publicPaths.some((p) => path === p) || path.startsWith("/api/auth");
+  const protectedApiPrefixes = [
+    "/api/admin",
+    "/api/conversations",
+    "/api/notifications",
+    "/api/profile",
+    "/api/push",
+  ];
 
-  if (isHome || isPublic) {
+  const requiresSession =
+    protectedPathPrefixes.some((p) => path === p || path.startsWith(`${p}/`)) ||
+    protectedApiPrefixes.some((p) => path === p || path.startsWith(`${p}/`));
+
+  if (!requiresSession) {
     return NextResponse.next({ request });
   }
 
