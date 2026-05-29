@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export type WalletData = {
   nc_balance: number;
@@ -6,7 +6,7 @@ export type WalletData = {
 };
 
 export async function getWallet(userId: string): Promise<WalletData> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const { data } = await supabase
     .from("wallets")
     .select("nc_balance, pro_balance")
@@ -20,7 +20,7 @@ export async function getWallet(userId: string): Promise<WalletData> {
 }
 
 export async function getDailyBonusAvailable(userId: string): Promise<boolean> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const { data } = await supabase
     .from("profiles")
     .select("last_login_award_at")
