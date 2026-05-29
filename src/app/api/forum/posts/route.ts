@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSession } from "@/lib/auth";
 import { awardXp } from "@/lib/gamification";
 import { sendPushToUser } from "@/lib/push";
@@ -65,12 +66,20 @@ export async function POST(request: NextRequest) {
   if (thread.author_id !== user.id) {
     const replierName = user.user_metadata?.username || user.email?.split("@")[0] || "ვიღაცამ";
     
-    const catSlug = (Array.isArray(thread.forum_categories)
-      ? thread.forum_categories[0]?.slug
-      : (thread.forum_categories as any)?.slug) || "general";
+    const category =
+      Array.isArray(thread.forum_categories)
+        ? thread.forum_categories[0]
+        : thread.forum_categories;
+    const catSlug =
+      category &&
+      typeof category === "object" &&
+      "slug" in category &&
+      typeof category.slug === "string"
+        ? category.slug
+        : "general";
 
     // 1. Save to notifications table
-    await supabase.from("notifications").insert({
+    await createSupabaseAdminClient().from("notifications").insert({
       user_id: thread.author_id,
       type: "forum_reply",
       title: "ახალი გამოხმაურება ფორუმზე 💬",
