@@ -16,6 +16,9 @@ import { Pill } from "@/components/ui/pill";
 import { getSiteContentValue } from "@/lib/site-content";
 import { Separator } from "@/components/ui/separator";
 import { PostReactions } from "@/app/feed/[id]/post-reactions";
+import { EditableText } from "@/components/admin/editable-text";
+import { EditableImage } from "@/components/admin/editable-image";
+import { EditableLink } from "@/components/admin/editable-link";
 
 type HomePost = {
   id: string;
@@ -48,13 +51,43 @@ export default async function HomePage() {
     headline: "ყველაფერი, რის გამოც თამაშები გიყვარს",
     logoUrl: "/logo.png",
   });
+  const userCta = await getSiteContentValue("home.user.cta", {
+    heading: "იპოვე გუნდი ან მოწინააღმდეგე წამებში",
+    description: "შექმენი ან იპოვე გუნდი და ითამაშე შენი საყვარელი თამაშები ქართველებთან ერთად",
+    buttonLabel: "დაწყება",
+    buttonHref: "/lfg",
+  });
+  const sectionGames = await getSiteContentValue("home.section.games", {
+    title: "თამაშები",
+  });
+  const sectionFreeGames = await getSiteContentValue("home.section.free_games", {
+    title: "PC თამაშები უფასოდ",
+  });
+  const bottomGames = await getSiteContentValue("home.bottom.games", {
+    eyebrow: "კატალოგი",
+    title: "თამაშები",
+    description: "ნახე ყველა მხარდაჭერილი თამაში.",
+    href: "/games",
+  });
+  const bottomLfg = await getSiteContentValue("home.bottom.lfg", {
+    eyebrow: "გუნდი",
+    title: "LIVE ლოკალი",
+    description: "შემოუერთდი მოთამაშეებს.",
+    href: "/lfg",
+  });
+  const bottomTournaments = await getSiteContentValue("home.bottom.tournaments", {
+    eyebrow: "ჩემპიონატი",
+    title: "ტურნირები",
+    description: "დარეგისტრირდი ან უყურე.",
+    href: "/tournaments",
+  });
 
   let recentPosts: HomePost[] = [];
   try {
     const supabase = await createSupabaseServerClient();
     const { data: postsData, error } = await supabase
       .from("posts")
-      .select("id, content, media_urls, likes_count, created_at, profiles!posts_author_id_fkey(username, display_name, avatar_url)")
+      .select("id, content, media_urls, likes_count, created_at, profiles!posts_author_id_profiles_id_fk(username, display_name, avatar_url)")
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(8);
@@ -82,11 +115,25 @@ export default async function HomePage() {
           {!user ? (
             <div className="mx-auto max-w-3xl text-center">
               <div className="flex justify-center mb-6">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={String(guestHero.logoUrl ?? "/logo.png")} alt="Gameroom" className="w-24 h-24 rounded-2xl" />
+                <EditableImage
+                  siteKey="home.guest.hero"
+                  field="logoUrl"
+                  value={String(guestHero.logoUrl ?? "/logo.png")}
+                  alt="Gameroom"
+                  imgClassName="w-24 h-24 rounded-2xl"
+                  folder="home"
+                  label="ლოგო"
+                />
               </div>
               <DisplayHeading as="h1" size="lg">
-                {String(guestHero.headline ?? "ყველაფერი, რის გამოც თამაშები გიყვარს")}
+                <EditableText
+                  siteKey="home.guest.hero"
+                  field="headline"
+                  value={String(guestHero.headline ?? "ყველაფერი, რის გამოც თამაშები გიყვარს")}
+                  multiline
+                  as="span"
+                  label="ჰედლაინი (Guest)"
+                />
               </DisplayHeading>
               <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
                 <GoogleSignInButton className="w-full sm:w-auto min-w-[280px]" />
@@ -143,19 +190,38 @@ export default async function HomePage() {
                     className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]"
                   />
                   <DisplayHeading as="h2" size="md" className="text-center relative z-10">
-                    იპოვე გუნდი ან მოწინააღმდეგე წამებში
+                    <EditableText
+                      siteKey="home.user.cta"
+                      field="heading"
+                      value={String(userCta.heading ?? "")}
+                      as="span"
+                      label="CTA Heading"
+                    />
                   </DisplayHeading>
                   <p className="mx-auto mt-3 max-w-2xl text-center text-[14px] leading-relaxed text-[var(--gr-text-mute)] relative z-10">
-                    შექმენი ან იპოვე გუნდი და ითამაშე შენი საყვარელი თამაშები ქართველებთან ერთად
+                    <EditableText
+                      siteKey="home.user.cta"
+                      field="description"
+                      value={String(userCta.description ?? "")}
+                      multiline
+                      as="span"
+                      label="CTA Description"
+                    />
                   </p>
                   <div className="mt-5 flex justify-center relative z-10">
                     <ChevronButton
-                      href="/lfg"
+                      href={String(userCta.buttonHref ?? "/lfg")}
                       variant="ghost"
                       size="md"
                       className="text-[var(--gr-violet-hi)] border-[var(--gr-border)] bg-[var(--gr-bg-1)] hover:text-[var(--gr-violet)] hover:border-[var(--gr-violet-hi)]"
                     >
-                      დაწყება
+                      <EditableText
+                        siteKey="home.user.cta"
+                        field="buttonLabel"
+                        value={String(userCta.buttonLabel ?? "დაწყება")}
+                        as="span"
+                        label="ბუტონის წარწერა"
+                      />
                     </ChevronButton>
                   </div>
                 </div>
@@ -172,7 +238,13 @@ export default async function HomePage() {
               <div className="flex items-end justify-between">
                 <div>
                   <DisplayHeading as="h2" size="md" className="mt-2">
-                    თამაშები
+                    <EditableText
+                      siteKey="home.section.games"
+                      field="title"
+                      value={String(sectionGames.title ?? "თამაშები")}
+                      as="span"
+                      label="სექციის ტიტული — თამაშები"
+                    />
                   </DisplayHeading>
                 </div>
                 <Link
@@ -212,7 +284,13 @@ export default async function HomePage() {
               <div className="flex items-end justify-between">
                 <div>
                   <DisplayHeading as="h2" size="md" className="mt-2">
-                    PC თამაშები უფასოდ
+                    <EditableText
+                      siteKey="home.section.free_games"
+                      field="title"
+                      value={String(sectionFreeGames.title ?? "PC თამაშები უფასოდ")}
+                      as="span"
+                      label="სექციის ტიტული — უფასო თამაშები"
+                    />
                   </DisplayHeading>
                 </div>
                 <Link
@@ -387,13 +465,17 @@ export default async function HomePage() {
         {/* ── BOTTOM CTA ROW ──────────────────────────────── */}
         <section className="grid gap-4 xl:grid-cols-3">
           {[
-            { href: "/games", icon: Gamepad2, eyebrow: "კატალოგი", title: "თამაშები", desc: "ნახე ყველა მხარდაჭერილი თამაში." },
-            { href: "/lfg", icon: Users, eyebrow: "გუნდი", title: "LIVE ლოკალი", desc: "შემოუერთდი მოთამაშეებს." },
-            { href: "/tournaments", icon: Trophy, eyebrow: "ჩემპიონატი", title: "ტურნირები", desc: "დარეგისტრირდი ან უყურე." },
+            { siteKey: "home.bottom.games", data: bottomGames, icon: Gamepad2 },
+            { siteKey: "home.bottom.lfg", data: bottomLfg, icon: Users },
+            { siteKey: "home.bottom.tournaments", data: bottomTournaments, icon: Trophy },
           ].map((item) => {
             const Icon = item.icon;
+            const href = String(item.data.href ?? "/");
+            const eyebrow = String(item.data.eyebrow ?? "");
+            const title = String(item.data.title ?? "");
+            const description = String(item.data.description ?? "");
             return (
-              <Link key={item.href} href={item.href} className="group block">
+              <Link key={item.siteKey} href={href} className="group block">
                 <div
                   className="relative isolate transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)]"
                   style={{ background: 'var(--card-border-hover, ' + cardBorder + ')', padding: 1, clipPath: cutClipMd }}
@@ -405,11 +487,34 @@ export default async function HomePage() {
                     <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)] z-10" />
                     <Icon className="relative z-10 h-6 w-6 text-[var(--gr-violet-hi)]" />
                     <div className="relative z-10 mt-3">
-                      <Eyebrow tone="amber">{item.eyebrow}</Eyebrow>
+                      <Eyebrow tone="amber">
+                        <EditableText
+                          siteKey={item.siteKey}
+                          field="eyebrow"
+                          value={eyebrow}
+                          as="span"
+                          label="Eyebrow"
+                        />
+                      </Eyebrow>
                       <h3 className="mt-1.5 font-display text-[18px] font-bold uppercase text-[var(--gr-text)]">
-                        {item.title}
+                        <EditableText
+                          siteKey={item.siteKey}
+                          field="title"
+                          value={title}
+                          as="span"
+                          label="ტიტული"
+                        />
                       </h3>
-                      <p className="mt-1.5 text-[12.5px] text-[var(--gr-text-mute)]">{item.desc}</p>
+                      <p className="mt-1.5 text-[12.5px] text-[var(--gr-text-mute)]">
+                        <EditableText
+                          siteKey={item.siteKey}
+                          field="description"
+                          value={description}
+                          multiline
+                          as="span"
+                          label="აღწერა"
+                        />
+                      </p>
                     </div>
 
                     {/* Hover Effects (Button Style) */}

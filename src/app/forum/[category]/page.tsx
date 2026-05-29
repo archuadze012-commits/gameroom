@@ -145,9 +145,14 @@ export default async function ForumCategoryPage({
                           {thread.title}
                         </h3>
                       </div>
-                      <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-[var(--gr-text-dim)]">
-                        {thread.author} · {thread.lastReplyAgo}
-                      </p>
+                      <div className="mt-2 flex flex-wrap items-center gap-3">
+                        <Pill tone="base" className="px-2 py-0.5 text-[10px]">
+                           @{thread.author}
+                        </Pill>
+                        <div className="text-[11px] uppercase tracking-[0.12em] text-[var(--gr-text-dim)]">
+                           {thread.lastReplyAgo}
+                        </div>
+                      </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <Pill tone={theme.accent === "amber" ? "amber" : theme.accent === "magenta" ? "violet" : theme.accent} icon={<MessageCircle className="h-3 w-3" />}>

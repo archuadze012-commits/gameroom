@@ -57,7 +57,7 @@ export default async function LfgPage({
   let query = supabase
     .from("lfg_posts")
     .select(
-      "id, game_slug, title, description, rank, region, slots_total, voice_required, created_at, profiles!lfg_posts_author_id_fkey(username, display_name, avatar_url)"
+      "id, game_slug, title, description, rank, region, slots_total, voice_required, created_at, profiles(username, display_name, avatar_url)"
     )
     .is("deleted_at", null)
     .order("created_at", { ascending: false })

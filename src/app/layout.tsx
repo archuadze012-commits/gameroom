@@ -8,6 +8,8 @@ import { after } from "next/server";
 import { updateLastSeen } from "@/lib/update-last-seen";
 import { ClientChrome } from "@/components/layout/client-chrome";
 import { getSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/admin";
+import { EditModeProvider } from "@/components/admin/edit-mode-context";
 
 const firaGO = localFont({
   src: [
@@ -50,6 +52,7 @@ export default async function RootLayout({
 }>) {
   after(() => updateLastSeen());
   const user = await getSession().catch(() => null);
+  const canEdit = user ? await hasPermission("manage_content").catch(() => false) : false;
 
   return (
     <html
@@ -57,11 +60,13 @@ export default async function RootLayout({
       className={`dark ${firaGO.variable} ${alkSanet.variable} h-full antialiased scroll-smooth`}
     >
       <body suppressHydrationWarning className="min-h-full flex flex-col">
-        <SiteHeader />
-        <main className="flex-1 pb-16 xl:pb-0">{children}</main>
-        <SiteFooter />
-        <ClientChrome isAuthenticated={!!user} />
-        <Toaster richColors position="top-right" />
+        <EditModeProvider canEdit={canEdit}>
+          <SiteHeader />
+          <main className="flex-1 pb-16 xl:pb-0">{children}</main>
+          <SiteFooter />
+          <ClientChrome isAuthenticated={!!user} canEdit={canEdit} />
+          <Toaster richColors position="top-right" />
+        </EditModeProvider>
       </body>
     </html>
   );

@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Package, Gift } from "lucide-react";
 import type { EventBox, ItemTier, OpenBoxBundleResult, OpenBoxResult } from "@/types/events";
 import { openBox, openBoxBundle } from "@/lib/events/actions";
-import { LobbyBoxOpenModal } from "@/components/lobby/lobby-box-open-modal";
+
+const LobbyBoxOpenModal = dynamic(
+  () => import("@/components/lobby/lobby-box-open-modal").then((m) => m.LobbyBoxOpenModal),
+  { ssr: false }
+);
 
 const TIER_GLOW_BG: Record<ItemTier, string> = {
   common:    "from-slate-700/30 to-slate-900/60",

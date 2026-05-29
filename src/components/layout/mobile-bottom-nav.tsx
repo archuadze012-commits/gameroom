@@ -12,7 +12,8 @@ function useMobileProfile() {
     (async () => {
       try {
         const supabase = createSupabaseBrowserClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { session } } = await supabase.auth.getSession();
+        const user = session?.user;
         if (!user) return;
 
         const key = `gameroom_profile_${user.id}`;
@@ -51,8 +52,8 @@ function useMsgCount() {
     async function tick() {
       try {
         const supabase = createSupabaseBrowserClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) {
           setCount(0);
           return;
         }

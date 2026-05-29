@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase
     .from("posts")
-    .select("content, profiles!posts_author_id_fkey(display_name)")
+    .select("content, profiles!posts_author_id_profiles_id_fk(display_name)")
     .eq("id", postId)
     .single();
   if (!data) return { title: "პოსტი" };
@@ -48,7 +48,7 @@ export default async function PostDetailPage({
   ] = await Promise.all([
     supabase
       .from("posts")
-      .select("id, content, media_urls, likes_count, created_at, profiles!posts_author_id_fkey(username, display_name, avatar_url, is_verified, role)")
+      .select("id, content, media_urls, likes_count, created_at, profiles!posts_author_id_profiles_id_fk(username, display_name, avatar_url, is_verified, role)")
       .eq("id", postId)
       .is("deleted_at", null)
       .single(),

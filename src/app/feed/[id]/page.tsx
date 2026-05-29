@@ -7,7 +7,7 @@ export default async function PostRedirectPage({ params }: { params: Promise<{ i
 
   const { data: post } = await supabase
     .from("posts")
-    .select("profiles!posts_author_id_fkey(username)")
+    .select("profiles!posts_author_id_profiles_id_fk(username)")
     .eq("id", id)
     .maybeSingle();
 

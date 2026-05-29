@@ -38,7 +38,7 @@ export function ForumTabs() {
             {isActive && (
               <span
                 aria-hidden
-                className="absolute inset-x-2 -bottom-px h-[2px] bg-[var(--gr-violet)] shadow-[0_0_12px_rgba(139,92,246,0.7)]"
+                className="absolute inset-x-2 -bottom-px h-[2px] bg-red-600/80 shadow-[0_0_12px_rgba(220,38,38,0.65)]"
               />
             )}
           </button>

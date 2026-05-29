@@ -59,10 +59,11 @@ function ProCoinIcon({ className }: { className?: string }) {
 
 import type { LobbyHudData } from "@/types/lobby";
 
-type CurrencyType = keyof LobbyHudData["currencies"];
+type Currencies = { pro: number; nc: number };
+type CurrencyType = keyof Currencies;
 
 type LobbyCurrencyStripProps = {
-  currencies: LobbyHudData["currencies"];
+  currencies: Currencies;
 };
 
 const currencyMeta: Array<{

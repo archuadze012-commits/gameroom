@@ -22,7 +22,7 @@ export type LobbyHudData = {
   currencies: {
     pro: number;
     nc: number;
-  };
+  } | null;
   dailyBonusAvailable: boolean;
   royalePass: {
     season: string;
