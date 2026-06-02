@@ -48,12 +48,11 @@ async function getOwnedLoadoutIds(
     .select("shop_items!inner(id, category, game_slug, metadata)")
     .eq("user_id", userId);
 
-  console.log("[getOwnedLoadoutIds]", {
+  console.log("[getOwnedLoadoutIds] rawShape", {
     userId,
-    gameSlug,
     error,
     rowCount: data?.length,
-    firstRow: data?.[0],
+    sample: JSON.stringify(data?.slice(0, 3)),
   });
 
   const owned: OwnedLoadoutIds = {
@@ -65,9 +64,13 @@ async function getOwnedLoadoutIds(
     nameCardIds: new Set<string>(),
   };
 
+  let processed = 0, skipped = 0, weaponCount = 0, comboCount = 0;
   for (const row of (data ?? []) as PurchasedShopItemRow[]) {
     const item = row.shop_items;
-    if (!item) continue;
+    if (!item) { skipped++; continue; }
+    if (item.category === "weapon") weaponCount++;
+    if (item.category === "combo") comboCount++;
+    processed++;
 
     const isSameGame = item.game_slug === null || item.game_slug === gameSlug;
     if (!isSameGame) continue;
@@ -102,6 +105,19 @@ async function getOwnedLoadoutIds(
       owned.nameCardIds.add(readStringMetadata(item.metadata, "name_card_id", item.id));
     }
   }
+
+  console.log("[getOwnedLoadoutIds] result", {
+    userId,
+    processed,
+    skipped,
+    weaponRowCount: weaponCount,
+    comboRowCount: comboCount,
+    weaponIds: [...owned.weaponIds],
+    comboIds: [...owned.comboIds],
+    characterIds: [...owned.characterIds],
+    vehicleIds: [...owned.vehicleIds],
+    effectIds: [...owned.effectIds],
+  });
 
   return owned;
 }
