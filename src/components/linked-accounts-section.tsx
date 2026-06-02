@@ -44,7 +44,15 @@ export function LinkedAccountsSection() {
   };
 
   useEffect(() => {
-    load();
+    void (async () => {
+      try {
+        const res = await fetch("/api/linked-accounts");
+        const data = await res.json();
+        setAccounts(Array.isArray(data) ? data : []);
+      } finally {
+        setLoading(false);
+      }
+    })();
     // refresh once when redirected back from steam
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);

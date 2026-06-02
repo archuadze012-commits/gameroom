@@ -40,8 +40,8 @@ export default async function ConversationPage({
         other={{
           id: otherId,
           username: other?.username ?? "user",
-          displayName: other?.display_name,
-          avatarUrl: other?.avatar_url,
+          displayName: other?.display_name ?? null,
+          avatarUrl: other?.avatar_url ?? null,
           isVerified: !!other?.is_verified,
         }}
       />

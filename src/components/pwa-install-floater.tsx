@@ -130,22 +130,15 @@ export function PWAInstallFloater({
   onDismiss,
   onPinAcknowledged,
 }: FloaterOptions = {}) {
-  const [stage, setStage] = useState<Stage>(null);
-  const [mounted, setMounted] = useState(false);
+  const [stage, setStage] = useState<Stage>(forceStage);
   const deferredRef = useRef<BeforeInstallPromptEvent | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
-  const os = useRef<OS>("other");
   const t = i18n[locale];
 
   // Decide initial stage + register listeners
   useEffect(() => {
-    os.current = detectOS();
-
-    if (forceStage) {
-      setStage(forceStage);
-      return;
-    }
+    if (forceStage) return;
 
     // Already installed → show pin once on first standalone launch
     if (isStandalone()) {
@@ -202,14 +195,9 @@ export function PWAInstallFloater({
     };
   }, [delay, cooldownDays, forceStage, onInstall]);
 
-  // Slide-up + fade animation flag
   useEffect(() => {
-    if (stage) {
-      previouslyFocused.current = document.activeElement as HTMLElement | null;
-      requestAnimationFrame(() => setMounted(true));
-    } else {
-      setMounted(false);
-    }
+    if (!stage) return;
+    previouslyFocused.current = document.activeElement as HTMLElement | null;
   }, [stage]);
 
   const dismiss = useCallback((s: Exclude<Stage, null>) => {
@@ -219,11 +207,8 @@ export function PWAInstallFloater({
     } catch {}
     onDismiss?.(s);
     if (s === "pin") onPinAcknowledged?.();
-    setMounted(false);
-    window.setTimeout(() => {
-      setStage(null);
-      previouslyFocused.current?.focus?.();
-    }, 280);
+    setStage(null);
+    previouslyFocused.current?.focus?.();
   }, [onDismiss, onPinAcknowledged]);
 
   // ESC + focus trap
@@ -272,7 +257,6 @@ export function PWAInstallFloater({
       deferredRef.current = null;
       if (outcome === "accepted") {
         onInstall?.();
-        setMounted(false);
         // appinstalled will transition to pin
       } else {
         dismiss("install");
@@ -283,13 +267,14 @@ export function PWAInstallFloater({
   };
 
   if (!stage) return null;
+  const currentOs = detectOS();
 
   const pinTitle =
-    os.current === "macos" ? t.pinTitleMac :
-    os.current === "linux" ? t.pinTitleLinux : t.pinTitleWin;
+    currentOs === "macos" ? t.pinTitleMac :
+    currentOs === "linux" ? t.pinTitleLinux : t.pinTitleWin;
   const pinBody =
-    os.current === "macos" ? t.pinBodyMac :
-    os.current === "linux" ? t.pinBodyLinux : t.pinBodyWin;
+    currentOs === "macos" ? t.pinBodyMac :
+    currentOs === "linux" ? t.pinBodyLinux : t.pinBodyWin;
 
   const title = stage === "install" ? t.installTitle : stage === "fallback" ? t.fallbackTitle : pinTitle;
   const body = stage === "install" ? t.installBody : stage === "fallback" ? t.fallbackBody : pinBody;
@@ -298,9 +283,7 @@ export function PWAInstallFloater({
   const positionClasses = isPin
     ? "bottom-20 xl:bottom-6 left-1/2 -translate-x-1/2 sm:w-[380px] w-[calc(100vw-32px)]"
     : "bottom-24 right-4 left-4 sm:left-auto sm:bottom-6 sm:right-6 sm:w-[320px]";
-  const enterTransform = isPin
-    ? (mounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0")
-    : (mounted ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0");
+  const enterTransform = "translate-y-0 opacity-100";
 
   return (
     <div
@@ -310,7 +293,6 @@ export function PWAInstallFloater({
       aria-live="polite"
       aria-labelledby="pwaif-title"
       aria-describedby="pwaif-body"
-      data-mounted={mounted}
       data-stage={stage}
       className={[
         "fixed z-[60] pwaif-root",

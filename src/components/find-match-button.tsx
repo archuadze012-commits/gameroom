@@ -142,9 +142,18 @@ export function FindMatchButton({ gameSlug, gameName, size = "sm", variant = "de
   const ss = (remaining % 60).toString().padStart(2, "0");
 
   if (status.state === "idle") {
+    const defaultClasses = variant === "default" 
+      ? "bg-[linear-gradient(135deg,#0ea5e9,#8b5cf6)] border border-white/10 shadow-[0_8px_24px_-8px_rgba(139,92,246,0.7),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_12px_36px_-6px_rgba(139,92,246,0.9),inset_0_1px_0_rgba(255,255,255,0.35)] hover:-translate-y-0.5 hover:border-white/20 transition-all duration-300 text-white font-bold tracking-wide"
+      : "";
+
     return (
-      <Button onClick={findMatch} size={size} variant={variant} className={className}>
-        <Zap className="mr-1.5 h-3.5 w-3.5" /> Find Match
+      <Button 
+        onClick={findMatch} 
+        size={size} 
+        variant={variant} 
+        className={`${defaultClasses} ${className || ""}`}
+      >
+        <Zap className="mr-1.5 h-3.5 w-3.5 drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" /> Find Match
       </Button>
     );
   }

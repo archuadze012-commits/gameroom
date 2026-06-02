@@ -30,7 +30,29 @@ export default function ModerationPage() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/admin/blocked-words");
+        const data = await res.json();
+        if (!cancelled) {
+          setWords(Array.isArray(data) ? data : []);
+        }
+      } catch {
+        if (!cancelled) {
+          setWords([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();

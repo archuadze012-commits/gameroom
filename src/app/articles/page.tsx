@@ -1,5 +1,5 @@
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSession } from "@/lib/auth";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { ArticleCard, type ArticleCardData } from "@/components/article-card";
 import { ChevronButton } from "@/components/ui/chevron-button";
@@ -11,13 +11,13 @@ export const metadata = { title: "სტატიები" };
 export const dynamic = "force-dynamic";
 
 export default async function ArticlesPage() {
-  const admin = createSupabaseAdminClient();
+  const supabase = await createSupabaseServerClient();
   const session = await getSession().catch(() => null);
 
   let favSlugs: string[] = [];
   let userRole: string = "user";
   if (session) {
-    const { data: profile } = await admin
+    const { data: profile } = await supabase
       .from("profiles")
       .select("favorite_game_slugs, role")
       .eq("id", session.id)

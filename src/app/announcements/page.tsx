@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { Bell, Users, UserCheck, MessageSquare, Trophy, Gamepad2, Info, AlertTriangle, AlertOctagon, CheckCheck, Loader2, type LucideIcon } from "lucide-react";
 import { PushBell } from "@/components/push-bell";
 import { DisplayHeading } from "@/components/ui/display-heading";
@@ -83,24 +83,30 @@ export default function AnnouncementsPage() {
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
 
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [nRes, aRes] = await Promise.all([
-        fetch("/api/notifications"),
-        fetch("/api/announcements"),
-      ]);
-      const nData = await nRes.json();
-      const aData = await aRes.json();
-      setNotifications(nData.notifications ?? []);
-      setAnnouncements(aData.announcements ?? []);
-      setReadAnnouncementIds(new Set(aData.readIds ?? []));
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const [nRes, aRes] = await Promise.all([
+          fetch("/api/notifications"),
+          fetch("/api/announcements"),
+        ]);
+        const nData = await nRes.json();
+        const aData = await aRes.json();
+        if (cancelled) return;
+        setNotifications(nData.notifications ?? []);
+        setAnnouncements(aData.announcements ?? []);
+        setReadAnnouncementIds(new Set(aData.readIds ?? []));
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
-
-  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const markAllRead = async () => {
     setMarkingAll(true);

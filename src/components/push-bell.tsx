@@ -15,20 +15,16 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export function PushBell({ className }: { className?: string }) {
-  const [supported, setSupported] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [busy, setBusy] = useState(false);
+  const supported =
+    typeof window !== "undefined" &&
+    "serviceWorker" in navigator &&
+    "PushManager" in window &&
+    "Notification" in window;
 
   useEffect(() => {
-    if (
-      typeof window === "undefined" ||
-      !("serviceWorker" in navigator) ||
-      !("PushManager" in window) ||
-      !("Notification" in window)
-    ) {
-      return;
-    }
-    setSupported(true);
+    if (!supported) return;
 
     (async () => {
       try {
@@ -39,7 +35,7 @@ export function PushBell({ className }: { className?: string }) {
         setSubscribed(!!sub);
       } catch {}
     })();
-  }, []);
+  }, [supported]);
 
   const enable = async () => {
     if (!supported) return;

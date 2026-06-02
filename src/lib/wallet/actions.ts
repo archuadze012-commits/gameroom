@@ -65,7 +65,7 @@ export async function adminGrantCurrency(
     p_user_id: targetUserId,
     p_currency: currency,
     p_amount: amount,
-    p_note: note || null,
+    p_note: note || undefined,
   });
 
   if (error) return { success: false, error: "unknown" };

@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { orderUsers } from "@/lib/dm";
+import { rateLimit } from "@/lib/rate-limit";
 
 // Join the matchmaking queue. Tries to match against an existing waiter
 // for the same game immediately.
 export async function POST(request: NextRequest) {
   const user = await getSession().catch(() => null);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  if (!rateLimit(`lfg-queue:${user.id}`, 20, 60_000))
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   const body = await request.json().catch(() => ({}));
   const gameSlug = typeof body.gameSlug === "string" ? body.gameSlug.trim() : "";

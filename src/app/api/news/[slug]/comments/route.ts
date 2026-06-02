@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSession } from "@/lib/auth";
 import { awardXp } from "@/lib/gamification";
 import { sendPushToUser } from "@/lib/push";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(
   request: NextRequest,
@@ -11,6 +12,9 @@ export async function POST(
 ) {
   const user = await getSession().catch(() => null);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  if (!rateLimit(`news-comment:${user.id}`, 15, 60_000))
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   const { slug } = await params;
   let body: { body?: string; parentId?: string };
@@ -38,14 +42,14 @@ export async function POST(
     return NextResponse.json({ error: "article_not_found" }, { status: 404 });
   }
 
-  // Insert the comment
+  // Insert the comment (parent_id column does not exist on news_comments,
+  // so threaded replies are flat for now)
   const { data: comment, error: commentErr } = await supabase
     .from("news_comments")
     .insert({
       article_id: article.id,
       user_id: user.id,
       body: commentBody,
-      parent_id: body.parentId || null,
     })
     .select("id, created_at")
     .single();

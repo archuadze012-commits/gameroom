@@ -5,15 +5,29 @@ import { DisplayHeading } from "@/components/ui/display-heading";
 import { Pill } from "@/components/ui/pill";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { format } from "date-fns";
+import { GamerCard } from "@/components/ui/gamer-card";
 
 
 export const metadata = { title: "სიახლეები" };
 export const dynamic = "force-dynamic";
 
-const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
-const cutMd = "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)";
-const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.55))";
-
+type NewsRow = {
+  id: string;
+  title: string;
+  slug: string;
+  cover_url: string | null;
+  excerpt: string | null;
+  body: string | null;
+  published_at: string | null;
+  profiles: {
+    username: string | null;
+  } | null;
+  games: {
+    slug: string | null;
+    name_ka: string | null;
+    emoji: string | null;
+  } | null;
+};
 
 export default async function NewsPage() {
   const supabase = await createSupabaseServerClient();
@@ -40,7 +54,7 @@ export default async function NewsPage() {
     .eq("status", "published")
     .order("published_at", { ascending: false });
 
-  const news = (dbNews || []).map((n: any) => {
+  const news = ((dbNews ?? []) as NewsRow[]).map((n) => {
     const readMinutes = Math.max(1, Math.ceil((n.body?.length || 0) / 800));
     return {
       id: n.id,
@@ -78,16 +92,8 @@ export default async function NewsPage() {
         </header>
 
         {featured && (
-          <Link href={`/news/${featured.slug}`} className="group block">
-            <div
-              className="relative isolate"
-              style={{ background: cardBorder, padding: 1, clipPath: cutMd }}
-            >
-              <div
-                className="relative overflow-hidden bg-[var(--gr-bg-1)] gr-sweep"
-                style={{ clipPath: cutMd }}
-              >
-                <span aria-hidden className="absolute left-0 top-0 z-10 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
+          <GamerCard clipSize={22} hover className="group block">
+            <Link href={`/news/${featured.slug}`} className="block">
                 <div className="grid md:grid-cols-[1.1fr_1fr]">
                   <div className={`relative h-48 w-full bg-gradient-to-br md:h-full ${featured.cover}`}>
                     <span aria-hidden className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[var(--gr-bg-1)]/80 md:to-[var(--gr-bg-1)]" />
@@ -110,25 +116,16 @@ export default async function NewsPage() {
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </Link>
+            </Link>
+          </GamerCard>
         )}
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {rest.map((n) => {
             const game = n.game;
             return (
-              <Link key={n.slug} href={`/news/${n.slug}`} className="group block">
-                <div
-                  className="relative isolate"
-                  style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
-                >
-                  <div
-                    className="relative bg-[var(--gr-bg-1)] gr-sweep"
-                    style={{ clipPath: cutSm }}
-                  >
-                    <span aria-hidden className="absolute left-0 top-0 z-10 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
+              <GamerCard key={n.slug} clipSize={14} hover className="group block">
+                <Link href={`/news/${n.slug}`} className="block">
                     <div className={`relative h-32 w-full bg-gradient-to-br ${n.cover}`}>
                       <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-1)] via-transparent to-transparent" />
                     </div>
@@ -148,9 +145,8 @@ export default async function NewsPage() {
                         <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" /> {n.readMinutes} წთ</span>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </Link>
+                </Link>
+              </GamerCard>
             );
           })}
         </div>

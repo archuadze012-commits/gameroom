@@ -62,7 +62,7 @@ export default async function SettingsPage() {
   const dbSlugs = new Set((dbGames ?? []).map((g) => g.slug));
 
   const allGames = [
-    ...(dbGames ?? []).map((g) => ({ slug: g.slug, nameKa: g.name_ka, emoji: g.emoji })),
+    ...(dbGames ?? []).map((g) => ({ slug: g.slug, nameKa: g.name_ka, emoji: g.emoji ?? "🎮" })),
     ...mockGames.filter((m) => !dbSlugs.has(m.slug)).map((m) => ({ slug: m.slug, nameKa: m.nameKa, emoji: m.emoji })),
   ];
 

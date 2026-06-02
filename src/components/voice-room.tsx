@@ -24,8 +24,8 @@ export function VoiceRoom({ room, onDisconnect }: { room: string; onDisconnect?:
           return;
         }
         setToken(data.token);
-      } catch (e: any) {
-        setError(e.message);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Token generation failed");
       }
     })();
   }, [room]);

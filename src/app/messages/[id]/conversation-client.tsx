@@ -57,9 +57,12 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
   // Handle send action response
   useEffect(() => {
     if (sendState.success && sendState.newMsg) {
-      setMessages((prev) => [...prev, sendState.newMsg]);
-      setInput("");
-      setSmartReplies([]);
+      const msg = sendState.newMsg;
+      queueMicrotask(() => {
+        setMessages((prev) => [...prev, msg]);
+        setInput("");
+        setSmartReplies([]);
+      });
     } else if (sendState.message && !sendState.success) {
       toast.error(sendState.message);
     }
@@ -133,8 +136,6 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
     const formData = new FormData();
     formData.append("conversationId", conversationId);
     formData.append("body", reply);
-    // Programmatically dispatch the action using startTransition to bypass the form
-    // In React 19, startTransition can wrap Server Actions
     import("react").then(({ startTransition: reactStartTransition }) => {
        reactStartTransition(() => {
            sendFormAction(formData);
@@ -173,156 +174,145 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
   };
 
   return (
-    <Card className="flex h-[calc(100vh-10rem)] flex-col overflow-hidden" style={{ background: "rgba(8,6,15,0.95)", border: "1px solid rgba(236,72,153,0.3)", boxShadow: "0 0 24px rgba(236,72,153,0.15)" }}>
-      {/* header */}
-      <div className="flex items-center gap-3 p-3" style={{ borderBottom: "1px solid rgba(236,72,153,0.2)" }}>
-        <Button asChild variant="ghost" size="icon">
-          <Link href="/messages"><ArrowLeft className="h-4 w-4" style={{ color: "#ffffff", filter: "drop-shadow(0 0 5px rgba(236,72,153,0.8))" }} /></Link>
-        </Button>
-        <Link href={`/profile/${other.username}`} className="flex flex-1 items-center gap-3">
-          <UserAvatar username={other.username} displayName={other.displayName ?? undefined} avatarUrl={other.avatarUrl} size="sm" />
-          <div>
-            <div className="flex items-center gap-1 font-semibold" style={{ color: "#ffffff", textShadow: "0 0 8px rgba(236,72,153,0.9), 0 0 18px rgba(236,72,153,0.5)" }}>
-              {other.displayName ?? other.username}
-              {other.isVerified && <VerifiedBadge className="h-3.5 w-3.5" />}
-            </div>
-          </div>
-        </Link>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={deleteConversation}
-          disabled={isDeleting}
-          className="shrink-0 text-muted-foreground hover:text-destructive"
-          title="მიმოწერის წაშლა"
-        >
-          {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-        </Button>
-      </div>
+    <div className="relative flex h-[calc(100vh-8rem)] w-full flex-col overflow-hidden rounded-[24px] p-[1.5px] bg-gradient-to-br from-[#00d0ff] via-[#6366f1] to-[#f43f5e] shadow-[0_0_40px_rgba(99,102,241,0.2)]">
+      <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[22.5px] bg-[#05050f]">
+        
+        {/* Ambient background glow inside chat */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(139,92,246,0.1),transparent_60%)]" />
 
-      {/* messages */}
-      <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4">
-        {loading && (
-          <div className="flex justify-center pt-8 text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin" />
-          </div>
-        )}
-        {!loading && messages.length === 0 && (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            ჯერ მესიჯები არ არის. შენ იყავი პირველი 👇
-          </p>
-        )}
-        {messages.map((m) => {
-          const isMe = m.sender_id === currentUserId;
-          return (
-            <div key={m.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-              <div className={`group relative max-w-[75%] ${isMe ? "" : "flex flex-col gap-1"}`}>
-                <div
-                  className={`rounded-2xl px-3 py-2 text-sm ${isMe ? "rounded-br-sm" : "rounded-bl-sm bg-secondary/60"}`}
-                  style={isMe ? {
-                    background: "rgba(236,72,153,0.18)",
-                    border: "1px solid rgba(236,72,153,0.45)",
-                    boxShadow: "0 0 14px rgba(236,72,153,0.3), inset 0 0 10px rgba(236,72,153,0.08)",
-                    backdropFilter: "blur(8px)",
-                  } : undefined}
-                >
-                  <p
-                    className="whitespace-pre-wrap break-words"
-                    style={isMe
-                      ? { color: "#ffffff", textShadow: "0 0 6px rgba(236,72,153,0.9), 0 0 14px rgba(236,72,153,0.5)" }
-                      : { color: "rgba(236,72,153,1)", textShadow: "0 0 6px rgba(255,255,255,0.9), 0 0 14px rgba(255,255,255,0.5)" }
-                    }
+        {/* header */}
+        <div className="relative z-10 flex items-center gap-4 bg-black/60 p-4 border-b border-white/10 backdrop-blur-md">
+          <Button asChild variant="ghost" size="icon" className="h-10 w-10 shrink-0 rounded-full bg-white/5 hover:bg-white/10 hover:text-pink-400">
+            <Link href="/messages"><ArrowLeft className="h-5 w-5" /></Link>
+          </Button>
+          <Link href={`/profile/${other.username}`} className="group flex flex-1 items-center gap-3">
+            <UserAvatar username={other.username} displayName={other.displayName ?? undefined} avatarUrl={other.avatarUrl} size="md" />
+            <div>
+              <div className="flex items-center gap-1.5 font-display text-lg font-black uppercase tracking-wide text-white drop-shadow-sm group-hover:text-pink-400 transition-colors">
+                {other.displayName ?? other.username}
+                {other.isVerified && <VerifiedBadge className="h-4 w-4" />}
+              </div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-white/40">@{other.username}</p>
+            </div>
+          </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={deleteConversation}
+            disabled={isDeleting}
+            className="h-10 w-10 shrink-0 rounded-full bg-white/5 text-white/50 hover:bg-red-500/20 hover:text-red-400"
+            title="მიმოწერის წაშლა"
+          >
+            {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+          </Button>
+        </div>
+
+        {/* messages */}
+        <div ref={scrollRef} className="relative z-10 flex-1 space-y-4 overflow-y-auto p-5 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
+          {loading && (
+            <div className="flex justify-center pt-8 text-white/30">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          )}
+          {!loading && messages.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Sparkles className="mb-4 h-12 w-12 text-pink-500/40 drop-shadow-[0_0_20px_rgba(236,72,153,0.5)]" />
+              <p className="text-sm font-bold uppercase tracking-widest text-white/40">
+                ჯერ მესიჯები არ არის.<br/>შენ იყავი პირველი.
+              </p>
+            </div>
+          )}
+          {messages.map((m) => {
+            const isMe = m.sender_id === currentUserId;
+            return (
+              <div key={m.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
+                <div className={`group relative max-w-[80%] ${isMe ? "" : "flex flex-col gap-1"}`}>
+                  <div
+                    className={`relative rounded-2xl px-4 py-3 text-[15px] shadow-lg backdrop-blur-md ${
+                      isMe 
+                        ? "rounded-br-sm border border-pink-500/30 bg-gradient-to-br from-pink-500/20 to-violet-500/20 shadow-[0_4px_20px_rgba(236,72,153,0.15)] text-white" 
+                        : "rounded-bl-sm border border-white/10 bg-white/5 shadow-[0_4px_20px_rgba(0,0,0,0.5)] text-white/90"
+                    }`}
                   >
-                    {m.body}
-                  </p>
-                  {translations[m.id] && (
-                    <p className="mt-1 border-t border-current/20 pt-1 text-xs opacity-80 italic">
-                      {translations[m.id]}
+                    <p className="whitespace-pre-wrap break-words leading-relaxed font-medium">
+                      {m.body}
                     </p>
-                  )}
-                  <div className="flex items-center justify-between gap-2 mt-0.5">
-                    <p
-                      className="text-[10px]"
-                      style={isMe
-                        ? { color: "rgba(255,255,255,0.6)", textShadow: "0 0 6px rgba(236,72,153,0.6)" }
-                        : { color: "rgba(236,72,153,0.7)", textShadow: "0 0 6px rgba(255,255,255,0.5)" }
-                      }
-                    >
-                      {timeOnly(m.created_at)}
-                    </p>
-                    {!isMe && (
-                      <button
-                        onClick={() => translate(m.id, m.body)}
-                        className="text-[10px] opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity flex items-center gap-0.5 text-muted-foreground"
-                      >
-                        {translating[m.id]
-                          ? <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                          : <Globe className="h-2.5 w-2.5" />}
-                        {translations[m.id] ? "დამალვა" : "თარგმანი"}
-                      </button>
+                    {translations[m.id] && (
+                      <p className="mt-2 border-t border-white/10 pt-2 text-sm text-cyan-200/80 italic">
+                        {translations[m.id]}
+                      </p>
                     )}
+                    <div className="mt-1 flex items-center justify-between gap-3">
+                      <p className={`text-[10px] font-bold tracking-widest uppercase ${isMe ? "text-pink-200/50" : "text-white/30"}`}>
+                        {timeOnly(m.created_at)}
+                      </p>
+                      {!isMe && (
+                        <button
+                          onClick={() => translate(m.id, m.body)}
+                          className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-cyan-400/60 opacity-0 transition-opacity hover:text-cyan-400 group-hover:opacity-100"
+                        >
+                          {translating[m.id]
+                            ? <Loader2 className="h-3 w-3 animate-spin" />
+                            : <Globe className="h-3 w-3" />}
+                          {translations[m.id] ? "დამალვა" : "თარგმანი"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* smart replies */}
-      {(smartReplies.length > 0 || loadingReplies) && (
-        <div className="flex items-center gap-2 border-t border-border/40 px-3 py-2 overflow-x-auto scrollbar-hide">
-          <Sparkles className="h-3 w-3 shrink-0 text-primary/60" />
-          {loadingReplies
-            ? <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-            : smartReplies.map((r) => (
-              <button
-                key={r}
-                onClick={() => handleSmartReply(r)}
-                className="shrink-0 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs text-primary hover:bg-primary/15 transition-colors"
-                disabled={isSending}
-              >
-                {r}
-              </button>
-            ))
-          }
+            );
+          })}
         </div>
-      )}
 
-      {/* composer */}
-      <CardContent className="p-0">
-        <form action={sendFormAction} className="flex items-center gap-2 p-3" style={{ borderTop: "1px solid rgba(236,72,153,0.2)" }}>
-          <input type="hidden" name="conversationId" value={conversationId} />
-          <Input
-            name="body"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="დაწერე მესიჯი..."
-            className="bg-background/40"
-            style={{ color: "#ffffff", textShadow: "0 0 6px rgba(236,72,153,0.7)" }}
-            onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 2px rgba(236,72,153,0.5), 0 0 14px rgba(236,72,153,0.4)"; e.currentTarget.style.borderColor = "rgba(236,72,153,0.9)"; }}
-            onBlur={(e) => { e.currentTarget.style.boxShadow = ""; e.currentTarget.style.borderColor = ""; }}
-            autoFocus
-            disabled={isSending}
-          />
-          <Button
-            type="submit"
-            disabled={!input.trim() || isSending}
-            style={{
-              background: "rgba(236,72,153,0.18)",
-              border: "1px solid rgba(236,72,153,0.45)",
-              boxShadow: "0 0 14px rgba(236,72,153,0.3), inset 0 0 10px rgba(236,72,153,0.08)",
-              backdropFilter: "blur(8px)",
-              color: "#ffffff",
-            }}
-          >
-            {isSending
-              ? <Loader2 className="h-4 w-4 animate-spin" style={{ filter: "drop-shadow(0 0 5px rgba(236,72,153,0.9))" }} />
-              : <Send className="h-4 w-4" style={{ filter: "drop-shadow(0 0 5px rgba(236,72,153,0.9))" }} />
+        {/* smart replies */}
+        {(smartReplies.length > 0 || loadingReplies) && (
+          <div className="relative z-10 flex items-center gap-3 border-t border-white/5 bg-black/40 px-4 py-3 overflow-x-auto scrollbar-hide backdrop-blur-md">
+            <Sparkles className="h-4 w-4 shrink-0 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
+            {loadingReplies
+              ? <Loader2 className="h-4 w-4 animate-spin text-white/30" />
+              : smartReplies.map((r) => (
+                <button
+                  key={r}
+                  onClick={() => handleSmartReply(r)}
+                  className="shrink-0 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-1.5 text-[12px] font-black tracking-wider text-cyan-400 transition-all hover:bg-cyan-500/20 hover:shadow-[0_0_15px_rgba(34,211,238,0.3)] hover:scale-105 disabled:opacity-50"
+                  disabled={isSending}
+                >
+                  {r}
+                </button>
+              ))
             }
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+          </div>
+        )}
+
+        {/* composer */}
+        <div className="relative z-10 bg-black/60 p-4 border-t border-white/10 backdrop-blur-md">
+          <form action={sendFormAction} className="flex items-center gap-3">
+            <input type="hidden" name="conversationId" value={conversationId} />
+            <Input
+              name="body"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="დაწერე მესიჯი..."
+              className="h-12 rounded-full border-white/10 bg-white/5 px-6 text-[15px] font-medium text-white shadow-inner transition-all focus-visible:border-pink-500/50 focus-visible:bg-white/10 focus-visible:ring-1 focus-visible:ring-pink-500/50 focus-visible:shadow-[0_0_20px_rgba(236,72,153,0.2)]"
+              autoFocus
+              disabled={isSending}
+              autoComplete="off"
+            />
+            <Button
+              type="submit"
+              disabled={!input.trim() || isSending}
+              className="h-12 w-12 shrink-0 rounded-full border border-pink-500/40 bg-[linear-gradient(135deg,#ec4899,#8b5cf6)] text-white shadow-[0_0_20px_rgba(236,72,153,0.3)] transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(236,72,153,0.5)] disabled:opacity-50"
+            >
+              {isSending
+                ? <Loader2 className="h-5 w-5 animate-spin" />
+                : <Send className="h-5 w-5 ml-0.5" />
+              }
+            </Button>
+          </form>
+        </div>
+
+      </div>
+    </div>
   );
 }

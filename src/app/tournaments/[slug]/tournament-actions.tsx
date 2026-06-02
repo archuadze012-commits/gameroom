@@ -10,6 +10,9 @@ import {
   checkinForTournamentAction,
   reportMatchScoreAction,
 } from "./actions";
+import type { BracketMatch } from "@/lib/tournament/generate-bracket";
+
+type ActiveMatch = BracketMatch & { id: string };
 
 export function TournamentActions({
   tournamentId,
@@ -25,8 +28,8 @@ export function TournamentActions({
   status: string;
   isRegistered: boolean;
   isCheckedIn: boolean;
-  currentUser: any;
-  activeMatch?: any;
+  currentUser: { id: string } | null;
+  activeMatch?: ActiveMatch;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -66,6 +69,7 @@ export function TournamentActions({
   }
 
   async function handleReport() {
+    if (!activeMatch) return;
     startTransition(async () => {
       const res = await reportMatchScoreAction(
         activeMatch.id,

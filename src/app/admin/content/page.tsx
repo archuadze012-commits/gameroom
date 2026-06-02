@@ -54,6 +54,22 @@ function pickString(obj: Record<string, unknown> | null | undefined, key: string
   return typeof v === "string" ? v : fallback;
 }
 
+function buildDraftState(
+  byKey: Map<string, Row>,
+  previous: Record<string, Record<string, string>> = {},
+) {
+  const next: Record<string, Record<string, string>> = {};
+  for (const slot of SLOTS) {
+    const row = byKey.get(slot.key);
+    const value = row?.value ?? {};
+    next[slot.key] = {};
+    for (const f of slot.fields) {
+      next[slot.key][f.id] = previous[slot.key]?.[f.id] ?? pickString(value, f.id, slot.defaults[f.id] ?? "");
+    }
+  }
+  return next;
+}
+
 export default function AdminContentPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,19 +89,12 @@ export default function AdminContentPage() {
     return m;
   }, [rows]);
 
-  const [draft, setDraft] = useState<Record<string, Record<string, string>>>({});
+  const [draft, setDraft] = useState<Record<string, Record<string, string>>>(() => buildDraftState(new Map()));
 
   useEffect(() => {
-    const next: Record<string, Record<string, string>> = {};
-    for (const slot of SLOTS) {
-      const row = byKey.get(slot.key);
-      const value = row?.value ?? {};
-      next[slot.key] = {};
-      for (const f of slot.fields) {
-        next[slot.key][f.id] = pickString(value, f.id, slot.defaults[f.id] ?? "");
-      }
-    }
-    setDraft(next);
+    queueMicrotask(() => {
+      setDraft((prev) => buildDraftState(byKey, prev));
+    });
   }, [byKey]);
 
   async function save(slot: Slot) {

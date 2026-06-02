@@ -4,17 +4,26 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
+import { rateLimit } from "@/lib/rate-limit";
 
 const sendMessageSchema = z.object({
   conversationId: z.string().uuid(),
-  body: z.string().min(1, "მესიჯი ცარიელია").max(2000, "მესიჯი ზედმეტად გრძელია"),
+  body: z.string().trim().min(1, "მესიჯი ცარიელია").max(2000, "მესიჯი ზედმეტად გრძელია"),
 });
+
+export type DirectMessage = {
+  id: string;
+  sender_id: string;
+  body: string;
+  created_at: string;
+  read_at: string | null;
+};
 
 export type SendMessageState = {
   success: boolean;
   message?: string;
   errors?: Record<string, string[]>;
-  newMsg?: any;
+  newMsg?: DirectMessage;
 };
 
 export async function sendMessageAction(
@@ -24,6 +33,11 @@ export async function sendMessageAction(
   const user = await getSession();
   if (!user) {
     return { success: false, message: "ავტორიზაცია აუცილებელია" };
+  }
+
+  // Anti-flood: cap DM sends per user per minute.
+  if (!rateLimit(`dm-send:${user.id}`, 30, 60_000)) {
+    return { success: false, message: "ნელა, ძალიან ბევრ მესიჯს აგზავნი. სცადე ცოტა ხანში." };
   }
 
   const rawData = {
@@ -62,7 +76,7 @@ export async function sendMessageAction(
     .insert({
       conversation_id: conversationId,
       sender_id: user.id,
-      body: body.trim(),
+      body,
     })
     .select("id, sender_id, body, created_at, read_at")
     .single();
@@ -100,7 +114,9 @@ export async function sendMessageAction(
 
   return {
     success: true,
-    newMsg: data,
+    newMsg: data
+      ? { ...data, created_at: data.created_at ?? new Date().toISOString() }
+      : undefined,
   };
 }
 
@@ -111,18 +127,44 @@ export async function deleteConversationAction(
   if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
 
   const supabase = await createSupabaseServerClient();
-  
-  // Note: Our conversations_delete_participant RLS policy ensures only participants can delete
-  const { error } = await supabase
+
+  const { data: conversation, error: convoError } = await supabase
+    .from("conversations")
+    .select("user_a, user_b")
+    .eq("id", conversationId)
+    .maybeSingle();
+
+  if (convoError) {
+    console.error("[deleteConversationAction] lookup", convoError);
+    return { success: false, message: "წაშლა ვერ მოხერხდა" };
+  }
+
+  if (!conversation || (conversation.user_a !== user.id && conversation.user_b !== user.id)) {
+    return { success: false, message: "წვდომა შეზღუდულია" };
+  }
+
+  const deletedAt = new Date().toISOString();
+  const { error: messageError } = await supabase
+    .from("conversation_messages")
+    .update({ deleted_at: deletedAt })
+    .eq("conversation_id", conversationId);
+
+  if (messageError) {
+    console.error("[deleteConversationAction] messages", messageError);
+    return { success: false, message: "წაშლა ვერ მოხერხდა" };
+  }
+
+  const { error: deleteError } = await supabase
     .from("conversations")
     .delete()
     .eq("id", conversationId);
 
-  if (error) {
-    console.error("[deleteConversationAction]", error);
+  if (deleteError) {
+    console.error("[deleteConversationAction] conversation", deleteError);
     return { success: false, message: "წაშლა ვერ მოხერხდა" };
   }
 
   revalidatePath("/messages");
+  revalidatePath(`/messages/${conversationId}`);
   return { success: true };
 }

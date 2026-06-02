@@ -22,7 +22,7 @@ export function CopyRoomCodeButton({ code }: { code: string }) {
     <button
       type="button"
       onClick={copy}
-      className="inline-flex items-center gap-1.5 bg-[var(--gr-bg-2)] px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--gr-text-mute)] ring-1 ring-[var(--gr-border)] transition-colors hover:bg-[var(--gr-amber)]/10 hover:text-[var(--gr-amber)] hover:ring-[var(--gr-amber)]/40"
+      className="inline-flex h-9 items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 text-[10.5px] font-black uppercase tracking-[0.14em] text-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.2)] transition-all hover:border-cyan-500/50 hover:bg-cyan-500/20 hover:scale-105"
     >
       {copied ? <Check className="h-3.5 w-3.5 text-green-400" /> : <Copy className="h-3.5 w-3.5" />}
       {copied ? "დაკოპირდა" : "კოპირება"}

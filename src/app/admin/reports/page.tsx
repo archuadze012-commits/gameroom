@@ -34,7 +34,23 @@ export default function ReportsPage() {
   };
 
   useEffect(() => {
-    load();
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/admin/reports?status=${tab}`);
+        const data = await res.json();
+        if (!cancelled) {
+          setReports(Array.isArray(data) ? data : []);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [tab]);
 
   const resolve = async (id: string, action: "dismiss" | "action") => {

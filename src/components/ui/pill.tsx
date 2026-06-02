@@ -6,15 +6,15 @@ type Tone =
   | "cyan" | "violet" | "lime" | "amber" | "magenta";
 
 const toneClasses: Record<Tone, string> = {
-  neutral: "bg-white/[0.04] text-[var(--gr-text-mute)] ring-1 ring-[var(--gr-border)]",
-  live:    "bg-[color-mix(in_oklab,var(--gr-amber)_18%,transparent)] text-[var(--gr-amber)] ring-1 ring-[color-mix(in_oklab,var(--gr-amber)_40%,transparent)]",
-  online:  "bg-[color-mix(in_oklab,var(--gr-lime)_15%,transparent)] text-[var(--gr-lime)] ring-1 ring-[color-mix(in_oklab,var(--gr-lime)_35%,transparent)]",
-  accent:  "bg-[color-mix(in_oklab,var(--gr-accent)_15%,transparent)] text-[var(--gr-accent)] ring-1 ring-[color-mix(in_oklab,var(--gr-accent)_40%,transparent)]",
-  cyan:    "bg-[color-mix(in_oklab,var(--gr-cyan)_15%,transparent)] text-[var(--gr-cyan)] ring-1 ring-[color-mix(in_oklab,var(--gr-cyan)_40%,transparent)]",
-  violet:  "bg-[color-mix(in_oklab,var(--gr-violet)_18%,transparent)] text-[var(--gr-violet)] ring-1 ring-[color-mix(in_oklab,var(--gr-violet)_40%,transparent)]",
-  lime:    "bg-[color-mix(in_oklab,var(--gr-lime)_15%,transparent)] text-[var(--gr-lime)] ring-1 ring-[color-mix(in_oklab,var(--gr-lime)_35%,transparent)]",
-  amber:   "bg-[color-mix(in_oklab,var(--gr-amber)_18%,transparent)] text-[var(--gr-amber)] ring-1 ring-[color-mix(in_oklab,var(--gr-amber)_40%,transparent)]",
-  magenta: "bg-[rgba(236,72,153,0.15)] text-white ring-1 ring-[rgba(236,72,153,0.5)] [text-shadow:0_0_7px_rgba(236,72,153,1),0_0_16px_rgba(236,72,153,0.7)]",
+  neutral: "bg-white/[0.04] text-[var(--gr-text-mute)] border border-white/5 backdrop-blur-md shadow-[0_4px_12px_rgba(0,0,0,0.2)]",
+  live:    "bg-[color-mix(in_oklab,var(--gr-amber)_15%,transparent)] text-[#fde68a] border border-[var(--gr-amber)]/25 backdrop-blur-md shadow-[0_4px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] [text-shadow:0_0_10px_var(--gr-amber)]",
+  online:  "bg-[color-mix(in_oklab,var(--gr-lime)_15%,transparent)] text-[#bbf7d0] border border-[var(--gr-lime)]/25 backdrop-blur-md shadow-[0_4px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] [text-shadow:0_0_10px_var(--gr-lime)]",
+  accent:  "bg-[color-mix(in_oklab,var(--gr-accent)_15%,transparent)] text-[#e2e8f0] border border-[var(--gr-accent)]/25 backdrop-blur-md shadow-[0_4px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] [text-shadow:0_0_10px_var(--gr-accent)]",
+  cyan:    "bg-[color-mix(in_oklab,var(--gr-cyan)_15%,transparent)] text-[#a5f3fc] border border-[var(--gr-cyan)]/25 backdrop-blur-md shadow-[0_4px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] [text-shadow:0_0_10px_var(--gr-cyan)]",
+  violet:  "bg-[color-mix(in_oklab,var(--gr-violet)_15%,transparent)] text-[#e9d5ff] border border-[var(--gr-violet)]/25 backdrop-blur-md shadow-[0_4px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] [text-shadow:0_0_10px_var(--gr-violet)]",
+  lime:    "bg-[color-mix(in_oklab,var(--gr-lime)_15%,transparent)] text-[#bbf7d0] border border-[var(--gr-lime)]/25 backdrop-blur-md shadow-[0_4px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] [text-shadow:0_0_10px_var(--gr-lime)]",
+  amber:   "bg-[color-mix(in_oklab,var(--gr-amber)_15%,transparent)] text-[#fde68a] border border-[var(--gr-amber)]/25 backdrop-blur-md shadow-[0_4px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] [text-shadow:0_0_10px_var(--gr-amber)]",
+  magenta: "bg-[rgba(236,72,153,0.15)] text-[#fbcfe8] border border-[rgba(236,72,153,0.35)] backdrop-blur-md shadow-[0_4px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.15)] [text-shadow:0_0_10px_rgba(236,72,153,1)]",
 };
 
 type Props = React.HTMLAttributes<HTMLSpanElement> & {

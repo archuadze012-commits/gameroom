@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { awardXp } from "@/lib/gamification";
+import { rateLimit } from "@/lib/rate-limit";
 
 function slugify(s: string) {
   return s
@@ -14,6 +15,9 @@ function slugify(s: string) {
 export async function POST(request: NextRequest) {
   const user = await getSession().catch(() => null);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  if (!rateLimit(`forum-thread:${user.id}`, 5, 60_000))
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   let body: { categorySlug?: string; title?: string; body?: string };
   try {

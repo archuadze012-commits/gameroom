@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDiscordClient } from "@/lib/discord";
-import { ChannelType } from "discord.js";
+import { ChannelType, type VoiceChannel, type GuildMember } from "discord.js";
+import { getSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,9 @@ function matchesGame(channelName: string, categoryName: string | null, gameSlug:
 }
 
 export async function GET(request: NextRequest) {
+  const user = await getSession().catch(() => null);
+  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
   const client = getDiscordClient();
   if (!client) return NextResponse.json({ error: "Discord not configured" }, { status: 500 });
 
@@ -80,14 +84,14 @@ export async function GET(request: NextRequest) {
 
     const channels = await guild.channels.fetch();
     const voiceChannels = Array.from(channels.values())
-      .filter((c) => c?.type === ChannelType.GuildVoice)
-      .map((c: any) => {
+      .filter((c): c is VoiceChannel => c?.type === ChannelType.GuildVoice)
+      .map((c) => {
         const parentCategory = c.parentId ? channels.get(c.parentId) : null;
         return {
           id: c.id,
           name: c.name,
           categoryName: parentCategory ? parentCategory.name : null,
-          members: c.members.map((m: any) => ({
+          members: c.members.map((m: GuildMember) => ({
             id: m.id,
             username: m.user.username,
             displayName: m.displayName,
@@ -116,8 +120,9 @@ export async function GET(request: NextRequest) {
       serverIcon: guild.iconURL(),
       channels: filteredChannels,
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error("[Discord API] Error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

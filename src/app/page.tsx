@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { MessageCircle, Search, MessageSquare, Bell, Gamepad2, ShoppingBag, Users, Trophy, Flame } from "lucide-react";
+import { MessageCircle, Search, MessageSquare, Bell, Gamepad2, ShoppingBag, Users, Trophy, Flame, Zap } from "lucide-react";
 import { mockGames, crackedGames } from "@/lib/mock-data";
 import { HomeNotificationsWidget } from "@/components/home-notifications-widget";
 import { HomeSearchWidget } from "@/components/home-search-widget";
-import { getSession } from "@/lib/auth";
+import { getIsAdmin, getSession } from "@/lib/auth";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { listPublishedArticles } from "@/lib/articles-db";
@@ -19,12 +19,14 @@ import { Separator } from "@/components/ui/separator";
 import { PostReactions } from "@/app/feed/[id]/post-reactions";
 import { EditableText } from "@/components/admin/editable-text";
 import { EditableImage } from "@/components/admin/editable-image";
-import { GamerCard } from "@/components/ui/gamer-card";
+import { PostComposer } from "@/components/post-composer";
+import { PostOwnerActions } from "@/components/post-owner-actions";
 
 export const dynamic = "force-dynamic";
 
 type HomePost = {
   id: string;
+  author_id: string;
   content: string;
   media_urls: string[] | null;
   likes_count: number;
@@ -44,16 +46,21 @@ const QUICK_NAV = [
   { icon: ShoppingBag,   label: "შოპი",      href: "/shop" },
 ];
 
-const COL_MAGENTA = "rgba(236,72,153,0.55)";
-const COL_VIOLET  = "rgba(167,139,250,0.55)";
-const COL_AMBER   = "rgba(245,165,36,0.55)";
-const COL_CYAN    = "rgba(34,211,238,0.55)";
-const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.55))";
-const cutClipSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
-const cutClipMd = "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)";
+function PremiumCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className="group relative block rounded-[20px] p-[1.5px] bg-gradient-to-br from-[#00d0ff] via-[#6366f1] to-[#f43f5e] transition-all duration-500 hover:shadow-[0_0_30px_rgba(99,102,241,0.4)] hover:-translate-y-1">
+      <div className={`relative h-full w-full overflow-hidden rounded-[18.5px] bg-[#0a0714] ${className}`}>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 export default async function HomePage() {
-  const user = await getSession().catch(() => null);
+  const [user, isAdmin] = await Promise.all([
+    getSession().catch(() => null),
+    getIsAdmin().catch(() => false),
+  ]);
   const guestHero = await getSiteContentValue("home.guest.hero", {
     headline: "ყველაფერი, რის გამოც თამაშები გიყვარს",
     logoUrl: "/logo.png",
@@ -70,40 +77,36 @@ export default async function HomePage() {
   const sectionFreeGames = await getSiteContentValue("home.section.free_games", {
     title: "PC თამაშები უფასოდ",
   });
-  const bottomGames = await getSiteContentValue("home.bottom.games", {
-    eyebrow: "კატალოგი",
-    title: "თამაშები",
-    description: "ნახე ყველა მხარდაჭერილი თამაში.",
-    href: "/games",
-  });
-  const bottomLfg = await getSiteContentValue("home.bottom.lfg", {
-    eyebrow: "გუნდი",
-    title: "LIVE ლოკალი",
-    description: "შემოუერთდი მოთამაშეებს.",
-    href: "/lfg",
-  });
-  const bottomTournaments = await getSiteContentValue("home.bottom.tournaments", {
-    eyebrow: "ჩემპიონატი",
-    title: "ტურნირები",
-    description: "დარეგისტრირდი ან უყურე.",
-    href: "/tournaments",
-  });
 
   type ArticleItem = { kind: "article"; slug: string; title: string; excerpt: string | null; cover_url: string | null; game_name: string | null; author_username: string; published_at: string; date: number };
   type PostItem = { kind: "post"; post: HomePost; date: number };
   type FeedItem = ArticleItem | PostItem;
 
   let feedItems: FeedItem[] = [];
+  let composerUser: {
+    id: string;
+    username: string;
+    displayName: string;
+    avatarUrl: string | null;
+  } | null = null;
   try {
     const supabase = await createSupabaseServerClient();
-    const [postsRes, articleRows] = await Promise.all([
+    const profilePromise = user
+      ? supabase
+          .from("profiles")
+          .select("username, display_name, avatar_url")
+          .eq("id", user.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null });
+    const [postsRes, articleRows, profileRes] = await Promise.all([
       supabase
         .from("posts")
-        .select("id, content, media_urls, likes_count, created_at, profiles!posts_author_id_profiles_id_fk(username, display_name, avatar_url)")
+        .select("id, author_id, content, media_urls, likes_count, created_at, profiles!posts_author_id_profiles_id_fk(username, display_name, avatar_url)")
         .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .limit(8),
       listPublishedArticles(4).catch(() => []),
+      profilePromise,
     ]);
     const posts = (postsRes.data ?? []) as unknown as HomePost[];
     const postItems: PostItem[] = posts.map((p) => ({ kind: "post", post: p, date: new Date(p.created_at).getTime() }));
@@ -119,122 +122,115 @@ export default async function HomePage() {
       date: new Date(r.published_at).getTime(),
     }));
     feedItems = [...postItems, ...articleItems].sort((a, b) => b.date - a.date);
+    if (user) {
+      const profile = profileRes.data;
+      composerUser = {
+        id: user.id,
+        username: profile?.username ?? user.email?.split("@")[0] ?? "player",
+        displayName:
+          profile?.display_name ??
+          String(user.user_metadata?.full_name ?? user.user_metadata?.name ?? profile?.username ?? ""),
+        avatarUrl: profile?.avatar_url ?? user.user_metadata?.avatar_url ?? null,
+      };
+    }
   } catch (e) {
     console.error("[HomePage] Exception during fetch:", e);
   }
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
-      <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
+    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)] overflow-hidden">
+      
+      {/* ── CINEMATIC BACKGROUND ────────────────────────────── */}
+      {!user ? (
+        <div className="absolute inset-x-0 top-0 h-[800px] w-full select-none pointer-events-none">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.15),transparent_50%)] mix-blend-screen" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(236,72,153,0.1),transparent_50%)] mix-blend-screen" />
+          <div className="absolute top-0 inset-x-0 h-[200px] bg-gradient-to-b from-[rgba(15,12,30,0.8)] to-transparent" />
+          <div className="absolute bottom-0 inset-x-0 h-[300px] bg-gradient-to-t from-[var(--gr-bg-0)] to-transparent" />
+        </div>
+      ) : (
+        <div className="absolute inset-x-0 top-0 h-[500px] w-full select-none pointer-events-none">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.08),transparent_50%)] mix-blend-screen" />
+          <div className="absolute bottom-0 inset-x-0 h-[300px] bg-gradient-to-t from-[var(--gr-bg-0)] to-transparent" />
+        </div>
+      )}
 
-      <div className="container relative mx-auto px-4 py-10 lg:py-14 space-y-14">
-        {/* â”€â”€ HERO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-        <section className="relative isolate">
-          {/* faint violet/magenta light leaks */}
-          <span aria-hidden className="pointer-events-none absolute -top-20 -right-20 h-72 w-72 rounded-full bg-[var(--gr-violet)]/25 blur-[120px]" />
-          <span aria-hidden className="pointer-events-none absolute -bottom-32 -left-10 h-72 w-72 rounded-full bg-[var(--gr-magenta)]/20 blur-[120px]" />
-
-          {!user ? (
-            <div className="mx-auto max-w-3xl text-center">
-              <div className="flex justify-center mb-6">
-                <EditableImage
-                  siteKey="home.guest.hero"
-                  field="logoUrl"
-                  value={String(guestHero.logoUrl ?? "/logo.png")}
-                  alt="Gameroom"
-                  imgClassName="w-24 h-24 rounded-2xl"
-                  folder="home"
-                  label="ლოგო"
-                />
-              </div>
-              <DisplayHeading as="h1" size="lg">
-                <EditableText
-                  siteKey="home.guest.hero"
-                  field="headline"
-                  value={String(guestHero.headline ?? "ყველაფერი, რის გამოც თამაშები გიყვარს")}
-                  multiline
-                  as="span"
-                  label="ჰედლაინი (Guest)"
-                />
-              </DisplayHeading>
-              <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <GoogleSignInButton className="w-full sm:w-auto min-w-[280px]" />
-              </div>
+      <div className="container relative mx-auto px-4 pb-14 lg:pb-24 pt-10 lg:pt-16 space-y-16">
+        
+        {/* ── HEADER CONTENT ────────────────────────────── */}
+        {!user ? (
+          <section className="relative z-10 mx-auto max-w-5xl text-center flex flex-col items-center pt-8">
+            <div className="mb-8 relative group">
+              <div className="absolute -inset-4 bg-gradient-to-r from-violet-500/20 to-pink-500/20 blur-2xl rounded-full opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
+              <EditableImage
+                siteKey="home.guest.hero"
+                field="logoUrl"
+                value={String(guestHero.logoUrl ?? "/logo.png")}
+                alt="Gameroom"
+                imgClassName="relative z-10 w-28 h-28 lg:w-32 lg:h-32 rounded-3xl shadow-[0_0_50px_rgba(139,92,246,0.3)] transition-transform duration-700 group-hover:scale-105"
+                folder="home"
+                label="ლოგო"
+              />
             </div>
-          ) : (
-            <div>
-              {/* quick nav */}
-              <div className="mt-6 hidden md:grid md:grid-cols-5 gap-3">
-                {QUICK_NAV.map(({ icon: Icon, label, href }) => (
-                  <Link key={href} href={href} className="group flex flex-col items-center gap-2 p-4 text-[12px] font-semibold uppercase tracking-[0.12em]">
-                    <span
-                      className="grid h-10 w-10 place-items-center rounded-lg transition-all duration-200 group-hover:scale-110"
-                      style={{
-                        background: "rgba(236,72,153,0.08)",
-                        outline: "1px solid rgba(236,72,153,0.35)",
-                        boxShadow: "0 0 10px rgba(236,72,153,0.2), inset 0 0 8px rgba(236,72,153,0.08)",
-                      }}
-                    >
-                      <Icon
-                        className="h-5 w-5"
-                        style={{
-                          color: "#ffffff",
-                          filter: "drop-shadow(0 0 6px rgba(236,72,153,1)) drop-shadow(0 0 12px rgba(236,72,153,0.7))",
-                        }}
-                      />
-                    </span>
-                    <span
-                      style={{
-                        color: "#ffffff",
-                        textShadow: "0 0 8px rgba(236,72,153,1), 0 0 18px rgba(236,72,153,0.7), 0 0 30px rgba(236,72,153,0.4)",
-                      }}
-                    >
+
+            <DisplayHeading as="h1" size="display" className="leading-[1.1] bg-[linear-gradient(180deg,#fff_0%,rgba(255,255,255,0.65)_100%)] bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(255,255,255,0.15)]">
+              <EditableText
+                siteKey="home.guest.hero"
+                field="headline"
+                value={String(guestHero.headline ?? "ყველაფერი, რის გამოც თამაშები გიყვარს")}
+                multiline
+                as="span"
+                label="ჰედლაინი"
+              />
+            </DisplayHeading>
+
+            <div className="mt-12 flex justify-center w-full max-w-[320px]">
+              <GoogleSignInButton className="w-full" />
+            </div>
+          </section>
+        ) : (
+          <section className="relative z-10 mx-auto w-full flex flex-col items-center gap-10">
+            {/* PRIMARY CTA - CINEMATIC BUTTON */}
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 to-violet-500 rounded-full blur opacity-40 group-hover:opacity-75 transition duration-500"></div>
+              <Link
+                href={String(userCta.buttonHref ?? "/lfg")}
+                className="relative flex items-center justify-center gap-3 bg-[linear-gradient(180deg,rgba(15,12,30,0.9),rgba(5,5,15,0.98))] px-10 py-4 rounded-full border border-white/10 overflow-hidden transition-all duration-300"
+              >
+                <span className="absolute inset-0 bg-gradient-to-r from-pink-500/20 to-violet-500/20 translate-y-[100%] group-hover:translate-y-0 transition-transform duration-500" />
+                <Zap className="h-5 w-5 text-pink-400 drop-shadow-[0_0_10px_rgba(236,72,153,0.8)] relative z-10" />
+                <span className="font-display font-bold uppercase tracking-widest text-[15px] text-white relative z-10 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]">
+                  <EditableText siteKey="home.user.cta" field="buttonLabel" value={String(userCta.buttonLabel ?? "დაწყება")} as="span" label="ბუტონის წარწერა" />
+                </span>
+              </Link>
+            </div>
+
+            {/* CINEMATIC QUICK NAV */}
+            <div className="w-full max-w-4xl grid grid-cols-2 md:grid-cols-5 gap-4">
+              {QUICK_NAV.map(({ icon: Icon, label, href }) => (
+                <Link key={href} href={href} className="group block">
+                  <PremiumCard className="flex flex-col items-center gap-3 p-5 text-center !rounded-[24px]">
+                    <Icon className="h-8 w-8 text-white/80 transition-all duration-500 group-hover:text-violet-300 group-hover:scale-110 group-hover:drop-shadow-[0_0_12px_rgba(139,92,246,0.8)]" />
+                    <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/70 transition-colors duration-300 group-hover:text-white group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
                       {label}
                     </span>
-                  </Link>
-                ))}
-              </div>
-              {/* primary CTA */}
-              <GamerCard color={COL_MAGENTA} clipSize={22} hover className="mt-4">
-                <div className="p-6 sm:p-7">
-                  <DisplayHeading as="h2" size="md" className="text-center relative z-10" style={{ color: "#ffffff", textShadow: "0 0 8px rgba(236,72,153,1), 0 0 20px rgba(236,72,153,0.7), 0 0 40px rgba(236,72,153,0.4)" }}>
-                    <EditableText siteKey="home.user.cta" field="heading" value={String(userCta.heading ?? "")} as="span" label="CTA Heading" />
-                  </DisplayHeading>
-                  <p className="mx-auto mt-3 max-w-2xl text-center text-[14px] leading-relaxed relative z-10" style={{ color: "#ffffff", textShadow: "0 0 6px rgba(236,72,153,0.9), 0 0 16px rgba(236,72,153,0.6), 0 0 28px rgba(236,72,153,0.3)" }}>
-                    <EditableText siteKey="home.user.cta" field="description" value={String(userCta.description ?? "")} multiline as="span" label="CTA Description" />
-                  </p>
-                  <div className="mt-5 flex justify-center relative z-10">
-                    <ChevronButton href={String(userCta.buttonHref ?? "/lfg")} variant="ghost" size="md" className="border-[var(--gr-border)] bg-[var(--gr-bg-1)] hover:border-[rgba(236,72,153,0.6)]" style={{ color: "#ffffff", textShadow: "0 0 8px rgba(236,72,153,1), 0 0 18px rgba(236,72,153,0.6)" }}>
-                      <EditableText siteKey="home.user.cta" field="buttonLabel" value={String(userCta.buttonLabel ?? "დაწყება")} as="span" label="ბუტონის წარწერა" />
-                    </ChevronButton>
-                  </div>
-                </div>
-              </GamerCard>
+                  </PremiumCard>
+                </Link>
+              ))}
             </div>
-          )}
-        </section>
+          </section>
+        )}
 
-        {/* â”€â”€ GAMES STRIP (mobile + tablet) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* ── CINEMATIC GAMES SHOWCASE ────────────────────────────── */}
         {!user && (
-          <section className="grid gap-10 lg:grid-cols-2">
+          <section className="grid gap-8 lg:grid-cols-2 relative z-10">
             {/* Left: Games */}
             <div className="space-y-6">
-              <div className="flex items-end justify-between">
-                <div>
-                  <DisplayHeading as="h2" size="md" className="mt-2">
-                    <EditableText
-                      siteKey="home.section.games"
-                      field="title"
-                      value={String(sectionGames.title ?? "თამაშები")}
-                      as="span"
-                      label="სექციის ტიტული — თამაშები"
-                    />
-                  </DisplayHeading>
-                </div>
-                <Link
-                  href="/auth/login?next=%2Fgames"
-                  className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--gr-violet-hi)] transition-colors hover:text-[var(--gr-violet)]"
-                >
+              <div className="flex items-end justify-between px-2">
+                <DisplayHeading as="h2" size="md" className="text-white drop-shadow-[0_0_12px_rgba(139,92,246,0.5)]">
+                  <EditableText siteKey="home.section.games" field="title" value={String(sectionGames.title ?? "თამაშები")} as="span" label="სექციის ტიტული" />
+                </DisplayHeading>
+                <Link href="/auth/login?next=%2Fgames" className="text-[11px] font-black uppercase tracking-[0.15em] text-violet-400 transition-colors hover:text-white hover:drop-shadow-[0_0_8px_rgba(139,92,246,0.8)]">
                   ყველა
                 </Link>
               </div>
@@ -242,22 +238,18 @@ export default async function HomePage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 {mockGames.slice(0, 4).map((game) => (
                   <Link key={game.slug} href={`/games/${game.slug}`} className="group block">
-                    <div className="relative isolate transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)]" style={{ background: 'var(--card-border-hover, ' + cardBorder + ')', padding: 1, clipPath: cutClipSm }}>
-                      <div className="relative h-24 overflow-hidden bg-[var(--gr-bg-1)]" style={{ clipPath: cutClipSm }}>
+                    <PremiumCard className="!p-0 !border-white/5">
+                      <div className="relative h-28 overflow-hidden">
                         {game.coverUrl && (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={game.coverUrl} alt={game.nameKa} className="absolute inset-0 h-full w-full object-cover opacity-40 transition-opacity group-hover:opacity-60" />
+                          <img src={game.coverUrl} alt={game.nameKa} className="absolute inset-0 h-full w-full object-cover opacity-60 mix-blend-luminosity transition-all duration-700 group-hover:opacity-100 group-hover:scale-105 group-hover:mix-blend-normal" />
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-1)] via-transparent to-transparent" />
-                        <div className="relative flex h-full items-end p-3 px-4">
-                          <h4 className="font-display text-[13px] font-bold uppercase tracking-tight text-[var(--gr-text)] drop-shadow-md">{game.nameKa}</h4>
+                        <div className="absolute inset-0 bg-gradient-to-t from-[rgba(15,12,30,0.95)] via-[rgba(15,12,30,0.4)] to-transparent" />
+                        <div className="relative flex h-full items-end p-4">
+                          <h4 className="font-display text-[14px] font-bold uppercase tracking-wide text-white drop-shadow-[0_0_10px_rgba(0,0,0,0.8)] transition-all duration-300 group-hover:drop-shadow-[0_0_12px_rgba(139,92,246,0.8)]">{game.nameKa}</h4>
                         </div>
-                        {/* Hover Effects (Button Style) */}
-                        <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
-                        <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
-                            <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
                       </div>
-                    </div>
+                    </PremiumCard>
                   </Link>
                 ))}
               </div>
@@ -265,22 +257,11 @@ export default async function HomePage() {
 
             {/* Right: Free PC Games */}
             <div className="space-y-6">
-              <div className="flex items-end justify-between">
-                <div>
-                  <DisplayHeading as="h2" size="md" className="mt-2">
-                    <EditableText
-                      siteKey="home.section.free_games"
-                      field="title"
-                      value={String(sectionFreeGames.title ?? "PC თამაშები უფასოდ")}
-                      as="span"
-                      label="სექციის ტიტული — უფასო თამაშები"
-                    />
-                  </DisplayHeading>
-                </div>
-                <Link
-                  href="/auth/login?next=%2Ffree-pc-games"
-                  className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--gr-violet-hi)] transition-colors hover:text-[var(--gr-violet)]"
-                >
+              <div className="flex items-end justify-between px-2">
+                <DisplayHeading as="h2" size="md" className="text-white drop-shadow-[0_0_12px_rgba(236,72,153,0.5)]">
+                  <EditableText siteKey="home.section.free_games" field="title" value={String(sectionFreeGames.title ?? "PC თამაშები უფასოდ")} as="span" label="სექციის ტიტული" />
+                </DisplayHeading>
+                <Link href="/auth/login?next=%2Ffree-pc-games" className="text-[11px] font-black uppercase tracking-[0.15em] text-pink-400 transition-colors hover:text-white hover:drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]">
                   ყველა
                 </Link>
               </div>
@@ -288,25 +269,19 @@ export default async function HomePage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 {crackedGames.slice(0, 4).map((game) => (
                   <Link key={game.id} href={`/free-pc-games/${game.id}`} className="group block">
-                    <div className="relative isolate transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)]" style={{ background: 'var(--card-border-hover, ' + cardBorder + ')', padding: 1, clipPath: cutClipSm }}>
-                      <div className="relative h-24 overflow-hidden bg-[var(--gr-bg-1)]" style={{ clipPath: cutClipSm }}>
+                    <PremiumCard className="!p-0 !border-white/5">
+                      <div className="relative h-28 overflow-hidden">
                         {game.coverUrl && (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={game.coverUrl} alt={game.title} className="absolute inset-0 h-full w-full object-cover opacity-40 transition-opacity group-hover:opacity-60" />
+                          <img src={game.coverUrl} alt={game.title} className="absolute inset-0 h-full w-full object-cover opacity-60 mix-blend-luminosity transition-all duration-700 group-hover:opacity-100 group-hover:scale-105 group-hover:mix-blend-normal" />
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-1)] via-transparent to-transparent" />
-                        <div className="relative flex h-full items-end justify-between p-3 px-4 z-10">
-                          <h4 className="font-display text-[13px] font-bold uppercase tracking-tight text-[var(--gr-text)] drop-shadow-md">{game.title}</h4>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] font-bold text-[var(--gr-amber)] drop-shadow-md">{game.rating}</span>
-                          </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-[rgba(15,12,30,0.95)] via-[rgba(15,12,30,0.4)] to-transparent" />
+                        <div className="relative flex h-full items-end justify-between p-4 z-10">
+                          <h4 className="font-display text-[14px] font-bold uppercase tracking-wide text-white drop-shadow-[0_0_10px_rgba(0,0,0,0.8)] transition-all duration-300 group-hover:drop-shadow-[0_0_12px_rgba(236,72,153,0.8)]">{game.title}</h4>
+                          <span className="text-[10px] font-black text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20 drop-shadow-[0_0_6px_rgba(251,191,36,0.5)]">{game.rating}</span>
                         </div>
-                        {/* Hover Effects (Button Style) */}
-                        <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
-                        <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
-                            <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
                       </div>
-                    </div>
+                    </PremiumCard>
                   </Link>
                 ))}
               </div>
@@ -314,21 +289,22 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* â”€â”€ POSTS FEED â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-        {/* ── POSTS FEED ────────────────────────────── */}
+        {/* ── CINEMATIC POSTS FEED ────────────────────────────── */}
         {user && (
-          <section className="grid gap-6 lg:grid-cols-12">
-            <div className="lg:col-span-8 space-y-4">
+          <section className="grid gap-8 lg:grid-cols-12 relative z-10">
+            <div className="lg:col-span-8 space-y-6">
+              {composerUser && (
+                <PremiumCard className="!bg-[linear-gradient(180deg,rgba(15,12,30,0.8),rgba(5,5,15,0.95))]">
+                  <PostComposer currentUser={composerUser} revalidatePath="/" />
+                </PremiumCard>
+              )}
               {feedItems.length === 0 ? (
-                <div
-                  className="relative bg-[var(--gr-bg-1)] py-12 text-center text-[14px] text-[var(--gr-text-mute)] ring-1 ring-[var(--gr-border)]"
-                  style={{ clipPath: cutClipMd }}
-                >
-                  <Flame className="mx-auto mb-2 h-5 w-5 text-[var(--gr-amber)]" />
-                  ჯერ არცერთი პოსტი არ არის. გახდი პირველი ვინც დაწერს!
-                </div>
+                <PremiumCard className="py-16 text-center flex flex-col items-center">
+                  <Flame className="mb-3 h-8 w-8 text-pink-500 drop-shadow-[0_0_15px_rgba(236,72,153,0.8)]" />
+                  <p className="text-[15px] text-white/60 font-medium">ჯერ არცერთი პოსტი არ არის. გახდი პირველი ვინც დაწერს!</p>
+                </PremiumCard>
               ) : (
-                <div className="grid gap-4 grid-cols-1">
+                <div className="grid gap-6 grid-cols-1">
                   {feedItems.map((item) => {
                     if (item.kind === "article") {
                       return (
@@ -350,93 +326,99 @@ export default async function HomePage() {
                     })();
                     return (
                       <div key={p.id} className="group block relative">
-                        <GamerCard color={COL_MAGENTA} hover>
-                          <div className="relative overflow-hidden">
-                            <Link href={`/profile/${author?.username ?? "user"}/${p.id}`} className="absolute inset-0 z-[1]" aria-label="პოსტის გახსნა" />
-                            <div className="relative z-[2] flex flex-col">
-                              {/* Author & Content */}
-                              <div className="p-4 pb-0 flex items-start gap-4">
+                        <PremiumCard className="!bg-[radial-gradient(ellipse_at_top_right,rgba(139,92,246,0.08),transparent_60%),linear-gradient(180deg,rgba(15,12,30,0.65),rgba(5,5,15,0.75))]">
+                          <Link href={`/profile/${author?.username ?? "user"}/${p.id}`} className="absolute inset-0 z-[1]" aria-label="პოსტის გახსნა" />
+                          <div className="relative z-[2] flex flex-col">
+                            
+                            {/* Author Header */}
+                            <div className="relative p-5 pb-2">
+                              <div className="relative z-[3] flex items-start gap-4">
                                 {author?.username ? (
                                   <Link href={`/profile/${author.username}`} className="relative z-[3]">
-                                    <Avatar className="h-14 w-14 shrink-0 border-2 border-[var(--gr-border-hi)] hover:opacity-85 transition-opacity" style={{ boxShadow: "0 0 10px rgba(236,72,153,0.4)" }}>
+                                    <Avatar className="h-12 w-12 shrink-0 border border-violet-500/30 shadow-[0_0_15px_rgba(139,92,246,0.2)] hover:border-pink-500/60 hover:shadow-[0_0_20px_rgba(236,72,153,0.4)] transition-all duration-300">
                                       <AvatarImage src={author?.avatar_url ?? undefined} alt={name} />
-                                      <AvatarFallback className="bg-[var(--gr-violet)]/15 text-base text-[var(--gr-violet-hi)]">
+                                      <AvatarFallback className="bg-violet-500/10 text-base font-black text-violet-400">
                                         {initial}
                                       </AvatarFallback>
                                     </Avatar>
                                   </Link>
                                 ) : (
-                                  <Avatar className="h-14 w-14 shrink-0 border-2 border-[var(--gr-border-hi)]" style={{ boxShadow: "0 0 10px rgba(236,72,153,0.4)" }}>
+                                  <Avatar className="h-12 w-12 shrink-0 border border-violet-500/30 shadow-[0_0_15px_rgba(139,92,246,0.2)]">
                                     <AvatarImage src={author?.avatar_url ?? undefined} alt={name} />
-                                    <AvatarFallback className="bg-[var(--gr-violet)]/15 text-base text-[var(--gr-violet-hi)]">
+                                    <AvatarFallback className="bg-violet-500/10 text-base font-black text-violet-400">
                                       {initial}
                                     </AvatarFallback>
                                   </Avatar>
                                 )}
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-2">
+                                <div className="min-w-0 flex-1 pt-1">
+                                  <div className="flex flex-col">
                                     {author?.username ? (
                                       <Link
                                         href={`/profile/${author.username}`}
-                                        className="relative z-[3] text-[18px] font-bold transition-colors"
-                                        style={{ color: "#ffffff", textShadow: "0 0 8px rgba(236,72,153,0.9), 0 0 18px rgba(236,72,153,0.5)" }}
+                                        className="relative z-[3] text-[16px] font-black text-white hover:text-pink-400 transition-colors drop-shadow-[0_0_8px_rgba(255,255,255,0.2)] hover:drop-shadow-[0_0_12px_rgba(236,72,153,0.6)]"
                                       >
                                         {name}
                                       </Link>
                                     ) : (
-                                      <span
-                                        className="text-[18px] font-bold"
-                                        style={{ color: "#ffffff", textShadow: "0 0 8px rgba(236,72,153,0.9), 0 0 18px rgba(236,72,153,0.5)" }}
-                                      >
+                                      <span className="text-[16px] font-black text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">
                                         {name}
                                       </span>
                                     )}
                                     {created && (
-                                      <span
-                                        className="text-[12px]"
-                                        style={{ color: "rgba(255,255,255,0.7)", textShadow: "0 0 6px rgba(236,72,153,0.7)" }}
-                                      >
-                                        · {created}
+                                      <span className="text-[11px] font-bold uppercase tracking-wider text-white/40 mt-0.5">
+                                        {created}
                                       </span>
                                     )}
                                   </div>
-                                  <p
-                                    className="mt-1 line-clamp-3 whitespace-pre-line text-[14.5px] pointer-events-none select-none"
-                                    style={{ color: "#ffffff", textShadow: "0 0 6px rgba(236,72,153,0.8), 0 0 16px rgba(236,72,153,0.45), 0 0 28px rgba(236,72,153,0.25)" }}
-                                  >
-                                    {p.content}
-                                  </p>
                                 </div>
                               </div>
+                            </div>
 
-                              {/* Full-bleed Photo */}
-                              {p.media_urls && p.media_urls.length > 0 && (
-                                <div className="mt-3 w-full border-y border-[var(--gr-border)] bg-[var(--gr-bg-2)] overflow-hidden pointer-events-none">
+                            {/* Content */}
+                            <div className="px-5 py-2">
+                               <p className="whitespace-pre-line text-[15px] pointer-events-none select-none text-white/90 leading-relaxed font-medium">
+                                 {p.content}
+                               </p>
+                            </div>
+
+                            {/* Full-bleed Photo */}
+                            {p.media_urls && p.media_urls.length > 0 && (
+                              <div className="relative z-0 mt-3 pointer-events-none px-1">
+                                <div className="relative z-0 overflow-hidden border border-white/5 rounded-xl">
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img
                                     src={p.media_urls[0]}
                                     alt=""
-                                    className="w-full h-auto block opacity-100"
+                                    className="relative z-0 block h-auto w-full opacity-90 transition-opacity duration-500 group-hover:opacity-100"
                                   />
                                 </div>
-                              )}
-
-                              {/* Reactions */}
-                              <div className="px-4 py-1 relative z-[3] mt-2">
-                                <PostReactions postId={p.id} hideHeading />
                               </div>
+                            )}
 
-                              <Separator className="border-border/40 mx-4 my-1" />
+                            {/* Reactions */}
+                            <div className="px-5 py-2 relative z-[3] mt-2">
+                              <PostReactions postId={p.id} hideHeading />
+                            </div>
 
-                              {/* Comments */}
-                              <div className="p-4 pt-2 flex items-center gap-2 relative z-[3]">
-                                <Link href={`/profile/${author?.username ?? "user"}/${p.id}#comments`} className="relative z-[3]">
-                                  <Pill tone="neutral" icon={<MessageCircle className="h-3 w-3" />}>კომენტარები</Pill>
-                                </Link>
-                              </div>
+                            <Separator className="border-white/5 mx-5 my-2" />
+
+                            {/* Comments Actions */}
+                            <div className="px-5 pb-4 pt-1 flex items-center gap-2 relative z-[3]">
+                              <Link href={`/profile/${author?.username ?? "user"}/${p.id}#comments`} className="relative z-[3]">
+                                <Pill tone="neutral" icon={<MessageCircle className="h-3.5 w-3.5" />}>კომენტარები</Pill>
+                              </Link>
+                              {user && author?.username ? (
+                                <PostOwnerActions
+                                  postId={p.id}
+                                  canEdit={p.author_id === user.id}
+                                  canDelete={p.author_id === user.id || isAdmin}
+                                  editHref={p.author_id === user.id ? `/profile/${author.username}/${p.id}/edit` : undefined}
+                                  className="relative z-[3] ml-auto"
+                                />
+                              ) : null}
                             </div>
                           </div>
-                        </GamerCard>
+                        </PremiumCard>
                       </div>
                     );
                   })}
@@ -446,63 +428,27 @@ export default async function HomePage() {
             
             {/* Sidebar Column */}
             <div className="lg:col-span-4 space-y-6">
-              <HomeNotificationsWidget />
-              <GamerCard color={COL_MAGENTA} clipSize={14}>
-                <div className="p-5">
-                  <h3
-                    className="font-display text-[12px] font-bold uppercase tracking-[0.18em] mb-4"
-                    style={{ color: "#ffffff", textShadow: "0 0 8px rgba(236,72,153,0.9), 0 0 20px rgba(236,72,153,0.55), 0 0 34px rgba(236,72,153,0.3)" }}
-                  >
+              <PremiumCard className="!bg-[radial-gradient(ellipse_at_top_right,rgba(34,211,238,0.1),transparent_60%),linear-gradient(180deg,rgba(15,12,30,0.65),rgba(5,5,15,0.75))]">
+                <div className="p-6">
+                  <h3 className="font-display text-[12px] font-black uppercase tracking-[0.2em] mb-5 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
+                    უწყებები
+                  </h3>
+                  <HomeNotificationsWidget />
+                </div>
+              </PremiumCard>
+
+              <PremiumCard className="!bg-[radial-gradient(ellipse_at_top_right,rgba(236,72,153,0.1),transparent_60%),linear-gradient(180deg,rgba(15,12,30,0.65),rgba(5,5,15,0.75))]">
+                <div className="p-6">
+                  <h3 className="font-display text-[12px] font-black uppercase tracking-[0.2em] mb-5 text-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]">
                     მოთამაშეების ძებნა
                   </h3>
                   <HomeSearchWidget />
                 </div>
-              </GamerCard>
-
+              </PremiumCard>
             </div>
           </section>
         )}
 
-        {/* ── BOTTOM CTA ROW ──────────────────────────────── */}
-        <section className="grid gap-4 xl:grid-cols-3">
-          {[
-            { siteKey: "home.bottom.games", data: bottomGames, icon: Gamepad2, color: COL_MAGENTA },
-            { siteKey: "home.bottom.lfg", data: bottomLfg, icon: Users, color: COL_MAGENTA },
-            { siteKey: "home.bottom.tournaments", data: bottomTournaments, icon: Trophy, color: COL_MAGENTA },
-          ].map((item) => {
-            const Icon = item.icon;
-            const href = String(item.data.href ?? "/");
-            const eyebrow = String(item.data.eyebrow ?? "");
-            const title = String(item.data.title ?? "");
-            const description = String(item.data.description ?? "");
-            return (
-              <Link key={item.siteKey} href={href} className="group block">
-                <GamerCard color={item.color} clipSize={22} hover>
-                  <div className="p-5">
-                    <Icon
-                      className="relative z-10 h-6 w-6"
-                      style={{ color: "#ffffff", filter: "drop-shadow(0 0 6px rgba(236,72,153,1)) drop-shadow(0 0 14px rgba(236,72,153,0.7))" }}
-                    />
-                    <div className="relative z-10 mt-3">
-                      <h3
-                        className="mt-1.5 font-display text-[18px] font-bold uppercase"
-                        style={{ color: "#ffffff", textShadow: "0 0 8px rgba(236,72,153,0.9), 0 0 20px rgba(236,72,153,0.55), 0 0 36px rgba(236,72,153,0.3)" }}
-                      >
-                        <EditableText siteKey={item.siteKey} field="title" value={title} as="span" label="ტიტული" />
-                      </h3>
-                      <p
-                        className="mt-1.5 text-[12.5px]"
-                        style={{ color: "#ffffff", textShadow: "0 0 6px rgba(236,72,153,0.8), 0 0 16px rgba(236,72,153,0.45), 0 0 28px rgba(236,72,153,0.25)" }}
-                      >
-                        <EditableText siteKey={item.siteKey} field="description" value={description} multiline as="span" label="აღწერა" />
-                      </p>
-                    </div>
-                  </div>
-                </GamerCard>
-              </Link>
-            );
-          })}
-        </section>
       </div>
     </div>
   );

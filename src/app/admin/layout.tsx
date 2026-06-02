@@ -16,6 +16,8 @@ import {
   BarChart3,
   Mail,
   MessageSquareWarning,
+  Package,
+  VolumeX,
 } from "lucide-react";
 import { getCurrentRole } from "@/lib/admin";
 
@@ -24,6 +26,7 @@ const allLinks = [
   { href: "/admin/analytics", label: "ანალიტიკა", icon: BarChart3, roles: ["admin"] },
   { href: "/admin/users", label: "მომხმარებლები", icon: UsersIcon, roles: ["admin"] },
   { href: "/admin/reports", label: "Reports", icon: Flag, roles: ["admin", "moderator"] },
+  { href: "/admin/mutes", label: "Muted Users", icon: VolumeX, roles: ["admin", "moderator"] },
   { href: "/admin/moderation-queue", label: "Moderation Queue", icon: MessageSquareWarning, roles: ["admin", "moderator"] },
   { href: "/admin/announcements", label: "Announcements", icon: Megaphone, roles: ["admin"] },
   { href: "/admin/pins", label: "Pins & Featured", icon: Pin, roles: ["admin"] },
@@ -32,6 +35,7 @@ const allLinks = [
   { href: "/admin/content", label: "Site Content", icon: FileText, roles: ["admin"] },
   { href: "/admin/news", label: "სიახლეები", icon: Newspaper, roles: ["admin"] },
   { href: "/admin/games", label: "თამაშები", icon: Gamepad2, roles: ["admin"] },
+  { href: "/admin/shop", label: "Shop Products", icon: Package, roles: ["admin", "moderator"] },
   { href: "/admin/tournaments", label: "ჩემპიონატები", icon: Trophy, roles: ["admin", "organizer"] },
   { href: "/admin/moderation", label: "Blocked Words", icon: ShieldAlert, roles: ["admin", "moderator"] },
 ];

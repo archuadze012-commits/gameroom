@@ -4,11 +4,29 @@
       "PowerShell(npm run *)",
       "mcp__supabase__execute_sql",
       "mcp__supabase__get_project_url",
-      "mcp__plugin_context-mode_context-mode__ctx_batch_execute"
+      "mcp__plugin_context-mode_context-mode__ctx_batch_execute",
+      "mcp__plugin_context-mode_context-mode__ctx_search",
+      "mcp__claude_ai_Vercel__list_deployments",
+      "mcp__claude_ai_Vercel__get_deployment",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__get_advisors",
+      "mcp__claude_ai_Supabase__list_tables",
+      "mcp__claude_ai_Supabase__execute_sql",
+      "mcp__claude_ai_Supabase__apply_migration",
+      "mcp__claude_ai_Supabase__get_publishable_keys",
+      "mcp__claude_ai_Vercel__get_project",
+      "mcp__claude_ai_Vercel__get_deployment_build_logs",
+      "mcp__supabase__apply_migration",
+      "mcp__supabase__list_branches",
+      "mcp__8875d494-eda9-4b27-979b-1fa06b2e68ac__list_teams",
+      "mcp__8875d494-eda9-4b27-979b-1fa06b2e68ac__list_projects",
+      "mcp__8875d494-eda9-4b27-979b-1fa06b2e68ac__get_project"
     ]
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
-    "supabase"
+    "supabase",
+    "github",
+    "browserbase"
   ]
 }

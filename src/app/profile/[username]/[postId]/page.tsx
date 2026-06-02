@@ -13,6 +13,7 @@ import { PostReactions } from "@/app/feed/[id]/post-reactions";
 import { PostComments } from "@/app/feed/[id]/post-comments";
 import { formatDistanceToNow } from "date-fns";
 import { ka } from "date-fns/locale";
+import { getIsAdmin } from "@/lib/auth";
 
 export async function generateMetadata({ params }: { params: Promise<{ username: string; postId: string }> }) {
   const { postId } = await params;
@@ -34,7 +35,10 @@ export default async function PostDetailPage({
 }) {
   const { username, postId } = await params;
 
-  const user = await getSession().catch(() => null);
+  const [user, isAdmin] = await Promise.all([
+    getSession().catch(() => null),
+    getIsAdmin().catch(() => false),
+  ]);
   if (!user) redirect("/auth/login");
 
   const supabase = await createSupabaseServerClient();
@@ -48,7 +52,7 @@ export default async function PostDetailPage({
   ] = await Promise.all([
     supabase
       .from("posts")
-      .select("id, content, media_urls, likes_count, created_at, profiles!posts_author_id_profiles_id_fk(username, display_name, avatar_url, is_verified, role)")
+      .select("id, author_id, content, media_urls, likes_count, created_at, profiles!posts_author_id_profiles_id_fk(username, display_name, avatar_url, is_verified, role)")
       .eq("id", postId)
       .is("deleted_at", null)
       .single(),
@@ -109,6 +113,7 @@ export default async function PostDetailPage({
     displayName: profile?.display_name ?? "",
     avatarUrl: profile?.avatar_url ?? "",
   };
+  const cardClip = "polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%)";
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
@@ -116,20 +121,24 @@ export default async function PostDetailPage({
       <div className="container relative mx-auto max-w-2xl px-4 py-10 lg:py-14 space-y-4">
         <Link
           href="/feed"
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit"
+          className="flex w-fit items-center gap-2 text-sm text-[var(--gr-text-dim)] transition-colors hover:text-[var(--gr-cyan-glow)]"
         >
           <ArrowLeft className="h-4 w-4" />
           ლენტაზე დაბრუნება
         </Link>
 
         {/* post card */}
-        <Card className="border-border/60">
+        <Card
+          className="group/post relative overflow-hidden border-0 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--gr-bg-1)_96%,black),color-mix(in_srgb,var(--gr-bg-2)_88%,black))] py-0 ring-1 ring-[var(--gr-border)]"
+          style={{ clipPath: cardClip }}
+        >
+          <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--gr-cyan-glow),var(--gr-magenta),transparent)] opacity-75" />
           <CardContent className="space-y-4 p-5">
             <div className="flex items-center gap-3">
               <Link href={`/profile/${author.username}`}>
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={author.avatar_url ?? ""} alt={author.display_name} />
-                  <AvatarFallback className="bg-primary/15 text-primary text-sm">
+                  <AvatarFallback className="bg-[linear-gradient(135deg,var(--gr-magenta),var(--gr-cyan-glow))] text-sm text-white">
                     {author.display_name.slice(0, 1).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -137,16 +146,16 @@ export default async function PostDetailPage({
               <div>
                 <Link
                   href={`/profile/${author.username}`}
-                  className="flex items-center gap-1 text-sm font-semibold hover:text-primary transition-colors"
+                  className="flex items-center gap-1 text-sm font-semibold text-[var(--gr-text)] transition-colors hover:text-[var(--gr-cyan-glow)]"
                 >
                   {author.display_name || author.username}
                   {author.is_verified && <VerifiedBadge className="h-3.5 w-3.5" />}
                 </Link>
-                <p className="text-xs text-muted-foreground">{timeAgoStr}</p>
+                <p className="text-xs uppercase tracking-[0.12em] text-[var(--gr-text-dim)]">{timeAgoStr}</p>
               </div>
             </div>
 
-            <Separator className="border-border/40" />
+            <Separator className="bg-[var(--gr-border)]" />
 
             <PostContent
               content={post.content}
@@ -155,7 +164,7 @@ export default async function PostDetailPage({
               authorVerified={author.is_verified}
             />
 
-            <Separator className="border-border/40" />
+            <Separator className="bg-[var(--gr-border)]" />
 
             {/* reactions */}
             <PostReactions
@@ -164,19 +173,27 @@ export default async function PostDetailPage({
               initialMine={myReactions}
             />
 
-            <Separator className="border-border/40" />
+            <Separator className="bg-[var(--gr-border)]" />
 
             {/* like + report */}
             <PostDetailActions
               postId={post.id}
               initialLikes={post.likes_count}
               initialLiked={!!likeRow}
+              canEdit={post.author_id === user.id}
+              canDelete={post.author_id === user.id || isAdmin}
+              editHref={post.author_id === user.id ? `/profile/${author.username}/${post.id}/edit` : undefined}
+              deleteRedirectTo={`/profile/${author.username}`}
             />
           </CardContent>
         </Card>
 
         {/* comments card */}
-        <Card className="border-border/60">
+        <Card
+          className="relative overflow-hidden border-0 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--gr-bg-1)_96%,black),color-mix(in_srgb,var(--gr-magenta)_7%,var(--gr-bg-0)))] py-0 ring-1 ring-[color-mix(in_srgb,var(--gr-magenta)_30%,var(--gr-border))]"
+          style={{ clipPath: cardClip }}
+        >
+          <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--gr-magenta),var(--gr-cyan-glow),transparent)] opacity-75" />
           <CardContent className="p-5">
             <PostComments
               postId={post.id}

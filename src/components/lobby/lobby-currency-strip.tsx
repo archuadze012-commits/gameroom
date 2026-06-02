@@ -3,7 +3,7 @@
 import type React from "react";
 import { Plus } from "lucide-react";
 
-function NubcoinIcon({ className }: { className?: string }) {
+function BotcoinIcon({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 16 16"
@@ -12,21 +12,17 @@ function NubcoinIcon({ className }: { className?: string }) {
       className={className}
       aria-hidden="true"
     >
-      <circle cx="8" cy="8" r="7.5" stroke="currentColor" strokeWidth="1" opacity="0.5" />
-      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="0.75" opacity="0.8" />
-      <text
-        x="8"
-        y="8"
-        textAnchor="middle"
-        dominantBaseline="central"
-        fontSize="5.5"
-        fontWeight="800"
-        fontFamily="sans-serif"
-        fill="currentColor"
-        letterSpacing="0.02"
-      >
-        NC
-      </text>
+      <circle cx="8" cy="8" r="7" fill="currentColor" opacity="0.15" />
+      <circle cx="8" cy="8" r="7.5" stroke="currentColor" strokeWidth="1" opacity="0.6" />
+      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="0.5" opacity="0.3" />
+      <g transform="translate(0, 0.5)">
+        <rect x="4.5" y="5.5" width="7" height="5" rx="1.5" stroke="currentColor" strokeWidth="0.9" fill="currentColor" fillOpacity="0.1" />
+        <line x1="8" y1="5.5" x2="8" y2="4" stroke="currentColor" strokeWidth="0.9" />
+        <circle cx="8" cy="3.5" r="0.7" fill="currentColor" />
+        <rect x="6" y="7" width="1.2" height="1.2" rx="0.3" fill="currentColor" />
+        <rect x="8.8" y="7" width="1.2" height="1.2" rx="0.3" fill="currentColor" />
+        <line x1="6.5" y1="9.2" x2="9.5" y2="9.2" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round" />
+      </g>
     </svg>
   );
 }
@@ -57,8 +53,6 @@ function ProCoinIcon({ className }: { className?: string }) {
   );
 }
 
-import type { LobbyHudData } from "@/types/lobby";
-
 type Currencies = { pro: number; nc: number };
 type CurrencyType = keyof Currencies;
 
@@ -74,8 +68,8 @@ const currencyMeta: Array<{
   iconSize?: string;
   showLabel?: boolean;
 }> = [
-  { key: "pro", label: "Pro", icon: ProCoinIcon, className: "text-[#F5A524]", iconSize: "h-4 w-4 max-[640px]:h-3.5 max-[640px]:w-3.5", showLabel: true },
-  { key: "nc", label: "Noob Coin", icon: NubcoinIcon, className: "text-[#C8D4DC]", iconSize: "h-4 w-4 max-[640px]:h-3.5 max-[640px]:w-3.5", showLabel: true },
+  { key: "pro", label: "Pro", icon: ProCoinIcon, className: "text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]", iconSize: "h-4 w-4", showLabel: true },
+  { key: "nc", label: "Botcoin", icon: BotcoinIcon, className: "text-cyan-200 drop-shadow-[0_0_8px_rgba(165,243,252,0.5)]", iconSize: "h-4 w-4", showLabel: true },
 ];
 
 function formatCompact(value: number) {
@@ -94,20 +88,20 @@ function formatCompact(value: number) {
 
 export function LobbyCurrencyStrip({ currencies }: LobbyCurrencyStripProps) {
   return (
-    <section className="pointer-events-auto flex flex-wrap justify-end gap-2 max-[640px]:justify-start">
+    <section className="pointer-events-auto flex flex-nowrap justify-end gap-2 whitespace-nowrap">
       {currencyMeta.map(({ key, label, icon: Icon, className, iconSize, showLabel }) => (
         <div
           key={key}
-          className="flex h-7 items-center gap-1.5 bg-[color-mix(in_srgb,var(--gr-bg-0)_72%,transparent)] px-2 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-[var(--gr-card-shadow)] ring-1 ring-[var(--gr-border)] backdrop-blur-md [clip-path:polygon(0_0,calc(100%_-_8px)_0,100%_8px,100%_100%,0_100%)] max-[640px]:h-6 max-[640px]:gap-1 max-[640px]:px-1.5 max-[640px]:text-[9px]"
+          className="flex h-7 items-center gap-1.5 rounded-full border border-white/10 bg-black/40 px-2.5 text-[10px] font-black uppercase tracking-[0.06em] text-white shadow-[0_5px_15px_rgba(0,0,0,0.5)] backdrop-blur-md transition-all hover:bg-black/60 hover:border-white/20"
           aria-label={`${label}: ${currencies[key]}`}
         >
-          <Icon className={`${iconSize ?? "h-4 w-4 max-[640px]:h-3.5 max-[640px]:w-3.5"} ${className}`} />
-          {showLabel && <span className={`text-[10px] font-black uppercase tracking-[0.12em] ${className}`}>{label}</span>}
-          <span className="tabular-nums">{formatCompact(currencies[key])}</span>
+          <Icon className={`${iconSize ?? "h-4 w-4"} ${className}`} />
+          {showLabel && <span className={`text-[10px] font-black uppercase tracking-[0.1em] ${className}`}>{label}</span>}
+          <span className="font-bold tabular-nums ml-0.5">{formatCompact(currencies[key])}</span>
           <button
             type="button"
             onClick={() => console.info("topup", key)}
-            className="grid h-4 w-4 place-items-center rounded-full bg-[color-mix(in_srgb,var(--gr-text)_10%,transparent)] text-[var(--gr-text-mute)] transition hover:bg-[color-mix(in_srgb,var(--gr-text)_18%,transparent)] hover:text-white max-[640px]:h-3.5 max-[640px]:w-3.5"
+            className="ml-0.5 grid h-4 w-4 place-items-center rounded-full bg-white/10 text-white/70 transition-all hover:bg-white/20 hover:text-white"
             aria-label={`Top up ${label}`}
           >
             <Plus className="h-3 w-3" />

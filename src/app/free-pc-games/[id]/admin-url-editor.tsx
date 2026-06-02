@@ -1,27 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Pencil, Check, X, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const STORAGE_KEY = "gameroom_cracked_urls";
 
+function readStoredUrl(gameId: string) {
+  if (typeof window === "undefined") return "";
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return "";
+    const overrides = JSON.parse(stored) as Record<string, string>;
+    return overrides[gameId] ?? "";
+  } catch {
+    return "";
+  }
+}
+
 export function AdminUrlEditor({ gameId }: { gameId: string }) {
-  const [currentUrl, setCurrentUrl] = useState("");
+  const [currentUrl, setCurrentUrl] = useState(() => readStoredUrl(gameId));
   const [editing, setEditing] = useState(false);
   const [input, setInput] = useState("");
   const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const overrides = JSON.parse(stored) as Record<string, string>;
-        if (overrides[gameId]) setCurrentUrl(overrides[gameId]);
-      }
-    } catch {}
-  }, [gameId]);
 
   function save() {
     const trimmed = input.trim();

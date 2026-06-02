@@ -2,26 +2,34 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { getRequestOriginFromHeaders } from "@/lib/url";
+import { getCanonicalOrigin, getRequestOriginFromHeaders, getSiteOrigin } from "@/lib/url";
 import { signupRateLimit } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin: requestOrigin } = new URL(request.url);
-  const origin = getRequestOriginFromHeaders(request.headers, requestOrigin);
+  const cookieStore = await cookies();
+  const savedOrigin = cookieStore.get("gr_oauth_origin")?.value;
+  const origin =
+    getSiteOrigin() ??
+    (savedOrigin ? getCanonicalOrigin(savedOrigin) : getRequestOriginFromHeaders(request.headers, requestOrigin));
   const code = searchParams.get("code");
   const authError = searchParams.get("error_description") ?? searchParams.get("error");
   const next = searchParams.get("next") ?? "/";
   const redirectTo = next.startsWith("/") ? `${origin}${next}` : origin;
 
+  const redirectWithCleanup = (url: string) => {
+    const response = NextResponse.redirect(url);
+    response.cookies.delete("gr_oauth_origin");
+    return response;
+  };
+
   if (!code && authError) {
-    return NextResponse.redirect(
+    return redirectWithCleanup(
       `${origin}/auth/login?error=${encodeURIComponent(authError)}`
     );
   }
 
   if (code) {
-    const cookieStore = await cookies();
-
     const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/^﻿/, "").trim();
     const supabaseKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "").replace(/^﻿/, "").trim();
 
@@ -69,7 +77,7 @@ export async function GET(request: NextRequest) {
             console.warn(
               `[auth/callback] signup rate-limited for IP ${clientIp}`
             );
-            return NextResponse.redirect(
+            return redirectWithCleanup(
               `${origin}/auth/login?error=${encodeURIComponent(
                 "დღეში მაქსიმუმ 2 ახალი ანგარიშის რეგისტრაცია შესაძლებელია ერთი IP მისამართიდან. სცადე ხვალ."
               )}`
@@ -99,14 +107,14 @@ export async function GET(request: NextRequest) {
         console.error("[auth/callback] profile upsert:", e);
       }
 
-      return NextResponse.redirect(hasProfile ? redirectTo : `${origin}/settings`);
+      return redirectWithCleanup(hasProfile ? redirectTo : `${origin}/settings`);
     }
 
     console.error("[auth/callback] exchangeCodeForSession error:", error);
-    return NextResponse.redirect(
+    return redirectWithCleanup(
       `${origin}/auth/login?error=${encodeURIComponent(error.message)}`
     );
   }
 
-  return NextResponse.redirect(`${origin}/auth/login?error=no_code`);
+  return redirectWithCleanup(`${origin}/auth/login?error=no_code`);
 }

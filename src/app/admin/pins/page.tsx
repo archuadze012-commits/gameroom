@@ -45,7 +45,20 @@ export default function PinsPage() {
   };
 
   useEffect(() => {
-    load();
+    let cancelled = false;
+    void (async () => {
+      const [pinsRes, featRes] = await Promise.all([
+        fetch("/api/admin/pins").then((r) => r.json()),
+        fetch("/api/admin/featured").then((r) => r.json()),
+      ]);
+      if (cancelled) return;
+      setPins(Array.isArray(pinsRes) ? pinsRes : []);
+      setFeatured(Array.isArray(featRes) ? featRes : []);
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const addPin = async () => {

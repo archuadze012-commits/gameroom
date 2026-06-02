@@ -2,14 +2,14 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSession } from "@/lib/auth";
 import { moderateText } from "@/lib/moderate";
 import { awardXp } from "@/lib/gamification";
 
 const createLfgSchema = z.object({
   gameSlug: z.string().min(1, "თამაში აუცილებელია"),
-  title: z.string().max(200, "სათაური ზედმეტად გრძელია").optional(),
+  title: z.string().max(140, "სათაური ზედმეტად გრძელია").optional(),
   description: z.string().max(2000, "აღწერა ზედმეტად გრძელია").optional(),
   rank: z.string().max(64).optional(),
   region: z.string().max(32).optional(),
@@ -35,16 +35,21 @@ export async function createLfgAction(
     return { success: false, message: "ავტორიზაცია აუცილებელია" };
   }
 
+  const optionalString = (name: string) => {
+    const value = formData.get(name);
+    return typeof value === "string" ? value : undefined;
+  };
+
   const rawData = {
     gameSlug: formData.get("gameSlug"),
-    title: formData.get("title"),
-    description: formData.get("description"),
-    rank: formData.get("rank"),
-    region: formData.get("region"),
+    title: optionalString("title"),
+    description: optionalString("description"),
+    rank: optionalString("rank"),
+    region: optionalString("region"),
     slotsTotal: Number(formData.get("slotsTotal") || 4),
     voiceRequired: formData.get("voiceRequired") === "on",
     modes: formData.getAll("modes") as string[],
-    ranked: formData.get("ranked"),
+    ranked: optionalString("ranked"),
     weapons: formData.getAll("weapons") as string[],
   };
 
@@ -89,10 +94,26 @@ export async function createLfgAction(
       ? "classic"
       : body.modes?.[0]?.toLowerCase().replace(/\s+/g, "-") ?? null;
 
+  const supabase = createSupabaseAdminClient();
+
+  // Server action already validates the signed-in user; admin client keeps writes
+  // behind this guarded path instead of depending on browser-side table grants.
+  const gameSlug = body.gameSlug.slice(0, 64);
+  const { data: gameRow } = await supabase
+    .from("games")
+    .select("id")
+    .eq("slug", gameSlug)
+    .eq("active", true)
+    .maybeSingle();
+  if (!gameRow) {
+    return { success: false, message: "თამაში ვერ მოიძებნა" };
+  }
+
   const row = {
     author_id: user.id,
-    game_slug: body.gameSlug.slice(0, 64),
-    title: title.slice(0, 200),
+    game_id: gameRow.id,
+    game_slug: gameSlug,
+    title: title.slice(0, 140),
     description: (body.description ?? "").trim().slice(0, 2000),
     rank: body.rank?.trim().slice(0, 64) || null,
     region: body.region?.trim().slice(0, 32) || null,
@@ -101,7 +122,6 @@ export async function createLfgAction(
     mode: modeSlug,
   };
 
-  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.from("lfg_posts").insert(row);
 
   if (error) {

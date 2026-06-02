@@ -32,7 +32,23 @@ export default function AuditPage() {
   };
 
   useEffect(() => {
-    load();
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/admin/audit?limit=200");
+        const data = await res.json();
+        if (!cancelled) {
+          setRows(Array.isArray(data) ? data : []);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (

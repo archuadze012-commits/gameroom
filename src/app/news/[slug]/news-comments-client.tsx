@@ -25,7 +25,10 @@ export function NewsCommentsClient({
   articleId: string;
   articleSlug: string;
   initialComments: CommentItem[];
-  currentUser: any;
+  currentUser: {
+    email?: string | null;
+    user_metadata?: { username?: string | null } | null;
+  } | null;
 }) {
   const [comments, setComments] = useState<CommentItem[]>(initialComments);
   const [text, setText] = useState("");

@@ -9,6 +9,19 @@ import { getSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
+type ClanListItem = {
+  id: string;
+  name: string;
+  slug: string;
+  tag: string;
+  description: string | null;
+  avatar_url: string | null;
+  xp: number;
+  level: number;
+  status: string;
+  clan_members: { count: number }[];
+};
+
 export default async function ClansPage() {
   const supabase = await createSupabaseServerClient();
   const sessionUser = await getSession().catch(() => null);
@@ -30,14 +43,14 @@ export default async function ClansPage() {
     .order("xp", { ascending: false });
 
   // Check if current user is in a clan
-  let userClan = null;
+  let userClan: { slug: string } | null = null;
   if (sessionUser) {
     const { data: member } = await supabase
       .from("clan_members")
       .select("clans(slug)")
       .eq("user_id", sessionUser.id)
       .maybeSingle();
-    userClan = member?.clans;
+    userClan = (member?.clans as unknown as { slug: string } | null) ?? null;
   }
 
   return (
@@ -49,7 +62,7 @@ export default async function ClansPage() {
         actions={
           userClan ? (
             <Button asChild>
-              <Link href={`/clans/${(userClan as any).slug}`}>ჩემი კლანი</Link>
+              <Link href={`/clans/${userClan.slug}`}>ჩემი კლანი</Link>
             </Button>
           ) : (
             <Button asChild>
@@ -60,13 +73,13 @@ export default async function ClansPage() {
       />
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {(clans || []).map((clan: any) => (
+        {((clans || []) as unknown as ClanListItem[]).map((clan) => (
           <Link key={clan.id} href={`/clans/${clan.slug}`}>
             <Card className="h-full border-border/60 transition-colors hover:border-primary/40 hover:bg-secondary/20">
               <CardContent className="p-5 flex flex-col gap-4">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-12 w-12 border border-primary/20">
-                    <AvatarImage src={clan.avatar_url} />
+                    <AvatarImage src={clan.avatar_url ?? undefined} />
                     <AvatarFallback className="bg-primary/10 text-primary font-bold">
                       {clan.tag}
                     </AvatarFallback>

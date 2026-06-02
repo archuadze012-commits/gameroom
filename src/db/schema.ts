@@ -313,6 +313,34 @@ export const shopItems = pgTable(
   ]
 );
 
+export const shopProducts = pgTable(
+  "shop_products",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: varchar("title", { length: 140 }).notNull(),
+    description: text("description"),
+    price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+    imageUrl: text("image_url"),
+    category: varchar("category", { length: 80 }).default("general").notNull(),
+    isActive: boolean("is_active").default(true).notNull(),
+    status: varchar("status", { length: 24 }).default("in_stock").notNull(),
+    stock: integer("stock"),
+    createdBy: uuid("created_by").references(() => profiles.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    index("shop_products_active_idx").on(t.createdAt).where(sql`${t.isActive} = true`),
+    index("shop_products_category_idx").on(t.category, t.isActive),
+  ]
+);
+
 export const eventBoxes = pgTable("event_boxes", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
@@ -999,6 +1027,46 @@ export const pushSubscriptions = pgTable(
   ]
 );
 
+// ---------- Daily Challenges ----------
+
+export const dailyChallenges = pgTable(
+  "daily_challenges",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    description: text("description"),
+    challengeType: text("challenge_type").notNull().default("manual"),
+    xpReward: integer("xp_reward").notNull().default(50),
+    targetCount: integer("target_count").notNull().default(1),
+    activeDate: text("active_date").notNull(), // YYYY-MM-DD
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (t) => [index("daily_challenges_date_idx").on(t.activeDate, t.isActive)]
+);
+
+export const userChallengeProgress = pgTable(
+  "user_challenge_progress",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    challengeId: uuid("challenge_id")
+      .notNull()
+      .references(() => dailyChallenges.id, { onDelete: "cascade" }),
+    progress: integer("progress").notNull().default(0),
+    completed: boolean("completed").notNull().default(false),
+    claimed: boolean("claimed").notNull().default(false),
+    claimedAt: timestamp("claimed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("user_challenge_uniq").on(t.userId, t.challengeId),
+    index("user_challenge_user_idx").on(t.userId),
+  ]
+);
+
 export const lfgQueue = pgTable(
   "lfg_queue",
   {
@@ -1200,3 +1268,4 @@ export type TournamentMatch = typeof tournamentMatches.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type Wallet = typeof wallets.$inferSelect;
 export type ShopItem = typeof shopItems.$inferSelect;
+export type ShopProduct = typeof shopProducts.$inferSelect;

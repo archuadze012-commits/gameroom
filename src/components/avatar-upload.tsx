@@ -2,7 +2,6 @@
 
 import { useRef, useState, useEffect } from "react";
 import { Camera, Loader2 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ImageCropModal } from "@/components/image-crop-modal";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -15,15 +14,12 @@ interface AvatarUploadProps {
 }
 
 export function AvatarUpload({ username, displayName, avatarUrl, isOwner }: AvatarUploadProps) {
-  const [src, setSrc] = useState(avatarUrl ?? "/default-avatar.svg");
+  const [uploadedSrc, setUploadedSrc] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const initial = displayName.slice(0, 1).toUpperCase();
-
-  useEffect(() => {
-    setSrc(avatarUrl ?? "/default-avatar.svg");
-  }, [avatarUrl]);
+  const src = uploadedSrc ?? avatarUrl ?? "/default-avatar.svg";
 
   useEffect(() => {
     if (!avatarUrl) return;
@@ -83,7 +79,7 @@ export function AvatarUpload({ username, displayName, avatarUrl, isOwner }: Avat
         window.dispatchEvent(new StorageEvent("storage", { key: "gameroom_avatars" }));
       } catch {}
 
-      setSrc(publicUrl);
+      setUploadedSrc(publicUrl);
       toast.success("პროფილის ფოტო განახლდა.");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "ატვირთვა ვერ მოხერხდა.");

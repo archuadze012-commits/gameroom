@@ -10,7 +10,7 @@ type Props = {
 };
 
 const CURRENCIES = [
-  { value: "nc" as const, label: "Noob Coin", color: "text-[#C8D4DC]" },
+  { value: "nc" as const, label: "Botcoin", color: "text-[#C8D4DC]" },
   { value: "pro" as const, label: "Pro Coin", color: "text-[var(--gr-amber)]" },
 ];
 

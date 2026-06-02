@@ -1,14 +1,16 @@
 import { redirect } from "next/navigation";
-import { Rss, Newspaper } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getSession } from "@/lib/auth";
+import { getIsAdmin, getSession } from "@/lib/auth";
 import { mockNews, mockGames } from "@/lib/mock-data";
 import { FeedClient } from "./feed-client";
 
 export const metadata = { title: "პოსტები" };
 
 export default async function FeedPage() {
-  const user = await getSession().catch(() => null);
+  const [user, isAdmin] = await Promise.all([
+    getSession().catch(() => null),
+    getIsAdmin().catch(() => false),
+  ]);
   if (!user) redirect("/auth/login");
 
   const supabase = await createSupabaseServerClient();
@@ -64,8 +66,10 @@ export default async function FeedPage() {
   }));
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
-      <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
+    <div className="relative min-h-[calc(100vh-4rem)] bg-[#05050f]">
+      {/* Cinematic Ambient Background */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.1),transparent_70%)]" />
+      
       <div className="container relative mx-auto max-w-6xl px-4 py-10 lg:py-14">
         <FeedClient
           currentUser={{
@@ -74,6 +78,7 @@ export default async function FeedPage() {
             displayName: profile?.display_name ?? "",
             avatarUrl: profile?.avatar_url ?? "",
             favoriteGameSlugs: favSlugs,
+            isAdmin,
           }}
           initialPosts={posts}
           initialLikedIds={likedPostIds}
@@ -87,6 +92,7 @@ export default async function FeedPage() {
 
 export type FeedPost = {
   id: string;
+  author_id?: string;
   content: string;
   media_urls?: string[] | null;
   likes_count: number;

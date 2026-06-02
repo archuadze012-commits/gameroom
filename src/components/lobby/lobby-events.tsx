@@ -21,7 +21,7 @@ const TIER_DOT: Record<ItemTier, string> = {
   legendary: "bg-amber-400",
 };
 
-const CURRENCY_LABEL: Record<string, string> = { nc: "NC", pro: "Pro" };
+const CURRENCY_LABEL: Record<string, string> = { nc: "Botcoin", pro: "Pro" };
 const CURRENCY_COLOR: Record<string, string> = {
   nc:  "text-[#C8D4DC]",
   pro: "text-[var(--gr-amber)]",
@@ -114,6 +114,7 @@ function BoxCard({ box, hasSession }: { box: EventBox; hasSession: boolean }) {
       {modalOpen && (
         <LobbyBoxOpenModal
           boxName={box.name}
+          boxImageUrl={box.image_url}
           boxItems={box.items}
           costAmount={box.cost_amount}
           costCurrency={box.cost_currency}

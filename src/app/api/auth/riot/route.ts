@@ -117,9 +117,11 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         provider: "riot",
         external_id: puuid,
-        data: profile,
-        verified: false, // soft-link only; requires RSO for true verification
-        refreshed_at: new Date().toISOString(),
+        external_name:
+          typeof (profile as { gameName?: unknown } | null)?.gameName === "string"
+            ? (profile as { gameName: string }).gameName.slice(0, 256)
+            : null,
+        metadata: profile as never,
       },
       { onConflict: "user_id,provider" }
     );

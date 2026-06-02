@@ -23,19 +23,24 @@ export default function ModerationQueuePage() {
   const [items, setItems] = useState<QueueItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const load = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/moderation-queue?status=pending");
-      const data = await res.json();
-      setItems(Array.isArray(data) ? data : []);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    load();
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/admin/moderation-queue?status=pending");
+        const data = await res.json();
+        if (!cancelled) {
+          setItems(Array.isArray(data) ? data : []);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const decide = async (id: string, action: "approve" | "reject") => {

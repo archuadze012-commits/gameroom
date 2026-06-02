@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NewArticleForm } from "./new-article-form";
 
 export const dynamic = "force-dynamic";
@@ -11,8 +11,8 @@ export default async function NewArticlePage() {
   const session = await getSession().catch(() => null);
   if (!session) redirect("/auth/login");
 
-  const admin = createSupabaseAdminClient();
-  const { data: profile } = await admin
+  const supabase = await createSupabaseServerClient();
+  const { data: profile } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", session.id)
@@ -20,7 +20,7 @@ export default async function NewArticlePage() {
 
   if (!ALLOWED.includes(profile?.role ?? "")) redirect("/articles");
 
-  const { data: games } = await admin
+  const { data: games } = await supabase
     .from("games")
     .select("slug, name_ka")
     .order("name_ka");

@@ -31,15 +31,14 @@ export function ProfileLobby({
   height = "h-64 md:h-80",
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
+  const [inView, setInView] = useState(
+    () => typeof window !== "undefined" && typeof IntersectionObserver === "undefined"
+  );
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (typeof IntersectionObserver === "undefined") {
-      setInView(true);
-      return;
-    }
+    if (typeof IntersectionObserver === "undefined") return;
     const obs = new IntersectionObserver(
       ([entry]) => {
         if (entry?.isIntersecting) {
@@ -109,7 +108,7 @@ export function ProfileLobby({
           </div>
           {level != null && (
             <div
-              className="pointer-events-auto shrink-0 bg-[var(--gr-grad-violet)] px-3 py-2 text-center text-white shadow-[0_0_24px_rgba(139,92,246,0.5)]"
+              className="pointer-events-auto shrink-0 bg-[linear-gradient(135deg,var(--gr-magenta)_0%,var(--gr-cyan-glow)_100%)] px-3 py-2 text-center text-white shadow-[0_0_22px_rgba(192,38,211,0.28),0_0_28px_rgba(34,211,238,0.18)]"
               style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 8px 100%, 0 calc(100% - 8px))" }}
             >
               <div className="text-[9px] font-semibold uppercase tracking-[0.18em] opacity-80">level</div>

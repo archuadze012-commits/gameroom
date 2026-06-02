@@ -8,6 +8,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { crackedGames, mockGames, type CrackedGame } from "@/lib/mock-data";
 import { GameCard as RosterGameCard } from "@/components/game-card";
+import { GamerCard } from "@/components/ui/gamer-card";
+
+export function getObjectPosition(url?: string) {
+  if (!url) return "center";
+  try {
+    const parsed = new URL(url, url.startsWith("/") ? "https://example.com" : undefined);
+    const y = parsed.searchParams.get("y");
+    if (y) return `center ${y}%`;
+  } catch {}
+  return "center";
+}
 
 type DbRow = {
   id: string;
@@ -104,7 +115,7 @@ export default function CrackedGamesPage() {
         const { data: { user } } = await supabase.auth.getUser();
 
         const [{ data: gamesData }, { data: profileRows }, myProfile] = await Promise.all([
-          supabase.from("games").select("slug, name_ka, emoji, accent, icon_url, cover_url"),
+          supabase.from("games").select("slug, name_ka, emoji, accent_color, icon_url, cover_url"),
           supabase.from("profiles").select("favorite_game_slugs"),
           user ? supabase.from("profiles").select("favorite_game_slugs").eq("id", user.id).single() : Promise.resolve({ data: null }),
         ]);
@@ -124,7 +135,7 @@ export default function CrackedGamesPage() {
         const merged = [
           ...(gamesData ?? []).map((g) => ({
             slug: g.slug, nameKa: g.name_ka, nameEn: g.name_ka,
-            description: "", accent: g.accent, emoji: g.emoji,
+            description: "", accent: g.accent_color ?? "", emoji: g.emoji ?? "🎮",
             iconUrl: g.icon_url ?? undefined, coverUrl: g.cover_url ?? undefined,
             players: 0, online: 0, liveLfg: 0, favoritedBy: 0,
           })),
@@ -229,62 +240,36 @@ export default function CrackedGamesPage() {
   );
 }
 
-const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
-const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.55))";
-
-function GameCard({ game }: { game: (typeof crackedGames)[0] }) {
+function GameCard({ game }: { game: CrackedGame }) {
   return (
-    <article
-      className="group relative isolate h-32 overflow-hidden transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)]"
-      style={{ background: 'var(--card-border-hover, ' + cardBorder + ')', padding: 1, clipPath: cutSm }}
-    >
-      <div
-        className="relative h-full w-full bg-[var(--gr-bg-1)] transition-transform duration-300"
-        style={{ clipPath: cutSm }}
-      >
-        {/* Top Glow Border */}
-        <span aria-hidden className="absolute left-0 top-0 z-10 h-[1.5px] w-full bg-[var(--gr-grad-violet)]" />
-
+    <GamerCard color="rgba(196,30,58,0.78)" clipSize={14} hover className="h-32 transition-transform duration-300 hover:-translate-y-0.5" surfaceClassName="h-full w-full">
+      <div className="relative h-full w-full overflow-hidden">
         {/* Game Cover Background */}
         {game.coverUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={game.coverUrl}
             alt={game.title}
-            className="absolute inset-0 h-full w-full object-cover opacity-98 transition-transform duration-500 group-hover:opacity-100"
+            className="absolute inset-0 h-full w-full object-cover opacity-60 transition-opacity group-hover:opacity-85 duration-500"
+            style={{ objectPosition: getObjectPosition(game.coverUrl) }}
           />
         ) : (
           <div className={`absolute inset-0 bg-gradient-to-br ${game.accent} opacity-20`} />
         )}
         
-        {/* Ambient Gradients */}
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-cyan-500/5 opacity-40" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[var(--gr-bg-0)]/70 via-[var(--gr-bg-0)]/15 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)]/80 via-[var(--gr-bg-0)]/5 to-transparent" />
-
-        {/* Atmosphere Circle */}
-        <div aria-hidden className="absolute -left-8 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full bg-white/5 blur-xl transition-transform duration-500 group-hover:scale-125" />
-
-        {/* Laser lines left */}
-        <div aria-hidden className="absolute inset-y-0 left-[7.5%] w-[1px] bg-[var(--gr-violet)]/40 shadow-[0_0_12px_rgba(139,92,246,0.5)]" />
-        <div aria-hidden className="absolute inset-y-0 left-[5.5%] w-[2px] bg-[var(--gr-violet)]/55 shadow-[0_0_15px_rgba(139,92,246,0.6)]" />
-
-        {/* Colored accent block on the left edge */}
-        <div aria-hidden className="absolute left-0 top-0 h-full w-[6%] bg-[linear-gradient(180deg,rgba(34,211,238,0.9),rgba(139,92,246,0.25))] [clip-path:polygon(0_0,68%_0,100%_100%,0_100%)] opacity-80" />
-
-        {/* Bottom Details (Title) */}
-        <div className="absolute bottom-2.5 left-[6.5%] right-2.5 z-10">
-          <h4 className="font-display text-[13px] font-extrabold uppercase leading-[1.1] tracking-tight text-[var(--gr-text)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] group-hover:text-[var(--gr-violet-hi)] transition-colors line-clamp-2" title={game.title}>
+        {/* Gradients */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)]/90 via-[var(--gr-bg-0)]/40 to-transparent z-[2]" />
+        
+        {/* Title & Rating */}
+        <div className="absolute bottom-3 left-4 right-4 z-10 flex items-end justify-between gap-2">
+          <h4 className="font-display text-[14px] font-extrabold uppercase leading-[1.2] tracking-tight text-[var(--gr-text)] drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] group-hover:text-[var(--gr-violet-hi)] transition-colors line-clamp-2" title={game.title}>
             {game.title}
           </h4>
+          <span className="text-xs font-bold text-[var(--gr-amber)] flex items-center gap-0.5 shrink-0">
+            ★ <span className="text-[11px]">{game.rating}</span>
+          </span>
         </div>
-
-        {/* Hover Effects (Button Style) */}
-        <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
-        <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
-
       </div>
-    </article>
+    </GamerCard>
   );
 }

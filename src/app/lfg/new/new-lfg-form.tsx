@@ -2,7 +2,7 @@
 
 import { useState, useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Mic, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,27 @@ type GameOption = { slug: string; nameKa: string; emoji: string };
 const GAME_MODES: Record<string, string[]> = {
   "pubg-mobile": ["Classic", "1 vs 1", "ULTIMATE ROYALE"],
 };
+
+const labelClassName =
+  "text-[12px] font-bold uppercase tracking-[0.12em] text-white [text-shadow:0_0_4px_rgba(196,30,58,0.3)]";
+
+const fieldClassName =
+  "border-[rgba(196,30,58,0.34)] bg-[rgba(6,5,14,0.72)] text-white shadow-[inset_0_0_18px_rgba(196,30,58,0.06)] placeholder:text-white/38 focus-visible:border-[rgba(34,211,238,0.58)] focus-visible:ring-[rgba(196,30,58,0.26)] [text-shadow:0_0_4px_rgba(196,30,58,0.32)]";
+
+const chipBaseClassName =
+  "rounded-full border px-3 py-1.5 text-sm font-semibold uppercase tracking-[0.08em] transition-all disabled:opacity-50";
+
+const chipActiveClassName =
+  "border-[rgba(196,30,58,0.72)] bg-[rgba(196,30,58,0.16)] text-white shadow-[0_0_16px_rgba(196,30,58,0.13)] [text-shadow:0_0_4px_rgba(196,30,58,0.34)]";
+
+const chipIdleClassName =
+  "border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.03)] text-white/70 hover:border-[rgba(34,211,238,0.42)] hover:text-white hover:[text-shadow:0_0_4px_rgba(34,211,238,0.32)]";
+
+const actionButtonClassName =
+  "border border-[rgba(196,30,58,0.42)] bg-[rgba(196,30,58,0.1)] text-white shadow-[0_0_18px_rgba(196,30,58,0.12)] hover:border-[rgba(196,30,58,0.62)] hover:bg-[rgba(196,30,58,0.16)] hover:text-white [text-shadow:0_0_4px_rgba(196,30,58,0.32)]";
+
+const submitButtonClassName =
+  "border border-[rgba(196,30,58,0.68)] bg-[rgba(196,30,58,0.22)] text-white shadow-[0_0_22px_rgba(196,30,58,0.18)] hover:bg-[rgba(196,30,58,0.28)] hover:text-white [text-shadow:0_0_5px_rgba(196,30,58,0.46)]";
 
 export function NewLfgForm({ games }: { games: GameOption[] }) {
   const router = useRouter();
@@ -97,8 +118,8 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
       ))}
 
       {/* AI Quick Fill */}
-      <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
-        <p className="flex items-center gap-1.5 text-sm font-medium text-primary">
+      <div className="space-y-3 border border-[rgba(196,30,58,0.24)] bg-[rgba(255,255,255,0.025)] p-4 shadow-[inset_0_0_22px_rgba(196,30,58,0.05)]">
+        <p className="flex items-center gap-1.5 text-sm font-bold uppercase tracking-[0.1em] text-white [text-shadow:0_0_5px_rgba(196,30,58,0.34)]">
           <Sparkles className="h-4 w-4" /> AI-ით შევსება
         </p>
         <div className="flex gap-2">
@@ -106,23 +127,25 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
             placeholder="მაგ: CS2-ში ვარ Gold Nova, ვეძებ ქართველ სერიოზულ თიმს"
             value={aiPrompt}
             onChange={(e) => setAiPrompt(e.target.value)}
-            className="bg-background/60"
+            className={fieldClassName}
           />
           <Button
             type="button"
             variant="outline"
             onClick={handleAiAssist}
             disabled={generating || isPending}
-            className="shrink-0"
+            className={`shrink-0 ${actionButtonClassName}`}
           >
             {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : "შევსება"}
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">AI შეავსებს სათაურს და აღწერას — შემდეგ შეგიძლია დაარედაქტირო.</p>
+        <p className="text-xs text-white/58 [text-shadow:0_0_3px_rgba(196,30,58,0.18)]">
+          AI შეავსებს სათაურს და აღწერას — შემდეგ შეგიძლია დაარედაქტირო.
+        </p>
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="game">თამაში *</Label>
+        <Label htmlFor="game" className={labelClassName}>თამაში *</Label>
         <Select
           name="game_select"
           required
@@ -135,12 +158,12 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
           }}
           disabled={isPending}
         >
-          <SelectTrigger id="game">
+          <SelectTrigger id="game" className={fieldClassName}>
             <SelectValue placeholder="აარჩიე თამაში" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="border-[rgba(196,30,58,0.34)] bg-[rgba(8,6,15,0.98)] text-white">
             {games.map((g) => (
-              <SelectItem key={g.slug} value={g.slug}>
+              <SelectItem key={g.slug} value={g.slug} className="focus:bg-[rgba(196,30,58,0.16)] focus:text-white">
                 {g.emoji} {g.nameKa}
               </SelectItem>
             ))}
@@ -154,7 +177,7 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
       {GAME_MODES[game] && (
         <>
           <div className="space-y-1.5">
-            <Label>რეჟიმი</Label>
+            <Label className={labelClassName}>რეჟიმი</Label>
             <div className="flex flex-wrap gap-2">
               {GAME_MODES[game].map((mode) => {
                 const active = selectedModes.includes(mode);
@@ -169,11 +192,7 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
                       setRanked("");
                       setWeapons([]);
                     }}
-                    className={`rounded-md px-3 py-1.5 text-sm font-medium border transition-all ${
-                      active
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                    }`}
+                    className={`${chipBaseClassName} ${active ? chipActiveClassName : chipIdleClassName}`}
                   >
                     {mode}
                   </button>
@@ -191,11 +210,7 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
                     type="button"
                     disabled={isPending}
                     onClick={() => setWeapons((prev) => prev.includes(w) ? prev.filter((x) => x !== w) : [...prev, w])}
-                    className={`rounded-md px-3 py-1.5 text-sm font-medium border transition-all ${
-                      weapons.includes(w)
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                    }`}
+                    className={`${chipBaseClassName} ${weapons.includes(w) ? chipActiveClassName : chipIdleClassName}`}
                   >
                     {w}
                   </button>
@@ -211,11 +226,7 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
                     type="button"
                     disabled={isPending}
                     onClick={() => setRanked(opt)}
-                    className={`rounded-md px-3 py-1.5 text-sm font-medium border transition-all ${
-                      ranked === opt
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                    }`}
+                    className={`${chipBaseClassName} ${ranked === opt ? chipActiveClassName : chipIdleClassName}`}
                   >
                     {opt}
                   </button>
@@ -228,7 +239,7 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
 
       {!GAME_MODES[game] && (
         <div className="space-y-1.5">
-          <Label htmlFor="title">სათაური *</Label>
+          <Label htmlFor="title" className={labelClassName}>სათაური *</Label>
           <Input
             id="title"
             name="title"
@@ -238,6 +249,7 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             disabled={isPending}
+            className={fieldClassName}
           />
           {state.errors?.title && (
             <p className="text-xs text-destructive">{state.errors.title[0]}</p>
@@ -246,7 +258,7 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
       )}
 
       <div className="space-y-1.5">
-        <Label htmlFor="description">აღწერა</Label>
+        <Label htmlFor="description" className={labelClassName}>აღწერა</Label>
         <Textarea
           id="description"
           name="description"
@@ -255,6 +267,7 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           disabled={isPending}
+          className={fieldClassName}
         />
         {state.errors?.description && (
           <p className="text-xs text-destructive">{state.errors.description[0]}</p>
@@ -264,7 +277,7 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
       {!selectedModes.includes("1 vs 1") && (
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="rank">რანკი</Label>
+            <Label htmlFor="rank" className={labelClassName}>რანკი</Label>
             <Input
               id="rank"
               name="rank"
@@ -272,10 +285,11 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
               value={rank}
               onChange={(e) => setRank(e.target.value)}
               disabled={isPending}
+              className={fieldClassName}
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="slotsTotal">ადგილების რაოდენობა</Label>
+            <Label htmlFor="slotsTotal" className={labelClassName}>ადგილების რაოდენობა</Label>
             <Input
               id="slotsTotal"
               name="slotsTotal"
@@ -285,12 +299,13 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
               value={slots}
               onChange={(e) => setSlots(e.target.value)}
               disabled={isPending}
+              className={fieldClassName}
             />
           </div>
         </div>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.025)] px-3 py-2.5">
         <input
           type="checkbox"
           id="voiceRequired"
@@ -298,18 +313,18 @@ export function NewLfgForm({ games }: { games: GameOption[] }) {
           checked={voice}
           onChange={(e) => setVoice(e.target.checked)}
           disabled={isPending}
-          className="h-4 w-4 rounded border-border bg-background accent-primary"
+          className="h-4 w-4 rounded border-[rgba(196,30,58,0.44)] bg-[rgba(6,5,14,0.8)] accent-[rgb(196,30,58)]"
         />
-        <Label htmlFor="voiceRequired" className="font-normal">
-          🎙 Voice chat აუცილებელია
+        <Label htmlFor="voiceRequired" className="flex items-center gap-1.5 font-normal text-white/82 [text-shadow:0_0_4px_rgba(196,30,58,0.24)]">
+          <Mic className="h-4 w-4 text-cyan-300" /> Voice chat აუცილებელია
         </Label>
       </div>
 
       <div className="flex justify-end gap-2 pt-2">
-        <Button type="button" variant="ghost" onClick={() => router.back()} disabled={isPending}>
+        <Button type="button" variant="ghost" onClick={() => router.back()} disabled={isPending} className="text-white/75 hover:bg-white/[0.04] hover:text-white">
           გაუქმება
         </Button>
-        <Button type="submit" disabled={isPending}>
+        <Button type="submit" disabled={isPending} className={submitButtonClassName}>
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           დაპოსტვა
         </Button>

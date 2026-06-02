@@ -4,7 +4,7 @@ import { ArrowLeft, Trophy, Users, Calendar, ListChecks, BookOpen } from "lucide
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { generateSingleElimBracket } from "@/lib/tournament/generate-bracket";
+import { generateSingleElimBracket, type BracketMatch } from "@/lib/tournament/generate-bracket";
 import { Bracket } from "@/components/tournament/bracket";
 import { MatchSummary } from "@/components/tournament/match-summary";
 
@@ -14,6 +14,32 @@ import { format } from "date-fns";
 import { TournamentActions } from "./tournament-actions";
 
 export const dynamic = "force-dynamic";
+
+type GameRel = { slug: string; name_ka: string | null; emoji: string | null };
+type ParticipantProfile = {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+};
+type ParticipantRow = {
+  id: string;
+  seed: number | null;
+  team_name: string | null;
+  checked_in: boolean | null;
+  profiles: ParticipantProfile | null;
+};
+type MatchRow = {
+  id: string;
+  round: number;
+  position: number;
+  player1_id: string | null;
+  player2_id: string | null;
+  score1: number | null;
+  score2: number | null;
+  winner_id: string | null;
+  status: string;
+};
 
 const mapStatus = (s: string): "pending" | "ready" | "live" | "completed" => {
   if (["confirmed", "reported", "disputed"].includes(s)) return "completed";
@@ -55,7 +81,7 @@ export default async function TournamentDetailPage({
     .single();
 
   if (!t) notFound();
-  const game = Array.isArray(t.games) ? t.games[0] : (t.games as any);
+  const game = (Array.isArray(t.games) ? t.games[0] : t.games) as GameRel;
 
   // Fetch participants
   const { data: dbParticipants } = await supabase
@@ -75,7 +101,9 @@ export default async function TournamentDetailPage({
     .eq("tournament_id", t.id)
     .order("seed", { ascending: true });
 
-  const participants = (dbParticipants || []).map((p: any) => ({
+  const participantRows = (dbParticipants ?? []) as ParticipantRow[];
+
+  const participants = participantRows.map((p) => ({
     id: p.profiles?.id || p.id,
     name: p.profiles?.username || p.team_name || "Participant",
     displayName: p.profiles?.display_name || p.profiles?.username || p.team_name || "Participant",
@@ -84,16 +112,16 @@ export default async function TournamentDetailPage({
   }));
 
   const isRegistered = sessionUser
-    ? (dbParticipants || []).some((p: any) => p.profiles?.id === sessionUser.id)
+    ? participantRows.some((p) => p.profiles?.id === sessionUser.id)
     : false;
 
   const isCheckedIn = sessionUser
-    ? (dbParticipants || []).some((p: any) => p.profiles?.id === sessionUser.id && p.checked_in)
+    ? participantRows.some((p) => p.profiles?.id === sessionUser.id && p.checked_in)
     : false;
 
   // Fetch or generate bracket matches
-  let matches: any[] = [];
-  let activeMatch: any = null;
+  let matches: BracketMatch[] = [];
+  let activeMatch: (BracketMatch & { id: string }) | null = null;
 
   if (t.status === "live" || t.status === "completed") {
     const { data: dbMatches } = await supabase
@@ -113,7 +141,7 @@ export default async function TournamentDetailPage({
       .order("round", { ascending: true })
       .order("position", { ascending: true });
 
-    matches = (dbMatches || []).map((m: any) => {
+    matches = ((dbMatches ?? []) as MatchRow[]).map((m) => {
       const p1 = participants.find((p) => p.id === m.player1_id) || null;
       const p2 = participants.find((p) => p.id === m.player2_id) || null;
       const winner = participants.find((p) => p.id === m.winner_id) || null;
@@ -203,7 +231,7 @@ export default async function TournamentDetailPage({
           isRegistered={isRegistered}
           isCheckedIn={isCheckedIn}
           currentUser={sessionUser}
-          activeMatch={activeMatch}
+          activeMatch={activeMatch ?? undefined}
         />
       </div>
 

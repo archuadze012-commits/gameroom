@@ -3,6 +3,7 @@ import { readJsonObject } from "@/lib/api/json";
 import { requirePermission, logAdminAction } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { UserRole } from "@/lib/types";
+import type { Database } from "@/lib/database.types";
 
 const USER_ROLES = new Set<UserRole>(["user", "moderator", "organizer", "streamer", "esports", "admin"]);
 
@@ -97,7 +98,8 @@ export async function PATCH(request: NextRequest) {
   if (body.banMinutes !== undefined && (!Number.isFinite(body.banMinutes) || body.banMinutes < 0))
     return NextResponse.json({ error: "invalid_ban_minutes" }, { status: 400 });
 
-  const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
+  const update: ProfileUpdate = { updated_at: new Date().toISOString() };
   if (body.role !== undefined) update.role = body.role;
   if (body.banned !== undefined) {
     update.banned = body.banned;

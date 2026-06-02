@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSession } from "@/lib/auth";
 
 // Checks the current user's stats and unlocks any newly-earned badges.
@@ -51,7 +52,10 @@ export async function POST() {
   if ((profile?.level ?? 1) >= 25 && !owned.has("level_25")) toUnlock.push("level_25");
 
   if (toUnlock.length > 0) {
-    await supabase
+    // Eligibility is computed server-side above; write via the service-role
+    // client so the badge_unlocks table can deny direct client inserts (RLS).
+    const admin = createSupabaseAdminClient();
+    await admin
       .from("badge_unlocks")
       .insert(toUnlock.map((code) => ({ user_id: user.id, badge_code: code })));
   }

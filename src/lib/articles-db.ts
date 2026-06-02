@@ -24,6 +24,7 @@ export type ArticleListRow = {
   cover_url: string | null;
   game_slug: string | null;
   game_name: string | null;
+  author_id: string;
   author_username: string;
   published_at: string;
 };
@@ -34,6 +35,7 @@ export async function listPublishedArticles(limit = 60): Promise<ArticleListRow[
     SELECT
       a.slug, a.title, a.excerpt, a.cover_url, a.game_slug,
       g.name_ka AS game_name,
+      a.author_id,
       p.username AS author_username,
       a.published_at::text AS published_at
     FROM public.articles a
@@ -54,6 +56,7 @@ export type ArticleFull = {
   cover_url: string | null;
   game_slug: string | null;
   game_name: string | null;
+  author_id: string;
   author_username: string;
   author_display_name: string | null;
   author_avatar_url: string | null;
@@ -66,6 +69,7 @@ export async function getPublishedArticle(slug: string): Promise<ArticleFull | n
     SELECT
       a.slug, a.title, a.excerpt, a.content, a.cover_url, a.game_slug,
       g.name_ka AS game_name,
+      a.author_id,
       p.username AS author_username,
       p.display_name AS author_display_name,
       p.avatar_url AS author_avatar_url,
@@ -95,4 +99,66 @@ export async function insertArticle(data: {
     INSERT INTO public.articles (slug, title, excerpt, content, cover_url, game_slug, author_id, published, published_at)
     VALUES (${data.slug}, ${data.title}, ${data.excerpt}, ${data.content}, ${data.cover_url}, ${data.game_slug}, ${data.author_id}, ${data.published}, ${data.published_at})
   `;
+}
+
+export type ArticleEditorRow = {
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  content: string;
+  cover_url: string | null;
+  game_slug: string | null;
+  author_id: string;
+  published: boolean;
+  published_at: string | null;
+};
+
+export async function getArticleForEditor(slug: string): Promise<ArticleEditorRow | null> {
+  const db = sql();
+  const rows = await db<ArticleEditorRow[]>`
+    SELECT
+      a.slug,
+      a.title,
+      a.excerpt,
+      a.content,
+      a.cover_url,
+      a.game_slug,
+      a.author_id,
+      a.published,
+      a.published_at::text AS published_at
+    FROM public.articles a
+    WHERE a.slug = ${slug}
+    LIMIT 1
+  `;
+  return rows[0] ?? null;
+}
+
+export async function updateArticleBySlug(data: {
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  content: string;
+  cover_url: string | null;
+  game_slug: string | null;
+  published: boolean;
+  published_at: string | null;
+}) {
+  const db = sql();
+  await db`
+    UPDATE public.articles
+    SET
+      title = ${data.title},
+      excerpt = ${data.excerpt},
+      content = ${data.content},
+      cover_url = ${data.cover_url},
+      game_slug = ${data.game_slug},
+      published = ${data.published},
+      published_at = ${data.published_at}
+    WHERE slug = ${data.slug}
+  `;
+}
+
+export async function deleteArticleBySlug(slug: string) {
+  const db = sql();
+  await db`DELETE FROM public.articles WHERE slug = ${slug}`;
 }

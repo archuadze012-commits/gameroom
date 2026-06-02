@@ -18,6 +18,7 @@ export type Permission =
   | "moderate_queue"
   | "manage_announcements"
   | "manage_pins"
+  | "manage_shop"
   | "broadcast_email"
   | "impersonate";
 
@@ -32,10 +33,11 @@ const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "moderate_queue",
     "manage_announcements",
     "manage_pins",
+    "manage_shop",
     "broadcast_email",
     "impersonate",
   ],
-  moderator: ["manage_chat", "moderate_queue"],
+  moderator: ["manage_chat", "moderate_queue", "manage_shop"],
   organizer: ["manage_tournaments"],
   streamer: [],
   esports: [],
@@ -82,7 +84,7 @@ export async function logAdminAction(params: {
       action: params.action,
       target_type: params.targetType ?? null,
       target_id: params.targetId ?? null,
-      metadata: params.metadata ?? null,
+      metadata: (params.metadata ?? null) as never,
     });
   } catch {
     // never throw from audit log

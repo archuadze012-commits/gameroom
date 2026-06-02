@@ -39,7 +39,7 @@ export function CloseRoomButton({ roomId }: { roomId: string }) {
       type="button"
       onClick={close}
       disabled={loading}
-      className="inline-flex items-center gap-1.5 bg-red-500/10 px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-red-300 ring-1 ring-red-500/30 transition-colors hover:bg-red-500/20 hover:text-red-200 disabled:opacity-50"
+      className="inline-flex h-9 items-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/10 px-4 text-[10.5px] font-black uppercase tracking-[0.14em] text-red-400 shadow-[0_0_10px_rgba(239,68,68,0.2)] transition-all hover:border-red-500/50 hover:bg-red-500/20 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
     >
       {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
       რუმის დახურვა
