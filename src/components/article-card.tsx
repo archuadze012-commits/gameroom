@@ -53,6 +53,8 @@ export function ArticleCard({ a }: { a: ArticleCardData }) {
             <img
               src={a.cover_url}
               alt={a.title}
+              loading="lazy"
+              decoding="async"
               className="h-full w-full object-cover transition-transform duration-[600ms] ease-out group-hover:scale-[1.06]"
             />
           ) : (

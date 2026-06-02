@@ -77,6 +77,8 @@ function CrateCard({ box, hasSession }: { box: EventBox; hasSession: boolean }) 
             <img
               src={featuredItem.image_url}
               alt={featuredItem.item_name}
+              loading="lazy"
+              decoding="async"
               className="relative z-10 h-28 w-auto max-w-[90%] object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] transition-transform duration-300 group-hover:scale-105"
             />
           ) : (

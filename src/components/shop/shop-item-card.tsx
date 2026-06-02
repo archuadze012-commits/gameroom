@@ -92,6 +92,7 @@ function ItemPreview({ item }: { item: ShopItem }) {
         <div className="relative w-full overflow-hidden" style={{ height: 112 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/lobbies/pubg-mobile-optimized.jpg" alt="" draggable={false}
+            loading="lazy" decoding="async"
             className="absolute inset-0 h-full w-full object-cover" />
           <span style={{ position: "absolute", width: 600, height: 300, bottom: 0, left: "50%",
             transform: "translateX(-50%) scale(0.30)", transformOrigin: "bottom center" }}>
@@ -128,6 +129,7 @@ function ItemPreview({ item }: { item: ShopItem }) {
         <div className="relative w-full overflow-hidden" style={{ height: 160 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={item.image_url} alt={item.name} draggable={false}
+            loading="lazy" decoding="async"
             className="absolute inset-0 h-full w-full object-cover object-top" />
         </div>
       );
@@ -267,6 +269,8 @@ export function ShopItemCard({ item, hasSession }: { item: ShopItem; hasSession:
               src={item.image_url!}
               alt={item.name}
               draggable={false}
+              loading="lazy"
+              decoding="async"
               className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
             />
             <div

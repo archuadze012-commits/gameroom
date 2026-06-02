@@ -67,6 +67,8 @@ export function GameCard({ slug, nameKa, players, online, coverUrl, accent }: Ga
             <img
               src={coverUrl}
               alt={nameKa}
+              loading="lazy"
+              decoding="async"
               className="absolute inset-0 h-full w-full object-cover"
             />
           ) : (
