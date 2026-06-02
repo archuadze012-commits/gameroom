@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { ArrowLeft, Users, Rocket } from "lucide-react";
 import { mockGames } from "@/lib/mock-data";
@@ -25,6 +26,7 @@ const LOBBY_BG: Record<string, string> = {
 
 const cutLg = "polygon(0 0, calc(100% - 32px) 0, 100% 32px, 100% 100%, 0 100%)";
 const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.5))";
+const WEBVIEW_USER_AGENT_RE = /(; wv\)|Electron|CEF|WebView|FBAN|FBAV|Instagram|Line\/|MicroMessenger)/i;
 
 export async function generateMetadata({
   params,
@@ -47,6 +49,8 @@ export default async function GameLobbyPage({
 }) {
   const { slug } = await params;
   const { user: requestedUsername } = await searchParams;
+  const userAgent = (await headers()).get("user-agent") ?? "";
+  const showRotatePrompt = WEBVIEW_USER_AGENT_RE.test(userAgent);
 
   if (!LOBBY_BG[slug]) notFound();
   const game = mockGames.find((g) => g.slug === slug);
@@ -212,8 +216,8 @@ export default async function GameLobbyPage({
   }
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
-      <LobbyOrientationGuard />
+    <div className="relative min-h-[calc(100svh-4rem)] bg-[var(--gr-bg-0)]">
+      <LobbyOrientationGuard enabled={showRotatePrompt} />
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
 
       <div className="lobby-fs-wrap container relative mx-auto max-w-6xl px-4 py-8 lg:py-10">
@@ -229,16 +233,16 @@ export default async function GameLobbyPage({
         </nav>
 
         {/* page header */}
-        <header className="lobby-chrome mb-6 flex flex-wrap items-center justify-between gap-3">
+        <header className="lobby-chrome lobby-page-header mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-4">
-            <DisplayHeading as="h1" size="lg">
+            <DisplayHeading as="h1" size="lg" className="lobby-page-title">
               {game.nameKa} — ლობი
             </DisplayHeading>
             <ChevronButton
               href={`/lfg/new?game=${game.slug}`}
               variant="violet"
               size="md"
-              className="shrink-0 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-amber-400 text-[12px] text-white shadow-[0_0_28px_rgba(139,92,246,0.45)]"
+              className="lobby-page-cta shrink-0 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-amber-400 text-[12px] text-white shadow-[0_0_28px_rgba(139,92,246,0.45)]"
               style={{ background: "linear-gradient(135deg, #8B5CF6 0%, #C026D3 50%, #F5A524 100%)" }}
             >
               <Rocket className="h-4 w-4" /> თამაშის დაწყება
@@ -294,7 +298,7 @@ export default async function GameLobbyPage({
         </article>
 
         {/* action bar */}
-        <div className="lobby-chrome mt-4 flex justify-end">
+        <div className="lobby-chrome lobby-page-actions mt-4 flex justify-end">
           <ChevronButton href={`/games/${game.slug}`} variant="ghost" size="md" className="text-[12px]">
             თამაშის გვერდი
           </ChevronButton>

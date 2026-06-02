@@ -85,44 +85,65 @@ export function LobbyStage({ gameName, gameSlug, imageUrl, hudData = null, curre
   const loadoutStorageKey = currentUserId ? getLobbyLoadoutStorageKey(gameSlug, currentUserId) : undefined;
   const [inventoryOpen, setInventoryOpen] = useState(false);
 
+  // Scale the fixed 1920×1080 logical canvas to the frame's real width.
+  // Replaces the old <svg><foreignObject> trick, which WebKit (iOS Safari /
+  // in-app webviews) does NOT scale to the viewBox — that caused the right
+  // side to clip and the zoom to grow on smaller screens. The initial 1-frame
+  // (scale 1) is hidden under the LobbyShell preloader, so no visible flash.
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const apply = () => setScale(el.clientWidth / LOBBY_SCENE_WIDTH);
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   return (
-    <div data-lobby-stage className="absolute inset-0 overflow-hidden">
-      <svg
-        className="absolute inset-0 h-full w-full overflow-hidden"
-        viewBox={`0 0 ${LOBBY_SCENE_WIDTH} ${LOBBY_SCENE_HEIGHT}`}
-        preserveAspectRatio="none"
+    <div
+      ref={stageRef}
+      data-lobby-stage
+      className="absolute inset-0 overflow-hidden"
+    >
+      {/* Fixed 1920×1080 logical canvas, uniformly scaled to fill the 16:9 frame. */}
+      <div
+        className="absolute left-0 top-0 origin-top-left overflow-hidden"
+        style={{
+          width: `${LOBBY_SCENE_WIDTH}px`,
+          height: `${LOBBY_SCENE_HEIGHT}px`,
+          transform: `scale(${scale})`,
+        }}
       >
-        <foreignObject x="0" y="0" width={LOBBY_SCENE_WIDTH} height={LOBBY_SCENE_HEIGHT}>
-          <div className="relative h-full w-full overflow-hidden">
-            <Image
-              src={imageUrl}
-              alt={`${gameName} lobby`}
-              fill
-              priority
-              quality={75}
-              sizes="(max-width: 640px) 100vw, (max-width: 1280px) 92vw, 1152px"
-              className="object-cover object-center"
-            />
-            <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_50%_62%,transparent_0_28%,rgba(8,6,15,0.1)_48%,rgba(8,6,15,0.45)_100%)]" />
-            <LiveHud data={hudData} hideRightHud={inventoryOpen} />
-            <StartWidget />
-            <LobbyLoadoutLayer
-              characterUrl={CHARACTER_URL}
-              persistEnabled={Boolean(currentUserId)}
-              storageKey={loadoutStorageKey}
-              gameSlug={gameSlug}
-              lobbyEffect={lobbyEffect}
-              ownedDbCombos={ownedDbCombos}
-              ownedDbCharacters={ownedDbCharacters}
-              ownedDbVehicles={ownedDbVehicles}
-              ownedWeapons={ownedWeapons}
-              initialLoadout={initialLoadout}
-              hasDbLoadout={hasDbLoadout}
-              onInventoryOpenChange={setInventoryOpen}
-            />
-          </div>
-        </foreignObject>
-      </svg>
+        <Image
+          src={imageUrl}
+          alt={`${gameName} lobby`}
+          fill
+          priority
+          quality={75}
+          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 92vw, 1152px"
+          className="object-cover object-center"
+        />
+        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_50%_62%,transparent_0_28%,rgba(8,6,15,0.1)_48%,rgba(8,6,15,0.45)_100%)]" />
+        <LiveHud data={hudData} hideRightHud={inventoryOpen} />
+        <StartWidget />
+        <LobbyLoadoutLayer
+          characterUrl={CHARACTER_URL}
+          persistEnabled={Boolean(currentUserId)}
+          storageKey={loadoutStorageKey}
+          gameSlug={gameSlug}
+          lobbyEffect={lobbyEffect}
+          ownedDbCombos={ownedDbCombos}
+          ownedDbCharacters={ownedDbCharacters}
+          ownedDbVehicles={ownedDbVehicles}
+          ownedWeapons={ownedWeapons}
+          initialLoadout={initialLoadout}
+          hasDbLoadout={hasDbLoadout}
+          onInventoryOpenChange={setInventoryOpen}
+        />
+      </div>
     </div>
   );
 }

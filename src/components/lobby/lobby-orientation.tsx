@@ -3,10 +3,15 @@
 import { useEffect, useState } from "react";
 import { RotateCcw } from "lucide-react";
 
-export function LobbyOrientationGuard() {
+export function LobbyOrientationGuard({ enabled = false }: { enabled?: boolean }) {
   const [showRotate, setShowRotate] = useState(false);
 
   useEffect(() => {
+    if (!enabled) {
+      setShowRotate(false);
+      return;
+    }
+
     const isTouch = () => navigator.maxTouchPoints > 0;
 
     const check = () => {
@@ -24,7 +29,7 @@ export function LobbyOrientationGuard() {
       window.removeEventListener("resize", check);
       window.removeEventListener("orientationchange", check);
     };
-  }, []);
+  }, [enabled]);
 
   if (!showRotate) return null;
 
