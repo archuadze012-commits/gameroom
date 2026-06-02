@@ -332,9 +332,9 @@ function LobbyLoadoutLayer({
           draggable={false}
           className="pointer-events-none absolute z-[1000] h-auto select-none"
           style={{
-            right: "calc(2.5% + 45px)",
-            top: "calc(34% + 140px)",
-            width: "calc(12% - 40px)",
+            right: "5%",
+            top: "47%",
+            width: "10%",
             height: "auto",
             transform: "rotate(-1deg)",
             transformOrigin: "50% 50%",

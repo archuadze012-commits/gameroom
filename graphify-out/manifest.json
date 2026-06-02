@@ -1,0 +1,2162 @@
+{
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\check-data.mjs": {
+    "mtime": 1779946461.3930428,
+    "ast_hash": "8ae99bc2d303bc18f777acecefb44d51",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\check-db-data.mjs": {
+    "mtime": 1779946461.3981583,
+    "ast_hash": "0dedf9b1f9c95d746401852a2d17a5b7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\check-db.mjs": {
+    "mtime": 1779946461.3991573,
+    "ast_hash": "2307fa089c3e5b9170987ea3218d5581",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\check-games.mjs": {
+    "mtime": 1779946461.400158,
+    "ast_hash": "f37f412b54673a65a54112e942c324cb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\check-news.mjs": {
+    "mtime": 1779946461.4011576,
+    "ast_hash": "e781f0ff9edafc24fa4860ff1844ee2e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\check-pk.mjs": {
+    "mtime": 1779946461.403159,
+    "ast_hash": "ceadf5f4f42ce9f3f13e64a91dc40425",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\check-posts-rls.mjs": {
+    "mtime": 1779946461.404159,
+    "ast_hash": "4b6cad0573645b5f3a343169635a292d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\check-pubg.mjs": {
+    "mtime": 1779946461.404159,
+    "ast_hash": "b2d997283c52aeb7f07d634cc7f208ed",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\check-rls.mjs": {
+    "mtime": 1779946461.4051578,
+    "ast_hash": "d3cdf2c79915fbc8e7e0498386955477",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\components.json": {
+    "mtime": 1779038794.0390875,
+    "ast_hash": "fc5c9e9a7b93eeb2f7b4e1ce0959e4a6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\drizzle.config.ts": {
+    "mtime": 1779946461.4071586,
+    "ast_hash": "5f1c79c43067ea88e592be4127b70957",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\eslint.config.mjs": {
+    "mtime": 1779798118.5706706,
+    "ast_hash": "2d797353f71871e3ced6a62ad15b58aa",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\fix-profiles-rls.mjs": {
+    "mtime": 1779946461.4081576,
+    "ast_hash": "de21b9e5a9c8d6f5cd8c748f0112bc7a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\fix-rls.mjs": {
+    "mtime": 1779946461.409158,
+    "ast_hash": "0beab39e8261d20987d7e68301815cff",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\next.config.ts": {
+    "mtime": 1779946461.4101572,
+    "ast_hash": "26b8ffc8a42f8efdd95b9cb3cf1f2c74",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\package.json": {
+    "mtime": 1779966282.8890562,
+    "ast_hash": "bfa9a4f73309e80d4ec454f61d0a1a7a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\postcss.config.mjs": {
+    "mtime": 1779038794.0688088,
+    "ast_hash": "239f3ebf717465dc636818a1a619398d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\run-migration.mjs": {
+    "mtime": 1779946461.4374647,
+    "ast_hash": "b4ae4476ef589e593bd553a292ac56e4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\seed-forum.mjs": {
+    "mtime": 1779946461.439463,
+    "ast_hash": "776624a6256de6d09e75bb25bdb58357",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\seed-news-tournaments.mjs": {
+    "mtime": 1779946461.441463,
+    "ast_hash": "e95f7c1e960d52f3040e22cb49c3a916",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\test-auth-full.mjs": {
+    "mtime": 1779946461.7842367,
+    "ast_hash": "0a964298664923c9d83ab1d2e6792ac0",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\test-auth-rls.mjs": {
+    "mtime": 1779946461.7852385,
+    "ast_hash": "e5a241735c71f9da516e65dece8a6d77",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\test-auth.mjs": {
+    "mtime": 1779946461.7852385,
+    "ast_hash": "a9c64d049f5eee299bb64caaebb67c33",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\test-discord.mjs": {
+    "mtime": 1779946461.7885444,
+    "ast_hash": "eecfff2bf666e48bf351ba910f522b78",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\test-join.mjs": {
+    "mtime": 1779946461.7895422,
+    "ast_hash": "336f917384f98bfd338e620fe2844ee4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\test-supabase.mjs": {
+    "mtime": 1779946461.7905436,
+    "ast_hash": "747bae23f948a1b67f80e07ca86cddf7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\tsconfig.json": {
+    "mtime": 1779038794.0752785,
+    "ast_hash": "ee17fd1c97c735e9f3564e3f5251f125",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\vercel.json": {
+    "mtime": 1779398340.8205066,
+    "ast_hash": "066185581581a6617aaf3b90e7704761",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\verify-env.mjs": {
+    "mtime": 1779946461.7990994,
+    "ast_hash": "cfcacb9411af46eb38b8e9b0fd376e53",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\.claude\\settings.local.json": {
+    "mtime": 1779976108.2168877,
+    "ast_hash": "6d88ba9c41e0f6b5f7c54fd7e19dd2bc",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\.claude\\skills\\run-gameroom\\screenshots.mjs": {
+    "mtime": 1779463771.4043455,
+    "ast_hash": "4880687dbae749073fa83317086dd85d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\.claude\\skills\\run-gameroom\\smoke.mjs": {
+    "mtime": 1779428068.5347357,
+    "ast_hash": "b396ab3008776f2bbe079a0275dfc3ed",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\.planning\\config.json": {
+    "mtime": 1779976171.1245818,
+    "ast_hash": "13a39e08ef724a0d79acc17f3c31dc61",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\.vscode\\launch.json": {
+    "mtime": 1779516260.9158962,
+    "ast_hash": "8536c0b1b0a5a6da1637feed7ca91d43",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\manifest.json": {
+    "mtime": 1779398089.2711704,
+    "ast_hash": "383def9db462c79077270ffac86b6295",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\pwa-install-floater.js": {
+    "mtime": 1779398111.8949773,
+    "ast_hash": "e85048eb09888d406ebbc1c8d62b98db",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\sw.js": {
+    "mtime": 1779398111.8955038,
+    "ast_hash": "b09436b8e66b89fb99a9d34daf54f9fd",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\scripts\\defringe.mjs": {
+    "mtime": 1779520876.8404565,
+    "ast_hash": "4a3f716a39ef1671c86e20ec19f05081",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\proxy.ts": {
+    "mtime": 1779038982.8799326,
+    "ast_hash": "37f44e675f9a674e41aa95423918675b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\layout.tsx": {
+    "mtime": 1779973439.346158,
+    "ast_hash": "f4034be9637c7e3977c96d0e0b796f1a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\not-found.tsx": {
+    "mtime": 1779652690.3440602,
+    "ast_hash": "f948a34e53ad6aaab2a59db38507b1eb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\page.tsx": {
+    "mtime": 1779973621.9456835,
+    "ast_hash": "075452dc833fd3b7b8816e9fa115520a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\admin\\layout.tsx": {
+    "mtime": 1779946461.4474638,
+    "ast_hash": "1434cf39ce4ef515141838d3f93148ae",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\admin\\page.tsx": {
+    "mtime": 1779652690.3508983,
+    "ast_hash": "f882a2b14e4a00c2816c4ea7196edfe7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\admin\\analytics\\page.tsx": {
+    "mtime": 1779398089.2717059,
+    "ast_hash": "f7f4d16c85207cf645b332ae41a296fb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\admin\\announcements\\page.tsx": {
+    "mtime": 1779398089.272234,
+    "ast_hash": "ef7f047adaf30b5400c37e3d877df23b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\admin\\audit\\page.tsx": {
+    "mtime": 1779398089.2727687,
+    "ast_hash": "3b8db06e052fa996cd23942ee3228a66",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\admin\\content\\page.tsx": {
+    "mtime": 1779946461.4424634,
+    "ast_hash": "1af34c65b9e167331801b9270ec9ee8a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\admin\\email\\page.tsx": {
+    "mtime": 1779398089.273824,
+    "ast_hash": "a0d4b92745bb0d81c0e9ecb16b3a437b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\admin\\free-pc-games\\page.tsx": {
+    "mtime": 1779946461.4464636,
+    "ast_hash": "0613612e4019fee39de73fa547eb9f99",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\admin\\games\\page.tsx": {
+    "mtime": 1779398089.27488,
+    "ast_hash": "dd0f823fde7ec1a8092359bfb3c73ec7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\admin\\moderation\\page.tsx": {
+    "mtime": 1779195180.639145,
+    "ast_hash": "2b2727959198d342caa4aad76b50d40e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\admin\\moderation-queue\\page.tsx": {
+    "mtime": 1779398089.2754035,
+    "ast_hash": "cec0f320afb3219407fffe3f60862f29",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\admin\\news\\page.tsx": {
+    "mtime": 1779038982.916344,
+    "ast_hash": "f8d2eceb671a5e65396b8b80cfa1b94b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\admin\\pins\\page.tsx": {
+    "mtime": 1779398089.2759302,
+    "ast_hash": "92f39ceb77df5658d55c16c1833664e4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\admin\\reports\\page.tsx": {
+    "mtime": 1779398089.276461,
+    "ast_hash": "35024130363841bc0b04d415b43b41b5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\admin\\tournaments\\bracket-draw.tsx": {
+    "mtime": 1779398089.2769887,
+    "ast_hash": "4368ccf09c4bf1ed1efc6792652772ed",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\admin\\tournaments\\page.tsx": {
+    "mtime": 1779138090.5705311,
+    "ast_hash": "ffc5000bde57f51c45a5f58ab9a19ed8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\admin\\tournaments\\tournament-form.tsx": {
+    "mtime": 1779138074.5265121,
+    "ast_hash": "d4ac9c661172421d66023a60fa8a5fd9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\admin\\users\\page.tsx": {
+    "mtime": 1779398089.2769887,
+    "ast_hash": "5365fbab692451581c749e8e99b0a2d4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\announcements\\page.tsx": {
+    "mtime": 1779946461.449463,
+    "ast_hash": "0f2f01666bdde63b90e8c5d4d4f58e54",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\admin\\analytics\\route.ts": {
+    "mtime": 1779797993.7558982,
+    "ast_hash": "29d658b881ea29f0c45df288bfc873c4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\admin\\audit\\route.ts": {
+    "mtime": 1779797993.754901,
+    "ast_hash": "3906ab377de39ab125e67e940b74b5b9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\admin\\blocked-words\\route.ts": {
+    "mtime": 1779797993.7558982,
+    "ast_hash": "245c892475fc6de3932543ec3c6c2f3f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\admin\\content\\route.ts": {
+    "mtime": 1779946461.4504662,
+    "ast_hash": "1eeb979d4f415b5d60c6959a70202762",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\admin\\cracked-games\\route.ts": {
+    "mtime": 1779797993.7537458,
+    "ast_hash": "30edf033d1e8ff005ef96810de5092ba",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\admin\\cracked-games\\[id]\\route.ts": {
+    "mtime": 1779797993.754901,
+    "ast_hash": "63733e41684c868cc18368e08760a4aa",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\admin\\cron\\unban-expired\\route.ts": {
+    "mtime": 1779798039.0090065,
+    "ast_hash": "b87d89596af8b85a3b8555db53f69c0f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\admin\\email-blast\\route.ts": {
+    "mtime": 1779797993.7568972,
+    "ast_hash": "9837574c47a731668bdb2bceea358c7b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\admin\\featured\\route.ts": {
+    "mtime": 1779797993.7578964,
+    "ast_hash": "bfb69b956aa4b93b4dff2c25cfae1e03",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\admin\\games\\route.ts": {
+    "mtime": 1779797993.7578964,
+    "ast_hash": "2a9d8bbb210fc474cdf2450a2679cfdc",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\admin\\games\\[slug]\\route.ts": {
+    "mtime": 1779797993.7588973,
+    "ast_hash": "f40190b8d213c81c327835eb6a93fb15",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\admin\\moderation-queue\\route.ts": {
+    "mtime": 1779797993.7537458,
+    "ast_hash": "e39df699335f137fced0c4c97b2fc5af",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\admin\\pins\\route.ts": {
+    "mtime": 1779797993.7578964,
+    "ast_hash": "19302d2cd0c62a57d98d6427b624ec1a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\admin\\reports\\route.ts": {
+    "mtime": 1779797993.7487714,
+    "ast_hash": "9f660d103ed4b51278f5ab0fc05dfb00",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\admin\\upload\\route.ts": {
+    "mtime": 1779973261.0618024,
+    "ast_hash": "1f80e2c8e617ba1c67475a2fc867d2ac",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\admin\\users\\route.ts": {
+    "mtime": 1779968211.577907,
+    "ast_hash": "2e374817008994ed7ebc8a96448dc32c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\announcements\\route.ts": {
+    "mtime": 1779398089.284797,
+    "ast_hash": "5589feca447180c7099c056bc6c7c6b5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\announcements\\[id]\\read\\route.ts": {
+    "mtime": 1779398089.284797,
+    "ast_hash": "3304be8f24b01fe11d4e2a9df18287d8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\auth\\riot\\route.ts": {
+    "mtime": 1779398089.285818,
+    "ast_hash": "5d5d5b2863f4a8ef2fb1e6933b400fca",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\auth\\steam\\callback\\route.ts": {
+    "mtime": 1779398089.285818,
+    "ast_hash": "963f5865d277f911ffd447915c56a37a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\auth\\steam\\start\\route.ts": {
+    "mtime": 1779398089.286807,
+    "ast_hash": "7b413e6dabb44a09f20615843ab68f60",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\badges\\check\\route.ts": {
+    "mtime": 1779398089.286807,
+    "ast_hash": "52b7dbd6b04fc2ebbc91b3982003e68b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\bio\\route.ts": {
+    "mtime": 1779946216.1111283,
+    "ast_hash": "8fcf7b36f6284b89f84acb69ba21a9d4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\bracket-generate\\route.ts": {
+    "mtime": 1779946216.1136458,
+    "ast_hash": "5e61bcb515e1b14f59ac6bbe7de4c9e9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\chatbot\\route.ts": {
+    "mtime": 1779946461.452463,
+    "ast_hash": "997f7f3d9f1094eb3b491daf8b994260",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\conversations\\route.ts": {
+    "mtime": 1779398089.289808,
+    "ast_hash": "b2b466183ba9d9e7b0758123a4bc5447",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\conversations\\[id]\\route.ts": {
+    "mtime": 1779398111.8992152,
+    "ast_hash": "d1907061816d82b5ed5bb31f632642e6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\conversations\\[id]\\messages\\route.ts": {
+    "mtime": 1779946461.4534626,
+    "ast_hash": "3cbe19dc617c06b6202f16282794690f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\cracked-games\\route.ts": {
+    "mtime": 1779398089.2907956,
+    "ast_hash": "3d71af0adbab43b100536d23ed1d5b29",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\discord\\voice\\route.ts": {
+    "mtime": 1779946461.4554634,
+    "ast_hash": "981f6f3d884c368dcbbf504a670c6da2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\follows\\[username]\\route.ts": {
+    "mtime": 1779946457.361872,
+    "ast_hash": "8436af34677ea70754190d7ea861d324",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\forum\\posts\\route.ts": {
+    "mtime": 1779946461.4614685,
+    "ast_hash": "aa763c62101940f55c82b4bad84d8a04",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\forum\\posts\\[id]\\like\\route.ts": {
+    "mtime": 1779946461.460468,
+    "ast_hash": "98889bc9db84ed95e3b84a32f2365dd2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\forum\\threads\\route.ts": {
+    "mtime": 1779946461.4624689,
+    "ast_hash": "4ff4893a3a2029710c0557ee6d0099f8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\lfg\\queue\\route.ts": {
+    "mtime": 1779652714.5728815,
+    "ast_hash": "d62cfeff25c3643073d04fe7c57cc7a5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\lfg\\queue\\status\\route.ts": {
+    "mtime": 1779398089.2947948,
+    "ast_hash": "60cdad20b325493df03c3c5e6fd8f711",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\lfg\\suggest-mates\\route.ts": {
+    "mtime": 1779946216.1196446,
+    "ast_hash": "fd6f6d639766544f39aaa0d8b9cd32eb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\lfg\\[id]\\route.ts": {
+    "mtime": 1779398089.291816,
+    "ast_hash": "87dddefbf3e0022911a427f985ade9cf",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\lfg\\[id]\\comments\\route.ts": {
+    "mtime": 1779398111.9002852,
+    "ast_hash": "0356e06489e1ef002bcdfd9702b3dd83",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\lfg\\[id]\\join\\route.ts": {
+    "mtime": 1779652714.5717785,
+    "ast_hash": "e28de693ebf630e283587ef67bcc2ae6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\lfg\\[id]\\respond\\route.ts": {
+    "mtime": 1779946461.4644694,
+    "ast_hash": "44565c9912bc459a69d7eae626ab28b1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\lfg-assist\\route.ts": {
+    "mtime": 1779946216.1176462,
+    "ast_hash": "3656680a3f9d6439db3439012ae239e2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\linked-accounts\\route.ts": {
+    "mtime": 1779398089.2967958,
+    "ast_hash": "f30c5fac6a6781d965a0f22f3e326d8f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\moderate\\route.ts": {
+    "mtime": 1779946216.1216414,
+    "ast_hash": "0eaecec226fa5b107079939f4863fc94",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\news\\[slug]\\comments\\route.ts": {
+    "mtime": 1779946461.4674685,
+    "ast_hash": "e581a6f63d895ff7a343cbd0af35f786",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\notifications\\route.ts": {
+    "mtime": 1779398089.298795,
+    "ast_hash": "bc7c2e632b813233ae7fac9ea1ebef77",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\notifications\\[id]\\route.ts": {
+    "mtime": 1779398111.9024124,
+    "ast_hash": "8d82c503ee9963f6eb90275f9b71cc00",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\posts\\[id]\\comments\\route.ts": {
+    "mtime": 1779662207.2806284,
+    "ast_hash": "28b7676717e45fdc69df014042ddd431",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\posts\\[id]\\like\\route.ts": {
+    "mtime": 1779946457.4242582,
+    "ast_hash": "3fa784a6be60f18bd67bfadd0e4ba716",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\posts\\[id]\\reactions\\route.ts": {
+    "mtime": 1779946461.4949594,
+    "ast_hash": "75b6bac8d98b099be5c06d35c18f7f2b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\profile\\route.ts": {
+    "mtime": 1779398111.9029427,
+    "ast_hash": "5a36bceadfcae3eb09c0d9a353b8d486",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\push\\subscribe\\route.ts": {
+    "mtime": 1779398089.3018165,
+    "ast_hash": "e773a91b829dee7d105d0e6738acdc16",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\push\\test\\route.ts": {
+    "mtime": 1779398089.3018165,
+    "ast_hash": "631d183b8c493767499a57f75f810ad5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\reports\\route.ts": {
+    "mtime": 1779946216.1236444,
+    "ast_hash": "c994803af5ace840c21fa676d09ff180",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\skill-assess\\route.ts": {
+    "mtime": 1779946216.1251547,
+    "ast_hash": "f82430aeafb796f4ba832740cc6ff65c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\smart-replies\\route.ts": {
+    "mtime": 1779946216.1271677,
+    "ast_hash": "84a2ce20333fe4f23e9f421279acb577",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\tournament-summary\\route.ts": {
+    "mtime": 1779946216.1496773,
+    "ast_hash": "b30ccaacd158d5dc5071b610b5491cdb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\tournaments\\[slug]\\checkin\\route.ts": {
+    "mtime": 1779946461.4984689,
+    "ast_hash": "8a3273ff3f1c1f7bc1c5f37bd791da87",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\tournaments\\[slug]\\register\\route.ts": {
+    "mtime": 1779946461.500469,
+    "ast_hash": "e4497b4ad6fe3ac80444d1d2e5ca3c6b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\translate\\route.ts": {
+    "mtime": 1779946216.1516774,
+    "ast_hash": "0a61992a9349b5dbd05e9cf57addd6be",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\users\\route.ts": {
+    "mtime": 1779398128.279729,
+    "ast_hash": "0af6480cf5e8c8eaf54a0177617cd8a5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\api\\voice\\token\\route.ts": {
+    "mtime": 1779946461.5024693,
+    "ast_hash": "da56b37892369e92a3e5305ba365bc1c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\auth\\layout.tsx": {
+    "mtime": 1779946461.5056658,
+    "ast_hash": "d4d334ea33e2fe1da98de31d8080bbdf",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\auth\\callback\\route.ts": {
+    "mtime": 1779946461.5044692,
+    "ast_hash": "c22bb12fe8b78c5c6662ee25a3238c12",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\auth\\clear\\route.ts": {
+    "mtime": 1779167678.0526435,
+    "ast_hash": "5782fc971484b64737bc8237128b41d4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\auth\\login\\actions.ts": {
+    "mtime": 1779946461.524573,
+    "ast_hash": "d9be6b767cd88b855a474fcdd069d01f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\auth\\login\\login-form.tsx": {
+    "mtime": 1779946461.5255811,
+    "ast_hash": "57d1b2213ff90a8ff6e7d039a4bc705b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\auth\\login\\page.tsx": {
+    "mtime": 1779946461.5275936,
+    "ast_hash": "6f9fa552605c16d0e5e1cec031ebcb63",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\auth\\logout\\route.ts": {
+    "mtime": 1779038982.9549553,
+    "ast_hash": "bd8d3d393586e3a05d86deaf6021ddec",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\auth\\signup\\page.tsx": {
+    "mtime": 1779426808.3428028,
+    "ast_hash": "d28e36870679eaab466d4d756791f9f5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\clans\\actions.ts": {
+    "mtime": 1779946461.5430956,
+    "ast_hash": "ae185a1ee49abdaff60bb4dffd205c06",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\clans\\page.tsx": {
+    "mtime": 1779946461.5476532,
+    "ast_hash": "2e9736f78ebe8fda01135e82305e9858",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\clans\\new\\new-clan-form.tsx": {
+    "mtime": 1779946461.5446486,
+    "ast_hash": "85f9041244495c059a75d5c439296d99",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\clans\\new\\page.tsx": {
+    "mtime": 1779946461.5466602,
+    "ast_hash": "6ed64cb697875f9ec926be9190a23b5a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\clans\\[slug]\\clan-join-button.tsx": {
+    "mtime": 1779946461.528586,
+    "ast_hash": "c82e6e70afcd0a7e550977abcfe472e3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\clans\\[slug]\\clan-kick-button.tsx": {
+    "mtime": 1779946461.530595,
+    "ast_hash": "8d45d03b3712bed710d4a495295bede6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\clans\\[slug]\\clan-request-actions.tsx": {
+    "mtime": 1779946461.5395885,
+    "ast_hash": "9d0e4fb7722a51e4fca9a0140a8c5cdc",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\clans\\[slug]\\manage-actions.ts": {
+    "mtime": 1779946461.541092,
+    "ast_hash": "9ba93782ba167edf78ce83ef33fa28a8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\clans\\[slug]\\page.tsx": {
+    "mtime": 1779946461.5430956,
+    "ast_hash": "aba344b9130191f5a2571c62731885a0",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\feed\\actions.ts": {
+    "mtime": 1779965327.1622622,
+    "ast_hash": "6697d43ff3ff6e7777f405d2ad011df9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\feed\\feed-client.tsx": {
+    "mtime": 1779946461.5516527,
+    "ast_hash": "50df9d4a4d9d9ec4e7402e914d977058",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\feed\\page.tsx": {
+    "mtime": 1779965327.1745446,
+    "ast_hash": "d823733b4be01573368cdfd4c4600f04",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\feed\\[id]\\page.tsx": {
+    "mtime": 1779965325.879137,
+    "ast_hash": "c148e58048e6c5264b3e895f391e092a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\feed\\[id]\\post-comments.tsx": {
+    "mtime": 1779662246.599316,
+    "ast_hash": "84cd075d1c716e6908b46a7b30417558",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\feed\\[id]\\post-detail-actions.tsx": {
+    "mtime": 1779661607.4080727,
+    "ast_hash": "9d34b268cb3b34d85e55a0309677c3f2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\feed\\[id]\\post-reactions.tsx": {
+    "mtime": 1779946461.5496602,
+    "ast_hash": "0acb94238fe367d55fa7b8667f690269",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\forum\\page.tsx": {
+    "mtime": 1779946461.570021,
+    "ast_hash": "616fd5999a7d9e31caaa05417768995f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\forum\\[category]\\page.tsx": {
+    "mtime": 1779946461.5690095,
+    "ast_hash": "cfea277cb17e0fdc58a921843169b3eb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\forum\\[category]\\[thread]\\page.tsx": {
+    "mtime": 1779946461.5670102,
+    "ast_hash": "ad6ee40a3a48d6aa9498f6166780694d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\forum\\[category]\\[thread]\\reply-form.tsx": {
+    "mtime": 1779123405.1715379,
+    "ast_hash": "cd47a8ec926bf19f9368a2531daa6766",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\forum\\[category]\\[thread]\\thread-client.tsx": {
+    "mtime": 1779946461.5680182,
+    "ast_hash": "3fe08b151c2279335285c548e4f476fe",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\free-pc-games\\page.tsx": {
+    "mtime": 1779946461.5840154,
+    "ast_hash": "87dae2fb90ae16c677af7a6fadc29243",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\free-pc-games\\voice-test\\page.tsx": {
+    "mtime": 1779946461.5850148,
+    "ast_hash": "e9c6394e7e6162afbd7c78824c81a458",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\free-pc-games\\[id]\\admin-url-editor.tsx": {
+    "mtime": 1779946461.5730126,
+    "ast_hash": "634a6ad3b0f24c1d5dacc2c36be5d069",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\free-pc-games\\[id]\\delete-button.tsx": {
+    "mtime": 1779946461.5740128,
+    "ast_hash": "1c04266d829d39281c301ff9e1058326",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\free-pc-games\\[id]\\download-button.tsx": {
+    "mtime": 1779946461.5820138,
+    "ast_hash": "62f4da11be890e97c0d595af3b5b904e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\free-pc-games\\[id]\\page.tsx": {
+    "mtime": 1779946461.583014,
+    "ast_hash": "f7a879766e245fc6a9192450ae5062c5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\games\\page.tsx": {
+    "mtime": 1779946461.5900595,
+    "ast_hash": "0387a04ea6cdbc0801290c445419df2a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\games\\[slug]\\page.tsx": {
+    "mtime": 1779946461.5890603,
+    "ast_hash": "a514076852e28d433d5b89278bdc17ab",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\games\\[slug]\\discordvoicechannels\\page.tsx": {
+    "mtime": 1779946461.5870588,
+    "ast_hash": "adf73c6ae8fd78bd55ac696139e64c2d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\games\\[slug]\\lobby\\page.tsx": {
+    "mtime": 1779968168.0449932,
+    "ast_hash": "2b2c1460dadd76b628e26b52007ffc3f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\leaderboard\\page.tsx": {
+    "mtime": 1779427170.8870332,
+    "ast_hash": "27aff5a30237e0bf30f717d9904da9e8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\lfg\\lfg-filters.tsx": {
+    "mtime": 1779946461.6152325,
+    "ast_hash": "02e321ed393b3e15c9fa848b17bb18b2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\lfg\\page.tsx": {
+    "mtime": 1779965335.2151172,
+    "ast_hash": "6812d491b06e8b7a754413be8dd26d5a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\lfg\\new\\actions.ts": {
+    "mtime": 1779946461.631603,
+    "ast_hash": "8dade1ce3612cf8ee41e057c1a3f8730",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\lfg\\new\\new-lfg-form.tsx": {
+    "mtime": 1779946461.6332586,
+    "ast_hash": "994d2333c572240960b31e18a8cfd323",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\lfg\\new\\page.tsx": {
+    "mtime": 1779652690.3460143,
+    "ast_hash": "0fb176a9043fe0db1753cde982d87fe8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\lfg\\[id]\\join-request-form.tsx": {
+    "mtime": 1779398111.9056013,
+    "ast_hash": "908d3775b46636ab53720928cee09109",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\lfg\\[id]\\page.tsx": {
+    "mtime": 1779965327.2686152,
+    "ast_hash": "65f46ce371b7151ae2600aa10fce5e4b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\lfg\\[id]\\teammate-suggestions.tsx": {
+    "mtime": 1779398089.312806,
+    "ast_hash": "9bf5d4ab2d656bba1fef7fb5478df380",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\messages\\actions.ts": {
+    "mtime": 1779946461.6377673,
+    "ast_hash": "f518d93d92bf8957acf8d123fd2581f7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\messages\\page.tsx": {
+    "mtime": 1779946461.6387684,
+    "ast_hash": "c80ed307c157d3f1d8dac3e8eec150b2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\messages\\[id]\\conversation-client.tsx": {
+    "mtime": 1779946461.6367688,
+    "ast_hash": "4a0ef430987b6068b64277fef2874257",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\messages\\[id]\\page.tsx": {
+    "mtime": 1779398089.3198063,
+    "ast_hash": "fc5d979baac6cad413675321c4c95557",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\news\\page.tsx": {
+    "mtime": 1779946461.642768,
+    "ast_hash": "ac8111d28638bc3358a1d06b0d0a20f7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\news\\[slug]\\news-comments-client.tsx": {
+    "mtime": 1779946461.6407688,
+    "ast_hash": "c89ae8ef4cfdd765c58f8c5965062735",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\news\\[slug]\\page.tsx": {
+    "mtime": 1779946461.6417682,
+    "ast_hash": "d090d7a15d54b636b2a554107f1d3374",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\profile\\[username]\\page.tsx": {
+    "mtime": 1779946461.6481051,
+    "ast_hash": "25cd7c3e34b18d8d4a3c006317ed7e6b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\profile\\[username]\\[postId]\\page.tsx": {
+    "mtime": 1779965335.297568,
+    "ast_hash": "06ba75815f208182f5534b55eae67524",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\rooms\\new\\close-room-button.tsx": {
+    "mtime": 1779525731.2920659,
+    "ast_hash": "ba82ed47aecc4d82f6219f165071ff3e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\rooms\\new\\copy-room-code-button.tsx": {
+    "mtime": 1779523343.4880984,
+    "ast_hash": "f42a99c94aa03bb40b62f97483bb5030",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\rooms\\new\\create-room-widget.tsx": {
+    "mtime": 1779526288.9058108,
+    "ast_hash": "28eddf38f0d7410facc368e8b7449f35",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\rooms\\new\\new-room-form.tsx": {
+    "mtime": 1779525960.2017782,
+    "ast_hash": "ab26bb37d2f30a9e5f02a45dc03789ac",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\rooms\\new\\page.tsx": {
+    "mtime": 1779652690.348966,
+    "ast_hash": "fb134eeb899806ddff6d6ae13bc0b217",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\rooms\\[code]\\page.tsx": {
+    "mtime": 1779525084.9232495,
+    "ast_hash": "33e1df4492c2aa84ccfbf86fca079781",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\rooms\\[code]\\room-chat.tsx": {
+    "mtime": 1779524163.6394837,
+    "ast_hash": "f90b9bad6ca7df1e79d8f1710ad4927c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\rooms\\[code]\\room-elapsed.tsx": {
+    "mtime": 1779524180.103117,
+    "ast_hash": "d99ca8eaf910851862881c47b76e8f2e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\search\\page.tsx": {
+    "mtime": 1779946461.6638434,
+    "ast_hash": "05e61c79657faaf0c25cc56fae0be84f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\settings\\page.tsx": {
+    "mtime": 1779426468.571085,
+    "ast_hash": "23acaf1db7ce384786c3013bbf09393c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\settings\\settings-form.tsx": {
+    "mtime": 1779398111.9096713,
+    "ast_hash": "331f63306fad12e7958dd3f384fc5e04",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\shop\\page.tsx": {
+    "mtime": 1779946461.675825,
+    "ast_hash": "d0c6e9d723f5c996d668f044b562e7a4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\shop\\[slug]\\page.tsx": {
+    "mtime": 1779721473.4374945,
+    "ast_hash": "f2e778d6a1588faf94536784867cae6d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\tournaments\\page.tsx": {
+    "mtime": 1779946461.694531,
+    "ast_hash": "666b43ffcc171e9f65d3d8581e1f52d4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\tournaments\\[slug]\\actions.ts": {
+    "mtime": 1779946461.676825,
+    "ast_hash": "6e483f954c9980909fb81416b4abb302",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\tournaments\\[slug]\\page.tsx": {
+    "mtime": 1779946461.6785295,
+    "ast_hash": "b03126cd8a909a7374e342ff372a1087",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\app\\tournaments\\[slug]\\tournament-actions.tsx": {
+    "mtime": 1779946461.679036,
+    "ast_hash": "e97bad913e47fe6ddf7f712604c98af3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\admin-grant-coins.tsx": {
+    "mtime": 1779644259.2495258,
+    "ast_hash": "590b4f4e9ba49fa1bc483879b2aa67ab",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\avatar-sync.tsx": {
+    "mtime": 1779155693.8963468,
+    "ast_hash": "7d98ce75ad0b35530d2d5877f59a487b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\avatar-upload.tsx": {
+    "mtime": 1779537516.3552265,
+    "ast_hash": "a9cd5eaf731fada794696fa858b3f1e1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\banner-upload.tsx": {
+    "mtime": 1779398219.6149702,
+    "ast_hash": "6ffff72c2629468700d5babcb8817ef3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\chatbot-widget.tsx": {
+    "mtime": 1779946461.7099836,
+    "ast_hash": "6b59130ff0f2e1caca57df0d7f075045",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\discord-voice-dashboard.tsx": {
+    "mtime": 1779946461.7109897,
+    "ast_hash": "9372b592d2cb3eaac2dae49bd5481a4e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\favorite-game-button.tsx": {
+    "mtime": 1779398089.340795,
+    "ast_hash": "a41733daeb3baba42c70ccfa4aa87a32",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\find-match-button.tsx": {
+    "mtime": 1779398089.3428025,
+    "ast_hash": "14d6340bd5994f82826f11b677ec2f07",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\follow-button.tsx": {
+    "mtime": 1779201835.7629595,
+    "ast_hash": "a6a2ba48e297f943a46046bdf28b9587",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\game-card.tsx": {
+    "mtime": 1779543182.109807,
+    "ast_hash": "a59569736480daafc137f07c32531733",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\game-icon.tsx": {
+    "mtime": 1779398089.3437967,
+    "ast_hash": "31362ec8cc05d6be424e7c49994ad05f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\google-sign-in-button.tsx": {
+    "mtime": 1779946461.7159874,
+    "ast_hash": "9a33568b333cee1b26b951eefde72865",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\home-favorite-lobbies.tsx": {
+    "mtime": 1779946461.7269924,
+    "ast_hash": "1c9609d381ee7933b85f7e3b1519c7cc",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\home-notifications-widget.tsx": {
+    "mtime": 1779946461.7289946,
+    "ast_hash": "b234cfcfbf7ed846d85da87266c9875b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\home-search-widget.tsx": {
+    "mtime": 1779179276.1019335,
+    "ast_hash": "fe2cda588277f5ddc3b3e3721c71f2ed",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\image-crop-modal.tsx": {
+    "mtime": 1779129673.5867493,
+    "ast_hash": "e235b4ae926a5a72dabe926323d785af",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\invite-button.tsx": {
+    "mtime": 1779398089.3437967,
+    "ast_hash": "a5834c554b03021b0025cc93113c19e0",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\lfg-comments.tsx": {
+    "mtime": 1779398111.9146712,
+    "ast_hash": "e300cab92beae203b6f4eea63c42961d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\lfg-join-requests.tsx": {
+    "mtime": 1779946461.7319918,
+    "ast_hash": "31a5eb253c2442ebb1cb48fc66de9f76",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\linked-accounts-section.tsx": {
+    "mtime": 1779398089.346826,
+    "ast_hash": "0091517a675de93de4bece153f9b1b38",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\logout-button.tsx": {
+    "mtime": 1779174811.3637848,
+    "ast_hash": "79e8bfd2e2d83dfa0b8ef7bc2199ea66",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\mention-text.tsx": {
+    "mtime": 1779398128.2822382,
+    "ast_hash": "f77e627e07f406fd087256a0939ad492",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\message-button.tsx": {
+    "mtime": 1779398089.346826,
+    "ast_hash": "defe810b07818904d5c03c4b8565151a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\notification-inbox.tsx": {
+    "mtime": 1779134994.4302409,
+    "ast_hash": "930dc35b9849e4f7b0f8d1606b8fdc09",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\page-header.tsx": {
+    "mtime": 1779425050.18739,
+    "ast_hash": "87bb7796cdf7aaf1a02715cad2557335",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\player-card.tsx": {
+    "mtime": 1779543137.5589833,
+    "ast_hash": "78316c771e08a96dbfefcb51ab123c19",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\post-content.tsx": {
+    "mtime": 1779946461.7365105,
+    "ast_hash": "c9eb4402302a27fd3798729f674df15b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\profile-display-name.tsx": {
+    "mtime": 1779176542.2632537,
+    "ast_hash": "9b6b379e7b5cb630448b62a5217af2c0",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\profile-favorite-games.tsx": {
+    "mtime": 1779398089.348806,
+    "ast_hash": "d0c7fedc7d92e1a5948f4114650c6b83",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\profile-feed.tsx": {
+    "mtime": 1779398128.2832465,
+    "ast_hash": "0353b5f1ceb834e2a7d98931e35e442c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\profile-follow-client.tsx": {
+    "mtime": 1779652690.3411534,
+    "ast_hash": "14ff6450976a0e293280181e7bfaaa4f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\profile-game-rows.tsx": {
+    "mtime": 1779652690.340166,
+    "ast_hash": "6e3e697db2ade291b5717a50484c69c8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\profile-linked-accounts.tsx": {
+    "mtime": 1779398089.3497958,
+    "ast_hash": "ee0299b165115718e26bfe724a2824a7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\profile-social-links.tsx": {
+    "mtime": 1779398089.3497958,
+    "ast_hash": "20070665ee09b4ca1ba89aa57684e8e1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\profile-stats.tsx": {
+    "mtime": 1779652690.340166,
+    "ast_hash": "5d4e71118e30b68a9f6fc0f72bbaea3f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\profile-summary-right.tsx": {
+    "mtime": 1779650258.7251117,
+    "ast_hash": "3b7a3f864cb4f14c3a3b688a289b34e8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\profile-tabs.tsx": {
+    "mtime": 1779652690.3421206,
+    "ast_hash": "0f4e5f769c202bb32984daa62573114a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\profile-xp.tsx": {
+    "mtime": 1779398089.350808,
+    "ast_hash": "98841c5f08acacdd7af5c77605fbbb62",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\push-bell.tsx": {
+    "mtime": 1779398089.351808,
+    "ast_hash": "2919d0c4dc6b84bd2883a3621b2a049e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\pwa-install-floater.tsx": {
+    "mtime": 1779467209.7494602,
+    "ast_hash": "dd377286e389e4b431a66849a9ba2c0f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\report-button.tsx": {
+    "mtime": 1779398089.3528042,
+    "ast_hash": "4806d4354c911138df5a4eaaef913631",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\role-badge.tsx": {
+    "mtime": 1779180766.350314,
+    "ast_hash": "3fa446bdf035a03146d8df2cbd86cf34",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\skill-assessment.tsx": {
+    "mtime": 1779398111.9166722,
+    "ast_hash": "b84983f5e3da890ccb98e6340cc7407a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\turnstile.tsx": {
+    "mtime": 1779946461.739508,
+    "ast_hash": "2ec181f40368706b491aa33c5bdc1c74",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\user-avatar.tsx": {
+    "mtime": 1779155110.6734254,
+    "ast_hash": "df3c3a8d106f2f705a74811673674ce6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\verified-badge.tsx": {
+    "mtime": 1779398089.354821,
+    "ast_hash": "8ace44f59c81d9ea7332762ec4f58eff",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\voice-room.tsx": {
+    "mtime": 1779946461.739508,
+    "ast_hash": "2625654e0ba3390d7b325f675a8cda79",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\youtube-embed.tsx": {
+    "mtime": 1779398089.354821,
+    "ast_hash": "dfb2ff3143bc40b12c580dfa3e316112",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\admin\\admin-edit-bar.tsx": {
+    "mtime": 1779973341.5240574,
+    "ast_hash": "a3fbbb13c94a69850e7fc1b9362b01b7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\admin\\edit-mode-context.tsx": {
+    "mtime": 1779973312.7380009,
+    "ast_hash": "e72de81b5af24c7fd51becdc587ede0a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\admin\\editable-image.tsx": {
+    "mtime": 1779973396.652855,
+    "ast_hash": "5ce7fd3fabcc68f52670f1c593ae06aa",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\admin\\editable-link.tsx": {
+    "mtime": 1779973418.7945871,
+    "ast_hash": "137e5d35b1c52422c295eb90abb99591",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\admin\\editable-text.tsx": {
+    "mtime": 1779973674.639453,
+    "ast_hash": "c3fcbb59ecdc5c90189095a1c4eb1c3b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\clans\\clan-finder-board.tsx": {
+    "mtime": 1779655422.0197005,
+    "ast_hash": "bb4b29152afc5caf17397112a89d6933",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\clans\\clan-store.ts": {
+    "mtime": 1779655422.0226312,
+    "ast_hash": "213ad96658f1e873c6639c8a7d28f3b2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\clans\\clans-hub.tsx": {
+    "mtime": 1779655422.0216541,
+    "ast_hash": "220c44c9476a1607ab719368f6238856",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\clans\\my-clan-console.tsx": {
+    "mtime": 1779655422.0206766,
+    "ast_hash": "a31f03365f31b2ece6911cdb995eae91",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\forum\\category-card.tsx": {
+    "mtime": 1779946461.7129889,
+    "ast_hash": "c06e58a410a660e6410fe88bc367f986",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\forum\\forum-search.tsx": {
+    "mtime": 1779398111.9106712,
+    "ast_hash": "8893da0a77afd498d07731f2520b50b0",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\forum\\forum-sidebar.tsx": {
+    "mtime": 1779946461.7149916,
+    "ast_hash": "a700d3081445af1221fbfd0dc8fa70e1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\forum\\forum-tabs.tsx": {
+    "mtime": 1779398111.9126751,
+    "ast_hash": "eb542a4c7288e1f419fc576cecb36bc9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\forum\\trending-strip.tsx": {
+    "mtime": 1779398111.9126751,
+    "ast_hash": "b8142dd92b5a3bc4d4fd41ea3f033367",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\layout\\announcements-link.tsx": {
+    "mtime": 1779398111.9136724,
+    "ast_hash": "62f8bbd62feb5a63f910b01e442813d5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\layout\\client-chrome.tsx": {
+    "mtime": 1779973445.5396197,
+    "ast_hash": "4f6a7ddf24e1627bc60ad2e98d85228b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\layout\\messages-link.tsx": {
+    "mtime": 1779467234.7697177,
+    "ast_hash": "1b3585149b88c6f2e72d00191f91bab0",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\layout\\mobile-bottom-nav.tsx": {
+    "mtime": 1779652690.3382037,
+    "ast_hash": "2fbbe1602c6c24c88cc7578caa900973",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\layout\\mobile-nav.tsx": {
+    "mtime": 1779398089.344797,
+    "ast_hash": "2c127f3684c84c8c790326809de1ca93",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\layout\\nav-links.ts": {
+    "mtime": 1779398089.344797,
+    "ast_hash": "44451068413cc002305a62f547330c93",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\layout\\notification-bell.tsx": {
+    "mtime": 1779398089.3457952,
+    "ast_hash": "0c1f24826b62f795a31793c357b51426",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\layout\\site-footer.tsx": {
+    "mtime": 1779652690.3382037,
+    "ast_hash": "0177784f8091981e9c60c9ce460c5aae",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\layout\\site-header.tsx": {
+    "mtime": 1779946461.7309935,
+    "ast_hash": "bb03b0de6764759f613b3abae87c0764",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\layout\\user-menu.tsx": {
+    "mtime": 1779652690.336262,
+    "ast_hash": "ca839c02bbfb248fe13f777bfdbb4b7b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\lobby\\lobby-box-open-modal.tsx": {
+    "mtime": 1779946461.7345004,
+    "ast_hash": "17a15bd081c71ef3d62eb2893e4a33d0",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\lobby\\lobby-canvas.tsx": {
+    "mtime": 1779692739.4433506,
+    "ast_hash": "f722dd7d645a206c0684328ce7c1564f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\lobby\\lobby-currency-strip.tsx": {
+    "mtime": 1779968203.1797867,
+    "ast_hash": "28177baa7d2939407fde0a19998795f3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\lobby\\lobby-daily-bonus.tsx": {
+    "mtime": 1779644033.977373,
+    "ast_hash": "3cce8a92c4686a445d33356c5aac7151",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\lobby\\lobby-events.tsx": {
+    "mtime": 1779726087.1772199,
+    "ast_hash": "e8b73873302b8707854d7926632ee61b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\lobby\\lobby-fire-effect.tsx": {
+    "mtime": 1779693264.7650924,
+    "ast_hash": "70fb66067f9cfffb638ba282aacbcbf6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\lobby\\lobby-hud.tsx": {
+    "mtime": 1779968192.0948753,
+    "ast_hash": "23bc252f0d998986b487554293823fc3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\lobby\\lobby-inventory.tsx": {
+    "mtime": 1779715683.1522627,
+    "ast_hash": "de33cde0688732fb004f23e247324082",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\lobby\\lobby-item-tooltip.tsx": {
+    "mtime": 1779693951.758033,
+    "ast_hash": "3bc778c926353a5aa1242546cf9d636f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\lobby\\lobby-orientation.tsx": {
+    "mtime": 1779532017.3585088,
+    "ast_hash": "001413fb7252201240e55c78da166136",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\lobby\\lobby-player-card.tsx": {
+    "mtime": 1779607707.3119557,
+    "ast_hash": "8973081cd29869b1745f740a98467871",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\lobby\\lobby-shell.tsx": {
+    "mtime": 1779463924.6176782,
+    "ast_hash": "40d64f8e41ee2b4abcf7f301c84a39d8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\lobby\\lobby-stage.tsx": {
+    "mtime": 1779946461.7355092,
+    "ast_hash": "343fc958f78aff128e1278852c30ff09",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\lobby\\lobby-weapon-stand.tsx": {
+    "mtime": 1779720809.600574,
+    "ast_hash": "dc674b6dbc47fa2a64f88049dd363d07",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\profile-lobby\\lobby-mount.tsx": {
+    "mtime": 1779445062.5230672,
+    "ast_hash": "eaf91ff8d6844b4a12b1700f7bb7f689",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\profile-lobby\\lobby-scene.tsx": {
+    "mtime": 1779444504.176907,
+    "ast_hash": "51c84ac4f64f725b24777bcb9e60d032",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\profile-lobby\\profile-lobby.tsx": {
+    "mtime": 1779444229.4247313,
+    "ast_hash": "441097fafc54687d19c03876ce0048c6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\shop\\shop-crates.tsx": {
+    "mtime": 1779967860.2284546,
+    "ast_hash": "abda3e06972caa83fd6a786e3cd526af",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\shop\\shop-grid.tsx": {
+    "mtime": 1779647191.4501965,
+    "ast_hash": "bad08d899dabb469697995a8e82dfff1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\shop\\shop-item-card.tsx": {
+    "mtime": 1779946461.7385147,
+    "ast_hash": "b7237473128796ff706ae869fd12057d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\tournament\\bracket.tsx": {
+    "mtime": 1779038983.0915933,
+    "ast_hash": "724f6843c78d02ad044f756ac9e6626c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\tournament\\match-summary.tsx": {
+    "mtime": 1779398089.3538105,
+    "ast_hash": "5e70c866ef3202c0751dd8504775c79e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\avatar.tsx": {
+    "mtime": 1779038983.0970228,
+    "ast_hash": "8b41492907a73176027427a3f0fd2302",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\badge.tsx": {
+    "mtime": 1779038983.100078,
+    "ast_hash": "e4ec840217040d5630ee6ed7213a1d72",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\button.tsx": {
+    "mtime": 1779038983.1030073,
+    "ast_hash": "a592c023f92e37d8ddd2891224501932",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\card.tsx": {
+    "mtime": 1779038983.105929,
+    "ast_hash": "77a10bd948ca424972a28e704a3df604",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\chevron-button.tsx": {
+    "mtime": 1779543088.5005841,
+    "ast_hash": "27116a598b7be0e519f2c188c1d40d45",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\dialog.tsx": {
+    "mtime": 1779038983.1078901,
+    "ast_hash": "d9618a63d34473ec512321cc12d43692",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\diamond-accent.tsx": {
+    "mtime": 1779398111.9176729,
+    "ast_hash": "1aa206bc8963a8ee8571e3349d2a6e90",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\display-heading.tsx": {
+    "mtime": 1779398111.9176729,
+    "ast_hash": "4cbd812389faba1489c791d874fcf1a0",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\dropdown-menu.tsx": {
+    "mtime": 1779038983.1108532,
+    "ast_hash": "e6107cbb2088437e76a858f75b5a0280",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\empty-state.tsx": {
+    "mtime": 1779398111.9186714,
+    "ast_hash": "66acfcffb09856b39e68b27322373ac1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\eyebrow.tsx": {
+    "mtime": 1779398111.9186714,
+    "ast_hash": "0b218dabf688eb2b43f2a534d831100d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\glow-dot.tsx": {
+    "mtime": 1779398111.9186714,
+    "ast_hash": "4c8505b4ea8b317dc6620c83ddf21555",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\gradient-border.tsx": {
+    "mtime": 1779398111.9196713,
+    "ast_hash": "df01f4ad4d740138f9f3c357de191509",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\gradient-text.tsx": {
+    "mtime": 1779398111.9196713,
+    "ast_hash": "6699f5f0ec109a89b72d4fcb4a9c2623",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\input.tsx": {
+    "mtime": 1779038983.1137905,
+    "ast_hash": "0607b02d99a2e92f9509223f36ccc6ec",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\label.tsx": {
+    "mtime": 1779038983.1173136,
+    "ast_hash": "a70440da86bfc6a07f15197cca48cb08",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\light-pillar.tsx": {
+    "mtime": 1779398111.9196713,
+    "ast_hash": "c6eeba1ea3f33e2ad82771731da599fb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\percent-badge.tsx": {
+    "mtime": 1779398111.9196713,
+    "ast_hash": "62cc75600eb9e0598039f77e0d68a0e9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\pill.tsx": {
+    "mtime": 1779532017.3575084,
+    "ast_hash": "91b027a7959478030dbe3b00844c43d1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\ribbon-tag.tsx": {
+    "mtime": 1779398111.9206705,
+    "ast_hash": "2b84710ad6e1edfe6f52cccaf0b93183",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\section-divider.tsx": {
+    "mtime": 1779398111.9206705,
+    "ast_hash": "b98f9c33cbf305da1cc76999ed77d74e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\section-header.tsx": {
+    "mtime": 1779398111.921673,
+    "ast_hash": "29015f9aded6551f39cd2066fe5297a2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\select.tsx": {
+    "mtime": 1779038983.1198554,
+    "ast_hash": "ab95f478cb74d1906b07425c15b124cc",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\separator.tsx": {
+    "mtime": 1779038983.1218085,
+    "ast_hash": "3de2dca3e47ab29c4b1f632671545628",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\sheet.tsx": {
+    "mtime": 1779038983.1257143,
+    "ast_hash": "43ad8bec991f7a28d2aa22d4f374e6b7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\skeleton.tsx": {
+    "mtime": 1779038983.1286726,
+    "ast_hash": "0e6e825c43d858d98c9903f4da975382",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\sonner.tsx": {
+    "mtime": 1779038983.1306305,
+    "ast_hash": "f46214bc2a6a5153a6e04fad523d5587",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\stat-chip.tsx": {
+    "mtime": 1779398111.921673,
+    "ast_hash": "1b7d0656f48687eaaa53f5737d0a6bed",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\stat-tile.tsx": {
+    "mtime": 1779398111.921673,
+    "ast_hash": "ca2acc70daf8c07e1593aa88804d54f4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\tab-bar.tsx": {
+    "mtime": 1779398111.921673,
+    "ast_hash": "9e1b560d2c378439c08d873cef28c959",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\tabs.tsx": {
+    "mtime": 1779038983.1335604,
+    "ast_hash": "429035bc858475cd3bcedbb08a5ba8da",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\components\\ui\\textarea.tsx": {
+    "mtime": 1779038983.1370254,
+    "ast_hash": "d448d2a90e48542e51b93a1189127bf2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\db\\client.ts": {
+    "mtime": 1779398128.2832465,
+    "ast_hash": "05a3dce2eba73b80a17c6037b4eb8551",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\db\\schema.ts": {
+    "mtime": 1779949518.6570835,
+    "ast_hash": "52d974015f33aded67125e2a72eed0a7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\db\\seed.ts": {
+    "mtime": 1779949564.9057045,
+    "ast_hash": "e5a439b5ec836105ecbc60356ed92924",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\db\\migrations\\0000_third_gamma_corps.sql": {
+    "mtime": 1779946461.7415595,
+    "ast_hash": "bec761e565e9f56ab999a4f01805157a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\db\\migrations\\meta\\0000_snapshot.json": {
+    "mtime": 1779946461.7445073,
+    "ast_hash": "e9d2bc3a72c58a10cbb43e1cfaec04cc",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\db\\migrations\\meta\\_journal.json": {
+    "mtime": 1779946461.7445073,
+    "ast_hash": "e6d0aa5e614f04e508b7751881897c0a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\admin.ts": {
+    "mtime": 1779797993.7487714,
+    "ast_hash": "b60b90e70d49424b8958217888c2af1b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\auth.ts": {
+    "mtime": 1779398241.007871,
+    "ast_hash": "7edbeddf9948a34cae9f522eb78b96b4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\badges.ts": {
+    "mtime": 1779398089.3558114,
+    "ast_hash": "bd633df234a6ba2dec6584cd04a92506",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\crop-image.ts": {
+    "mtime": 1779398089.3567977,
+    "ast_hash": "e15236f454c9fd2337bb6b5bca9f0b08",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\discord.ts": {
+    "mtime": 1779946461.7652314,
+    "ast_hash": "83b8fa392f674ac11971a868717bdd4e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\dm.ts": {
+    "mtime": 1779398089.3567977,
+    "ast_hash": "ccba59be0e69910d1d80546485c324c8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\forum-themes.ts": {
+    "mtime": 1779398111.9236732,
+    "ast_hash": "d5c0e2a6dc6f5b489336af7376b5a1b5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\gamification.ts": {
+    "mtime": 1779946457.3648722,
+    "ast_hash": "69bcbe247d2c15f78cf424dcf1ced262",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\mock-data.ts": {
+    "mtime": 1779652690.3392,
+    "ast_hash": "6ecb31e81848bddad417d966cd0d680d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\moderate.ts": {
+    "mtime": 1779398111.924671,
+    "ast_hash": "131e6b65ebec9bf58aee8d07a037723a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\push.ts": {
+    "mtime": 1779398089.3578117,
+    "ast_hash": "2fcdd8b66809750efbad83be44566a83",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\rate-limit.ts": {
+    "mtime": 1779946461.768227,
+    "ast_hash": "9a951f5b9f66046faf2a7fe7b6bc5557",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\site-content-client.ts": {
+    "mtime": 1779973322.9209025,
+    "ast_hash": "97bab09e715d97922a5409dbe30c9b93",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\site-content.ts": {
+    "mtime": 1779946461.7702386,
+    "ast_hash": "0f538f0d7803141e136707227622bedd",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\sounds.ts": {
+    "mtime": 1779135640.6784945,
+    "ast_hash": "838680c438db099081a39fd09797ba2b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\turnstile.ts": {
+    "mtime": 1779946461.7722375,
+    "ast_hash": "a082b66751a458a956ff787ade1dea66",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\types.ts": {
+    "mtime": 1779398089.3578117,
+    "ast_hash": "17f642ee33168abb72a2b856e5882ca4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\update-last-seen.ts": {
+    "mtime": 1779946457.3658721,
+    "ast_hash": "ecfb2c222d91a3d12f11004dc2259660",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\url.ts": {
+    "mtime": 1779538997.8394456,
+    "ast_hash": "f3b6adcf1dcb472499780fbba4863e8b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\utils.ts": {
+    "mtime": 1779038983.164768,
+    "ast_hash": "5a6fd53fdcf2be529e9cc0b718fde352",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\api\\guards.ts": {
+    "mtime": 1779946216.1791894,
+    "ast_hash": "12d40cb3eed5df5fa4f4bbbef6294d16",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\api\\json.ts": {
+    "mtime": 1779798039.0084548,
+    "ast_hash": "26107fc20feab85ba7b2566941bd3f0a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\events\\actions.ts": {
+    "mtime": 1779946461.7662272,
+    "ast_hash": "1fbb4ea5c5493829e52fd54daa9059c9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\events\\queries.ts": {
+    "mtime": 1779644587.0442913,
+    "ast_hash": "356a5ebfb25b38fb84aa5f1d090599e6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\lobby\\loadout-actions.ts": {
+    "mtime": 1779715610.5779715,
+    "ast_hash": "48f665412f04e2afc46ae32d6de9e2ee",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\lobby\\loadout-queries.ts": {
+    "mtime": 1779715615.1322205,
+    "ast_hash": "99230b56dc9ec155e9050a550eca6841",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\lobby\\loadout-storage.ts": {
+    "mtime": 1779640475.342915,
+    "ast_hash": "c08dcc02e21c74386227a445624adbe9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\lobby\\mock-hud.ts": {
+    "mtime": 1779646380.285637,
+    "ast_hash": "1d3a80fdd2a9deec533aee36b153944d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\shop\\actions.ts": {
+    "mtime": 1779946457.426662,
+    "ast_hash": "3662f53e7a008d248fb002a66903475f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\shop\\equip-actions.ts": {
+    "mtime": 1779946457.4276686,
+    "ast_hash": "1516f685d4d93aba09999544212a33ea",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\shop\\equip-queries.ts": {
+    "mtime": 1779688401.112426,
+    "ast_hash": "67efcf7723b10460acddd020dffea0b5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\shop\\queries.ts": {
+    "mtime": 1779648424.0568058,
+    "ast_hash": "7e70af4a2354c72c65b203c5733a12b4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\supabase\\admin.ts": {
+    "mtime": 1779797993.7487714,
+    "ast_hash": "961ff7ddae1669ff640f26497fe1e376",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\supabase\\client.ts": {
+    "mtime": 1779168063.1902635,
+    "ast_hash": "964b310f53e026f21eb1ff352786551e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\supabase\\middleware.ts": {
+    "mtime": 1779946461.7712383,
+    "ast_hash": "dac28640678f710dcd68d2464bf95ba6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\supabase\\server.ts": {
+    "mtime": 1779168055.9662912,
+    "ast_hash": "ffafd58f2bd9abc2a2e6b088f688c127",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\tournament\\generate-bracket.ts": {
+    "mtime": 1779038983.1849203,
+    "ast_hash": "f03e87a327d59d67bdf57938138ed245",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\wallet\\actions.ts": {
+    "mtime": 1779946457.4286706,
+    "ast_hash": "856c66d9f895d59863f1d8df653a42f8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\lib\\wallet\\queries.ts": {
+    "mtime": 1779643995.2723818,
+    "ast_hash": "89407186870a6bf2b20ead24f755bb30",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\types\\events.ts": {
+    "mtime": 1779725890.8931215,
+    "ast_hash": "165529c0228ac5ffd5961ae2545cddd2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\types\\lobby.ts": {
+    "mtime": 1779968180.8904152,
+    "ast_hash": "735516e100cba95a42165e2006f61b28",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\src\\types\\shop.ts": {
+    "mtime": 1779648407.490273,
+    "ast_hash": "a30f7d2750b130cd9583837a63785841",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\supabase\\migrations\\20260526_admin_currency_service_role.sql": {
+    "mtime": 1779946457.3673785,
+    "ast_hash": "d5cea90f13812b19fcf92d468906f9a5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\supabase\\migrations\\20260526_backend_performance_indexes.sql": {
+    "mtime": 1779946216.1811893,
+    "ast_hash": "57bde4171d747c8419c43fa309021177",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\supabase\\migrations\\20260526_backend_security_hardening_round2.sql": {
+    "mtime": 1779946457.3678863,
+    "ast_hash": "7493ae1260b7444ef2ccd219f581ea91",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\supabase\\migrations\\20260526_open_box_bundle_hardening.sql": {
+    "mtime": 1779799084.9538932,
+    "ast_hash": "a4d13e8ec647a99e6df04bea21939184",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\supabase\\migrations\\20260526_phase1_milestone1_infrastructure.sql": {
+    "mtime": 1779946461.773237,
+    "ast_hash": "8325dfa9e022a8d7d6a980705f297d4a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\supabase\\migrations\\20260526_phase3_clans.sql": {
+    "mtime": 1779946461.7742357,
+    "ast_hash": "0e8c372f5db0a6ad0f3e8916ad7b7b78",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\supabase\\migrations\\20260526_user_action_service_role.sql": {
+    "mtime": 1779946457.4296687,
+    "ast_hash": "eeff05660fb0c9366bcd4ab5b4a20b57",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\supabase\\migrations\\20260527_site_content.sql": {
+    "mtime": 1779946461.7822402,
+    "ast_hash": "4bdc55d334ebb69821f521a157a15b94",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\supabase\\migrations\\run-clans-migration.mjs": {
+    "mtime": 1779946461.7832382,
+    "ast_hash": "2188a2489eee14aca9917058c961f44b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\AGENTS.md": {
+    "mtime": 1779975116.71732,
+    "ast_hash": "6aa3ab270ee013ce0dfabc68cbd3549e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\CLAUDE.md": {
+    "mtime": 1779968390.2083752,
+    "ast_hash": "5c27369b226fcf2be8a6cfe52224e767",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\README.md": {
+    "mtime": 1779038794.070777,
+    "ast_hash": "a586b55a7100447ac3e064f8ae95e074",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\.claude\\skills\\run-gameroom\\SKILL.md": {
+    "mtime": 1779428352.8275068,
+    "ast_hash": "90aee120ae39de53d71495ea1a7e860c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\.planning\\PROJECT.md": {
+    "mtime": 1779946461.37235,
+    "ast_hash": "368e6adb724d940ed2880ec86cbd53e6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\.planning\\REQUIREMENTS.md": {
+    "mtime": 1779946461.3825269,
+    "ast_hash": "72519c479b5196fc1e2053ff0dfa4c04",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\.planning\\ROADMAP.md": {
+    "mtime": 1779946461.383531,
+    "ast_hash": "b076ef2b1d337a7b7526a11d16a309b6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\.planning\\STATE.md": {
+    "mtime": 1779946461.3850362,
+    "ast_hash": "2f086e11772343bd9d438a759e7ba332",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\.planning\\phases\\phase-1\\PLAN.md": {
+    "mtime": 1779946461.3910425,
+    "ast_hash": "bce0c7c2d31b1dc7eb0348b6306d41cf",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\.planning\\phases\\phase-2\\PLAN.md": {
+    "mtime": 1779946461.3930428,
+    "ast_hash": "2eb686a8ef9d30fa3f1280ba239a80fe",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\docs\\ARCHITECTURE.md": {
+    "mtime": 1779038806.956246,
+    "ast_hash": "6b13f911e40e23334fb71edd325b423f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\docs\\DATABASE.md": {
+    "mtime": 1779038806.959776,
+    "ast_hash": "75b1f57fb6f60b7a138a868b16186406",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\docs\\DEPLOYMENT.md": {
+    "mtime": 1779038806.9627054,
+    "ast_hash": "38b76878ce91bc1a10656fdb50d029c9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\docs\\FEATURES.md": {
+    "mtime": 1779946461.4071586,
+    "ast_hash": "7cbc92e5473be6df0cc274b3e3e0f0b2",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\pwa-install-floater.html": {
+    "mtime": 1779398111.8949773,
+    "ast_hash": "a563fbee40ce389521be33660005ec9d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\pwa-install-floater.README.md": {
+    "mtime": 1779398111.8944519,
+    "ast_hash": "6f417fa03e774afad225b055dd62f8c1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\.claude\\skills\\run-gameroom\\shots\\forum.png": {
+    "mtime": 1779428372.9731114,
+    "ast_hash": "b8ae691621c9fb21f71d94f9efbcbf00",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\.claude\\skills\\run-gameroom\\shots\\games.png": {
+    "mtime": 1779946198.6447344,
+    "ast_hash": "7440348cf2b29fd0416efa03ad8f3676",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\.claude\\skills\\run-gameroom\\shots\\games_pubg-mobile.png": {
+    "mtime": 1779428374.7912416,
+    "ast_hash": "cf0beb71f2094403597486cbeb596b23",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\.claude\\skills\\run-gameroom\\shots\\games_pubg-mobile_lobby.png": {
+    "mtime": 1779463939.12895,
+    "ast_hash": "26927b8aa003c61742fa1ec35f429d3b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\.claude\\skills\\run-gameroom\\shots\\home.png": {
+    "mtime": 1779428371.473094,
+    "ast_hash": "25b4711b9965dd579fcb87fdc4769797",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\.claude\\skills\\run-gameroom\\shots\\profile_Saba.png": {
+    "mtime": 1779445117.2202625,
+    "ast_hash": "6b87cc880e707ea7262502398e45b4db",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\default-avatar.svg": {
+    "mtime": 1779137022.1992185,
+    "ast_hash": "28d0a9123008cfd57400322fd206181f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\file.svg": {
+    "mtime": 1779038982.8600965,
+    "ast_hash": "d09f95206c3fa0bb9bd9fefabfd0ea71",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\globe.svg": {
+    "mtime": 1779038982.8630288,
+    "ast_hash": "2aaafa6a49b6563925fe440891e32717",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\logo.png": {
+    "mtime": 1778999022.375541,
+    "ast_hash": "737cac54d7ba96954f9c698ce4e02c45",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\next.svg": {
+    "mtime": 1779038982.8665133,
+    "ast_hash": "8e061864f388b47f33a1c3780831193e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\vercel.svg": {
+    "mtime": 1779038982.870957,
+    "ast_hash": "c0af2f507b369b085b35ef4bbe3bcf1e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\window.svg": {
+    "mtime": 1779038982.873894,
+    "ast_hash": "a2760511c65806022ad20adf74370ff3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\characters\\betuchio.png": {
+    "mtime": 1779697772.421,
+    "ast_hash": "1c76f6bbcc22b0887a5197ef181be318",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\characters\\betuchio2.png": {
+    "mtime": 1779701099.747,
+    "ast_hash": "4e464a09c79cbd33da85b9e7286c968b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\characters\\gameroom-vanguard.backup.png": {
+    "mtime": 1779488427.2195687,
+    "ast_hash": "7555081e599691f818c21615e64fe813",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\characters\\gameroom-vanguard.png": {
+    "mtime": 1779630224.006,
+    "ast_hash": "6e7f56face12a6fe530487982d219d37",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\games\\cs2.png": {
+    "mtime": 1779120339.5699594,
+    "ast_hash": "d506097404632145f1800cb53cecc93e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\games\\eafc26.png": {
+    "mtime": 1779120983.670763,
+    "ast_hash": "ccc1dfb6f8c2ea24d065f3952c6f5075",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\games\\efootball-mobile.png": {
+    "mtime": 1779121384.5758452,
+    "ast_hash": "8a7360381334a92f4d7908abe07b694a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\games\\efootball.png": {
+    "mtime": 1779121264.4698222,
+    "ast_hash": "1486aac8bf4100ddc61a3c8b9021382b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\games\\gta-v.webp": {
+    "mtime": 1779121612.8949106,
+    "ast_hash": "9206b59d870d8731b1086d8716abd7da",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\games\\pubg-battlegrounds.png": {
+    "mtime": 1779120512.1589482,
+    "ast_hash": "fc003e6bf48f5de567c36ff5ed580bc4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\games\\pubg-mobile.png": {
+    "mtime": 1779044463.1303835,
+    "ast_hash": "84692191456c8caf53f26b9935c010cf",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\games\\rdr2.png": {
+    "mtime": 1779128228.3969584,
+    "ast_hash": "a2399de8408609252520ea20132c0b95",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\games\\valorant.png": {
+    "mtime": 1779128228.4153495,
+    "ast_hash": "df184f9c0b1a938cfe354d4b059911c8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\games\\warzone.png": {
+    "mtime": 1779121742.9213774,
+    "ast_hash": "e56367b9645bec2c02c6f5d20b61ce89",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\games\\covers\\eafc26.png": {
+    "mtime": 1779122755.2240653,
+    "ast_hash": "19d40aaf4a8a913f5178e1aca147e3ca",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\games\\covers\\efootball-mobile.png": {
+    "mtime": 1779122536.4933965,
+    "ast_hash": "2696b3aaac1fd06d9b5e72c5e7ba5af3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\games\\covers\\pubg-battlegrounds.png": {
+    "mtime": 1779123057.7168934,
+    "ast_hash": "617ae02c15f1a0e49932e706c1d416e8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\games\\covers\\pubg-mobile.png": {
+    "mtime": 1779123201.911909,
+    "ast_hash": "9af5f3d071fb74d9583b6509267783b7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\games\\covers\\valorant.png": {
+    "mtime": 1779122877.9017756,
+    "ast_hash": "1ecb93df05345e126f71f0b8568f77a0",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\games\\covers\\warzone.png": {
+    "mtime": 1779122601.225968,
+    "ast_hash": "475255316befc3462006a4b4056e3c08",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\lobbies\\pubg-mobile-optimized.jpg": {
+    "mtime": 1779467258.6188154,
+    "ast_hash": "6d3f161f9ee6f90ae9f629bdc136cfdf",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\lobbies\\pubg-mobile.png": {
+    "mtime": 1779462077.0443087,
+    "ast_hash": "0f9ca8c479bba99b8191e42d48770c9a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\weapons\\m416-glacier.png": {
+    "mtime": 1779720460.3668292,
+    "ast_hash": "6213fefe01aad7ed3ac9a7cd318d021f",
+    "semantic_hash": ""
+  }
+}

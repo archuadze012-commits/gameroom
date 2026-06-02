@@ -104,11 +104,11 @@ export function LobbyWeaponStand({ weapons = [] }: Props) {
     <div
       className="lobby-weapon-stand pointer-events-none absolute z-[999] origin-right"
       style={{
-        top: "calc(59% - 50px)",
-        right: "calc(2.5% - 50px)",
-        width: "360px",
+        top: "55%",
+        right: "1%",
+        width: "18.75%",
         aspectRatio: `${STAND_IMAGE_WIDTH} / ${STAND_IMAGE_HEIGHT}`,
-        transform: "translateY(-50%) scale(1.05)",
+        transform: "translateY(-50%)",
       }}
     >
       <div className="relative h-full w-full">
