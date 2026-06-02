@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 type WeaponItem = {
   id: string;
   name: string;
@@ -11,70 +13,83 @@ type Props = {
   weapons?: WeaponItem[];
 };
 
-const SHELF_COUNT = 4;
-
-const TIER_GLOW: Record<string, string> = {
-  common: "rgba(148,163,184,0.35)",
-  rare: "rgba(34,211,238,0.45)",
-  epic: "rgba(139,92,246,0.55)",
-  legendary: "rgba(245,158,11,0.6)",
+type WeaponHook = {
+  top: string;
+  left: string;
+  width: string;
+  height: string;
+  rotate: string;
 };
 
-function Rivet({ className = "" }: { className?: string }) {
-  return (
-    <span
-      aria-hidden
-      className={`block shrink-0 rounded-full ${className}`}
-      style={{
-        width: "clamp(4px, 0.5vw, 6px)",
-        height: "clamp(4px, 0.5vw, 6px)",
-        background: "radial-gradient(circle at 35% 35%, #6b6b6b 0%, #2a2a2a 60%, #1a1a1a 100%)",
-        boxShadow: "inset 0 1px 1px rgba(255,255,255,0.15), 0 1px 2px rgba(0,0,0,0.6)",
-      }}
-    />
-  );
-}
+const STAND_IMAGE_URL = "/lobby-assets/royal-weapon-stand.png";
+const STAND_IMAGE_WIDTH = 1122;
+const STAND_IMAGE_HEIGHT = 1402;
+const SHELF_COUNT = 4;
 
-function MetalRail() {
+const WEAPON_HOOKS: WeaponHook[] = [
+  { top: "27.4%", left: "23.4%", width: "57.8%", height: "8.2%", rotate: "-0.8deg" },
+  { top: "46.2%", left: "23.0%", width: "58.5%", height: "8.2%", rotate: "0deg" },
+  { top: "58.1%", left: "22.7%", width: "59%", height: "8.2%", rotate: "1.5deg" },
+  { top: "73.4%", left: "22.5%", width: "59.5%", height: "8.2%", rotate: "2.2deg" },
+];
+
+const TIER_GLOW: Record<string, string> = {
+  common: "rgba(148,163,184,0.36)",
+  rare: "rgba(34,211,238,0.5)",
+  epic: "rgba(139,92,246,0.58)",
+  legendary: "rgba(245,158,11,0.68)",
+};
+
+function WeaponHookLayer({ weapon, hook, index }: { weapon: WeaponItem | null; hook: WeaponHook; index: number }) {
+  const glow = TIER_GLOW[weapon?.tier ?? "common"] ?? TIER_GLOW.common;
+  const isIcefireM416 =
+    Boolean(weapon?.image_url) &&
+    ((weapon?.name ?? "").toLowerCase().includes("icefire") ||
+      (weapon?.image_url ?? "").toLowerCase().includes("m416-caucasus-icefire") ||
+      (weapon?.image_url ?? "").toLowerCase().includes("icefire"));
+  const isGlacierM416 =
+    Boolean(weapon?.image_url) &&
+    !isIcefireM416 &&
+    ((weapon?.name ?? "").toLowerCase().includes("glacier") ||
+      (weapon?.image_url ?? "").toLowerCase().includes("m416-glacier"));
+  const hookRotate = Number.parseFloat(hook.rotate);
+  const m416Rotate = `${Number.isFinite(hookRotate) ? hookRotate - 3 : -3}deg`;
+  const icefireRotate = `${Number.isFinite(hookRotate) ? hookRotate - 3 : -3}deg`;
+
   return (
     <div
       aria-hidden
-      className="relative flex items-center"
-      style={{ height: "clamp(3px, 0.4vw, 5px)" }}
+      data-weapon-hook={index + 1}
+      className="pointer-events-none absolute"
+      style={{
+        top: hook.top,
+        left: hook.left,
+        width: hook.width,
+        height: hook.height,
+        zIndex: isIcefireM416 ? 9998 : isGlacierM416 ? 50 : 10,
+      }}
     >
-      {/* main rail body */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: "linear-gradient(180deg, #4a4a4a 0%, #2d2d2d 35%, #1f1f1f 65%, #3a3a3a 100%)",
-          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.5)",
-        }}
-      />
-      {/* top edge highlight */}
-      <span
-        className="absolute inset-x-0 top-0 h-px"
-        style={{ background: "linear-gradient(90deg, transparent 5%, rgba(255,255,255,0.1) 30%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.1) 70%, transparent 95%)" }}
-      />
-    </div>
-  );
-}
-
-function WeaponHooks() {
-  return (
-    <div aria-hidden className="absolute bottom-0 left-0 right-0 flex justify-around px-[15%]">
-      {[0, 1].map((i) => (
-        <div
-          key={i}
-          style={{
-            width: "clamp(3px, 0.4vw, 5px)",
-            height: "clamp(8px, 1.2vw, 14px)",
-            background: "linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 50%, #1f1f1f 100%)",
-            borderRadius: "0 0 1px 1px",
-            boxShadow: "inset 1px 0 0 rgba(255,255,255,0.06), 1px 1px 2px rgba(0,0,0,0.4)",
-            transform: "translateY(100%)",
-          }}
-        />
-      ))}
+      <span className="absolute inset-0 opacity-0" />
+      {weapon?.image_url ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+            src={weapon.image_url}
+            alt=""
+            draggable={false}
+            className="absolute inset-0 h-full w-full object-contain"
+            style={{
+              width: isIcefireM416 ? "calc(100% - 20px)" : undefined,
+              height: isIcefireM416 ? "calc(100% - 20px)" : undefined,
+              margin: isIcefireM416 ? "auto" : undefined,
+              filter: `drop-shadow(0 3px 5px rgba(0,0,0,0.72)) drop-shadow(0 0 8px ${glow}) ${isGlacierM416 ? "drop-shadow(0 0 22px rgba(0,0,0,0.42)) drop-shadow(0 0 34px rgba(0,0,0,0.22))" : "drop-shadow(0 0 14px rgba(0,0,0,0.28))"}`,
+              transform: `${isGlacierM416 ? "translate(-10px, -30px)" : isIcefireM416 ? "translate(0px, 10px)" : "translate(0px, 0px)"} rotate(${isGlacierM416 ? m416Rotate : isIcefireM416 ? icefireRotate : hook.rotate}) scaleX(${isGlacierM416 ? 1.02 : isIcefireM416 ? 1.12 : 1.18}) ${isGlacierM416 ? "scale(5)" : isIcefireM416 ? "scale(1.4)" : ""}`,
+              transformOrigin: "center center",
+              zIndex: isIcefireM416 ? 9999 : isGlacierM416 ? 51 : 11,
+            }}
+          />
+        </>
+      ) : null}
     </div>
   );
 }
@@ -82,150 +97,44 @@ function WeaponHooks() {
 export function LobbyWeaponStand({ weapons = [] }: Props) {
   const shelves: (WeaponItem | null)[] = Array.from(
     { length: SHELF_COUNT },
-    (_, i) => weapons[i] ?? null,
+    (_, index) => weapons[index] ?? null,
   );
 
   return (
-    <div className="lobby-weapon-stand absolute right-[2.5%] top-[55%] z-[3] -translate-y-1/2">
-      <div
-        className="relative flex w-[clamp(130px,18vw,240px)] flex-col"
-        style={{
-          filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.7))",
-          transform: "perspective(270px) rotateY(-21deg)",
-          transformOrigin: "95% center",
-        }}
-      >
-        {/* === OUTER FRAME — welded steel rectangle === */}
-        <div
-          className="relative overflow-hidden"
-          style={{
-            background: "linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 50%, #222 100%)",
-            border: "2px solid #3a3a3a",
-            borderRadius: "2px",
-            clipPath: "polygon(0 0, calc(100% - 36px) 3%, 100% calc(3% + 36px), 100% 100%, 0 100%)",
-            boxShadow:
-              "inset 0 1px 0 rgba(255,255,255,0.06), inset 0 -1px 0 rgba(0,0,0,0.3), 0 0 0 1px rgba(0,0,0,0.6)",
-          }}
-        >
-          {/* brushed-metal texture overlay */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 opacity-[0.04]"
-            style={{
-              backgroundImage: "repeating-linear-gradient(90deg, transparent 0 1px, rgba(255,255,255,0.5) 1px 2px)",
-              backgroundSize: "3px 100%",
-            }}
-          />
-
-          {/* top plate with label */}
-          <div
-            className="relative flex items-center justify-between px-2 pb-1.5 pt-4"
-            style={{
-              background: "linear-gradient(180deg, #333 0%, #252525 100%)",
-              borderBottom: "1px solid #3a3a3a",
-            }}
-          >
-            <Rivet />
-            <span
-              className="text-[7px] font-bold uppercase tracking-[0.22em]"
-              style={{
-                color: "#8a8a7a",
-                textShadow: "0 1px 0 rgba(0,0,0,0.8)",
-                letterSpacing: "0.22em",
-              }}
-            >
-              ARSENAL
-            </span>
-            <Rivet />
-          </div>
-
-          {/* shelves */}
-          {shelves.map((weapon, i) => (
-            <div key={weapon?.id ?? `empty-${i}`} className="relative">
-              {/* rail at top of each shelf */}
-              <div className="relative">
-                <MetalRail />
-                <WeaponHooks />
-              </div>
-
-              {/* weapon display area */}
-              <div
-                className="relative flex items-center justify-center overflow-visible"
-                style={{
-                  height: "clamp(36px, 5vw, 54px)",
-                  background: weapon
-                    ? `radial-gradient(ellipse at 50% 80%, ${TIER_GLOW[weapon.tier] ?? TIER_GLOW.common} 0%, transparent 70%)`
-                    : "transparent",
-                }}
-              >
-                {/* dark recessed back panel */}
-                <div
-                  aria-hidden
-                  className="absolute inset-x-[6%] inset-y-[8%]"
-                  style={{
-                    background: "linear-gradient(180deg, #0d0d0d 0%, #141414 50%, #0f0f0f 100%)",
-                    boxShadow: "inset 0 2px 6px rgba(0,0,0,0.6), inset 0 -1px 3px rgba(0,0,0,0.3)",
-                    borderRadius: "1px",
-                  }}
-                />
-
-                {weapon?.image_url ? (
-                  <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={weapon.image_url}
-                      alt={weapon.name}
-                      draggable={false}
-                      className="relative z-[1] h-[310%] w-auto max-w-none object-contain"
-                      style={{
-                        filter: `drop-shadow(0 2px 4px rgba(0,0,0,0.7)) drop-shadow(0 0 6px ${TIER_GLOW[weapon.tier] ?? TIER_GLOW.common})`,
-                      }}
-                    />
-                  </>
-                ) : (
-                  /* empty slot — silhouette hooks */
-                  <div className="relative z-[1] flex items-center gap-[clamp(6px,1vw,10px)] opacity-15">
-                    <span className="h-[1px] w-[clamp(8px,1.5vw,14px)] bg-white/40" />
-                    <span className="h-[2px] w-[clamp(16px,3vw,28px)] bg-white/25" style={{ borderRadius: "1px" }} />
-                    <span className="h-[1px] w-[clamp(8px,1.5vw,14px)] bg-white/40" />
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-
-          {/* bottom rail */}
-          <MetalRail />
-
-          {/* bottom plate with rivets */}
-          <div
-            className="flex items-center justify-between px-2 py-1"
-            style={{
-              background: "linear-gradient(180deg, #282828 0%, #1e1e1e 100%)",
-              borderTop: "1px solid #333",
-            }}
-          >
-            <Rivet />
-            <div className="flex gap-[clamp(4px,0.6vw,8px)]">
-              <Rivet />
-              <Rivet />
-            </div>
-            <Rivet />
-          </div>
-        </div>
-
-        {/* floor shadow beneath the stand */}
-        <div
+    <div
+      className="lobby-weapon-stand pointer-events-none absolute z-[999] origin-right"
+      style={{
+        top: "calc(59% - 50px)",
+        right: "calc(2.5% - 50px)",
+        width: "360px",
+        aspectRatio: `${STAND_IMAGE_WIDTH} / ${STAND_IMAGE_HEIGHT}`,
+        transform: "translateY(-50%) scale(1.05)",
+      }}
+    >
+      <div className="relative h-full w-full">
+        <Image
+          src={STAND_IMAGE_URL}
+          alt=""
           aria-hidden
-          className="absolute left-[-45%] w-[170%]"
+          fill
+          sizes="(max-width: 640px) 32vw, (max-width: 1280px) 24vw, 360px"
+          className="select-none object-contain"
+          priority
+          quality={90}
+          draggable={false}
           style={{
-            top: "100%",
-            height: "clamp(70px, 10vw, 130px)",
-            background: "radial-gradient(ellipse at 50% 0%, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.35) 35%, transparent 70%)",
-            clipPath: "polygon(8% 0%, 92% 0%, 100% 100%, 0% 100%)",
-            filter: "blur(8px)",
+            filter: "drop-shadow(0 16px 18px rgba(0,0,0,0.62)) drop-shadow(0 0 16px rgba(245,158,11,0.14))",
           }}
         />
+
+        {WEAPON_HOOKS.map((hook, index) => (
+          <WeaponHookLayer
+            key={`weapon-hook-${index}`}
+            weapon={shelves[index]}
+            hook={hook}
+            index={index}
+          />
+        ))}
       </div>
     </div>
   );

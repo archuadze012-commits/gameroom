@@ -10,6 +10,7 @@ import { LobbyStage } from "@/components/lobby/lobby-stage";
 import { LobbyOrientationGuard } from "@/components/lobby/lobby-orientation";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getMockHud } from "@/lib/lobby/mock-hud";
 import { getWallet, getDailyBonusAvailable } from "@/lib/wallet/queries";
 import { getEquippedItems } from "@/lib/shop/equip-queries";
@@ -53,6 +54,7 @@ export default async function GameLobbyPage({
 
   const user = await getSession().catch(() => null);
   const supabase = await createSupabaseServerClient();
+  const adminSupabase = createSupabaseAdminClient();
   let displayName: string | null = null;
   let username: string | null = null;
   let avatarUrl: string | null = null;
@@ -87,41 +89,79 @@ export default async function GameLobbyPage({
 
   let hudData = null;
   let lobbyEffect: { effect: string; color?: string } | null = null;
+  let ownedDbCombos: { id: string; name: string; tier: string; image_url: string | null; metadata: Record<string, unknown> }[] = [];
   let ownedDbCharacters: { id: string; name: string; tier: string; image_url: string | null; metadata: Record<string, unknown> }[] = [];
-  let ownedWeapons: { id: string; name: string; tier: string; image_url: string | null }[] = [];
-  let lobbyInitialLoadout: { character?: string; lobby?: string; effect?: string; nameCard?: string } | null = null;
+  let ownedDbVehicles: { id: string; name: string; tier: string; image_url: string | null; metadata: Record<string, unknown> }[] = [];
+  let ownedWeapons: { id: string; name: string; tier: string; image_url: string | null; metadata: Record<string, unknown> }[] = [];
+  let lobbyInitialLoadout: { combo?: string; character?: string; vehicle?: string; lobby?: string; effect?: string; nameCard?: string } | null = null;
   let hasDbLoadout = false;
 
   if (lobbyUserId) {
     const hud = getMockHud(username ?? displayName ?? lobbyUserId);
-    const [wallet, dailyBonusAvailable, equippedItems, charRows, weaponRows, savedLoadout] = await Promise.all([
+    const [wallet, dailyBonusAvailable, equippedItems, comboRows, charRows, vehicleRows, weaponRows, savedLoadout] = await Promise.all([
       getWallet(lobbyUserId),
       getDailyBonusAvailable(lobbyUserId),
       getEquippedItems(lobbyUserId),
-      supabase
+      adminSupabase
+        .from("user_purchases")
+        .select("shop_items!inner(id, name, tier, image_url, metadata)")
+        .eq("user_id", lobbyUserId)
+        .eq("shop_items.category", "combo")
+        .then((r) => r.data ?? []),
+      adminSupabase
         .from("user_purchases")
         .select("shop_items!inner(id, name, tier, image_url, metadata)")
         .eq("user_id", lobbyUserId)
         .eq("shop_items.category", "character")
         .then((r) => r.data ?? []),
-      supabase
+      adminSupabase
         .from("user_purchases")
-        .select("shop_items!inner(id, name, tier, image_url)")
+        .select("shop_items!inner(id, name, tier, image_url, metadata)")
+        .eq("user_id", lobbyUserId)
+        .eq("shop_items.category", "vehicle")
+        .then((r) => r.data ?? []),
+      adminSupabase
+        .from("user_purchases")
+        .select("shop_items!inner(id, name, tier, image_url, metadata)")
         .eq("user_id", lobbyUserId)
         .eq("shop_items.category", "weapon")
-        .limit(4)
         .then((r) => r.data ?? []),
       getLobbyLoadout(lobbyUserId, slug),
     ]);
+    ownedDbCombos = comboRows.map((row) => {
+      const item = ((row as unknown) as { shop_items: { id: string; name: string; tier: string; image_url: string | null; metadata: Record<string, unknown> } }).shop_items;
+      return item;
+    });
     ownedDbCharacters = charRows.map((row) => {
       const item = ((row as unknown) as { shop_items: { id: string; name: string; tier: string; image_url: string | null; metadata: Record<string, unknown> } }).shop_items;
       return item;
     });
-    ownedWeapons = weaponRows.map((row) => {
-      const item = ((row as unknown) as { shop_items: { id: string; name: string; tier: string; image_url: string | null } }).shop_items;
+    ownedDbVehicles = vehicleRows.map((row) => {
+      const item = ((row as unknown) as { shop_items: { id: string; name: string; tier: string; image_url: string | null; metadata: Record<string, unknown> } }).shop_items;
       return item;
     });
-
+    ownedWeapons = weaponRows.map((row) => {
+      const item = ((row as unknown) as { shop_items: { id: string; name: string; tier: string; image_url: string | null; metadata: Record<string, unknown> } }).shop_items;
+      return item;
+    });
+    ownedWeapons = [...ownedWeapons].sort((a, b) => {
+      const aKey = `${a.name} ${a.image_url ?? ""}`.toLowerCase();
+      const bKey = `${b.name} ${b.image_url ?? ""}`.toLowerCase();
+      const aPriority = aKey.includes("m416-glacier") || aKey.includes("glacier")
+        ? 0
+        : aKey.includes("m416-caucasus-icefire") || aKey.includes("icefire")
+          ? 1
+          : 2;
+      const bPriority = bKey.includes("m416-glacier") || bKey.includes("glacier")
+        ? 0
+        : bKey.includes("m416-caucasus-icefire") || bKey.includes("icefire")
+          ? 1
+          : 2;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+      if (aKey.includes("m416") && !bKey.includes("m416")) return -1;
+      if (!aKey.includes("m416") && bKey.includes("m416")) return 1;
+      return a.name.localeCompare(b.name);
+    });
     hudData = {
       ...hud,
       gameSlug: slug,
@@ -146,9 +186,13 @@ export default async function GameLobbyPage({
       lobbyInitialLoadout = savedLoadout;
       hasDbLoadout = true;
     } else {
+      const equippedComboItem = equippedItems.find((i) => i.category === "combo");
       const equippedCharItem = equippedItems.find((i) => i.category === "character");
+      const equippedVehicleItem = equippedItems.find((i) => i.category === "vehicle");
       lobbyInitialLoadout = {
+        combo: (equippedComboItem?.metadata.combo_id as string | undefined),
         character: (equippedCharItem?.metadata.character_id as string | undefined),
+        vehicle: (equippedVehicleItem?.metadata.vehicle_id as string | undefined),
         effect: lobbyEffectItem ? "fx_fire" : undefined,
       };
     }
@@ -204,7 +248,7 @@ export default async function GameLobbyPage({
           style={{ background: cardBorder, padding: 1, clipPath: cutLg }}
         >
           <div
-            className="lobby-card-inner relative aspect-[2/1] w-full overflow-hidden bg-[#08060F]"
+            className="lobby-card-inner relative aspect-video w-full overflow-hidden bg-[#08060F]"
             style={{ clipPath: cutLg }}
           >
             <LobbyShell imageUrl={LOBBY_BG[slug]} eyebrow={`${game.nameEn} · ლობის გახსნა`}>
@@ -215,16 +259,12 @@ export default async function GameLobbyPage({
               hudData={hudData}
               currentUserId={canPersistLobby ? user?.id ?? null : null}
               lobbyEffect={lobbyEffect}
+              ownedDbCombos={ownedDbCombos}
               ownedDbCharacters={ownedDbCharacters}
+              ownedDbVehicles={ownedDbVehicles}
               ownedWeapons={ownedWeapons}
               initialLoadout={lobbyInitialLoadout ?? undefined}
               hasDbLoadout={hasDbLoadout}
-            />
-
-            {/* atmospheric integration */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#08060F]/85 via-[#08060F]/30 to-transparent"
             />
             <div
               aria-hidden
