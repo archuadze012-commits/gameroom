@@ -22,7 +22,7 @@ export default function SignupPage() {
           <Eyebrow tone="amber">ახალი ანგარიში</Eyebrow>
           <DisplayHeading as="h1" size="md" className="mt-2">დარეგისტრირდი</DisplayHeading>
           <p className="mt-2 text-[13px] text-[var(--gr-text-mute)]">
-            შექმენი ანგარიში 30 წამში — magic link ან Google.
+            შექმენი ანგარიში Google-ით.
           </p>
         </header>
 

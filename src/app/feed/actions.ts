@@ -65,6 +65,10 @@ export async function createPostAction(
 
   revalidatePath("/feed");
   revalidatePath("/");
+  const extraRevalidatePath = String(formData.get("revalidatePath") ?? "");
+  if (extraRevalidatePath.startsWith("/")) {
+    revalidatePath(extraRevalidatePath);
+  }
 
   return {
     success: true,

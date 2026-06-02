@@ -37,8 +37,8 @@ export function ProfileTabs({
               role="tab"
               aria-selected={active}
               onClick={() => setTab(t.id)}
-              className={`relative flex shrink-0 items-center gap-1.5 px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gr-violet-hi)] rounded-md ${
-                active ? "text-[var(--gr-text)]" : "text-[var(--gr-text-mute)] hover:text-[var(--gr-text)]"
+              className={`relative flex shrink-0 items-center gap-1.5 rounded-md px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gr-magenta)] ${
+                active ? "text-[var(--gr-text-hi)]" : "text-[var(--gr-text-mute)] hover:text-[var(--gr-cyan-glow)]"
               }`}
             >
               {t.icon}
@@ -46,7 +46,7 @@ export function ProfileTabs({
               {active && (
                 <span
                   aria-hidden
-                  className="absolute inset-x-2 -bottom-px h-[2px] bg-[var(--gr-violet)] shadow-[0_0_10px_rgba(139,92,246,0.6)]"
+                  className="absolute inset-x-2 -bottom-px h-[2px] bg-[linear-gradient(90deg,var(--gr-cyan-glow),var(--gr-magenta))] shadow-[0_0_10px_rgba(34,211,238,0.22),0_0_16px_rgba(192,38,211,0.3)]"
                 />
               )}
             </button>

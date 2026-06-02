@@ -72,6 +72,7 @@ export function ChatbotWidget() {
   const [sending, setSending] = useState(false);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [unread, setUnread] = useState(0);
+  const [viewerId, setViewerId] = useState<string | null>(null);
   const userIdRef = useRef<string | null>(null);
   const openRef = useRef(open);
   const openedConvoRef = useRef<OpenedConvo | null>(openedConvo);
@@ -100,17 +101,15 @@ export function ChatbotWidget() {
     }
   }, []);
 
-  const loadMessages = useCallback(async (convoId: string) => {
-    try {
-      setLoadingMsgs(true);
-      const res = await fetch(`/api/conversations/${convoId}/messages`);
-      if (!res.ok) return;
-      const data = await res.json();
-      setMessages(Array.isArray(data) ? data : []);
-    } catch {
-    } finally {
-      setLoadingMsgs(false);
-    }
+  const showPreview = useCallback((p: Preview) => {
+    setPreview(p);
+    if (previewTimer.current) clearTimeout(previewTimer.current);
+    previewTimer.current = setTimeout(() => setPreview(null), 5000);
+  }, []);
+
+  const dismissPreview = useCallback(() => {
+    setPreview(null);
+    if (previewTimer.current) clearTimeout(previewTimer.current);
   }, []);
 
   // Initial load + realtime
@@ -179,6 +178,7 @@ export function ChatbotWidget() {
       } = await supabase.auth.getUser();
       if (!user) return;
       userIdRef.current = user.id;
+      setViewerId(user.id);
       loadConversations();
     }
 
@@ -187,13 +187,30 @@ export function ChatbotWidget() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [loadConversations]);
+  }, [loadConversations, showPreview]);
 
   // When opening a conversation, load messages and mark read on the server
   useEffect(() => {
     if (!openedConvo) return;
-    loadMessages(openedConvo.id);
-  }, [openedConvo, loadMessages]);
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/conversations/${openedConvo.id}/messages`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) {
+          setMessages(Array.isArray(data) ? data : []);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingMsgs(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [openedConvo]);
 
   // Auto-scroll messages to bottom
   useEffect(() => {
@@ -204,17 +221,6 @@ export function ChatbotWidget() {
       });
     }
   }, [messages.length, openedConvo?.id]);
-
-  function showPreview(p: Preview) {
-    setPreview(p);
-    if (previewTimer.current) clearTimeout(previewTimer.current);
-    previewTimer.current = setTimeout(() => setPreview(null), 5000);
-  }
-
-  function dismissPreview() {
-    setPreview(null);
-    if (previewTimer.current) clearTimeout(previewTimer.current);
-  }
 
   const toggleOpen = () => {
     if (!open) {
@@ -230,6 +236,7 @@ export function ChatbotWidget() {
 
   const openConversation = (c: Conversation) => {
     if (!c.other) return;
+    setLoadingMsgs(true);
     setOpenedConvo({ id: c.id, other: c.other });
   };
 
@@ -280,6 +287,7 @@ export function ChatbotWidget() {
                 avatar_url: preview.senderAvatar,
               },
             });
+            setLoadingMsgs(true);
             setOpen(true);
             dismissPreview();
           }}
@@ -386,7 +394,7 @@ export function ChatbotWidget() {
                   </p>
                 )}
                 {messages.map((m) => {
-                  const isMe = m.sender_id === userIdRef.current;
+                  const isMe = m.sender_id === viewerId;
                   return (
                     <div
                       key={m.id}
@@ -456,7 +464,7 @@ export function ChatbotWidget() {
                   {conversations.map((c) => {
                     const name = nameFor(c.other);
                     const isMine =
-                      c.lastMessage?.sender_id === userIdRef.current;
+                      c.lastMessage?.sender_id === viewerId;
                     return (
                       <li key={c.id}>
                         <button

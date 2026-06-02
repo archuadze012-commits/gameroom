@@ -110,7 +110,11 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
         youtubeHandle: dbProfile?.youtube_handle ?? stored.youtubeHandle ?? "",
         tiktokHandle: dbProfile?.tiktok_handle ?? stored.tiktokHandle ?? "",
         tiktokFollowers: dbProfile?.tiktok_followers ?? stored.tiktokFollowers ?? "",
-        favoriteGameSlugs: dbProfile?.favorite_game_slugs?.length ? dbProfile.favorite_game_slugs : (stored.favoriteGameSlugs ?? []),
+        favoriteGameSlugs: dbProfile?.favorite_game_slugs?.length
+          ? dbProfile.favorite_game_slugs
+          : dbProfile?.main_game_slug
+            ? [dbProfile.main_game_slug]
+            : (stored.favoriteGameSlugs ?? []),
         inGameName: dbProfile?.in_game_name ?? stored.inGameName ?? "",
         gameId: dbProfile?.game_id ?? stored.gameId ?? "",
         mainGameSlug: dbProfile?.main_game_slug ?? stored.mainGameSlug ?? "",

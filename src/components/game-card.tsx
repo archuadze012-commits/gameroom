@@ -3,9 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import { Pill } from "@/components/ui/pill";
-
-const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
-const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.55))";
+import { GamerCard } from "@/components/ui/gamer-card";
 
 function useCountUp(target: number, duration = 1400) {
   const [count, setCount] = useState(0);
@@ -53,15 +51,13 @@ export function GameCard({ slug, nameKa, players, online, coverUrl, accent }: Ga
 
   return (
     <Link href={`/games/${slug}`} className="block">
-      <div
+      <GamerCard
+        color="rgba(196,30,58,0.78)"
+        clipSize={14}
+        hover
         className="relative isolate"
-        style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
       >
-        <div
-          className="relative h-56 overflow-hidden bg-[var(--gr-bg-1)]"
-          style={{ clipPath: cutSm }}
-        >
-          <span aria-hidden className="absolute left-0 top-0 z-10 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
+        <div className="relative h-56 overflow-hidden bg-[var(--gr-bg-1)]">
           {coverUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -90,7 +86,7 @@ export function GameCard({ slug, nameKa, players, online, coverUrl, accent }: Ga
             </div>
           </div>
         </div>
-      </div>
+      </GamerCard>
     </Link>
   );
 }

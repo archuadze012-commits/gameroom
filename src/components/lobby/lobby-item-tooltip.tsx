@@ -8,10 +8,13 @@ type LobbyItemTooltipProps = {
 };
 
 const statLabels: Record<LobbyInventoryTab, string[]> = {
+  combo:      ["Prestige", "Presence", "Scene"],
   characters: ["Health", "Speed", "Stamina"],
-  lobby:      ["Style", "Atmosphere", "Depth"],
-  effects:    ["Intensity", "Coverage", "Duration"],
-  name_card:  ["Style", "Prestige", "Shine"],
+  weapons:    ["Damage", "Fire Rate", "Recoil"],
+  vehicles:   ["Speed", "Handling", "Glow"],
+  lobby:      ["Ambience", "Light", "Vibe"],
+  effects:    ["Intensity", "Aura", "Spread"],
+  name_card:  ["Rarity", "Flex", "Shine"],
 };
 
 const tierColor: Record<LobbyInventoryItem["tier"], string> = {

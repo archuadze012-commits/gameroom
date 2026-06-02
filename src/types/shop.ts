@@ -1,5 +1,7 @@
 export type ShopCategory =
+  | "combo"
   | "character"
+  | "vehicle"
   | "profile_frame"
   | "name_frame"
   | "name_card"
@@ -40,7 +42,9 @@ export const GLOBAL_SHOP_CATEGORIES: CategoryMeta[] = [
 ];
 
 export const GAME_SHOP_CATEGORIES: CategoryMeta[] = [
+  { key: "combo",          label: "კომბო",             emoji: "👑" },
   { key: "character",      label: "გმირები",           emoji: "🎭" },
+  { key: "vehicle",        label: "ტრანსპორტი",        emoji: "🚗" },
   { key: "lobby_effect",   label: "ლობის ეფექტი",     emoji: "⚡" },
   { key: "badge",          label: "ბეჯები",            emoji: "🏅" },
   { key: "name_card",      label: "Name Card",         emoji: "🪪" },

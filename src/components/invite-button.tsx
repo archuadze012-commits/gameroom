@@ -42,6 +42,10 @@ interface InviteButtonProps {
   gameSlugs: string[];
 }
 
+function makeInviteTimestamp() {
+  return Math.round(performance.timeOrigin + performance.now());
+}
+
 export function InviteButton({ username, displayName, gameSlugs }: InviteButtonProps) {
   const [open, setOpen] = useState(false);
   const [sent, setSent] = useState(false);
@@ -67,13 +71,13 @@ export function InviteButton({ username, displayName, gameSlugs }: InviteButtonP
     } catch {}
 
     const invite: GameInvite = {
-      id: `${Date.now()}`,
+      id: crypto.randomUUID(),
       fromUsername,
       fromDisplay,
       toUsername: username,
       gameSlug: game.slug,
       gameName: game.nameKa,
-      sentAt: Date.now(),
+      sentAt: makeInviteTimestamp(),
     };
 
     saveInvite(invite);

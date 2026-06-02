@@ -9,51 +9,26 @@ import { equipItem, unequipCategory } from "@/lib/shop/equip-actions";
 import { LobbyFireEffect } from "@/components/lobby/lobby-fire-effect";
 
 /* ─── Tier colours ──────────────────────────────────────── */
-const TIER_BORDER_DEFAULT: Record<ShopTier, string> = {
-  common:    "rgba(148,163,184,0.45)",
-  rare:      "rgba(96,165,250,0.50)",
-  epic:      "rgba(167,139,250,0.55)",
-  legendary: "rgba(251,191,36,0.60)",
-};
 const TIER_TOP_GRAD: Record<ShopTier, string> = {
-  common:    "linear-gradient(90deg,transparent,rgba(148,163,184,0.7),transparent)",
-  rare:      "linear-gradient(90deg,transparent,rgba(96,165,250,0.8),transparent)",
-  epic:      "linear-gradient(90deg,transparent,rgba(167,139,250,0.9),transparent)",
-  legendary: "linear-gradient(90deg,transparent,rgba(251,191,36,0.95),transparent)",
+  common:    "from-slate-500/50 via-slate-400/20 to-transparent",
+  rare:      "from-blue-500/50 via-blue-400/20 to-transparent",
+  epic:      "from-violet-500/50 via-violet-400/20 to-transparent",
+  legendary: "from-amber-500/50 via-amber-400/20 to-transparent",
 };
-const TIER_INNER_BG: Record<ShopTier, string> = {
-  common:    "linear-gradient(155deg,#1e293b 0%,#0f172a 100%)",
-  rare:      "linear-gradient(155deg,#1e3a8a 0%,#172554 100%)",
-  epic:      "linear-gradient(155deg,#3b0764 0%,#1e1b4b 100%)",
-  legendary: "linear-gradient(155deg,#78350f 0%,#1c1003 100%)",
-};
-const TIER_GLOW_COLOR: Record<ShopTier, string> = {
-  common:    "rgba(148,163,184,0.12)",
-  rare:      "rgba(96,165,250,0.12)",
-  epic:      "rgba(167,139,250,0.14)",
-  legendary: "rgba(251,191,36,0.14)",
-};
-const TIER_BADGE_STYLE: Record<ShopTier, { bg: string; color: string }> = {
-  common:    { bg: "rgba(100,116,139,0.4)",  color: "#cbd5e1" },
-  rare:      { bg: "rgba(59,130,246,0.28)",  color: "#93c5fd" },
-  epic:      { bg: "rgba(139,92,246,0.30)",  color: "#c4b5fd" },
-  legendary: { bg: "rgba(245,158,11,0.30)",  color: "#fcd34d" },
+const TIER_BADGE_STYLE: Record<ShopTier, { border: string; bg: string; color: string; shadow: string }> = {
+  common:    { border: "border-slate-500/30", bg: "bg-slate-500/10", color: "text-slate-300", shadow: "shadow-[0_0_10px_rgba(100,116,139,0.2)]" },
+  rare:      { border: "border-blue-500/30", bg: "bg-blue-500/10", color: "text-blue-300", shadow: "shadow-[0_0_10px_rgba(59,130,246,0.2)]" },
+  epic:      { border: "border-violet-500/30", bg: "bg-violet-500/10", color: "text-violet-300", shadow: "shadow-[0_0_10px_rgba(139,92,246,0.2)]" },
+  legendary: { border: "border-amber-500/30", bg: "bg-amber-500/10", color: "text-amber-300", shadow: "shadow-[0_0_10px_rgba(245,158,11,0.2)]" },
 };
 const TIER_LABEL: Record<ShopTier, string> = {
   common: "Common", rare: "Rare", epic: "Epic", legendary: "Legendary",
 };
 const CURRENCY_COLOR: Record<string, string> = {
-  nc: "#C8D4DC",
-  pro: "var(--gr-amber)",
+  nc: "text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]",
+  pro: "text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]",
 };
 const CURRENCY_LABEL: Record<string, string> = { nc: "NC", pro: "Pro" };
-
-const CUT = "polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%)";
-const CUT_SM = "polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)";
-
-/* magenta hover values — same trick as post cards */
-const MAGENTA_BORDER = "rgba(236,72,153,0.85)";
-const MAGENTA_LASER  = "linear-gradient(90deg,transparent,rgba(236,72,153,0.9),transparent)";
 
 /* ─── Item preview ─────────────────────────────────────── */
 function ItemPreview({ item }: { item: ShopItem }) {
@@ -109,18 +84,17 @@ function ItemPreview({ item }: { item: ShopItem }) {
     return (
       <div className="flex flex-col items-center gap-1.5">
         <span className="text-3xl">{meta.emoji as string}</span>
-        <div className="flex h-10 w-20 items-center justify-center"
-          style={{ background: "linear-gradient(135deg,#1e3a8a,#172554)", clipPath: CUT_SM }}>
-          <span className="text-[8px] font-black uppercase tracking-[0.12em] text-blue-300/80">Name Card</span>
+        <div className="flex h-10 w-24 items-center justify-center rounded-lg border border-blue-500/30 bg-[linear-gradient(135deg,#1e3a8a,#172554)] shadow-[0_0_15px_rgba(30,58,138,0.3)]">
+          <span className="text-[9px] font-black uppercase tracking-[0.12em] text-blue-300">Name Card</span>
         </div>
       </div>
     );
 
   if (item.category === "cover" && meta.gradient)
-    return <div className={`h-12 w-full rounded-sm bg-gradient-to-r ${meta.gradient as string} ring-1 ring-white/10`} />;
+    return <div className={`h-12 w-full rounded-md bg-gradient-to-r ${meta.gradient as string} ring-1 ring-white/10`} />;
 
   if (item.category === "profile_theme" && meta.bg)
-    return <div className={`h-16 w-24 rounded-sm bg-gradient-to-br ${meta.bg as string} ring-1 ring-white/10`} />;
+    return <div className={`h-16 w-24 rounded-md bg-gradient-to-br ${meta.bg as string} ring-1 ring-white/10`} />;
 
   if (item.category === "character") {
     if (item.image_url)
@@ -132,9 +106,43 @@ function ItemPreview({ item }: { item: ShopItem }) {
         </div>
       );
     return (
-      <div className="flex h-16 w-16 items-center justify-center"
-        style={{ background: "rgba(255,255,255,0.04)", clipPath: CUT }}>
-        <span className="text-2xl">🎭</span>
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5 border border-white/10">
+        <span className="text-2xl drop-shadow-md">🎭</span>
+      </div>
+    );
+  }
+
+  if (item.category === "combo") {
+    if (item.image_url)
+      return (
+        <div className="relative w-full overflow-hidden" style={{ height: 160 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={item.image_url} alt={item.name} draggable={false}
+            className="absolute inset-0 h-full w-full object-cover object-center" />
+          <span className="absolute left-3 top-3 z-10 rounded-full border border-amber-500/50 bg-amber-500/20 px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.14em] text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.3)] backdrop-blur-md">
+            Combo
+          </span>
+        </div>
+      );
+    return (
+      <div className="flex h-16 w-20 items-center justify-center rounded-2xl bg-white/5 border border-white/10">
+        <span className="text-2xl drop-shadow-md">👑</span>
+      </div>
+    );
+  }
+
+  if (item.category === "vehicle") {
+    if (item.image_url)
+      return (
+        <div className="relative w-full overflow-hidden" style={{ height: 150 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={item.image_url} alt={item.name} draggable={false}
+            className="absolute inset-0 h-full w-full object-contain drop-shadow-[0_16px_18px_rgba(0,0,0,0.72)]" />
+        </div>
+      );
+    return (
+      <div className="flex h-16 w-20 items-center justify-center rounded-2xl bg-white/5 border border-white/10">
+        <span className="text-2xl drop-shadow-md">🚗</span>
       </div>
     );
   }
@@ -148,12 +156,9 @@ export function ShopItemCard({ item, hasSession }: { item: ShopItem; hasSession:
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null);
 
-  const borderDefault = TIER_BORDER_DEFAULT[item.tier];
   const topGrad       = TIER_TOP_GRAD[item.tier];
-  const innerBg       = TIER_INNER_BG[item.tier];
-  const glowColor     = TIER_GLOW_COLOR[item.tier];
   const badge         = TIER_BADGE_STYLE[item.tier];
-  const isHero        = item.category === "character" && !!item.image_url;
+  const isHero        = (item.category === "character" || item.category === "combo") && !!item.image_url;
 
   function handleEquip() {
     if (isPending) return;
@@ -193,172 +198,99 @@ export function ShopItemCard({ item, hasSession }: { item: ShopItem; hasSession:
   }
 
   return (
-    /* ── outer border wrapper — same trick as post cards ──
-       CSS var flips to magenta on group-hover              */
-    <div
-      className="group relative isolate transition-all duration-300
-                 group-hover:[--shop-border:rgba(236,72,153,0.85)]"
-      style={{
-        clipPath: CUT,
-        background: `var(--shop-border, ${borderDefault})`,
-        padding: 1,
-      }}
-    >
-      {/* ── inner card ── */}
-      <div
-        className="relative flex h-full flex-col overflow-hidden"
-        style={{ clipPath: CUT, background: innerBg }}
-      >
-        {/* permanent tier top-line */}
-        <span
-          aria-hidden
-          className="absolute left-0 top-0 z-10 h-[2px] w-full"
-          style={{ background: topGrad }}
-        />
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-[24px] border border-white/5 bg-white/5 p-[1.5px] transition-all duration-300 hover:-translate-y-1 hover:border-pink-500/30 hover:shadow-[0_0_30px_rgba(236,72,153,0.15)]">
+      <div className={`absolute inset-0 bg-gradient-to-br ${topGrad} opacity-0 transition-opacity duration-300 group-hover:opacity-10`} />
 
-        {/* laser sweeper on hover */}
-        <span
-          aria-hidden
-          className="pointer-events-none absolute left-0 top-0 z-10 h-[2px] w-full
-                     translate-x-[-100%] opacity-0
-                     group-hover:translate-x-[100%] group-hover:opacity-100
-                     group-hover:transition-transform group-hover:duration-700"
-          style={{ background: MAGENTA_LASER }}
-        />
+      <div className="relative flex flex-1 flex-col rounded-[22.5px] bg-[#0a0714]/80 backdrop-blur-md">
+        
+        <div className="relative grid min-h-[190px] place-items-center overflow-hidden rounded-t-[22.5px] bg-[radial-gradient(circle_at_50%_12%,rgba(255,255,255,0.05),transparent_60%)] border-b border-white/5">
+          <div aria-hidden className="absolute inset-0 bg-[linear-gradient(115deg,transparent_0%,rgba(255,255,255,0.06)_46%,transparent_52%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-        {/* tier glow (always subtle) */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-[2]"
-          style={{ background: `radial-gradient(ellipse at 50% 0%,${glowColor} 0%,transparent 65%)` }}
-        />
-
-        {/* magenta glow on hover */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-[2] opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-          style={{ background: "radial-gradient(ellipse at 50% 0%,rgba(236,72,153,0.10) 0%,transparent 65%)" }}
-        />
-
-        {/* tier badge */}
-        <span
-          className="absolute left-0 top-0 z-20 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em]"
-          style={{ background: badge.bg, color: badge.color }}
-        >
-          {TIER_LABEL[item.tier]}
-        </span>
-
-        {/* status badge */}
-        {item.equipped ? (
-          <span className="absolute right-2 top-1 z-20 flex items-center gap-0.5 text-[9px] font-bold" style={{ color: "#c4b5fd" }}>
-            <Sparkles className="h-2.5 w-2.5" /> აქტიური
+          <span
+            className={`absolute left-3 top-3 z-20 rounded-full border px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] backdrop-blur-md ${badge.border} ${badge.bg} ${badge.color} ${badge.shadow}`}
+          >
+            {TIER_LABEL[item.tier]}
           </span>
-        ) : item.owned ? (
-          <span className="absolute right-2 top-1 z-20 flex items-center gap-0.5 text-[9px] font-bold text-emerald-400">
-            <Check className="h-2.5 w-2.5" /> შეძენილი
-          </span>
-        ) : null}
 
-        {/* ── preview ── */}
-        {isHero ? (
-          <div className="relative overflow-hidden" style={{ aspectRatio: "3/4" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+          {item.equipped ? (
+            <span className="absolute right-3 top-3 z-20 flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.2)] backdrop-blur-md">
+              <Sparkles className="h-3 w-3" /> აქტიური
+            </span>
+          ) : item.owned ? (
+            <span className="absolute right-3 top-3 z-20 flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)] backdrop-blur-md">
+              <Check className="h-3 w-3" /> შეძენილი
+            </span>
+          ) : null}
+
+          {isHero ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={item.image_url!}
               alt={item.name}
               draggable={false}
-              className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+              className="relative z-[2] h-[190px] w-full object-cover object-top drop-shadow-[0_16px_18px_rgba(0,0,0,0.72)] transition-transform duration-500 group-hover:scale-105"
             />
+          ) : (
             <div
-              aria-hidden
-              className="absolute inset-x-0 bottom-0 h-2/3"
-              style={{ background: "linear-gradient(to top,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0.55) 50%,transparent 100%)" }}
-            />
-          </div>
-        ) : (
-          <div
-            className={`relative z-[3] flex items-end justify-center overflow-hidden ${
-              item.metadata?.effect === "fire_lobby" ? "h-28 p-0" : "h-28 px-3 pt-8"
-            }`}
-          >
-            <ItemPreview item={item} />
-          </div>
-        )}
-
-        {/* ── info + actions ── */}
-        <div
-          className={`relative z-[3] flex flex-1 flex-col gap-2 p-3 ${
-            isHero ? "absolute inset-x-0 bottom-0" : "pt-2"
-          }`}
-        >
-          <div>
-            <p
-              className={`font-display font-extrabold uppercase leading-tight tracking-tight text-white ${
-                isHero ? "text-[15px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]" : "text-[12px]"
-              }`}
+              className={`relative z-[2] flex w-full items-center justify-center ${
+                item.metadata?.effect === "fire_lobby" ? "h-[190px] p-0" : "h-[190px] px-4 pt-8"
+              } transition-transform duration-500 group-hover:scale-[1.04]`}
             >
-              {item.name}
-            </p>
-            {item.description && (
-              <p
-                className={`mt-0.5 line-clamp-2 leading-snug ${
-                  isHero ? "text-[9px] text-white/60" : "text-[10px] text-[var(--gr-text-dim)]"
-                }`}
-              >
-                {item.description}
+              <ItemPreview item={item} />
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-1 flex-col gap-4 p-5">
+            <div>
+              <p className="font-display text-[18px] font-black uppercase leading-tight text-white transition-colors group-hover:text-pink-400">
+                {item.name}
               </p>
-            )}
-          </div>
+              {item.description && (
+                <p className="mt-2 line-clamp-2 min-h-10 text-[13px] font-medium leading-relaxed text-white/50">
+                  {item.description}
+                </p>
+              )}
+            </div>
 
-          {/* price + action */}
-          <div className="mt-auto flex items-center justify-between gap-2 pt-1">
-            <span
-              className="text-[13px] font-black tabular-nums"
-              style={{ color: CURRENCY_COLOR[item.cost_currency] }}
-            >
-              {item.cost_amount} {CURRENCY_LABEL[item.cost_currency]}
-            </span>
+            {/* price + action */}
+            <div className="mt-auto flex items-center justify-between gap-3 pt-2">
+              <span className={`font-display text-[20px] font-black tabular-nums ${CURRENCY_COLOR[item.cost_currency]}`}>
+                {item.cost_amount} {CURRENCY_LABEL[item.cost_currency]}
+              </span>
 
-            {item.owned ? (
-              <button
-                type="button"
-                onClick={handleEquip}
-                disabled={isPending}
-                className="flex h-7 items-center gap-1 px-2.5 text-[9px] font-black uppercase tracking-[0.1em] transition-all duration-200 disabled:opacity-50"
-                style={{
-                  clipPath: CUT_SM,
-                  background: item.equipped
-                    ? "color-mix(in srgb, #8b5cf6 22%, transparent)"
-                    : "rgba(255,255,255,0.07)",
-                  color: item.equipped ? "#c4b5fd" : "#e2e8f0",
-                  outline: `1px solid ${item.equipped ? "rgba(196,181,253,0.45)" : "rgba(255,255,255,0.13)"}`,
-                }}
-              >
-                {item.equipped ? <><Sparkles className="h-3 w-3" /> აქტიური</> : "გამოყენება"}
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handlePurchase}
-                disabled={isPending}
-                className="h-7 px-3 text-[10px] font-black uppercase tracking-[0.12em] text-black transition hover:brightness-110 active:scale-95 disabled:opacity-50"
-                style={{
-                  clipPath: CUT_SM,
-                  background: "linear-gradient(180deg,#f5c842 0%,#e6a800 55%,#c87f00 100%)",
-                }}
-              >
-                {isPending ? "..." : "ყიდვა"}
-              </button>
-            )}
-          </div>
+              {item.owned ? (
+                <button
+                  type="button"
+                  onClick={handleEquip}
+                  disabled={isPending}
+                  className={`flex h-10 items-center justify-center gap-1.5 rounded-full px-5 text-[10px] font-black uppercase tracking-[0.16em] transition-all duration-300 disabled:opacity-50 ${
+                    item.equipped
+                      ? "border border-amber-500/40 bg-amber-500/20 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.3)] hover:bg-amber-500/30"
+                      : "border border-cyan-500/40 bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.2)] hover:bg-cyan-500/20 hover:scale-105"
+                  }`}
+                >
+                  {item.equipped ? <><Sparkles className="h-3.5 w-3.5" /> აქტიური</> : "გამოყენება"}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handlePurchase}
+                  disabled={isPending}
+                  className="flex h-10 items-center justify-center rounded-full border border-pink-500/50 bg-[linear-gradient(90deg,#ec4899,#8b5cf6)] px-6 text-[11px] font-black uppercase tracking-[0.18em] text-white shadow-[0_0_20px_rgba(236,72,153,0.4)] transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(236,72,153,0.6)] disabled:opacity-50"
+                >
+                  {isPending ? "..." : "ყიდვა"}
+                </button>
+              )}
+            </div>
 
           {feedback && (
-            <p className={`text-[10px] font-bold ${feedback.type === "success" ? "text-emerald-400" : "text-red-400"}`}>
+            <p className={`text-[11px] font-black uppercase tracking-widest mt-1 ${feedback.type === "success" ? "text-emerald-400 drop-shadow-[0_0_5px_rgba(16,185,129,0.5)]" : "text-red-400 drop-shadow-[0_0_5px_rgba(248,113,113,0.5)]"}`}>
               {feedback.msg}
             </p>
           )}
         </div>
       </div>
-    </div>
+    </article>
   );
 }

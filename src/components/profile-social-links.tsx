@@ -48,15 +48,20 @@ export function ProfileSocialLinks({
   if (!hasAny) return null;
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-2.5">
       {steam && (
         <a
           href={steam.data?.profileUrl ?? "#"}
           target="_blank"
           rel="noopener noreferrer"
           title={`Steam — ${steam.data?.personaName ?? steam.external_id}${steam.data?.gameCount ? ` · ${steam.data.gameCount} თამაში` : ""}`}
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-blue-500/10 text-blue-400 transition-all hover:border-blue-500/60 hover:bg-blue-500/20"
+          className="group relative flex h-10 w-10 items-center justify-center overflow-hidden text-sky-300 ring-1 ring-sky-400/22 transition-all hover:-translate-y-0.5 hover:ring-sky-300/45"
+          style={{
+            background: "linear-gradient(135deg, rgba(34,211,238,0.14), rgba(8,6,15,0.96))",
+            clipPath: "polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 0 100%)",
+          }}
         >
+          <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-[linear-gradient(90deg,rgba(34,211,238,0.85),transparent)]" />
           <SteamIcon />
         </a>
       )}
@@ -66,8 +71,13 @@ export function ProfileSocialLinks({
           target="_blank"
           rel="noopener noreferrer"
           title={`YouTube — @${ytHandle.replace(/^@/, "")}`}
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-red-500/10 text-red-500 transition-all hover:border-red-500/60 hover:bg-red-500/20"
+          className="group relative flex h-10 w-10 items-center justify-center overflow-hidden text-rose-300 ring-1 ring-rose-400/22 transition-all hover:-translate-y-0.5 hover:ring-rose-300/45"
+          style={{
+            background: "linear-gradient(135deg, rgba(255,77,109,0.15), rgba(8,6,15,0.96))",
+            clipPath: "polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 0 100%)",
+          }}
         >
+          <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-[linear-gradient(90deg,rgba(255,77,109,0.88),transparent)]" />
           <YoutubeIcon />
         </a>
       )}
@@ -77,8 +87,13 @@ export function ProfileSocialLinks({
           target="_blank"
           rel="noopener noreferrer"
           title={`TikTok — @${ttHandle.replace(/^@/, "")}`}
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-pink-500/10 text-pink-500 transition-all hover:border-pink-500/60 hover:bg-pink-500/20"
+          className="group relative flex h-10 w-10 items-center justify-center overflow-hidden text-fuchsia-300 ring-1 ring-fuchsia-400/22 transition-all hover:-translate-y-0.5 hover:ring-fuchsia-300/45"
+          style={{
+            background: "linear-gradient(135deg, rgba(192,38,211,0.15), rgba(8,6,15,0.96))",
+            clipPath: "polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 0 100%)",
+          }}
         >
+          <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-[linear-gradient(90deg,rgba(192,38,211,0.88),transparent)]" />
           <TikTokIcon />
         </a>
       )}

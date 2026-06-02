@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
+import { rateLimit } from "@/lib/rate-limit";
+import type { Database } from "@/lib/database.types";
+
+type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
 
 export async function POST(request: NextRequest) {
   const user = await getSession().catch(() => null);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  if (!rateLimit(`profile-update:${user.id}`, 20, 60_000))
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   let body: Record<string, unknown>;
   try {
@@ -13,7 +20,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
 
-  const update: Record<string, unknown> = {
+  const update: ProfileUpdate = {
     updated_at: new Date().toISOString(),
   };
   if (typeof body.username === "string" && body.username.trim())
@@ -26,8 +33,11 @@ export async function POST(request: NextRequest) {
     update.region = body.region.trim() || null;
   if (typeof body.voiceChat === "boolean")
     update.voice_chat = body.voiceChat;
-  if (Array.isArray(body.favoriteGameSlugs))
-    update.favorite_game_slugs = (body.favoriteGameSlugs as unknown[]).filter((s) => typeof s === "string");
+  if (Array.isArray(body.favoriteGameSlugs)) {
+    const favoriteSlugs = (body.favoriteGameSlugs as unknown[]).filter((s): s is string => typeof s === "string");
+    const mainGameSlug = typeof body.mainGameSlug === "string" ? body.mainGameSlug.trim() : "";
+    update.favorite_game_slugs = Array.from(new Set([...(mainGameSlug ? [mainGameSlug] : []), ...favoriteSlugs]));
+  }
   if (typeof body.youtubeHandle === "string")
     update.youtube_handle = body.youtubeHandle.trim().replace(/^@/, "").slice(0, 64) || null;
   if (typeof body.tiktokHandle === "string")

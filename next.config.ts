@@ -12,6 +12,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   distDir: ".next",
+  devIndicators: false,
   serverExternalPackages: ["discord.js"],
   async headers() {
     return [
@@ -35,6 +36,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "avatars.steamstatic.com",
+      },
+      {
+        protocol: "https",
+        hostname: "images.contentstack.io",
       },
     ],
   },

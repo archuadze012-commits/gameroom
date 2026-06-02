@@ -16,6 +16,15 @@ import { NewsCommentsClient } from "./news-comments-client";
 
 export const dynamic = "force-dynamic";
 
+type GameRel = { name_ka: string | null; emoji: string | null };
+type CommentRow = {
+  id: string;
+  body: string;
+  created_at: string;
+  profiles: { username: string | null } | null;
+};
+type ArticleAuthor = { username: string | null };
+
 export default async function NewsArticlePage({
   params,
 }: {
@@ -50,7 +59,7 @@ export default async function NewsArticlePage({
     .single();
 
   if (!article) notFound();
-  const game = Array.isArray(article.games) ? article.games[0] : (article.games as any);
+  const game = (Array.isArray(article.games) ? article.games[0] : article.games) as GameRel;
 
   const readMinutes = Math.max(1, Math.ceil((article.body?.length || 0) / 800));
   const formattedDate = article.published_at
@@ -71,7 +80,7 @@ export default async function NewsArticlePage({
     .eq("article_id", article.id)
     .order("created_at", { ascending: false });
 
-  const comments = (dbComments || []).map((c: any) => ({
+  const comments = ((dbComments ?? []) as CommentRow[]).map((c) => ({
     id: c.id,
     name: c.profiles?.username || "Anonymous",
     ago: formatDistanceToNow(new Date(c.created_at), { addSuffix: true, locale: ka }),
@@ -114,8 +123,8 @@ export default async function NewsArticlePage({
           <div className="flex flex-wrap items-center gap-3 text-[12px] uppercase tracking-[0.14em] text-[var(--gr-text-dim)]">
             <span className="inline-flex items-center gap-1.5"><User className="h-3.5 w-3.5" /> {
               (() => {
-                const p = article.profiles;
-                return (Array.isArray(p) ? p[0]?.username : (p as any)?.username) || "Admin";
+                const p = article.profiles as ArticleAuthor | ArticleAuthor[] | null;
+                return (Array.isArray(p) ? p[0]?.username : p?.username) || "Admin";
               })()
             }</span>
             <span>·</span>

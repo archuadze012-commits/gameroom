@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useMemo, useEffect } from "react";
-import { Canvas, useFrame, useThree, extend } from "@react-three/fiber";
+import { Canvas, useFrame, extend } from "@react-three/fiber";
 import {
   MeshReflectorMaterial,
   Text,
@@ -231,15 +231,17 @@ function Room() {
 }
 
 function CameraBob() {
-  const { camera } = useThree();
+  const cameraRef = useRef<THREE.PerspectiveCamera>(null);
   const baseY = useRef(2.2);
   useFrame((state) => {
+    const camera = cameraRef.current;
+    if (!camera) return;
     const t = state.clock.elapsedTime;
     camera.position.y = baseY.current + Math.sin(t * 0.5) * 0.08;
     camera.position.x = Math.sin(t * 0.25) * 0.15;
     camera.lookAt(0, 1.6, -8);
   });
-  return null;
+  return <PerspectiveCamera ref={cameraRef} makeDefault fov={45} position={[0, 2.2, 8]} />;
 }
 
 function SceneContents() {
@@ -249,7 +251,6 @@ function SceneContents() {
 
   return (
     <>
-      <PerspectiveCamera makeDefault fov={45} position={[0, 2.2, 8]} />
       <CameraBob />
 
       {/* ambient + hemisphere — very low, dark canvas */}

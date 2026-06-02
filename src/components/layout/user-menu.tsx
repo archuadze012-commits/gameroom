@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getSession } from "@/lib/auth";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { AvatarSync } from "@/components/avatar-sync";
 import { LogoutButton } from "@/components/logout-button";
 
@@ -28,16 +29,32 @@ export async function UserMenu() {
     );
   }
 
-  const displayName =
+  const supabase = await createSupabaseServerClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("username, display_name, avatar_url")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const canonicalUsername =
+    profile?.username ??
     (user.user_metadata?.username as string | undefined) ??
+    user.email?.split("@")[0] ??
+    "";
+  const displayName =
+    profile?.display_name ??
+    canonicalUsername ??
     user.email?.split("@")[0] ??
     "მოთამაშე";
   const initial = displayName.slice(0, 1).toUpperCase();
-  const avatarUrl = (user.user_metadata?.avatar_url as string | undefined) ?? "/default-avatar.svg";
+  const avatarUrl =
+    profile?.avatar_url ??
+    (user.user_metadata?.avatar_url as string | undefined) ??
+    "/default-avatar.svg";
 
   return (
     <>
-    <AvatarSync username={displayName} avatarUrl={avatarUrl} />
+    <AvatarSync username={canonicalUsername || displayName} avatarUrl={avatarUrl} />
     <div className="hidden md:block">
       <DropdownMenu>
         <DropdownMenuTrigger
@@ -63,7 +80,7 @@ export async function UserMenu() {
           </DropdownMenuGroup>
           <DropdownMenuSeparator style={{ background: "rgba(236,72,153,0.25)" }} />
           <DropdownMenuGroup>
-            <DropdownMenuItem render={<Link href={`/profile/${displayName}`} style={{ color: "#ffffff", textShadow: "0 0 7px rgba(236,72,153,0.8), 0 0 16px rgba(236,72,153,0.45)" }}>ჩემი პროფილი</Link>} />
+            <DropdownMenuItem render={<Link href={canonicalUsername ? `/profile/${canonicalUsername}` : "/settings"} style={{ color: "#ffffff", textShadow: "0 0 7px rgba(236,72,153,0.8), 0 0 16px rgba(236,72,153,0.45)" }}>ჩემი პროფილი</Link>} />
             <DropdownMenuItem render={<Link href="/settings" style={{ color: "#ffffff", textShadow: "0 0 7px rgba(236,72,153,0.8), 0 0 16px rgba(236,72,153,0.45)" }}>პარამეტრები</Link>} />
             <DropdownMenuItem render={<Link href="/lfg/new" style={{ color: "#ffffff", textShadow: "0 0 7px rgba(236,72,153,0.8), 0 0 16px rgba(236,72,153,0.45)" }}>ლოკალის დაპოსტვა</Link>} />
           </DropdownMenuGroup>

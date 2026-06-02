@@ -18,12 +18,14 @@ const firaGO = localFont({
   ],
   variable: "--font-firago",
   display: "swap",
+  preload: false,
 });
 
 const alkSanet = localFont({
   src: "./fonts/alk-sanet.ttf",
   variable: "--font-alk-sanet",
   display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -54,6 +56,7 @@ export default async function RootLayout({
   return (
     <html
       lang="ka"
+      data-scroll-behavior="smooth"
       className={`dark ${firaGO.variable} ${alkSanet.variable} h-full antialiased scroll-smooth`}
     >
       <body suppressHydrationWarning className="min-h-full flex flex-col">

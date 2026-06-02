@@ -48,6 +48,10 @@ const BLANK: FormState = {
   accent: ACCENT_OPTIONS[7].value, emoji: "🎮", iconUrl: "", coverUrl: "",
 };
 
+function makeTempGameSlug() {
+  return `game-${crypto.randomUUID().slice(0, 8)}`;
+}
+
 export default function AdminGamesPage() {
   const [dbGames, setDbGames] = useState<DbGame[]>([]);
   const [form, setForm] = useState<FormState>(BLANK);
@@ -80,7 +84,7 @@ export default function AdminGamesPage() {
     if (file.size > 8 * 1024 * 1024) { toast.error("ფოტო მაქს. 8MB"); return; }
     setUploadingCover(true);
     try {
-      const slug = (editingSlug ?? form.slug) || `game-${Date.now()}`;
+      const slug = (editingSlug ?? form.slug) || makeTempGameSlug();
       const url = await uploadImage(file, "cover", slug);
       set("coverUrl", url);
       toast.success("Cover ატვირთულია");
@@ -98,7 +102,7 @@ export default function AdminGamesPage() {
     if (file.size > 2 * 1024 * 1024) { toast.error("ფოტო მაქს. 2MB"); return; }
     setUploadingIcon(true);
     try {
-      const slug = (editingSlug ?? form.slug) || `game-${Date.now()}`;
+      const slug = (editingSlug ?? form.slug) || makeTempGameSlug();
       const url = await uploadImage(file, "icon", slug);
       set("iconUrl", url);
       toast.success("Icon ატვირთულია");

@@ -10,6 +10,17 @@ import { DownloadButton } from "./download-button";
 import { AdminUrlEditor } from "./admin-url-editor";
 import { AdminDeleteButton } from "./delete-button";
 import { YouTubeEmbed } from "@/components/youtube-embed";
+import { GamerCard } from "@/components/ui/gamer-card";
+
+export function getObjectPosition(url?: string) {
+  if (!url) return "center";
+  try {
+    const parsed = new URL(url, url.startsWith("/") ? "https://example.com" : undefined);
+    const y = parsed.searchParams.get("y");
+    if (y) return `center ${y}%`;
+  } catch {}
+  return "center";
+}
 
 type DbRow = {
   id: string;
@@ -64,7 +75,7 @@ export default async function CrackedGamePage({
     supabase.auth.getUser(),
   ]);
   if (dbRow) {
-    game = dbRowToGame(dbRow as DbRow);
+    game = dbRowToGame(dbRow as unknown as DbRow);
   } else {
     game = crackedGames.find((g) => g.id === id);
   }
@@ -95,74 +106,76 @@ export default async function CrackedGamePage({
       </Link>
 
       {/* Hero */}
-      <Card className="overflow-hidden border-border/60">
-        {/* Cover banner */}
-        {game.coverUrl ? (
-          <div className="relative h-48 w-full overflow-hidden sm:h-56">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={game.coverUrl} alt={game.title} className="h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
-          </div>
-        ) : (
-          <div className={`h-32 w-full bg-gradient-to-br ${game.accent}`} />
-        )}
+      <GamerCard color="rgba(196,30,58,0.78)" clipSize={0} showSideBorders={false}>
+        <div className="bg-[var(--gr-bg-1)]">
+          {/* Cover banner */}
+          {game.coverUrl ? (
+            <div className="relative w-full overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={game.coverUrl} alt={game.title} className="w-full h-auto block" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-1)] via-[var(--gr-bg-1)]/45 to-transparent" />
+            </div>
+          ) : (
+            <div className={`h-32 w-full bg-gradient-to-br ${game.accent}`} />
+          )}
 
-        <CardContent className="p-6 space-y-4">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold">{game.title}</h1>
-              <div className="mt-1 flex items-center gap-2 text-muted-foreground text-sm">
-                <span>{game.releaseYear}</span>
-                <span>·</span>
-                <span className="flex items-center gap-1 text-amber-400">
-                  <Star className="h-3.5 w-3.5 fill-amber-400" />
-                  <span className="font-bold">{game.rating}</span>
-                </span>
-                {game.metacriticScore != null && (
-                  <>
-                    <span>·</span>
-                    <span className="flex items-center gap-1.5">
-                      <span className={`inline-flex h-6 min-w-[2rem] items-center justify-center rounded px-1.5 text-xs font-bold text-white ${
-                        game.metacriticScore >= 75 ? "bg-green-600" :
-                        game.metacriticScore >= 50 ? "bg-yellow-600" : "bg-red-600"
-                      }`}>
-                        {game.metacriticScore}
+          <CardContent className="p-6 space-y-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-bold">{game.title}</h1>
+                <div className="mt-1 flex items-center gap-2 text-muted-foreground text-sm">
+                  <span>{game.releaseYear}</span>
+                  <span>·</span>
+                  <span className="flex items-center gap-1 text-amber-400">
+                    <Star className="h-3.5 w-3.5 fill-amber-400" />
+                    <span className="font-bold">{game.rating}</span>
+                  </span>
+                  {game.metacriticScore != null && (
+                    <>
+                      <span>·</span>
+                      <span className="flex items-center gap-1.5">
+                        <span className={`inline-flex h-6 min-w-[2rem] items-center justify-center rounded px-1.5 text-xs font-bold text-white ${
+                          game.metacriticScore >= 75 ? "bg-green-600" :
+                          game.metacriticScore >= 50 ? "bg-yellow-600" : "bg-red-600"
+                        }`}>
+                          {game.metacriticScore}
+                        </span>
+                        <span className="text-xs text-muted-foreground">Metacritic</span>
                       </span>
-                      <span className="text-xs text-muted-foreground">Metacritic</span>
-                    </span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {isAdmin && (
+                  <>
+                    <Link
+                      href={`/admin/free-pc-games?edit=${game.id}`}
+                      className="flex h-9 w-9 items-center justify-center rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-400 transition-colors hover:bg-amber-500/20"
+                      title="ადმინ რედაქტირება"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Link>
+                    <AdminDeleteButton gameId={game.id} />
                   </>
                 )}
+                <DownloadButton gameId={game.id} fallbackUrl={game.downloadUrl} />
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              {isAdmin && (
-                <>
-                  <Link
-                    href={`/admin/free-pc-games?edit=${game.id}`}
-                    className="flex h-9 w-9 items-center justify-center rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-400 transition-colors hover:bg-amber-500/20"
-                    title="ადმინ რედაქტირება"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Link>
-                  <AdminDeleteButton gameId={game.id} />
-                </>
-              )}
-              <DownloadButton gameId={game.id} fallbackUrl={game.downloadUrl} />
-            </div>
-          </div>
 
-          <div className="flex flex-wrap gap-2">
-            {game.genre.map((g) => (
-              <Badge key={g} variant="secondary">{g}</Badge>
-            ))}
-            {game.platform.map((p) => (
-              <Badge key={p} variant="outline" className="flex items-center gap-1 border-border/60">
-                {PLATFORM_ICON[p]} {p}
-              </Badge>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            <div className="flex flex-wrap gap-2">
+              {game.genre.map((g) => (
+                <Badge key={g} variant="secondary">{g}</Badge>
+              ))}
+              {game.platform.map((p) => (
+                <Badge key={p} variant="outline" className="flex items-center gap-1 border-border/60">
+                  {PLATFORM_ICON[p]} {p}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </div>
+      </GamerCard>
 
       {/* Gameplay video */}
       {game.gameplayUrl && (

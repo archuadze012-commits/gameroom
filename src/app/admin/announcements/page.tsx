@@ -25,14 +25,21 @@ export default function AnnouncementsPage() {
   const [severity, setSeverity] = useState<"info" | "warning" | "critical">("info");
   const [sending, setSending] = useState(false);
 
-  const load = async () => {
+  const load = async (showLoading = false) => {
+    if (showLoading) {
+      setList([]);
+    }
     const res = await fetch("/api/announcements");
     const data = await res.json();
     setList(data.announcements ?? []);
   };
 
   useEffect(() => {
-    load();
+    void (async () => {
+      const res = await fetch("/api/announcements");
+      const data = await res.json();
+      setList(data.announcements ?? []);
+    })();
   }, []);
 
   const handleSend = async (e: React.FormEvent) => {
@@ -48,7 +55,7 @@ export default function AnnouncementsPage() {
       toast.success("გაიგზავნა!");
       setTitle("");
       setBody("");
-      load();
+      await load();
     } catch {
       toast.error("შეცდომა");
     } finally {

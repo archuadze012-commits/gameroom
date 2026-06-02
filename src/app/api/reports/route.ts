@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { readJsonObject } from "@/lib/api/json";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   const user = await getSession().catch(() => null);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  if (!rateLimit(`report:${user.id}`, 10, 60_000))
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   const body = await readJsonObject(request, 4 * 1024);
   if (!body.ok) return body.response;

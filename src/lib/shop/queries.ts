@@ -2,7 +2,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { ShopItem } from "@/types/shop";
 import { getEquippedItemIds } from "@/lib/shop/equip-queries";
 
-const GAME_CATEGORIES = ["character", "lobby_effect", "badge", "name_card"];
+const GAME_CATEGORIES = ["combo", "character", "vehicle", "lobby_effect", "badge", "name_card"];
 
 async function fetchOwned(userId: string) {
   const supabase = await createSupabaseServerClient();

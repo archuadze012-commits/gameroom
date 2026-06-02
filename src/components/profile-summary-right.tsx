@@ -51,7 +51,7 @@ export function ProfileSummaryRight({
 
   return (
     <div className="w-full space-y-3">
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3">
         <StatCard
           icon={<UsersIcon className="h-5 w-5" />}
           label="გამომწერი"
@@ -63,8 +63,8 @@ export function ProfileSummaryRight({
           icon={<Trophy className="h-5 w-5" />}
           label="ტიტული"
           value="0"
-          color="#C084FC"
-          glow="rgba(192,132,252,0.3)"
+          color="#C026D3"
+          glow="rgba(192,38,211,0.28)"
         />
       </div>
 
@@ -73,10 +73,10 @@ export function ProfileSummaryRight({
           variant={following ? "outline" : "default"}
           onClick={toggle}
           disabled={loading}
-          className={`w-full ${
+          className={`h-11 w-full font-black uppercase tracking-[0.14em] [clip-path:polygon(0_0,calc(100%_-_12px)_0,100%_12px,100%_100%,0_100%)] ${
             following
-              ? "border-primary/40 text-primary hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
-              : ""
+              ? "border-[color-mix(in_srgb,var(--gr-cyan-glow)_36%,transparent)] bg-[color-mix(in_srgb,var(--gr-cyan-glow)_10%,transparent)] text-[var(--gr-cyan-glow)] hover:border-[color-mix(in_srgb,var(--gr-magenta)_40%,transparent)] hover:bg-[color-mix(in_srgb,var(--gr-magenta)_10%,transparent)] hover:text-[var(--gr-magenta)]"
+              : "border-[color-mix(in_srgb,var(--gr-magenta)_40%,transparent)] bg-[linear-gradient(135deg,var(--gr-magenta)_0%,var(--gr-cyan-glow)_100%)] text-white shadow-[0_10px_30px_-14px_rgba(192,38,211,0.8)] hover:brightness-110 hover:shadow-[0_0_24px_rgba(34,211,238,0.25),0_0_28px_rgba(192,38,211,0.3)]"
           }`}
         >
           {loading ? (
@@ -108,14 +108,19 @@ function StatCard({
   color: string;
   glow: string;
 }) {
+  const topLine = `linear-gradient(90deg, ${color}, rgba(255,255,255,0.06))`;
+
   return (
     <div
-      className="group relative overflow-hidden p-3 ring-1 ring-white/[0.06] transition-all hover:ring-white/[0.12]"
+      className="group relative overflow-hidden px-3.5 py-3 ring-1 ring-white/[0.07] transition-all duration-200 hover:-translate-y-0.5 hover:ring-white/[0.14]"
       style={{
-        background: `linear-gradient(135deg, ${color}08 0%, ${color}03 100%)`,
-        clipPath: "polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%)",
+        background: `linear-gradient(180deg, color-mix(in_srgb, var(--gr-bg-1) 92%, black), color-mix(in_srgb, ${color} 10%, var(--gr-bg-0)))`,
+        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.04), 0 18px 38px -28px ${glow}`,
+        clipPath: "polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%)",
       }}
     >
+      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[2px]" style={{ background: topLine }} />
+
       {/* glow orb */}
       <div
         className="pointer-events-none absolute -right-3 -top-3 h-14 w-14 rounded-full opacity-50 blur-xl transition-opacity group-hover:opacity-80"
@@ -123,10 +128,14 @@ function StatCard({
       />
 
       <div className="relative">
+        <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/42">
+          {label}
+        </p>
+
         {/* icon */}
         <div
-          className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg"
-          style={{ background: `${color}18`, color }}
+          className="mb-3 mt-2 inline-flex h-9 w-9 items-center justify-center rounded-[12px] ring-1"
+          style={{ background: `${color}15`, color, boxShadow: `0 0 18px -8px ${glow}`, borderColor: `${color}30` }}
         >
           {icon}
         </div>
@@ -134,8 +143,7 @@ function StatCard({
         {/* value */}
         <div className="flex items-baseline gap-1.5">
           <span
-            className="font-display text-[22px] font-extrabold leading-none tabular-nums"
-            style={{ color }}
+            className="font-display text-[24px] font-extrabold leading-none tabular-nums text-[var(--gr-text-hi)]"
           >
             {value}
           </span>
@@ -146,9 +154,8 @@ function StatCard({
           )}
         </div>
 
-        {/* label */}
-        <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.16em] text-white/35">
-          {label}
+        <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color }}>
+          pulse
         </p>
       </div>
     </div>

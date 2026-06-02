@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 
 type EditModeContextValue = {
   canEdit: boolean;
@@ -25,15 +25,14 @@ export function EditModeProvider({
   canEdit: boolean;
   children: React.ReactNode;
 }) {
-  const [editMode, setEditModeState] = useState(false);
-
-  useEffect(() => {
-    if (!canEdit) return;
+  const [editMode, setEditModeState] = useState(() => {
+    if (!canEdit || typeof window === "undefined") return false;
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw === "1") setEditModeState(true);
-    } catch {}
-  }, [canEdit]);
+      return window.localStorage.getItem(STORAGE_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
 
   const setEditMode = useCallback((next: boolean) => {
     setEditModeState(next);

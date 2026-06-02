@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Headphones } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { mockGames } from "@/lib/mock-data";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -10,8 +10,7 @@ import { DiscordVoiceDashboard } from "@/components/discord-voice-dashboard";
 export const dynamic = "force-dynamic";
 
 const cutLg = "polygon(0 0, calc(100% - 32px) 0, 100% 32px, 100% 100%, 0 100%)";
-const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
-const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.5))";
+const cardBorder = "linear-gradient(135deg, rgba(236,72,153,0.98), rgba(192,38,211,0.95))";
 
 export async function generateMetadata({
   params,
@@ -45,9 +44,9 @@ export default async function DiscordVoiceChannelsPage({
         slug: dbGame.slug,
         nameKa: dbGame.name_ka,
         nameEn: dbGame.name_en,
-        description: dbGame.description,
-        accent: dbGame.accent,
-        emoji: dbGame.emoji,
+        description: dbGame.description ?? "",
+        accent: dbGame.accent_color ?? "",
+        emoji: dbGame.emoji ?? "🎮",
         iconUrl: dbGame.icon_url ?? undefined,
         coverUrl: dbGame.cover_url ?? undefined,
         players: 0,
@@ -106,11 +105,9 @@ export default async function DiscordVoiceChannelsPage({
           style={{ background: cardBorder, padding: 1, clipPath: cutLg }}
         >
           <div
-            className="relative overflow-hidden bg-[var(--gr-bg-1)] p-6 md:p-8"
+            className="relative overflow-hidden bg-[#120b1d] p-6 shadow-[inset_0_0_0_1px_rgba(236,72,153,0.14)] md:p-8"
             style={{ clipPath: cutLg }}
           >
-            <span aria-hidden className="absolute left-0 top-0 z-10 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
-            <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 via-fuchsia-500/5 to-cyan-500/10" />
             <div className="relative z-[1]">
               <DiscordVoiceDashboard gameSlug={game.slug} />
             </div>

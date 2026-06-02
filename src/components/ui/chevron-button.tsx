@@ -7,11 +7,11 @@ type Variant = "violet" | "amber" | "ghost";
 
 const variantClasses: Record<Variant, string> = {
   violet:
-    "text-white bg-[var(--gr-grad-violet)] shadow-[0_8px_24px_-8px_rgba(139,92,246,0.7)] hover:shadow-[var(--gr-glow-violet)]",
+    "text-white bg-[var(--gr-grad-violet)] border border-white/10 shadow-[0_8px_24px_-8px_rgba(139,92,246,0.7),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_12px_36px_-6px_rgba(139,92,246,0.9),inset_0_1px_0_rgba(255,255,255,0.35)] hover:-translate-y-0.5 hover:border-white/20",
   amber:
-    "text-[#1a0e00] bg-[var(--gr-grad-amber)] shadow-[0_8px_24px_-8px_rgba(245,165,36,0.6)] hover:shadow-[var(--gr-glow-amber)]",
+    "text-[#381e00] bg-[var(--gr-grad-amber)] border border-white/20 shadow-[0_8px_24px_-8px_rgba(245,165,36,0.6),inset_0_1px_0_rgba(255,255,255,0.4)] hover:shadow-[0_12px_36px_-6px_rgba(245,165,36,0.8),inset_0_1px_0_rgba(255,255,255,0.6)] hover:-translate-y-0.5 hover:border-white/40",
   ghost:
-    "text-[var(--gr-text)] bg-transparent border border-[var(--gr-border-hi)] hover:bg-white/[0.04] hover:border-[var(--gr-violet-hi)]",
+    "text-[var(--gr-text)] bg-transparent border border-[var(--gr-border-hi)] hover:bg-white/[0.06] hover:border-[var(--gr-violet-hi)] hover:shadow-[0_0_20px_rgba(139,92,246,0.2)] hover:-translate-y-0.5",
 };
 
 type CommonProps = {

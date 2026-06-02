@@ -23,10 +23,6 @@ type CardUser = {
 
 type Props = { user: CardUser };
 
-const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
-const COL = "rgba(236,72,153,0.55)";
-const COL_HOVER = "rgba(236,72,153,0.85)";
-
 // Deterministic gradient per username — consistent backdrop for cards without banners.
 function gradientForUser(username: string): string {
   let h = 0;
@@ -51,49 +47,34 @@ export function PlayerCard({ user }: Props) {
     : { backgroundImage: gradientForUser(user.username) };
 
   return (
-    <Link href={`/profile/${user.username}`} className="group block">
-      <div
-        className="relative isolate"
-        style={{ background: COL, padding: 1, clipPath: cutSm }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = COL_HOVER)}
-        onMouseLeave={(e) => (e.currentTarget.style.background = COL)}
-      >
-        {/* top glow line */}
-        <span
-          aria-hidden
-          className="absolute left-0 top-0 z-10 h-[2px] w-full"
-          style={{ background: "linear-gradient(90deg,transparent,rgba(236,72,153,0.9),transparent)" }}
-        />
-        {/* inner radial glow */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-10"
-          style={{ background: "radial-gradient(ellipse at 50% 0%,rgba(236,72,153,0.09) 0%,transparent 65%)" }}
-        />
-        <div
-          className="relative h-52 overflow-hidden bg-[var(--gr-bg-1)]"
-          style={{ clipPath: cutSm }}
-        >
-          {/* Banner backdrop */}
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={bannerStyle}
-          />
-          {/* Dark gradient overlay for legibility */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[var(--gr-bg-0)]/30 via-[var(--gr-bg-0)]/45 to-[var(--gr-bg-0)]/90" />
-          {/* magenta overlay on hover */}
-          <div aria-hidden className="pointer-events-none absolute inset-0 z-[5] bg-fuchsia-600/0 duration-0 group-hover:bg-fuchsia-600/[0.08]" />
+    <Link href={`/profile/${user.username}`} className="group block h-full">
+      <div className="relative isolate h-full rounded-[20px] p-[1.5px] bg-gradient-to-br from-[#00d0ff] via-[#6366f1] to-[#f43f5e] transition-all duration-500 hover:shadow-[0_0_30px_rgba(99,102,241,0.4)] hover:-translate-y-1">
+        <div className="relative h-full overflow-hidden rounded-[18.5px] bg-[#0a0714] flex flex-col">
+          <div className="relative h-40 overflow-hidden shrink-0">
+            {/* Banner backdrop */}
+            <div
+              className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+              style={bannerStyle}
+            />
+            {/* Dark gradient overlay for legibility */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[rgba(10,7,20,0.4)] to-[#0a0714]" />
+            
+            {/* pink overlay on hover */}
+            <div aria-hidden className="pointer-events-none absolute inset-0 z-[5] bg-pink-500/0 duration-500 group-hover:bg-pink-500/10 mix-blend-overlay" />
 
           {/* Online dot */}
           <div
-            className="absolute left-3 top-3 z-10 h-3 w-3 rounded-full ring-2 ring-[var(--gr-bg-0)]/80 shadow-md"
-            style={{ backgroundColor: user.isOnline ? "var(--gr-lime)" : "var(--gr-amber)" }}
+            className="absolute left-3 top-3 z-10 h-3 w-3 rounded-full ring-2 ring-black/50 shadow-[0_0_10px_rgba(0,0,0,0.5)]"
+            style={{ 
+              backgroundColor: user.isOnline ? "#10b981" : "#f59e0b",
+              boxShadow: user.isOnline ? "0 0 10px #10b981" : "0 0 10px #f59e0b" 
+            }}
           />
 
           {/* Centered avatar */}
-          <div className="absolute left-1/2 top-9 -translate-x-1/2">
+          <div className="absolute left-1/2 top-10 -translate-x-1/2 transition-transform duration-500 group-hover:scale-105">
             <div className="relative">
-              <div className="h-20 w-20 overflow-hidden rounded-full ring-2 ring-[var(--gr-violet-hi)]/40 shadow-xl">
+              <div className="h-20 w-20 overflow-hidden rounded-full ring-2 ring-white/10 shadow-[0_0_20px_rgba(0,0,0,0.8)] group-hover:ring-pink-500/50 group-hover:shadow-[0_0_25px_rgba(236,72,153,0.5)] transition-all">
                 {user.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -104,51 +85,56 @@ export function PlayerCard({ user }: Props) {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-[var(--gr-violet)]/20 text-2xl font-bold text-[var(--gr-violet-hi)]">
+                  <div className="flex h-full w-full items-center justify-center bg-violet-500/20 text-2xl font-bold text-violet-400">
                     {initial}
                   </div>
                 )}
               </div>
               {user.isVerified && (
-                <span className="absolute -bottom-1 -right-1 rounded-full bg-[var(--gr-bg-1)] p-0.5 shadow ring-1 ring-[var(--gr-border-hi)]">
+                <span className="absolute -bottom-1 -right-1 rounded-full bg-black p-0.5 shadow-md ring-1 ring-white/20">
                   <VerifiedBadge className="h-4 w-4" />
                 </span>
               )}
             </div>
           </div>
-
-          {/* Bottom info */}
-          <div className="absolute bottom-0 left-0 right-0 z-10 flex items-end justify-between gap-2 p-3">
+          </div>
+        </div>
+        {/* Bottom info */}
+        <div className="relative z-10 flex flex-col p-4 bg-[rgba(15,12,30,0.95)]">
+          <div className="flex items-start justify-between gap-2 mb-2">
             <div className="min-w-0 flex-1">
-              {user.role && user.role !== "user" && (
-                <RoleBadge username={user.username} defaultRole={user.role} />
-              )}
-              <p className="mt-0.5 truncate text-sm font-bold text-[var(--gr-text)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">
-                {displayName}
-              </p>
-              <p className="flex items-center gap-1 text-[10px] text-[var(--gr-text)]/70">
+              <div className="flex items-center gap-1.5 mb-1">
+                {user.role && user.role !== "user" && (
+                  <RoleBadge username={user.username} defaultRole={user.role} />
+                )}
+                <p className="truncate text-[15px] font-black text-white drop-shadow-md group-hover:text-pink-400 transition-colors">
+                  {displayName}
+                </p>
+              </div>
+              <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-white/40">
                 {user.region && <span>{user.region}</span>}
                 {user.voiceChat && (
                   <>
                     {user.region && <span>·</span>}
-                    <Mic className="h-2.5 w-2.5" />
+                    <Mic className="h-3 w-3 text-pink-400" />
                   </>
                 )}
               </p>
             </div>
-            {games.length > 0 && (
-              <div className="flex shrink-0 items-center gap-1">
-                {games.map((g) => (
-                  <div
-                    key={g.slug}
-                    className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--gr-bg-0)]/70 backdrop-blur-sm ring-1 ring-white/10"
-                  >
-                    <GameIcon game={g} size="sm" />
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
+
+          {games.length > 0 && (
+            <div className="flex shrink-0 items-center gap-1.5 mt-1">
+              {games.map((g) => (
+                <div
+                  key={g.slug}
+                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/5 backdrop-blur-md transition-colors group-hover:border-pink-500/20 group-hover:bg-pink-500/10"
+                >
+                  <GameIcon game={g} size="sm" />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </Link>

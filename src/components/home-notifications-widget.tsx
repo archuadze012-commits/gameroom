@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Users, Bell } from "lucide-react";
+import { Users, Bell, ChevronRight } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type Notification = {
@@ -70,34 +70,25 @@ export function HomeNotificationsWidget() {
   if (items.length === 0) return null;
 
   return (
-    <div className="mt-3 space-y-2">
+    <div className="space-y-3">
       {items.map((n) => {
         const card = (
-          <div
-            className="relative isolate transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)] group"
-            style={{ background: 'var(--card-border-hover, transparent)', padding: 1, clipPath: "polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%)" }}
-          >
-            <div
-              className="relative flex items-start gap-3 bg-[var(--gr-bg-1)] px-4 py-3"
-              style={{ clipPath: "polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%)" }}
-            >
-              {/* Hover Effects */}
-              <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
-              <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
-            <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
-
-            <span className="relative z-10 mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md bg-[var(--gr-violet)]/15 text-[var(--gr-violet-hi)] ring-1 ring-[var(--gr-violet)]/30">
-              <Users className="h-3.5 w-3.5" />
-            </span>
-            <div className="relative z-10 min-w-0 flex-1">
-              <p className="text-[12.5px] font-semibold text-[var(--gr-text)] group-hover:text-[var(--gr-violet-hi)]">{n.title}</p>
-              <p className="mt-0.5 line-clamp-1 text-[11.5px] text-[var(--gr-text-mute)]">{n.body}</p>
+          <div className="group relative overflow-hidden rounded-[16px] p-[1.5px] bg-gradient-to-br from-[#00d0ff] via-[#6366f1] to-[#f43f5e] transition-all duration-300 hover:shadow-[0_0_20px_rgba(99,102,241,0.4)]">
+            <div className="relative h-full w-full rounded-[14.5px] bg-[#0a0714] p-3 flex items-start gap-3">
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              
+              <span className="relative z-10 mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_10px_rgba(34,211,238,0.2)]">
+                <Users className="h-4 w-4" />
+              </span>
+              <div className="relative z-10 min-w-0 flex-1">
+                <p className="text-[13px] font-bold text-white transition-colors group-hover:text-cyan-400 drop-shadow-sm">{n.title}</p>
+                <p className="mt-1 line-clamp-2 text-[12px] text-white/60 leading-relaxed">{n.body}</p>
+              </div>
             </div>
-          </div>
           </div>
         );
         return n.link ? (
-          <Link key={n.id} href={n.link} onClick={() => markRead(n.id)}>
+          <Link key={n.id} href={n.link} onClick={() => markRead(n.id)} className="block">
             {card}
           </Link>
         ) : (
@@ -106,10 +97,11 @@ export function HomeNotificationsWidget() {
       })}
       <Link
         href="/announcements"
-        className="flex items-center justify-center gap-1 pt-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--gr-violet-hi)] hover:text-[var(--gr-violet)]"
+        className="group mt-4 flex items-center justify-center gap-1.5 rounded-full border border-cyan-500/20 bg-cyan-500/5 py-2 text-[11px] font-black uppercase tracking-[0.15em] text-cyan-400 transition-all hover:bg-cyan-500/10 hover:shadow-[0_0_10px_rgba(34,211,238,0.2)]"
       >
         <Bell className="h-3 w-3" />
         ყველა შეტყობინება
+        <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
       </Link>
     </div>
   );

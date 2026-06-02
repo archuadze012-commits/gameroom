@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     .upsert(
       {
         key,
-        value,
+        value: value as never,
         updated_at: new Date().toISOString(),
         updated_by: auth.userId,
       },

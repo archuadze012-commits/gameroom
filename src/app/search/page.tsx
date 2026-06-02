@@ -1,26 +1,22 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Search, Users, Gamepad2, Download, Star, ShieldCheck, Shield, Trophy, MonitorPlay, Loader2 } from "lucide-react";
+import { Search, Users, Gamepad2, Download, ShieldCheck, Shield, Trophy, MonitorPlay, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { mockGames, crackedGames } from "@/lib/mock-data";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { GameIcon } from "@/components/game-icon";
 import { DisplayHeading } from "@/components/ui/display-heading";
 import { Pill } from "@/components/ui/pill";
 import type { PublicProfile, UserRole } from "@/lib/types";
+import { GamerCard } from "@/components/ui/gamer-card";
 
-const neonText = { color: "#ffffff", textShadow: "0 0 8px rgba(236,72,153,0.9), 0 0 18px rgba(236,72,153,0.55), 0 0 32px rgba(236,72,153,0.3)" } as const;
-const neonMute = { color: "rgba(255,255,255,0.75)", textShadow: "0 0 6px rgba(236,72,153,0.75), 0 0 16px rgba(236,72,153,0.4)" } as const;
-const neonDim  = { color: "rgba(255,255,255,0.55)", textShadow: "0 0 5px rgba(236,72,153,0.55)" } as const;
-const neonMagenta = { color: "rgba(236,72,153,1)", textShadow: "0 0 8px rgba(236,72,153,1), 0 0 18px rgba(236,72,153,0.7)" } as const;
+const neonText = { color: "#ffffff", textShadow: "0 0 4px rgba(196,30,58,0.45), 0 0 10px rgba(196,30,58,0.2)" } as const;
+const neonMute = { color: "rgba(255,255,255,0.75)", textShadow: "0 0 3px rgba(196,30,58,0.3), 0 0 8px rgba(196,30,58,0.14)" } as const;
+const neonDim  = { color: "rgba(255,255,255,0.55)", textShadow: "0 0 2px rgba(196,30,58,0.22)" } as const;
+const neonMagenta = { color: "rgba(196,30,58,0.92)", textShadow: "0 0 4px rgba(196,30,58,0.5), 0 0 10px rgba(196,30,58,0.22)" } as const;
 
 type Tab = "players" | "games" | "cracked";
 type RoleFilter = "all" | Exclude<UserRole, "user">;
-
-const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
-const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.55))";
 
 type RoleTone = "neutral" | "live" | "amber" | "violet" | "cyan";
 
@@ -33,13 +29,123 @@ const ROLE_FILTERS: { role: RoleFilter; label: string; icon: React.ReactNode; to
   { role: "esports",   label: "კიბერსპორტსმენი",  icon: <Gamepad2 className="h-3.5 w-3.5" />,      tone: "cyan" },
 ];
 
-const TONE_ACTIVE: Record<RoleTone, string> = {
-  neutral: "bg-[var(--gr-violet)]/14 text-[var(--gr-text)] ring-1 ring-[var(--gr-violet-hi)]/60",
-  live:    "bg-[color-mix(in_oklab,var(--gr-amber)_20%,transparent)] text-[var(--gr-amber)] ring-1 ring-[color-mix(in_oklab,var(--gr-amber)_55%,transparent)]",
-  amber:   "bg-[color-mix(in_oklab,var(--gr-amber)_18%,transparent)] text-[var(--gr-amber)] ring-1 ring-[color-mix(in_oklab,var(--gr-amber)_50%,transparent)]",
-  violet:  "bg-[color-mix(in_oklab,var(--gr-violet)_18%,transparent)] text-[var(--gr-violet-hi)] ring-1 ring-[color-mix(in_oklab,var(--gr-violet)_55%,transparent)]",
-  cyan:    "bg-[color-mix(in_oklab,var(--gr-cyan-glow)_15%,transparent)] text-[var(--gr-cyan-glow)] ring-1 ring-[color-mix(in_oklab,var(--gr-cyan-glow)_45%,transparent)]",
-};
+function SearchPlayerCard({ user }: { user: PublicProfile }) {
+  return (
+    <GamerCard clipSize={14} hover sideGlow={false} innerGlow="none" className="transition-transform duration-300 hover:-translate-y-0.5" surfaceClassName="bg-[linear-gradient(180deg,color-mix(in_srgb,var(--gr-bg-1)_96%,black),color-mix(in_srgb,var(--gr-bg-2)_88%,black))]">
+      <div className="relative flex min-h-[112px] items-center gap-4 p-4 sm:min-h-[124px] sm:gap-5 sm:p-5">
+        <div className="relative z-[3] shrink-0">
+          <div
+            className="transition-transform duration-300 group-hover:scale-105"
+            style={{
+              width: 72, height: 72, borderRadius: "50%",
+              border: "2px solid rgba(196,30,58,0.38)",
+              boxShadow: "0 0 6px rgba(196,30,58,0.18)",
+              overflow: "hidden",
+              background: "rgba(196,30,58,0.05)",
+              flexShrink: 0,
+            }}
+          >
+            {user.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={user.avatarUrl}
+                alt={user.displayName ?? user.username}
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              />
+            ) : (
+              <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 900, color: "#ffffff", textShadow: "0 0 4px rgba(196,30,58,0.4)" }}>
+                {(user.displayName ?? user.username).slice(0, 1).toUpperCase()}
+              </div>
+            )}
+          </div>
+          <span
+            className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[var(--gr-bg-1)]"
+            style={{
+              backgroundColor: user.isOnline ? "var(--gr-lime)" : "rgba(255,255,255,0.2)",
+              boxShadow: user.isOnline ? "0 0 6px var(--gr-lime)" : "none",
+            }}
+          />
+          {user.isVerified && (
+            <span className="absolute -top-0.5 -right-0.5 rounded-full p-0.5" style={{ background: "rgba(196,30,58,0.92)", boxShadow: "0 0 4px rgba(196,30,58,0.32)" }}>
+              <ShieldCheck className="h-3 w-3 text-white" />
+            </span>
+          )}
+        </div>
+
+        <div className="relative z-[3] min-w-0 flex-1">
+          <h4
+            className="font-display text-[18px] font-extrabold uppercase leading-tight tracking-tight truncate sm:text-[20px]"
+            style={neonText}
+          >
+            {user.displayName ?? user.username}
+          </h4>
+          <p className="mt-1 truncate text-[12px] sm:text-[13px]" style={neonMute}>
+            @{user.username}
+          </p>
+          {user.role && user.role !== "user" && (
+            <span
+              className="mt-2 inline-block px-2 py-1 text-[10px] font-bold uppercase tracking-widest"
+              style={{
+                color: "rgba(196,30,58,0.92)",
+                textShadow: "0 0 4px rgba(196,30,58,0.34)",
+                border: "1px solid rgba(196,30,58,0.22)",
+                borderRadius: 3,
+                background: "rgba(196,30,58,0.05)",
+              }}
+            >
+              {user.role}
+            </span>
+          )}
+        </div>
+      </div>
+    </GamerCard>
+  );
+}
+
+function SearchMediaCard({
+  href,
+  title,
+  coverUrl,
+  accent,
+}: {
+  href: string;
+  title: string;
+  coverUrl?: string;
+  accent?: string;
+}) {
+  return (
+    <Link href={href} className="group block">
+      <GamerCard clipSize={14} hover sideGlow={false} innerGlow="none" className="h-32 transition-transform duration-300 hover:-translate-y-0.5">
+        <div className="relative h-full w-full overflow-hidden">
+          {coverUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={coverUrl}
+              alt={title}
+              className="absolute inset-0 h-full w-full object-cover opacity-95 transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div className={`absolute inset-0 bg-gradient-to-br ${accent ?? "from-indigo-500/30 to-cyan-500/10"} opacity-30`} />
+          )}
+
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/6 to-red-600/8 opacity-28" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[var(--gr-bg-0)]/76 via-[var(--gr-bg-0)]/18 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)]/84 via-[var(--gr-bg-0)]/8 to-transparent" />
+
+          <div className="absolute bottom-2.5 left-4 right-3 z-10">
+            <h4
+              className="line-clamp-2 font-display text-[14px] font-extrabold uppercase leading-[1.1] tracking-tight"
+              style={neonText}
+              title={title}
+            >
+              {title}
+            </h4>
+          </div>
+        </div>
+      </GamerCard>
+    </Link>
+  );
+}
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
@@ -120,8 +226,8 @@ export default function SearchPage() {
     <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
       {/* faint light leaks like the home hero */}
-      <span aria-hidden className="pointer-events-none absolute -top-24 -right-20 h-72 w-72 rounded-full bg-[var(--gr-violet)]/20 blur-[120px]" />
-      <span aria-hidden className="pointer-events-none absolute top-40 -left-20 h-72 w-72 rounded-full bg-[var(--gr-magenta)]/15 blur-[120px]" />
+      <span aria-hidden className="pointer-events-none absolute -top-24 -right-20 h-72 w-72 rounded-full bg-[var(--gr-violet)]/12 blur-[120px]" />
+      <span aria-hidden className="pointer-events-none absolute top-40 -left-20 h-72 w-72 rounded-full bg-[rgba(196,30,58,0.08)] blur-[120px]" />
 
       <div className="container relative mx-auto px-4 py-10 lg:py-14 space-y-7">
         <div>
@@ -133,13 +239,13 @@ export default function SearchPage() {
         </div>
 
         <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "#ffffff", filter: "drop-shadow(0 0 5px rgba(236,72,153,0.8))" }} />
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "#ffffff", filter: "drop-shadow(0 0 3px rgba(196,30,58,0.38))" }} />
           <Input
             autoFocus
             placeholder="username, თამაში, ჟანრი, პლატფორმა..."
-            className="pl-10 h-12 text-base bg-[var(--gr-bg-1)]"
-            style={{ color: "#ffffff", textShadow: "0 0 6px rgba(236,72,153,0.7)" }}
-            onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 2px rgba(236,72,153,0.5), 0 0 14px rgba(236,72,153,0.4)"; e.currentTarget.style.borderColor = "rgba(236,72,153,0.9)"; }}
+            className="h-12 bg-[var(--gr-bg-1)] pl-10 text-base text-white placeholder:text-white/40"
+            style={{ color: "#ffffff", textShadow: "0 0 5px rgba(196,30,58,0.55), 0 0 12px rgba(196,30,58,0.24)" }}
+            onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 2px rgba(196,30,58,0.26), 0 0 8px rgba(196,30,58,0.18)"; e.currentTarget.style.borderColor = "rgba(196,30,58,0.58)"; }}
             onBlur={(e) => { e.currentTarget.style.boxShadow = ""; e.currentTarget.style.borderColor = ""; }}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -147,7 +253,7 @@ export default function SearchPage() {
         </div>
 
         {/* Tabs — underline slide */}
-        <div className="flex flex-wrap gap-1" style={{ borderBottom: "1px solid rgba(236,72,153,0.2)" }}>
+        <div className="flex flex-wrap gap-1" style={{ borderBottom: "1px solid rgba(196,30,58,0.2)" }}>
           {tabs.map((t) => {
             const active = tab === t.id;
             return (
@@ -162,7 +268,7 @@ export default function SearchPage() {
                 {t.label}
                 <Pill tone={active ? "accent" : "neutral"}>{t.count}</Pill>
                 {active && (
-                  <span aria-hidden className="absolute inset-x-2 -bottom-px h-[2px]" style={{ background: "rgba(236,72,153,1)", boxShadow: "0 0 10px rgba(236,72,153,0.8)" }} />
+                  <span aria-hidden className="absolute inset-x-2 -bottom-px h-[2px]" style={{ background: "rgba(196,30,58,0.92)", boxShadow: "0 0 4px rgba(196,30,58,0.34)" }} />
                 )}
               </button>
             );
@@ -173,7 +279,7 @@ export default function SearchPage() {
       {tab === "players" && (
         <div className="space-y-5">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.14em]" style={{ color: "#ffffff", textShadow: "0 0 7px rgba(236,72,153,0.8)" }}>
+            <span className="inline-flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.14em]" style={{ color: "#ffffff", textShadow: "0 0 3px rgba(196,30,58,0.28)" }}>
               <span className="relative grid h-2 w-2 place-items-center">
                 <span className="absolute inset-0 rounded-full bg-[var(--gr-lime)] opacity-60 motion-safe:animate-ping" />
                 <span className="relative h-2 w-2 rounded-full bg-[var(--gr-lime)]" />
@@ -191,16 +297,16 @@ export default function SearchPage() {
                   onClick={() => setRoleFilter(f.role)}
                   className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] transition-all duration-200"
                   style={isActive ? {
-                    background: "rgba(236,72,153,0.18)",
-                    border: "1px solid rgba(236,72,153,0.7)",
-                    boxShadow: "0 0 12px rgba(236,72,153,0.35)",
+                    background: "rgba(196,30,58,0.18)",
+                    border: "1px solid rgba(196,30,58,0.7)",
+                    boxShadow: "0 0 5px rgba(196,30,58,0.16)",
                     color: "#ffffff",
-                    textShadow: "0 0 8px rgba(236,72,153,0.9), 0 0 18px rgba(236,72,153,0.5)",
+                    textShadow: "0 0 4px rgba(196,30,58,0.28)",
                   } : {
                     background: "rgba(255,255,255,0.03)",
                     border: "1px solid rgba(255,255,255,0.1)",
                     color: "rgba(255,255,255,0.6)",
-                    textShadow: "0 0 6px rgba(236,72,153,0.5)",
+                    textShadow: "0 0 2px rgba(196,30,58,0.2)",
                   }}
                 >
                   {f.icon}
@@ -208,7 +314,7 @@ export default function SearchPage() {
                   <span
                     className="rounded-full px-1.5 text-[10px] tabular-nums"
                     style={isActive ? {
-                      background: "rgba(236,72,153,0.25)",
+                      background: "rgba(196,30,58,0.25)",
                       color: "#ffffff",
                     } : {
                       background: "rgba(255,255,255,0.05)",
@@ -238,96 +344,10 @@ export default function SearchPage() {
               {playerResults.length === 0 ? (
                 <EmptyResult label="მოთამაშე ვერ მოიძებნა" />
               ) : (
-                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {playerResults.map((user) => (
                     <Link key={user.username} href={`/profile/${user.username}`} className="group block">
-                      <article
-                        className="relative overflow-hidden transition-all duration-300 group-hover:-translate-y-0.5"
-                        style={{
-                          clipPath: cutSm,
-                          background: "rgba(236,72,153,0.35)",
-                          padding: 1,
-                        }}
-                      >
-                        <div
-                          className="relative flex items-center gap-3 p-3 bg-[var(--gr-bg-1)]"
-                          style={{ clipPath: cutSm }}
-                        >
-                          {/* magenta glow bg on hover */}
-                          <div className="absolute inset-0 bg-gradient-to-br from-[rgba(236,72,153,0.12)] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none z-[1]" />
-                          {/* laser sweep */}
-                          <div aria-hidden className="pointer-events-none absolute left-0 top-0 z-[2] h-[2px] w-full translate-x-[-100%] bg-gradient-to-r from-transparent via-white/60 to-transparent group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700" />
-
-                          {/* Avatar */}
-                          <div className="relative z-[3] shrink-0">
-                            <div
-                              className="transition-transform duration-300 group-hover:scale-105"
-                              style={{
-                                width: 56, height: 56, borderRadius: "50%",
-                                border: "2px solid rgba(236,72,153,0.6)",
-                                boxShadow: "0 0 12px rgba(236,72,153,0.4)",
-                                overflow: "hidden",
-                                background: "rgba(236,72,153,0.1)",
-                                flexShrink: 0,
-                              }}
-                            >
-                              {user.avatarUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={user.avatarUrl}
-                                  alt={user.displayName ?? user.username}
-                                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                                />
-                              ) : (
-                                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 900, color: "#ffffff", textShadow: "0 0 8px rgba(236,72,153,1)" }}>
-                                  {(user.displayName ?? user.username).slice(0, 1).toUpperCase()}
-                                </div>
-                              )}
-                            </div>
-                            {/* online dot */}
-                            <span
-                              className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[var(--gr-bg-1)]"
-                              style={{
-                                backgroundColor: user.isOnline ? "var(--gr-lime)" : "rgba(255,255,255,0.2)",
-                                boxShadow: user.isOnline ? "0 0 6px var(--gr-lime)" : "none",
-                              }}
-                            />
-                            {/* verified */}
-                            {user.isVerified && (
-                              <span className="absolute -top-0.5 -right-0.5 rounded-full p-0.5" style={{ background: "rgba(236,72,153,1)", boxShadow: "0 0 8px rgba(236,72,153,0.8)" }}>
-                                <ShieldCheck className="h-3 w-3 text-white" />
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Info */}
-                          <div className="relative z-[3] min-w-0 flex-1">
-                            <h4
-                              className="font-display text-[15px] font-extrabold uppercase leading-tight tracking-tight truncate"
-                              style={neonText}
-                            >
-                              {user.displayName ?? user.username}
-                            </h4>
-                            <p className="text-[11px] truncate mt-0.5" style={neonMute}>
-                              @{user.username}
-                            </p>
-                            {user.role && user.role !== "user" && (
-                              <span
-                                className="mt-1 inline-block text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5"
-                                style={{
-                                  color: "rgba(236,72,153,1)",
-                                  textShadow: "0 0 6px rgba(236,72,153,0.9)",
-                                  border: "1px solid rgba(236,72,153,0.4)",
-                                  borderRadius: 3,
-                                  background: "rgba(236,72,153,0.08)",
-                                }}
-                              >
-                                {user.role}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </article>
+                      <SearchPlayerCard user={user} />
                     </Link>
                   ))}
                 </div>
@@ -348,59 +368,13 @@ export default function SearchPage() {
           ) : (
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {gameResults.map((g) => (
-                <Link key={g.slug} href={`/games/${g.slug}`} className="group block">
-                  <article
-                    className="group relative isolate h-32 overflow-hidden transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)]"
-                    style={{ background: 'var(--card-border-hover, ' + cardBorder + ')', padding: 1, clipPath: cutSm }}
-                  >
-                    <div
-                      className="relative h-full w-full bg-[var(--gr-bg-1)] transition-transform duration-300"
-                      style={{ clipPath: cutSm }}
-                    >
-                      {/* Top Border Glow */}
-                      <span aria-hidden className="absolute left-0 top-0 z-10 h-[1.5px] w-full bg-[var(--gr-grad-violet)]" />
-
-                      {/* Game Cover Background */}
-                      {g.coverUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={g.coverUrl}
-                          alt={g.nameKa}
-                          className="absolute inset-0 h-full w-full object-cover opacity-98 transition-transform duration-500 group-hover:opacity-100"
-                        />
-                      ) : (
-                        <div className={`absolute inset-0 bg-gradient-to-br ${g.accent} opacity-20`} />
-                      )}
-                      
-                      {/* Ambient Gradients */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-cyan-500/5 opacity-40" />
-                      <div className="absolute inset-0 bg-gradient-to-r from-[var(--gr-bg-0)]/70 via-[var(--gr-bg-0)]/15 to-transparent" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)]/80 via-[var(--gr-bg-0)]/5 to-transparent" />
-
-                      {/* Atmosphere Circle */}
-                      <div aria-hidden className="absolute -left-8 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full bg-white/5 blur-xl transition-transform duration-500 group-hover:scale-125" />
-
-                      {/* Laser lines left */}
-                      <div aria-hidden className="absolute inset-y-0 left-[7.5%] w-[1px] bg-[var(--gr-violet)]/40 shadow-[0_0_12px_rgba(139,92,246,0.5)]" />
-                      <div aria-hidden className="absolute inset-y-0 left-[5.5%] w-[2px] bg-[var(--gr-violet)]/55 shadow-[0_0_15px_rgba(139,92,246,0.6)]" />
-
-                      {/* Colored accent block on the left edge */}
-                      <div aria-hidden className="absolute left-0 top-0 h-full w-[6%] bg-[linear-gradient(180deg,rgba(34,211,238,0.9),rgba(139,92,246,0.25))] [clip-path:polygon(0_0,68%_0,100%_100%,0_100%)] opacity-80" />
-
-                      {/* Bottom Details (Game Name) */}
-                      <div className="absolute bottom-2.5 left-[6.5%] right-2.5 z-10">
-                        <h4 className="font-display text-[14px] font-extrabold uppercase leading-[1.1] tracking-tight transition-colors line-clamp-2" style={neonText}>
-                          {g.nameKa}
-                        </h4>
-                      </div>
-
-                      {/* Hover Effects (Button Style) */}
-                      <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
-                      <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
-                      <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
-                    </div>
-                  </article>
-                </Link>
+                <SearchMediaCard
+                  key={g.slug}
+                  href={`/games/${g.slug}`}
+                  title={g.nameKa}
+                  coverUrl={g.coverUrl}
+                  accent={g.accent}
+                />
               ))}
             </div>
           )}
@@ -418,59 +392,13 @@ export default function SearchPage() {
           ) : (
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {crackedResults.map((g) => (
-                <Link key={g.id} href={`/free-pc-games/${g.id}`} className="group block">
-                  <article
-                    className="group relative isolate h-32 overflow-hidden transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)]"
-                    style={{ background: 'var(--card-border-hover, ' + cardBorder + ')', padding: 1, clipPath: cutSm }}
-                  >
-                    <div
-                      className="relative h-full w-full bg-[var(--gr-bg-1)] transition-transform duration-300"
-                      style={{ clipPath: cutSm }}
-                    >
-                      {/* Top Border Glow */}
-                      <span aria-hidden className="absolute left-0 top-0 z-10 h-[1.5px] w-full bg-[var(--gr-grad-violet)]" />
-
-                      {/* Game Cover Background */}
-                      {g.coverUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={g.coverUrl}
-                          alt={g.title}
-                          className="absolute inset-0 h-full w-full object-cover opacity-98 transition-transform duration-500 group-hover:opacity-100"
-                        />
-                      ) : (
-                        <div className={`absolute inset-0 bg-gradient-to-br ${g.accent} opacity-20`} />
-                      )}
-                      
-                      {/* Ambient Gradients */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-cyan-500/5 opacity-40" />
-                      <div className="absolute inset-0 bg-gradient-to-r from-[var(--gr-bg-0)]/70 via-[var(--gr-bg-0)]/15 to-transparent" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)]/80 via-[var(--gr-bg-0)]/5 to-transparent" />
-
-                      {/* Atmosphere Circle */}
-                      <div aria-hidden className="absolute -left-8 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full bg-white/5 blur-xl transition-transform duration-500 group-hover:scale-125" />
-
-                      {/* Laser lines left */}
-                      <div aria-hidden className="absolute inset-y-0 left-[7.5%] w-[1px] bg-[var(--gr-violet)]/40 shadow-[0_0_12px_rgba(139,92,246,0.5)]" />
-                      <div aria-hidden className="absolute inset-y-0 left-[5.5%] w-[2px] bg-[var(--gr-violet)]/55 shadow-[0_0_15px_rgba(139,92,246,0.6)]" />
-
-                      {/* Colored accent block on the left edge */}
-                      <div aria-hidden className="absolute left-0 top-0 h-full w-[6%] bg-[linear-gradient(180deg,rgba(34,211,238,0.9),rgba(139,92,246,0.25))] [clip-path:polygon(0_0,68%_0,100%_100%,0_100%)] opacity-80" />
-
-                      {/* Bottom Details (Title) */}
-                      <div className="absolute bottom-2.5 left-[6.5%] right-2.5 z-10">
-                        <h4 className="font-display text-[13px] font-extrabold uppercase leading-[1.1] tracking-tight transition-colors line-clamp-2" style={neonText} title={g.title}>
-                          {g.title}
-                        </h4>
-                      </div>
-
-                      {/* Hover Effects (Button Style) */}
-                      <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
-                      <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
-                      <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
-                    </div>
-                  </article>
-                </Link>
+                <SearchMediaCard
+                  key={g.id}
+                  href={`/free-pc-games/${g.id}`}
+                  title={g.title}
+                  coverUrl={g.coverUrl}
+                  accent={g.accent}
+                />
               ))}
             </div>
           )}
@@ -488,8 +416,8 @@ function EmptyResult({ label }: { label: string }) {
       style={{ clipPath: "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)" }}
     >
       <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
-      <Search className="mx-auto mb-3 h-8 w-8 opacity-70" style={{ color: "#ffffff", filter: "drop-shadow(0 0 6px rgba(236,72,153,0.9))" }} />
-      <p className="text-[13.5px]" style={{ color: "rgba(255,255,255,0.75)", textShadow: "0 0 6px rgba(236,72,153,0.7)" }}>{label}</p>
+      <Search className="mx-auto mb-3 h-8 w-8 opacity-70" style={{ color: "#ffffff", filter: "drop-shadow(0 0 6px rgba(196,30,58,0.9))" }} />
+      <p className="text-[13.5px]" style={{ color: "rgba(255,255,255,0.75)", textShadow: "0 0 6px rgba(196,30,58,0.7)" }}>{label}</p>
     </div>
   );
 }

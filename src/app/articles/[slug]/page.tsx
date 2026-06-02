@@ -5,14 +5,22 @@ import { ka } from "date-fns/locale";
 import Link from "next/link";
 import { ArrowLeft, Clock } from "lucide-react";
 import { UserAvatar } from "@/components/user-avatar";
+import { ArticleOwnerActions } from "@/components/article-owner-actions";
+import { getIsAdmin, getSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug: rawSlug } = await params;
   const slug = decodeURIComponent(rawSlug);
-  const article = await getPublishedArticle(slug).catch(() => null);
+  const [article, session, isAdmin] = await Promise.all([
+    getPublishedArticle(slug).catch(() => null),
+    getSession().catch(() => null),
+    getIsAdmin().catch(() => false),
+  ]);
   if (!article) notFound();
+  const canEdit = !!session && session.id === article.author_id;
+  const canDelete = canEdit || isAdmin;
 
   const readingMinutes = Math.max(1, Math.round(article.content.split(/\s+/).length / 180));
 
@@ -142,6 +150,17 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             </span>
           </div>
         </div>
+
+        {canDelete || canEdit ? (
+          <div className="mb-8 flex justify-end">
+            <ArticleOwnerActions
+              slug={article.slug}
+              canEdit={canEdit}
+              canDelete={canDelete}
+              editHref={`/articles/${encodeURIComponent(article.slug)}/edit`}
+            />
+          </div>
+        ) : null}
 
         {/* excerpt as lede */}
         {article.excerpt && (

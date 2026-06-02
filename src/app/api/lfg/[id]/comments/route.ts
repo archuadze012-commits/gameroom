@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(
   request: NextRequest,
@@ -8,6 +9,9 @@ export async function POST(
 ) {
   const user = await getSession().catch(() => null);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  if (!rateLimit(`lfg-comment:${user.id}`, 15, 60_000))
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   const { id: postId } = await params;
   const body = await request.json().catch(() => ({}));

@@ -13,6 +13,32 @@ import { ClanKickButton } from "./clan-kick-button";
 
 export const dynamic = "force-dynamic";
 
+type ClanMemberProfile = {
+  id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  is_verified: boolean | null;
+};
+type ClanMember = {
+  id: string;
+  role: string;
+  joined_at: string | null;
+  profiles: ClanMemberProfile;
+};
+type ClanRequestProfile = {
+  id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string;
+};
+type ClanRequest = {
+  id: string;
+  message: string | null;
+  created_at: string | null;
+  profiles: ClanRequestProfile;
+};
+
 export default async function ClanDetailPage({
   params,
 }: {
@@ -36,7 +62,7 @@ export default async function ClanDetailPage({
 
   if (!clan) notFound();
 
-  const members = clan.clan_members || [];
+  const members = (clan.clan_members || []) as ClanMember[];
   
   // Check user status relative to this clan
   let userStatus = "none"; // 'none', 'member', 'pending'
@@ -45,7 +71,7 @@ export default async function ClanDetailPage({
   let canKickMembers = false;
 
   if (sessionUser) {
-    const membership = members.find((m: any) => m.profiles.id === sessionUser.id);
+    const membership = members.find((m) => m.profiles.id === sessionUser.id);
     if (membership) {
       userStatus = "member";
       userRole = membership.role;
@@ -63,7 +89,7 @@ export default async function ClanDetailPage({
   }
 
   // Fetch pending requests if user has permissions
-  let pendingRequests: any[] = [];
+  let pendingRequests: ClanRequest[] = [];
   if (canManageRequests) {
     const { data: reqs } = await supabase
       .from("clan_requests")
@@ -74,7 +100,7 @@ export default async function ClanDetailPage({
       .eq("clan_id", clan.id)
       .eq("status", "pending")
       .order("created_at", { ascending: false });
-    pendingRequests = reqs || [];
+    pendingRequests = (reqs || []) as ClanRequest[];
   }
 
   const coverBanner = clan.banner_url || "from-amber-500/40 via-primary/20 to-transparent";
@@ -91,7 +117,7 @@ export default async function ClanDetailPage({
       <div className={`mb-6 h-40 rounded-xl bg-gradient-to-br ${coverBanner} md:h-56 relative overflow-hidden`}>
         <div className="absolute -bottom-8 left-8">
           <Avatar className="h-24 w-24 border-4 border-background bg-background shadow-xl">
-            <AvatarImage src={clan.avatar_url} />
+            <AvatarImage src={clan.avatar_url ?? undefined} />
             <AvatarFallback className="text-2xl font-bold text-primary bg-primary/10">
               {clan.tag}
             </AvatarFallback>
@@ -149,7 +175,7 @@ export default async function ClanDetailPage({
                 <CardContent className="p-4 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0">
                     <Avatar className="h-10 w-10 border border-amber-500/20">
-                      <AvatarImage src={req.profiles.avatar_url} />
+                      <AvatarImage src={req.profiles.avatar_url ?? undefined} />
                       <AvatarFallback>{(req.profiles.display_name || req.profiles.username).slice(0,1)}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
@@ -176,7 +202,7 @@ export default async function ClanDetailPage({
       </h3>
       
       <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-        {members.map((m: any) => {
+        {members.map((m) => {
           const profile = m.profiles;
           
           // Logic for showing kick button
@@ -191,7 +217,7 @@ export default async function ClanDetailPage({
               <CardContent className="p-3 flex items-center justify-between gap-3">
                  <div className="flex items-center gap-3 min-w-0">
                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={profile.avatar_url} />
+                      <AvatarImage src={profile.avatar_url ?? undefined} />
                       <AvatarFallback>{(profile.display_name || profile.username).slice(0,1)}</AvatarFallback>
                    </Avatar>
                    <div className="min-w-0">

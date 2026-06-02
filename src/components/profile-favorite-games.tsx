@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { mockGames } from "@/lib/mock-data";
 import { GameIcon } from "@/components/game-icon";
@@ -11,25 +11,22 @@ type Props = {
   userId?: string;
 };
 
-export function ProfileFavoriteGames({ fallbackSlugs, isOwner, userId }: Props) {
-  const [slugs, setSlugs] = useState(fallbackSlugs);
+function getInitialFavoriteSlugs(fallbackSlugs: string[], isOwner: boolean, userId?: string) {
+  if (!isOwner || !userId || typeof window === "undefined") return fallbackSlugs;
+  try {
+    const raw = localStorage.getItem(`gameroom_profile_${userId}`);
+    if (!raw) return [];
+    const saved = JSON.parse(raw) as { favoriteGameSlugs?: string[] };
+    return Array.isArray(saved.favoriteGameSlugs) && saved.favoriteGameSlugs.length > 0
+      ? saved.favoriteGameSlugs
+      : [];
+  } catch {
+    return fallbackSlugs;
+  }
+}
 
-  useEffect(() => {
-    if (!isOwner || !userId) return;
-    try {
-      const raw = localStorage.getItem(`gameroom_profile_${userId}`);
-      if (raw) {
-        const saved = JSON.parse(raw);
-        if (Array.isArray(saved.favoriteGameSlugs) && saved.favoriteGameSlugs.length > 0) {
-          setSlugs(saved.favoriteGameSlugs);
-        } else {
-          setSlugs([]);
-        }
-      } else {
-        setSlugs([]);
-      }
-    } catch {}
-  }, [isOwner, userId]);
+export function ProfileFavoriteGames({ fallbackSlugs, isOwner, userId }: Props) {
+  const [slugs] = useState(() => getInitialFavoriteSlugs(fallbackSlugs, isOwner, userId));
 
   const games = slugs
     .map((slug) => mockGames.find((g) => g.slug === slug))

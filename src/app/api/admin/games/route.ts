@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { readJsonObject } from "@/lib/api/json";
 import { requirePermission } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import type { Database } from "@/lib/database.types";
+
+type GameInsert = Database["public"]["Tables"]["games"]["Insert"];
 
 type Body = {
   slug?: string;
@@ -46,7 +49,7 @@ export async function POST(request: NextRequest) {
   const isEditing = !!body.slug?.trim();
 
   // Match the live schema: accent_color (text), no `accent` column.
-  const payload: Record<string, unknown> = {
+  const payload: GameInsert = {
     slug,
     name_ka: body.nameKa.trim(),
     name_en: body.nameEn?.trim() || body.nameKa.trim(),

@@ -3,7 +3,6 @@ function normalizeOrigin(origin: string, fallbackOrigin?: string | null) {
     const url = new URL(origin);
 
     if (url.hostname === "0.0.0.0") {
-      if (fallbackOrigin) return normalizeOrigin(fallbackOrigin);
       url.hostname = "localhost";
     }
 
@@ -11,6 +10,12 @@ function normalizeOrigin(origin: string, fallbackOrigin?: string | null) {
   } catch {
     return fallbackOrigin ?? origin;
   }
+}
+
+function isUsableHost(host?: string | null) {
+  if (!host) return false;
+  const normalized = host.trim().toLowerCase();
+  return normalized !== "" && normalized !== "0.0.0.0" && !normalized.startsWith("0.0.0.0:");
 }
 
 export function getCanonicalOrigin(origin: string) {
@@ -22,13 +27,21 @@ export function getSiteOrigin() {
   return siteUrl ? normalizeOrigin(siteUrl) : null;
 }
 
+export function getTrustedOrigin(fallbackOrigin: string) {
+  return getSiteOrigin() ?? normalizeOrigin(fallbackOrigin);
+}
+
 export function getRequestOrigin(origin: string) {
-  return normalizeOrigin(origin, getSiteOrigin());
+  return normalizeOrigin(origin);
 }
 
 export function getRequestOriginFromHeaders(headers: Headers, fallbackOrigin: string) {
+  const siteOrigin = getSiteOrigin();
+  if (siteOrigin) return siteOrigin;
+
   const forwardedHost = headers.get("x-forwarded-host")?.split(",")[0]?.trim();
-  const host = forwardedHost || headers.get("host")?.split(",")[0]?.trim();
+  const directHost = headers.get("host")?.split(",")[0]?.trim();
+  const host = isUsableHost(forwardedHost) ? forwardedHost : directHost;
 
   if (!host) return getRequestOrigin(fallbackOrigin);
 
@@ -41,7 +54,7 @@ export function getRequestOriginFromHeaders(headers: Headers, fallbackOrigin: st
     }
   })();
 
-  return normalizeOrigin(`${forwardedProto || fallbackProtocol}://${host}`, getSiteOrigin());
+  return normalizeOrigin(`${forwardedProto || fallbackProtocol}://${host}`, getRequestOrigin(fallbackOrigin));
 }
 
 export function getBrowserOrigin() {

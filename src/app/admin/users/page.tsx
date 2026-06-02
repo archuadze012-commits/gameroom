@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Ban, ShieldCheck, Shield, MonitorPlay, Trophy, Gamepad2, User, Loader2, RefreshCw, BadgeCheck, Download, Clock, History, PenLine } from "lucide-react";
+import { Ban, ShieldCheck, Shield, MonitorPlay, Trophy, Gamepad2, User, Loader2, RefreshCw, BadgeCheck, Download, Clock, PenLine } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,30 @@ export default function AdminUsersPage() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/admin/users");
+        if (!res.ok) throw new Error("forbidden");
+        const data: AdminUserRow[] = await res.json();
+        if (!cancelled) {
+          setUsers(data);
+        }
+      } catch {
+        if (!cancelled) {
+          setUsers([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filtered = users.filter(
     (u) =>

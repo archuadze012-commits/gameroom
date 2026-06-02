@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
-import { mockLfgPosts, mockFeedPosts, mockUsers } from "@/lib/mock-data";
+import { mockLfgPosts, mockUsers } from "@/lib/mock-data";
 import { RoleBadge, type UserRole } from "@/components/role-badge";
 import { ProfileDisplayName } from "@/components/profile-display-name";
 import { ProfileSocialLinks } from "@/components/profile-social-links";
 import { BannerUpload } from "@/components/banner-upload";
-import { ProfileFeed } from "@/components/profile-feed";
+import { ProfileFeed, type ProfileFeedPost } from "@/components/profile-feed";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { InviteButton } from "@/components/invite-button";
 import { VerifiedBadge } from "@/components/verified-badge";
@@ -21,6 +22,7 @@ import { getSession, getIsAdmin } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { AdminGrantCoins } from "@/components/admin-grant-coins";
 import { getEquippedItems } from "@/lib/shop/equip-queries";
+import { ProfileFriendsTab } from "@/components/profile-friends-tab";
 
 export default async function ProfilePage({
   params,
@@ -39,13 +41,38 @@ export default async function ProfilePage({
 
   const { data: dbProfile } = await supabase
     .from("profiles")
-    .select("id, display_name, avatar_url, favorite_game_slugs, banner_url, is_verified, youtube_handle, tiktok_handle, tiktok_followers")
+    .select("id, username, display_name, avatar_url, favorite_game_slugs, main_game_slug, banner_url, is_verified, youtube_handle, tiktok_handle, tiktok_followers")
     .eq("username", username)
     .maybeSingle();
 
+  if (!dbProfile && currentUserId) {
+    const legacySlugs = new Set(
+      [
+        session?.user_metadata?.username,
+        session?.user_metadata?.name,
+        session?.user_metadata?.full_name,
+        session?.user_metadata?.display_name,
+        session?.email?.split("@")[0],
+      ]
+        .filter((value): value is string => typeof value === "string" && value.length > 0)
+        .map((value) => value.toLowerCase())
+    );
+
+    if (legacySlugs.has(username.toLowerCase())) {
+      const { data: ownProfile } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", currentUserId)
+        .maybeSingle();
+
+      if (ownProfile?.username && ownProfile.username !== username) {
+        redirect(`/profile/${ownProfile.username}`);
+      }
+    }
+  }
+
   const targetUserId = dbProfile?.id ?? null;
 
-  // isOwner = the logged-in user's profile row owns this username (authoritative via DB id)
   const isOwner = !!(currentUserId && targetUserId && currentUserId === targetUserId);
   const profileAvatarUrl = dbProfile?.avatar_url ?? null;
   const avatarUrl = profileAvatarUrl ?? (isOwner ? sessionAvatarUrl : null);
@@ -75,9 +102,48 @@ export default async function ProfilePage({
   
   const userPosts = mockLfgPosts.filter((p) => p.authorName === username).slice(0, 5);
 
-  const feedPosts = mockFeedPosts.filter((p) => p.authorName === username);
+  let feedPosts: ProfileFeedPost[] = [];
+  let likedPostIds: string[] = [];
+  if (targetUserId) {
+    const { data: postRows } = await supabase
+      .from("posts")
+      .select("id, content, media_urls, likes_count, created_at, profiles!posts_author_id_profiles_id_fk(username, display_name, avatar_url, is_verified, role)")
+      .eq("author_id", targetUserId)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(20);
 
-  let badgeCodes: string[] = [];
+    const rawPosts = (postRows ?? []) as unknown as Array<Omit<ProfileFeedPost, "comments_count">>;
+    if (rawPosts.length > 0) {
+      const postIds = rawPosts.map((post) => post.id);
+      const [{ data: commentRows }, likedRowsResult] = await Promise.all([
+        supabase
+          .from("post_comments")
+          .select("post_id")
+          .in("post_id", postIds)
+          .is("deleted_at", null),
+        currentUserId
+          ? supabase
+              .from("post_likes")
+              .select("post_id")
+              .eq("user_id", currentUserId)
+              .in("post_id", postIds)
+          : Promise.resolve({ data: [] as Array<{ post_id: string }> | null }),
+      ]);
+
+      const commentCounts = new Map<string, number>();
+      for (const row of commentRows ?? []) {
+        commentCounts.set(row.post_id, (commentCounts.get(row.post_id) ?? 0) + 1);
+      }
+
+      likedPostIds = (likedRowsResult.data ?? []).map((row: { post_id: string }) => row.post_id);
+      feedPosts = rawPosts.map((post) => ({
+        ...post,
+        comments_count: commentCounts.get(post.id) ?? 0,
+      }));
+    }
+  }
+
   let linkedAccounts: Array<{
     provider: "steam" | "riot";
     external_id: string;
@@ -85,15 +151,35 @@ export default async function ProfilePage({
     verified: boolean;
   }> = [];
   if (targetUserId) {
-    const [{ data: badges }, { data: linked }] = await Promise.all([
-      supabase.from("badge_unlocks").select("badge_code").eq("user_id", targetUserId),
-      supabase
-        .from("linked_accounts")
-        .select("provider, external_id, data, verified")
-        .eq("user_id", targetUserId),
-    ]);
-    badgeCodes = (badges ?? []).map((b: { badge_code: string }) => b.badge_code);
-    linkedAccounts = (linked ?? []) as typeof linkedAccounts;
+    const { data: linked } = await supabase
+      .from("linked_accounts")
+      .select("provider, external_id, metadata")
+      .eq("user_id", targetUserId);
+    linkedAccounts = (linked ?? []).map((row) => ({
+      provider: row.provider as "steam" | "riot",
+      external_id: row.external_id,
+      data: (row.metadata ?? null) as Record<string, unknown> | null,
+      verified: true,
+    }));
+  }
+
+  let profileGameSlugs = Array.from(
+    new Set([
+      ...((dbProfile?.favorite_game_slugs as string[] | null) ?? []),
+      ...(dbProfile?.main_game_slug ? [dbProfile.main_game_slug] : []),
+    ])
+  );
+
+  if (targetUserId && profileGameSlugs.length === 0) {
+    const { data: lfgGames } = await supabase
+      .from("lfg_posts")
+      .select("game_slug")
+      .eq("author_id", targetUserId)
+      .limit(12);
+
+    profileGameSlugs = Array.from(
+      new Set((lfgGames ?? []).map((row: { game_slug: string | null }) => row.game_slug).filter(Boolean) as string[])
+    );
   }
 
   const steamAccount = linkedAccounts.find((a) => a.provider === "steam");
@@ -103,44 +189,68 @@ export default async function ProfilePage({
   const equippedFrame = equippedItems.find((e) => e.category === "profile_frame");
   const equippedNameFrame = equippedItems.find((e) => e.category === "name_frame");
   const equippedTheme = equippedItems.find((e) => e.category === "profile_theme");
-
-  const cutMd = "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)";
-  const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.5))";
+  const profileFeedProps = {
+    currentUser: currentUserId
+      ? {
+          id: currentUserId,
+          username,
+          displayName,
+          avatarUrl,
+        }
+      : undefined,
+    initialPosts: feedPosts,
+    initialLikedIds: likedPostIds,
+    isOwner,
+    canDeletePosts: isOwner || isAdmin,
+  } as const;
 
   return (
-    <div className={`relative min-h-[calc(100vh-4rem)] ${equippedTheme ? `bg-gradient-to-br ${equippedTheme.metadata.bg as string}` : "bg-[var(--gr-bg-1)]"}`}>
-            <div className="relative">
-              {equippedCover ? (
-                <div className={`h-40 w-full bg-gradient-to-r ${equippedCover.metadata.gradient as string} sm:h-48`} />
-              ) : (
-                <BannerUpload
-                  isOwner={false}
-                  initialBannerUrl={dbProfile?.banner_url ?? null}
-                />
-              )}
-              {isOwner && (
-                <Link
-                  href="/shop?mine=true"
-                  className="absolute bottom-3 right-3 z-10 inline-flex h-7 items-center gap-1.5 bg-[color-mix(in_srgb,var(--gr-bg-0)_80%,transparent)] px-2.5 text-[9px] font-black uppercase tracking-[0.14em] text-[var(--gr-violet-hi)] ring-1 ring-[var(--gr-border)] backdrop-blur-md transition hover:ring-[var(--gr-violet-hi)] hover:bg-[color-mix(in_srgb,var(--gr-violet)_14%,transparent)] [clip-path:polygon(0_0,calc(100%-7px)_0,100%_7px,100%_100%,0_100%)]"
-                >
-                  <Paintbrush className="h-3 w-3" />
-                  კუსტომიზაცია
-                </Link>
-              )}
-            </div>
+    <div className={`relative min-h-[calc(100vh-4rem)] ${equippedTheme ? `bg-gradient-to-br ${equippedTheme.metadata.bg as string}` : "bg-[#05050f]"}`}>
+      {/* Ambient background glow if no theme */}
+      {!equippedTheme && (
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.1),transparent_70%)]" />
+      )}
 
-            <div className="space-y-5 px-6 pb-6 pt-0">
-          {/* Header — 2-col grid: left summary | right stats */}
-          <div className="-mt-16 flex flex-col items-center gap-5 md:grid md:grid-cols-[minmax(220px,1fr)_minmax(260px,1fr)] md:items-start md:gap-6">
-            {/* Left — avatar + name + badge + social icons */}
-            <div className="flex flex-col items-center gap-2 md:items-start">
-              <div
-                className="rounded-full"
-                style={equippedFrame ? {
-                  boxShadow: `0 0 20px ${equippedFrame.metadata.color as string}50, 0 0 40px ${equippedFrame.metadata.color as string}25`,
-                  border: `3px solid ${equippedFrame.metadata.color as string}`,
-                } : undefined}
-              >
+      <div className="relative">
+        {dbProfile?.banner_url || !equippedCover ? (
+          <BannerUpload
+            isOwner={isOwner}
+            userId={targetUserId ?? undefined}
+            initialBannerUrl={dbProfile?.banner_url ?? null}
+          />
+        ) : (
+          <div className={`h-48 w-full bg-gradient-to-r ${equippedCover.metadata.gradient as string} shadow-[inset_0_-20px_40px_rgba(0,0,0,0.5)]`} />
+        )}
+        
+        {isOwner && (
+          <Link
+            href="/shop?mine=true"
+            className="absolute bottom-4 right-4 z-10 flex items-center gap-2 rounded-full border border-pink-500/30 bg-pink-500/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-pink-400 shadow-[0_0_15px_rgba(236,72,153,0.3)] backdrop-blur-md transition-all hover:bg-pink-500/20 hover:shadow-[0_0_25px_rgba(236,72,153,0.5)]"
+          >
+            <Paintbrush className="h-3.5 w-3.5" />
+            კუსტომიზაცია
+          </Link>
+        )}
+      </div>
+
+      <div className="relative z-20 mx-auto max-w-7xl space-y-6 px-4 pb-12 pt-0 sm:px-6 lg:px-8">
+        
+        {/* Header — 2-col grid: left summary | right stats */}
+        <div className="-mt-20 flex flex-col items-center gap-6 md:flex-row md:items-end md:justify-between md:gap-8 rounded-[24px] border border-white/5 bg-white/5 p-6 backdrop-blur-md shadow-2xl">
+          
+          {/* Left — avatar + name + badge + social icons */}
+          <div className="flex flex-col items-center gap-4 md:flex-row md:items-end md:gap-6">
+            <div
+              className="relative -mt-12 shrink-0 rounded-full bg-[#05050f] p-1.5"
+              style={equippedFrame ? {
+                boxShadow: `0 0 30px ${equippedFrame.metadata.color as string}50, 0 0 60px ${equippedFrame.metadata.color as string}25`,
+                background: `linear-gradient(135deg, ${equippedFrame.metadata.color as string}, transparent)`,
+              } : {
+                boxShadow: "0 0 30px rgba(139,92,246,0.2)",
+                background: "linear-gradient(135deg, rgba(139,92,246,0.5), rgba(236,72,153,0.5))",
+              }}
+            >
+              <div className="overflow-hidden rounded-full border-[3px] border-[#0a0714]">
                 <AvatarUpload
                   username={username}
                   displayName={displayName}
@@ -148,9 +258,12 @@ export default async function ProfilePage({
                   isOwner={isOwner}
                 />
               </div>
-              <h1 className="flex items-center gap-2 text-2xl font-bold">
+            </div>
+            
+            <div className="flex flex-col items-center md:items-start md:pb-2">
+              <h1 className="flex items-center gap-2 font-display text-3xl font-black uppercase tracking-tight text-white drop-shadow-md">
                 {equippedNameFrame ? (
-                  <span className={`bg-gradient-to-r ${equippedNameFrame.metadata.gradient as string} bg-clip-text text-transparent`}>
+                  <span className={`bg-gradient-to-r ${equippedNameFrame.metadata.gradient as string} bg-clip-text text-transparent drop-shadow-lg`}>
                     {isOwner ? (
                       <ProfileDisplayName fallback={displayName} userId={currentUserId ?? undefined} />
                     ) : (
@@ -162,11 +275,11 @@ export default async function ProfilePage({
                 ) : (
                   displayName
                 )}
-                {dbProfile?.is_verified && <VerifiedBadge className="h-5 w-5" />}
+                {dbProfile?.is_verified && <VerifiedBadge className="h-6 w-6" />}
               </h1>
-              <RoleBadge username={username} defaultRole={mockUser?.role as UserRole | undefined} />
-
-              <div className="mt-1">
+              
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-2 md:justify-start">
+                <RoleBadge username={username} defaultRole={mockUser?.role as UserRole | undefined} />
                 <ProfileSocialLinks
                   defaultYtHandle={dbProfile?.youtube_handle ?? ""}
                   defaultTtHandle={dbProfile?.tiktok_handle ?? ""}
@@ -187,94 +300,99 @@ export default async function ProfilePage({
                 />
               </div>
             </div>
-
-            {/* Right — stats list + follow + action buttons */}
-            <div className="w-full md:mt-16">
-              <ProfileSummaryRight
-                username={username}
-                isOwner={isOwner}
-                hasSession={!!session}
-                initialFollowing={initialFollowing}
-                initialFollowerCount={followerCount}
-              />
-
-              {!isOwner && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <InviteButton
-                    username={username}
-                    displayName={displayName}
-                    gameSlugs={mockUser?.games.map((g) => g.slug) ?? []}
-                  />
-                  {targetUserId && session && <MessageButton targetUserId={targetUserId} />}
-                  {targetUserId && (
-                    <Button size="sm" variant="outline" asChild>
-                      <span className="flex items-center gap-1.5">
-                        <ReportButton
-                          targetType="profile"
-                          targetId={targetUserId}
-                          iconSize="h-3.5 w-3.5"
-                        />
-                        Report
-                      </span>
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
           </div>
 
-          <Separator />
+          {/* Right — stats list + follow + action buttons */}
+          <div className="w-full md:w-auto md:pb-2">
+            <ProfileSummaryRight
+              username={username}
+              isOwner={isOwner}
+              hasSession={!!session}
+              initialFollowing={initialFollowing}
+              initialFollowerCount={followerCount}
+            />
 
-          {/* Admin: grant coins — only visible to admins, hidden on own profile */}
-          {isAdmin && targetUserId && (
-            <AdminGrantCoins targetUserId={targetUserId} targetUsername={username} />
-          )}
+            {!isOwner && (
+              <div className="mt-4 flex flex-wrap justify-center gap-3 md:justify-end">
+                <InviteButton
+                  username={username}
+                  displayName={displayName}
+                  gameSlugs={mockUser?.games.map((g) => g.slug) ?? []}
+                />
+                {targetUserId && session && <MessageButton targetUserId={targetUserId} />}
+                {targetUserId && (
+                  <Button size="sm" variant="ghost" className="rounded-full border border-white/10 bg-white/5 hover:bg-white/10 hover:text-red-400" asChild>
+                    <span className="flex items-center gap-1.5">
+                      <ReportButton
+                        targetType="profile"
+                        targetId={targetUserId}
+                        iconSize="h-3.5 w-3.5"
+                      />
+                      Report
+                    </span>
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
 
-          {/* Linked accounts (Riot only — Steam now lives in social icons above) */}
-          {linkedAccounts.filter((a) => a.provider !== "steam").length > 0 && (
+        <Separator className="my-8 bg-white/5" />
+
+        {/* Admin: grant coins */}
+        {isAdmin && targetUserId && (
+          <AdminGrantCoins targetUserId={targetUserId} targetUsername={username} />
+        )}
+
+        {/* Linked accounts (Riot only) */}
+        {linkedAccounts.filter((a) => a.provider !== "steam").length > 0 && (
+          <div className="rounded-[20px] bg-white/5 p-4 border border-white/5">
             <ProfileLinkedAccounts
               accounts={linkedAccounts.filter((a) => a.provider !== "steam")}
             />
-          )}
+          </div>
+        )}
 
-          {/* Tabbed content area */}
-          <ProfileTabs
-            games={<ProfileGameRows slugs={dbProfile?.favorite_game_slugs ?? []} username={username} />}
-            posts={
-              <ProfileFeed
-                username={username}
-                displayName={displayName}
-                initialPosts={feedPosts}
-                isOwner={isOwner}
-              />
-            }
-            lfg={
-              userPosts.length === 0 ? (
-                <p className="border border-dashed border-[var(--gr-border-hi)] bg-[var(--gr-bg-2)]/40 py-8 text-center text-[13px] text-[var(--gr-text-mute)]">
-                  ჯერ არცერთი ლოკალის პოსტი არ არის.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {userPosts.map((p) => (
-                    <div
-                      key={p.id}
-                      className="bg-[var(--gr-bg-2)] p-3 text-[13px] ring-1 ring-[var(--gr-border)]"
-                      style={{ clipPath: "polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%)" }}
-                    >
-                      <p className="font-display text-[14px] font-bold uppercase tracking-tight text-[var(--gr-text)]">{p.title}</p>
-                      <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-[var(--gr-text-dim)]">{p.gameSlug}</p>
-                    </div>
-                  ))}
-                </div>
-              )
-            }
-            friends={
-              <p className="border border-dashed border-[var(--gr-border-hi)] bg-[var(--gr-bg-2)]/40 py-8 text-center text-[13px] text-[var(--gr-text-mute)]">
-                მეგობრების სია მალე იქნება ხელმისაწვდომი.
-              </p>
-            }
-          />
+        {/* Tabbed content area */}
+        <ProfileTabs
+          games={
+            <div className="space-y-8">
+              <ProfileGameRows slugs={profileGameSlugs} username={username} />
+              <ProfileFeed {...profileFeedProps} />
             </div>
+          }
+          posts={
+            <ProfileFeed {...profileFeedProps} />
+          }
+          lfg={
+            userPosts.length === 0 ? (
+              <div className="flex items-center justify-center rounded-[20px] border border-white/5 bg-white/5 py-12 text-[14px] font-medium text-white/40">
+                ჯერ არცერთი ლოკალის პოსტი არ არის.
+              </div>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-2">
+                {userPosts.map((p) => (
+                  <div
+                    key={p.id}
+                    className="flex flex-col rounded-[16px] border border-white/5 bg-white/5 p-4 transition-all hover:-translate-y-1 hover:border-cyan-500/30 hover:bg-white/10 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)]"
+                  >
+                    <p className="font-display text-[16px] font-black uppercase leading-tight text-white">{p.title}</p>
+                    <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.16em] text-cyan-400">{p.gameSlug}</p>
+                  </div>
+                ))}
+              </div>
+            )
+          }
+          friends={
+            <div className="rounded-[24px] border border-white/5 bg-white/5 p-6">
+              <ProfileFriendsTab
+                username={username}
+                currentUserId={currentUserId}
+              />
+            </div>
+          }
+        />
+      </div>
     </div>
   );
 }

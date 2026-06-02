@@ -36,16 +36,14 @@ export function StatTile({
   const [display, setDisplay] = React.useState<number | string>(
     countUp && Number.isFinite(target) ? 0 : value
   );
+  const shouldAnimate = countUp && Number.isFinite(target);
 
   React.useEffect(() => {
-    if (!countUp || !Number.isFinite(target)) {
-      setDisplay(value);
-      return;
-    }
+    if (!shouldAnimate) return;
     const el = ref.current;
     if (!el) return;
     if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-      setDisplay(target);
+      window.requestAnimationFrame(() => setDisplay(target));
       return;
     }
     let started = false;
@@ -68,9 +66,10 @@ export function StatTile({
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [countUp, target, value]);
+  }, [shouldAnimate, target]);
 
   const clip = "polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%)";
+  const renderedValue = shouldAnimate ? display : value;
 
   return (
     <div
@@ -95,7 +94,7 @@ export function StatTile({
         {label}
       </span>
       <span className="font-display text-[28px] font-extrabold leading-none tabular-nums">
-        {display}
+        {renderedValue}
         {suffix && <span className="ml-0.5 text-[18px] text-[var(--gr-text-mute)]">{suffix}</span>}
       </span>
     </div>

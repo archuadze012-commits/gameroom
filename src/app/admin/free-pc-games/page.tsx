@@ -13,6 +13,38 @@ import { Separator } from "@/components/ui/separator";
 import { crackedGames, type CrackedGame } from "@/lib/mock-data";
 import { toast } from "sonner";
 
+export function getObjectPosition(url?: string) {
+  if (!url) return "center";
+  try {
+    const parsed = new URL(url, url.startsWith("/") ? "https://example.com" : undefined);
+    const y = parsed.searchParams.get("y");
+    if (y) return `center ${y}%`;
+  } catch {}
+  return "center";
+}
+
+export function getYParam(url?: string): number {
+  if (!url) return 50;
+  try {
+    const parsed = new URL(url, url.startsWith("/") ? "https://example.com" : undefined);
+    const y = parsed.searchParams.get("y");
+    if (y) return parseInt(y) || 50;
+  } catch {}
+  return 50;
+}
+
+export function updateUrlParam(urlStr: string, param: string, value: string): string {
+  if (!urlStr) return "";
+  try {
+    const isRelative = !urlStr.startsWith("http://") && !urlStr.startsWith("https://");
+    const url = new URL(urlStr, isRelative ? "https://example.com" : undefined);
+    url.searchParams.set(param, value);
+    return isRelative ? url.pathname + url.search : url.toString();
+  } catch {
+    return urlStr;
+  }
+}
+
 type DbRow = {
   id: string;
   title: string;
@@ -99,6 +131,16 @@ const BLANK: FormState = {
   recOs: "", recCpu: "", recRam: "", recGpu: "", recStorage: "",
 };
 
+function getInitialUrlOverrides() {
+  if (typeof window === "undefined") return {};
+  try {
+    const stored = localStorage.getItem("gameroom_cracked_urls");
+    return stored ? (JSON.parse(stored) as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}
+
 export default function AdminCrackedGamesPage() {
   const searchParams = useSearchParams();
   const autoEditId = searchParams.get("edit");
@@ -110,8 +152,39 @@ export default function AdminCrackedGamesPage() {
   const [editingGameId, setEditingGameId] = useState<string | null>(null);
   const [saved, setSaved] = useState<"added" | "updated" | false>(false);
   const [submitting, setSubmitting] = useState(false);
-  const [urlOverrides, setUrlOverrides] = useState<Record<string, string>>({});
+  const [uploading, setUploading] = useState(false);
+  const [urlOverrides, setUrlOverrides] = useState<Record<string, string>>(() => getInitialUrlOverrides());
   const [editingUrl, setEditingUrl] = useState<string | null>(null);
+
+  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", "cracked_games");
+
+    try {
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error || "ატვირთვა ვერ მოხერხდა");
+      }
+      const data = await res.json();
+      set("coverUrl", data.url);
+      toast.success("სურათი წარმატებით აიტვირთა!");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "ატვირთვა ვერ მოხერხდა";
+      toast.error(msg);
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
   const [urlInput, setUrlInput] = useState("");
   const [urlSavedId, setUrlSavedId] = useState<string | null>(null);
 
@@ -124,11 +197,6 @@ export default function AdminCrackedGamesPage() {
   })();
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("gameroom_cracked_urls");
-      if (stored) setUrlOverrides(JSON.parse(stored));
-    } catch {}
-
     // load existing DB games + hidden IDs
     (async () => {
       try {
@@ -361,9 +429,80 @@ export default function AdminCrackedGamesPage() {
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs text-muted-foreground">Cover Image URL</label>
-            <Input placeholder="https://cdn.cloudflare.steamstatic.com/..." value={form.coverUrl} onChange={(e) => set("coverUrl", e.target.value)} />
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground">Cover Image (URL ან ატვირთვა)</label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="https://cdn.cloudflare.steamstatic.com/..."
+                  value={form.coverUrl}
+                  onChange={(e) => set("coverUrl", e.target.value)}
+                  className="flex-1"
+                />
+                <div className="relative shrink-0">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    id="cover-upload"
+                    onChange={handleCoverUpload}
+                    className="hidden"
+                    disabled={uploading}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={uploading}
+                    onClick={() => document.getElementById("cover-upload")?.click()}
+                    className="h-9 gap-1.5"
+                  >
+                    {uploading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "ატვირთვა"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Adjust Cover Y-Offset Slider */}
+            {form.coverUrl && (
+              <div className="rounded-lg border border-border/60 p-4 space-y-3 bg-secondary/10">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>სურათის პოზიციონირება (Y offset)</span>
+                  <span className="font-mono">{getYParam(form.coverUrl)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={getYParam(form.coverUrl)}
+                  onChange={(e) => {
+                    const newUrl = updateUrlParam(form.coverUrl, "y", e.target.value);
+                    set("coverUrl", newUrl);
+                  }}
+                  className="w-full h-1.5 bg-border rounded-lg appearance-none cursor-pointer accent-primary"
+                />
+                
+                {/* Live Preview Box */}
+                <div className="space-y-1.5">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">ლობის ქარდის პრევიუ (14px clip):</span>
+                  <div className="relative h-24 w-full max-w-sm rounded border border-border/60 overflow-hidden bg-[var(--gr-bg-1)]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={form.coverUrl}
+                      alt="Preview"
+                      className="absolute inset-0 h-full w-full object-cover opacity-60"
+                      style={{ objectPosition: getObjectPosition(form.coverUrl) }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)]/90 via-[var(--gr-bg-0)]/30 to-transparent" />
+                    <div className="absolute bottom-2 left-3 text-[11px] font-bold uppercase text-[var(--gr-text)]">
+                      {form.title || "თამაშის სათაური"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-1.5">

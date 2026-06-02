@@ -1,11 +1,8 @@
 import Link from "next/link";
-import { Trophy, Users, Calendar, Plus } from "lucide-react";
-import { PageHeader } from "@/components/page-header";
-import { Eyebrow } from "@/components/ui/eyebrow";
-import { Pill } from "@/components/ui/pill";
-import { ChevronButton } from "@/components/ui/chevron-button";
+import { Trophy, Users, Calendar, Plus, Sparkles } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { format } from "date-fns";
+import { DisplayHeading } from "@/components/ui/display-heading";
 
 export const metadata = { title: "ჩემპიონატები" };
 export const dynamic = "force-dynamic";
@@ -29,8 +26,32 @@ const formatLabels: Record<string, string> = {
   round_robin: "Round Robin",
 };
 
-const cutMd = "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)";
-const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.5))";
+type TournamentRow = {
+  id: string;
+  slug: string;
+  name: string;
+  banner_url: string | null;
+  format: string;
+  status: string;
+  prize_pool: string | null;
+  max_participants: number | null;
+  starts_at: string | null;
+  tournament_participants: { id: string }[] | null;
+  games: { name_ka: string | null; emoji: string | null } | null;
+};
+
+type TournamentCard = {
+  id: string;
+  slug: string;
+  name: string;
+  banner: string;
+  format: string;
+  status: string;
+  prizePool: string;
+  participants: { current: number; max: number };
+  startsAt: string;
+  game: { nameKa: string | null; emoji: string | null } | null;
+};
 
 export default async function TournamentsPage() {
   const supabase = await createSupabaseServerClient();
@@ -60,13 +81,13 @@ export default async function TournamentsPage() {
     .neq("status", "draft")
     .order("starts_at", { ascending: true });
 
-  const tournaments = (dbTournaments || []).map((t: any) => {
+  const tournaments = ((dbTournaments ?? []) as unknown as TournamentRow[]).map((t) => {
     const participantsCount = t.tournament_participants?.length || 0;
     return {
       id: t.id,
       slug: t.slug,
       name: t.name,
-      banner: t.banner_url || "from-violet-500/40 via-primary/20 to-transparent",
+      banner: t.banner_url || "from-violet-500/40 via-pink-500/20 to-transparent",
       format: formatLabels[t.format] || t.format,
       status: t.status,
       prizePool: t.prize_pool || "0 GEL",
@@ -83,25 +104,37 @@ export default async function TournamentsPage() {
   };
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
-      <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
+    <div className="relative min-h-[calc(100vh-4rem)] bg-[#05050f]">
+      {/* Premium Cinematic Background */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(236,72,153,0.1),transparent_70%)]" />
 
       <div className="container relative mx-auto px-4 py-10 lg:py-14">
-        <PageHeader
-          eyebrow="ჩემპიონატები"
-          title="ტურნირები"
-          description="თემიდან გასული ჩემპიონატები. დარეგისტრირდი, უყურე, მოიგე."
-          actions={
-            <ChevronButton href="/tournaments/propose" variant="ghost" size="md">
-              <Plus className="h-4 w-4" /> შემოთავაზება
-            </ChevronButton>
-          }
-        />
+        
+        {/* Header - Premium Glass Wrapper */}
+        <header className="mb-12 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-[12px] font-black uppercase tracking-[0.24em] text-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.5)]">
+              ჩემპიონატები
+            </p>
+            <DisplayHeading as="h1" size="lg" className="mt-1 text-white drop-shadow-md">
+              ტურნირები
+            </DisplayHeading>
+            <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-white/50">
+              თემიდან გასული ჩემპიონატები. დარეგისტრირდი, უყურე და მოიგე პრემიუმ პრიზები.
+            </p>
+          </div>
+          <Link
+            href="/tournaments/propose"
+            className="group flex items-center justify-center gap-2 rounded-full border border-pink-500/30 bg-pink-500/10 px-6 py-3 text-[12px] font-black uppercase tracking-[0.16em] text-pink-400 shadow-[0_0_15px_rgba(236,72,153,0.2)] transition-all hover:scale-105 hover:bg-pink-500/20 hover:shadow-[0_0_25px_rgba(236,72,153,0.4)] md:shrink-0"
+          >
+            <Plus className="h-4 w-4" /> შემოთავაზება
+          </Link>
+        </header>
 
-        <div className="mt-10 space-y-12">
-          <Section eyebrow="LIVE" title="LIVE" tone="live" tournaments={grouped.live} />
-          <Section eyebrow="მომავალი" title="დარეგისტრირდი" tone="amber" tournaments={grouped.upcoming} />
-          <Section eyebrow="არქივი" title="დასრულებული" tone="mute" tournaments={grouped.completed} />
+        <div className="space-y-16">
+          <Section eyebrow="მიმდინარეობს" title="LIVE" color="cyan" tournaments={grouped.live} />
+          <Section eyebrow="მომავალი" title="დარეგისტრირდი" color="violet" tournaments={grouped.upcoming} />
+          <Section eyebrow="არქივი" title="დასრულებული" color="neutral" tournaments={grouped.completed} />
         </div>
       </div>
     </div>
@@ -111,78 +144,104 @@ export default async function TournamentsPage() {
 function Section({
   eyebrow,
   title,
-  tone,
+  color,
   tournaments,
 }: {
   eyebrow: string;
   title: string;
-  tone: "live" | "amber" | "mute";
-  tournaments: any[];
+  color: "cyan" | "violet" | "neutral";
+  tournaments: TournamentCard[];
 }) {
   if (tournaments.length === 0) return null;
-  const eyebrowTone = tone === "live" ? "magenta" : tone === "amber" ? "amber" : "mute";
+  
+  const textColor = color === "cyan" ? "text-cyan-400" : color === "violet" ? "text-violet-400" : "text-white/40";
+  const dropShadow = color === "cyan" ? "drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" : color === "violet" ? "drop-shadow-[0_0_8px_rgba(139,92,246,0.5)]" : "";
+
   return (
     <section>
-      <div className="mb-5">
-        <Eyebrow tone={eyebrowTone}>{eyebrow}</Eyebrow>
-        <h2 className="mt-2 font-display text-[22px] font-extrabold uppercase tracking-tight text-[var(--gr-text)]">
+      <div className="mb-6">
+        <p className={`text-[11px] font-black uppercase tracking-[0.2em] ${textColor} ${dropShadow}`}>
+          {eyebrow}
+        </p>
+        <h2 className="mt-1 font-display text-[26px] font-black uppercase text-white drop-shadow-md">
           {title}
         </h2>
       </div>
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+      
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {tournaments.map((t) => {
           const game = t.game;
-          const sTone = statusTone[t.status] ?? "neutral";
-          const sLabel = statusLabel[t.status] ?? t.status;
+          const isLive = t.status === "live";
           const fillPct = Math.min(100, Math.round((t.participants.current / t.participants.max) * 100));
+          
           return (
             <Link key={t.slug} href={`/tournaments/${t.slug}`} className="group block">
               <article
-                className="relative isolate h-full transition-transform duration-200 hover:-translate-y-1"
-                style={{ background: cardBorder, padding: 1, clipPath: cutMd }}
+                className={`relative isolate flex h-full flex-col overflow-hidden rounded-[20px] p-[1.5px] transition-all duration-500 hover:-translate-y-1 ${
+                  isLive 
+                    ? "bg-gradient-to-br from-[#00d0ff] via-[#6366f1] to-[#f43f5e] shadow-[0_0_30px_rgba(34,211,238,0.2)] hover:shadow-[0_0_40px_rgba(34,211,238,0.4)]" 
+                    : "bg-white/5 border border-white/5 hover:border-pink-500/30 hover:bg-gradient-to-br hover:from-pink-500/30 hover:to-violet-500/30 hover:shadow-[0_0_20px_rgba(236,72,153,0.2)]"
+                }`}
               >
-                <div className="relative h-full bg-[var(--gr-bg-1)] gr-sweep" style={{ clipPath: cutMd }}>
-                  {/* banner ribbon */}
-                  <div className={`h-2.5 w-full bg-gradient-to-r ${t.banner}`} />
+                <div className="relative flex h-full flex-col bg-[#0a0714] rounded-[18.5px] overflow-hidden">
+                  
+                  {/* Glowing background */}
+                  <div aria-hidden className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(ellipse_at_center,rgba(236,72,153,0.1),transparent_60%)]`} />
 
-                  <div className="space-y-3 p-5">
+                  {/* Top Ribbon */}
+                  {isLive && (
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-cyan-400 via-pink-400 to-violet-400 z-10 animate-pulse" />
+                  )}
+
+                  <div className="relative flex-1 p-6 space-y-5">
                     <div className="flex items-center justify-between gap-2">
-                      <Pill tone="neutral">{game?.emoji} {game?.nameKa}</Pill>
-                      <Pill tone={sTone} pulse={t.status === "live"}>{sLabel}</Pill>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white/70">
+                        {game?.emoji} {game?.nameKa}
+                      </span>
+                      <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.16em] ${
+                        isLive 
+                          ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.2)] animate-pulse" 
+                          : t.status === "open" || t.status === "checkin"
+                            ? "border-violet-500/30 bg-violet-500/10 text-violet-400"
+                            : "border-white/10 bg-white/5 text-white/40"
+                      }`}>
+                        {statusLabel[t.status] ?? t.status}
+                      </span>
                     </div>
 
-                    <h3 className="font-display text-[17px] font-bold uppercase tracking-tight text-[var(--gr-text)] group-hover:text-[var(--gr-violet-hi)]">
+                    <h3 className="font-display text-[20px] font-black uppercase leading-tight text-white drop-shadow-sm group-hover:text-pink-400 transition-colors">
                       {t.name}
                     </h3>
 
-                    <div className="space-y-2 text-[12.5px] text-[var(--gr-text-mute)]">
-                      <div className="flex items-center gap-2">
-                        <Trophy className="h-3.5 w-3.5 text-[var(--gr-amber)]" />
-                        <span className="font-display text-[15px] font-bold tabular-nums text-[var(--gr-amber)]">{t.prizePool}</span>
+                    <div className="space-y-2.5 pt-2 border-t border-white/5 text-[12.5px]">
+                      <div className="flex items-center gap-3">
+                        <Trophy className="h-4 w-4 text-pink-400 drop-shadow-[0_0_5px_rgba(236,72,153,0.5)]" />
+                        <span className="font-display text-[15px] font-black tabular-nums text-pink-400">{t.prizePool}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="h-3.5 w-3.5 text-[var(--gr-violet-hi)]" />
-                        <span className="tabular-nums">{t.participants.current}/{t.participants.max}</span> მონაწილე
+                      <div className="flex items-center gap-3 text-white/50">
+                        <Users className="h-4 w-4 text-violet-400" />
+                        <span><span className="font-bold text-white/80 tabular-nums">{t.participants.current}/{t.participants.max}</span> მონაწილე</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-3.5 w-3.5 text-[var(--gr-cyan-glow)]" />
-                        {t.startsAt}
+                      <div className="flex items-center gap-3 text-white/50">
+                        <Calendar className="h-4 w-4 text-cyan-400" />
+                        <span>{t.startsAt}</span>
                       </div>
                     </div>
 
-                    {/* registration progress */}
-                    <div className="space-y-1">
-                      <div className="h-1 w-full overflow-hidden rounded-full bg-[var(--gr-bg-2)]">
+                    {/* Progress Bar */}
+                    <div className="space-y-1.5 pt-2">
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5">
                         <div
-                          className="h-full bg-[var(--gr-grad-violet)] transition-all"
+                          className="h-full bg-gradient-to-r from-violet-500 to-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.5)] transition-all duration-1000"
                           style={{ width: `${fillPct}%` }}
                         />
                       </div>
-                      <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.14em] text-[var(--gr-text-dim)]">
+                      <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.16em] text-white/40">
                         <span>{t.format}</span>
                         <span className="tabular-nums">{fillPct}%</span>
                       </div>
                     </div>
+
                   </div>
                 </div>
               </article>

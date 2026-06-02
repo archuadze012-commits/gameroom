@@ -325,31 +325,13 @@ function LobbyLoadoutLayer({
         </>
       )}
 
-      {loadout.weapons.some(w => w === "m416_icefire" || ownedWeapons?.find(ow => ow.id === w && (ow.metadata?.weapon_id === "m416_icefire" || ow.name?.toLowerCase().includes("icefire")))) && !hasActiveCombo ? (
-        <Image
-          src={CENTER_WEAPON_URL}
-          alt=""
-          aria-hidden
-          width={CENTER_WEAPON_WIDTH}
-          height={CENTER_WEAPON_HEIGHT}
-          quality={90}
-          draggable={false}
-          className="pointer-events-none absolute z-[1000] h-auto select-none"
-          style={{
-            right: "calc(2.5% + 45px)",
-            top: "calc(34% + 140px)",
-            width: "calc(12% - 40px)",
-            height: "auto",
-            transform: "rotate(-1deg)",
-            transformOrigin: "50% 50%",
-            opacity: 0.98,
-            filter: "drop-shadow(0 10px 18px rgba(0,0,0,0.6)) drop-shadow(0 0 16px rgba(0,0,0,0.32))",
-          }}
+      {(lobbyEffect?.effect === "fire_lobby" || loadout.effect === "fx_fire") && <LobbyFireEffect />}
+      {!hasActiveCombo ? (
+        <LobbyWeaponStand 
+          weapons={Array.from(new Map((ownedWeapons || []).map(w => [(w.metadata?.weapon_id as string) ?? w.id, w])).values())
+            .filter(w => loadout.weapons.includes((w.metadata?.weapon_id as string) ?? w.id))} 
         />
       ) : null}
-
-      {(lobbyEffect?.effect === "fire_lobby" || loadout.effect === "fx_fire") && <LobbyFireEffect />}
-      {!hasActiveCombo ? <LobbyWeaponStand weapons={Array.from(new Map((ownedWeapons || []).map(w => [(w.metadata?.weapon_id as string) ?? w.id, w])).values()).filter(w => loadout.weapons.includes((w.metadata?.weapon_id as string) ?? w.id) && ((w.metadata?.weapon_id as string) ?? w.id) !== "m416_icefire" && !w.name?.toLowerCase().includes("icefire"))} /> : null}
       {persistEnabled && (
         <LobbyInventory
           key={storageKey ?? "guest-lobby"}

@@ -2,16 +2,22 @@ import { redirect } from "next/navigation";
 import { Users } from "lucide-react";
 import { NewLfgForm } from "./new-lfg-form";
 import { getSession } from "@/lib/auth";
-import { mockGames } from "@/lib/mock-data";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { DisplayHeading } from "@/components/ui/display-heading";
+import { GamerCard } from "@/components/ui/gamer-card";
 
 export const metadata = { title: "ახალი ლოკალი" };
 export const dynamic = "force-dynamic";
 
-const cutMd = "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)";
-const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.5))";
+const neonText = {
+  color: "#ffffff",
+  textShadow: "0 0 6px rgba(196,30,58,0.48), 0 0 16px rgba(196,30,58,0.22)",
+} as const;
+
+const neonMute = {
+  color: "rgba(255,255,255,0.72)",
+  textShadow: "0 0 4px rgba(196,30,58,0.24)",
+} as const;
 
 export default async function NewLfgPage() {
   const user = await getSession();
@@ -20,7 +26,12 @@ export default async function NewLfgPage() {
   const supabase = await createSupabaseServerClient();
 
   const [{ data: dbGames }, { data: profileRows }, { data: myProfile }] = await Promise.all([
-    supabase.from("games").select("slug, name_ka, emoji"),
+    supabase
+      .from("games")
+      .select("slug, name_ka, emoji")
+      .eq("active", true)
+      .order("position", { ascending: true })
+      .order("name_ka", { ascending: true }),
     supabase.from("profiles").select("favorite_game_slugs"),
     supabase.from("profiles").select("favorite_game_slugs").eq("id", user.id).single(),
   ]);
@@ -35,15 +46,14 @@ export default async function NewLfgPage() {
   const userFavSlugs: string[] = (myProfile?.favorite_game_slugs as string[] | null) ?? [];
   const userFavSet = new Set(userFavSlugs);
 
-  const dbSlugs = new Set((dbGames ?? []).map((g) => g.slug));
-  const allGames = [
-    ...(dbGames ?? []).map((g) => ({ slug: g.slug, nameKa: g.name_ka, emoji: g.emoji })),
-    ...mockGames.filter((m) => !dbSlugs.has(m.slug)).map((m) => ({ slug: m.slug, nameKa: m.nameKa, emoji: m.emoji })),
-  ];
+  const allGames = (dbGames ?? []).map((g) => ({
+    slug: g.slug,
+    nameKa: g.name_ka,
+    emoji: g.emoji ?? "🎮",
+  }));
 
-  const filtered = userFavSet.size > 0
-    ? allGames.filter((g) => userFavSet.has(g.slug))
-    : allGames;
+  const favoriteGames = allGames.filter((g) => userFavSet.has(g.slug));
+  const filtered = favoriteGames.length > 0 ? favoriteGames : allGames;
   const games = filtered.sort((a, b) => {
     const aCount = favCount[a.slug] ?? 0;
     const bCount = favCount[b.slug] ?? 0;
@@ -53,28 +63,33 @@ export default async function NewLfgPage() {
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
-      <span aria-hidden className="pointer-events-none absolute -top-24 -right-20 h-72 w-72 rounded-full bg-[var(--gr-violet)]/20 blur-[120px]" />
 
       <div className="container relative mx-auto max-w-2xl px-4 py-10 lg:py-14">
-        <section
-          className="relative isolate"
-          style={{ background: cardBorder, padding: 1, clipPath: cutMd }}
+        <GamerCard
+          clipSize={14}
+          sideGlow={false}
+          className="overflow-hidden"
+          surfaceClassName="bg-[linear-gradient(180deg,color-mix(in_srgb,var(--gr-bg-1)_97%,black),color-mix(in_srgb,var(--gr-bg-2)_90%,black))]"
         >
-          <div className="relative bg-[var(--gr-bg-1)] p-7 gr-sweep" style={{ clipPath: cutMd }}>
-            <span aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[var(--gr-grad-card)]" />
-            <header className="mb-6">
-              <Eyebrow tone="amber">ახალი ლოკალი</Eyebrow>
-              <DisplayHeading as="h1" size="md" className="mt-2 flex items-center gap-2">
-                <Users className="h-5 w-5 text-[var(--gr-violet-hi)]" />
+          <div className="relative p-6 sm:p-7">
+            <header className="mb-6 border-b border-[rgba(196,30,58,0.22)] pb-5">
+              <p
+                className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em]"
+                style={{ color: "rgb(103,232,249)", textShadow: "0 0 8px rgba(34,211,238,0.72)" }}
+              >
+                ახალი ლოკალი
+              </p>
+              <DisplayHeading as="h1" size="md" className="mt-2 flex items-center gap-2" style={neonText}>
+                <Users className="h-5 w-5 text-white drop-shadow-[0_0_8px_rgba(196,30,58,0.68)]" />
                 იპოვე გუნდი
               </DisplayHeading>
-              <p className="mt-2 text-[13px] leading-relaxed text-[var(--gr-text-mute)]">
+              <p className="mt-3 text-[13px] leading-relaxed sm:text-[14px]" style={neonMute}>
                 დაწერე რას ეძებ — რა თამაში, რა რანკი, რა რეგიონი. ხალხი მიგწერს.
               </p>
             </header>
             <NewLfgForm games={games} />
           </div>
-        </section>
+        </GamerCard>
       </div>
     </div>
   );

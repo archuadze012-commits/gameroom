@@ -89,9 +89,11 @@ export async function GET(request: NextRequest) {
         user_id: user.id,
         provider: "steam",
         external_id: steamId,
-        data: profile,
-        verified: true,
-        refreshed_at: new Date().toISOString(),
+        external_name:
+          typeof (profile as { personaname?: unknown } | null)?.personaname === "string"
+            ? ((profile as { personaname: string }).personaname.slice(0, 256))
+            : null,
+        metadata: profile as never,
       },
       { onConflict: "user_id,provider" }
     );

@@ -1,9 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Loader2 } from "lucide-react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { getBrowserOrigin } from "@/lib/url";
+import Link from "next/link";
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -23,36 +20,17 @@ export function GoogleSignInButton({
   className?: string;
   nextPath?: string;
 }) {
-  const [loading, setLoading] = useState(false);
-
-  const handleClick = async () => {
-    setLoading(true);
-    try {
-      const supabase = createSupabaseBrowserClient();
-      await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${getBrowserOrigin()}/auth/callback${
-            nextPath ? `?next=${encodeURIComponent(nextPath)}` : ""
-          }`,
-        },
-      });
-    } catch {
-      setLoading(false);
-    }
-  };
-
   const cutClipSm = "polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%)";
+  const href = `/auth/google${nextPath ? `?next=${encodeURIComponent(nextPath)}` : ""}`;
 
   return (
     <div
-      className="relative isolate transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)] group"
+      className="group relative isolate w-full transition-all duration-300 group-hover:[--card-border-hover:rgba(220,38,38,0.8)]"
       style={{ background: 'var(--card-border-hover, transparent)', padding: 1, clipPath: cutClipSm }}
     >
-      <button
-        onClick={handleClick}
-        disabled={loading}
-        className={`relative isolate overflow-hidden px-8 py-4 transition-all duration-300 active:scale-95 disabled:opacity-70 w-full ${className}`}
+      <Link
+        href={href}
+        className={`relative isolate flex w-full items-center justify-center overflow-hidden px-8 py-4 text-center transition-all duration-300 active:scale-95 ${className ?? ""}`}
         style={{ clipPath: cutClipSm }}
       >
         {/* ── BACKGROUND & EFFECTS ────────────────────── */}
@@ -64,15 +42,11 @@ export function GoogleSignInButton({
 
       {/* ── CONTENT ────────────────────────────────── */}
       <div className="relative flex items-center justify-center gap-3">
-        {loading ? (
-          <Loader2 className="h-5 w-5 animate-spin text-white/70" />
-        ) : (
-          <div className="relative">
-            {/* Icon Glow */}
-            <div className="absolute inset-0 blur-md bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <GoogleIcon className="relative h-5 w-5" />
-          </div>
-        )}
+        <div className="relative">
+          {/* Icon Glow */}
+          <div className="absolute inset-0 blur-md bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <GoogleIcon className="relative h-5 w-5" />
+        </div>
         
         <span className="font-display text-[15px] font-bold uppercase tracking-[0.12em] text-white group-hover:text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
           Google-ით შესვლა
@@ -84,7 +58,7 @@ export function GoogleSignInButton({
         className="absolute bottom-0 right-0 h-2 w-2 bg-white/30" 
         style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }}
       />
-    </button>
+    </Link>
     </div>
   );
 }

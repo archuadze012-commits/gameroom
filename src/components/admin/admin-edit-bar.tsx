@@ -8,7 +8,7 @@ export function AdminEditBar() {
   if (!canEdit) return null;
 
   return (
-    <div className="fixed bottom-20 right-4 z-[60] xl:bottom-6">
+    <div className="fixed right-4 top-20 z-[60] xl:right-6 xl:top-20">
       <button
         type="button"
         onClick={toggle}
