@@ -43,10 +43,18 @@ async function getOwnedLoadoutIds(
   gameSlug: string,
 ): Promise<OwnedLoadoutIds> {
   const supabase = createSupabaseAdminClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("user_purchases")
     .select("shop_items!inner(id, category, game_slug, metadata)")
     .eq("user_id", userId);
+
+  console.log("[getOwnedLoadoutIds]", {
+    userId,
+    gameSlug,
+    error,
+    rowCount: data?.length,
+    firstRow: data?.[0],
+  });
 
   const owned: OwnedLoadoutIds = {
     comboIds: new Set<string>(),
