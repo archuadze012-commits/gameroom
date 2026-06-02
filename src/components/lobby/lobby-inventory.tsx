@@ -40,14 +40,16 @@ const EFFECTS_ITEMS: LobbyInventoryItem[] = [
   { id: "fx_fire", name: "ცეცხლოვანი", tier: "common", asset: "/lobbies/pubg-mobile-optimized.jpg" },
 ];
 
-const WEAPONS_ITEMS: LobbyInventoryItem[] = [];
+const WEAPONS_ITEMS: LobbyInventoryItem[] = [
+  { id: "m416_icefire", name: "M416 Caucasus Icefire", tier: "legendary", asset: "/weapons/m416-caucasus-icefire.png" },
+];
 
 const NAME_CARD_ITEMS: LobbyInventoryItem[] = [];
 
 const OWNED_CHARACTER_IDS = new Set(["leo"]);
 const OWNED_COMBO_IDS     = new Set(COMBO_ITEMS.map((i) => i.id));
 const OWNED_VEHICLE_IDS   = new Set<string>();
-const OWNED_WEAPON_IDS    = new Set<string>();
+const OWNED_WEAPON_IDS    = new Set<string>(["m416_icefire"]);
 const OWNED_LOBBY_IDS     = new Set(LOBBY_ITEMS.map((i) => i.id));
 const OWNED_EFFECTS_IDS   = new Set(EFFECTS_ITEMS.map((i) => i.id));
 const OWNED_NAME_CARD_IDS = new Set(NAME_CARD_ITEMS.map((i) => i.id));
@@ -367,13 +369,19 @@ export function LobbyInventory({
     thumbnailObjectPosition: (v.metadata?.thumbnail_object_position as string) ?? "center",
   }));
 
-  const dbWeaponItems: LobbyInventoryItem[] = ownedWeapons.map((w) => ({
-    id: (w.metadata?.weapon_id as string) ?? w.id,
-    name: w.name,
-    tier: w.tier as LobbyInventoryTier,
-    asset: w.image_url ?? undefined,
-    thumbnailObjectPosition: "center",
-  }));
+  const dbWeaponItems: LobbyInventoryItem[] = ownedWeapons.map((w) => {
+    const isIcefire =
+      (w.metadata?.weapon_id as string) === "m416_icefire" ||
+      w.name?.toLowerCase().includes("icefire") ||
+      (w.image_url ?? "").toLowerCase().includes("icefire");
+    return {
+      id: (w.metadata?.weapon_id as string) ?? w.id,
+      name: w.name,
+      tier: w.tier as LobbyInventoryTier,
+      asset: isIcefire ? "/weapons/m416-caucasus-icefire.png" : (w.image_url ?? undefined),
+      thumbnailObjectPosition: "center",
+    };
+  });
 
   const allComboItems = [
     ...COMBO_ITEMS,

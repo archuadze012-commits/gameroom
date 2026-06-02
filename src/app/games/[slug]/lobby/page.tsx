@@ -142,7 +142,20 @@ export default async function GameLobbyPage({
     });
     ownedWeapons = weaponRows.map((row) => {
       const item = ((row as unknown) as { shop_items: { id: string; name: string; tier: string; image_url: string | null; metadata: Record<string, unknown> } }).shop_items;
-      return item;
+      const isIcefire =
+        (item.metadata?.weapon_id as string) === "m416_icefire" ||
+        item.name?.toLowerCase().includes("icefire") ||
+        (item.image_url ?? "").toLowerCase().includes("icefire");
+      return {
+        ...item,
+        image_url: isIcefire ? "/weapons/m416-caucasus-icefire.png" : item.image_url,
+      };
+    }).filter((item) => {
+      const isIcefire =
+        (item.metadata?.weapon_id as string) === "m416_icefire" ||
+        item.name?.toLowerCase().includes("icefire") ||
+        (item.image_url ?? "").toLowerCase().includes("icefire");
+      return !isIcefire;
     });
     ownedWeapons = [...ownedWeapons].sort((a, b) => {
       const aKey = `${a.name} ${a.image_url ?? ""}`.toLowerCase();
