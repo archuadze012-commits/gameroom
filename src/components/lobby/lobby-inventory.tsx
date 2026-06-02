@@ -482,7 +482,16 @@ export function LobbyInventory({
     const loadoutData = buildLoadout(selected);
     window.localStorage.setItem(storageKey, JSON.stringify(loadoutData));
     if (gameSlug) {
-      await saveLobbyLoadout(gameSlug, loadoutData);
+      try {
+        const result = await saveLobbyLoadout(gameSlug, loadoutData);
+        if (!result.success) {
+          console.error("[lobby] saveLobbyLoadout failed", { payload: loadoutData, error: result.error });
+        } else {
+          console.log("[lobby] saved", loadoutData);
+        }
+      } catch (err) {
+        console.error("[lobby] saveLobbyLoadout threw", err);
+      }
     }
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1800);
