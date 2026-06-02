@@ -328,8 +328,14 @@ function LobbyLoadoutLayer({
       {(lobbyEffect?.effect === "fire_lobby" || loadout.effect === "fx_fire") && <LobbyFireEffect />}
       {!hasActiveCombo ? (
         <LobbyWeaponStand 
-          weapons={Array.from(new Map((ownedWeapons || []).map(w => [(w.metadata?.weapon_id as string) ?? w.id, w])).values())
-            .filter(w => loadout.weapons.includes((w.metadata?.weapon_id as string) ?? w.id))} 
+          weapons={(ownedWeapons || [])
+            .filter((w, i, arr) => {
+              if (w.name?.toLowerCase().includes("icefire") || w.metadata?.weapon_id === "m416_icefire") {
+                const hasNewIcefire = arr.some(ow => ow.metadata?.weapon_id === "m416_icefire");
+                if (hasNewIcefire && w.metadata?.weapon_id !== "m416_icefire") return false;
+              }
+              return loadout.weapons.includes((w.metadata?.weapon_id as string) ?? w.id);
+            })} 
         />
       ) : null}
       {persistEnabled && (
