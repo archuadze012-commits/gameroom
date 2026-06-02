@@ -382,6 +382,7 @@ function LobbyLoadoutLayer({
         <LobbyInventory
           key={storageKey ?? "guest-lobby"}
           initialLoadout={loadout}
+          hasDbLoadout={hasDbLoadout}
           onLoadoutChange={setLoadout}
           persistEnabled={persistEnabled}
           storageKey={storageKey}

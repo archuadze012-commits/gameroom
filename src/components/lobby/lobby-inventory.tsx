@@ -141,6 +141,8 @@ type DbInventoryProp = { id: string; name: string; tier: string; image_url: stri
 
 type Props = {
   initialLoadout?: Partial<LobbyLoadout>;
+  /** When true, initialLoadout came from the DB and takes priority over localStorage. */
+  hasDbLoadout?: boolean;
   onLoadoutChange?: (loadout: LobbyLoadout) => void;
   onPreviewItem?: (item: LobbyInventoryItem, tab: LobbyInventoryTab, loadout: LobbyLoadout) => void;
   persistEnabled?: boolean;
@@ -230,6 +232,7 @@ function getInitialSelected(
   extraCharIds: Set<string> = new Set(),
   extraVehicleIds: Set<string> = new Set(),
   extraWeaponIds: Set<string> = new Set(),
+  hasDbLoadout = false,
 ) {
   const fallback = getSelectedFromLoadout(initialLoadout, extraComboIds, extraCharIds, extraVehicleIds, extraWeaponIds);
   const allComboIds = extraComboIds.size > 0
@@ -245,7 +248,9 @@ function getInitialSelected(
     ? new Set([...OWNED_WEAPON_IDS, ...extraWeaponIds])
     : OWNED_WEAPON_IDS;
 
-  if (!persistEnabled || typeof window === "undefined") {
+  // DB loadout (server-side) always beats localStorage — it's the cross-device
+  // source of truth. Skip localStorage entirely when the server already provided it.
+  if (!persistEnabled || typeof window === "undefined" || hasDbLoadout) {
     return {
       combo: initialLoadout?.combo && allComboIds.has(initialLoadout.combo)
         ? initialLoadout.combo
@@ -302,6 +307,7 @@ function getInitialSelected(
 
 export function LobbyInventory({
   initialLoadout,
+  hasDbLoadout = false,
   onLoadoutChange,
   onPreviewItem,
   persistEnabled = true,
@@ -332,7 +338,7 @@ export function LobbyInventory({
     const dbWeaponIds = new Set(
       ownedWeapons.map((w) => (w.metadata?.weapon_id as string) ?? w.id),
     );
-    return getInitialSelected(initialLoadout, persistEnabled, storageKey, dbComboIds, dbCharIds, dbVehicleIds, dbWeaponIds);
+    return getInitialSelected(initialLoadout, persistEnabled, storageKey, dbComboIds, dbCharIds, dbVehicleIds, dbWeaponIds, hasDbLoadout);
   });
   const [tooltipId, setTooltipId] = useState<string | null>(null);
   const [randomizing, setRandomizing] = useState(false);
