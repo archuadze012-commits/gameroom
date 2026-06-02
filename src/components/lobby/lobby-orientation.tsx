@@ -14,20 +14,7 @@ export function LobbyOrientationGuard() {
       const portrait = window.innerHeight > window.innerWidth;
       setShowRotate(portrait);
 
-      if (!portrait) {
-        // landscape — request fullscreen
-        const el = document.documentElement;
-        if (el.requestFullscreen && !document.fullscreenElement) {
-          el.requestFullscreen().catch(() => {});
-        }
-        // lock orientation if supported
-        try {
-          const orientation = screen.orientation as ScreenOrientation & {
-            lock?: (orientation: string) => Promise<void>;
-          };
-          orientation.lock?.("landscape").catch(() => {});
-        } catch {}
-      }
+      // portrait-only guard — no auto-fullscreen, no orientation lock
     };
 
     check();

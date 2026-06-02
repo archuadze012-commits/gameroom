@@ -579,42 +579,19 @@
   }
 }
 
-/* Lobby — fullscreen on mobile / iPad in landscape (touch devices only) */
+/* Lobby — landscape iPad: keep card proportional but don't force fullscreen */
 @media (orientation: landscape) and (max-height: 1024px) and (any-pointer: coarse) {
-  .lobby-fs-wrap {
-    position: fixed !important;
-    inset: 0 !important;
-    z-index: 70 !important;
-    min-height: 0 !important;
-    height: 100vh !important;
-    height: 100svh !important;
-    display: grid !important;
-    place-items: center !important;
-    padding: clamp(8px, 2vw, 18px) !important;
-    max-width: none !important;
-    background: var(--gr-bg-0) !important;
-  }
-  .lobby-fs-wrap .lobby-chrome { display: none !important; }
   .lobby-fs-wrap .lobby-card-outer {
-    width: min(calc(100vw - 20px), calc((100svh - 20px) * 16 / 9)) !important;
-    height: auto !important;
-    max-height: calc(100svh - 20px) !important;
+    width: min(calc(100vw - 32px), calc((100svh - 80px) * 16 / 9));
+    height: auto;
+    max-height: calc(100svh - 80px);
+    margin: 0 auto;
   }
   .lobby-fs-wrap .lobby-card-inner {
-    aspect-ratio: 16 / 9 !important;
-    height: auto !important;
-    width: 100% !important;
-    max-height: calc(100svh - 22px) !important;
-  }
-  .lobby-fs-wrap .lobby-character {
-    bottom: 6%;
-    height: 86%;
-  }
-  .lobby-fs-wrap .lobby-contact-shadow {
-    left: 51.5%;
-    bottom: 0.5%;
-    width: min(34%, 320px);
-    height: 20%;
+    aspect-ratio: 16 / 9;
+    height: auto;
+    width: 100%;
+    max-height: calc(100svh - 82px);
   }
 }
 
