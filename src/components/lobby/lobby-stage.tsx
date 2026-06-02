@@ -182,6 +182,17 @@ function LobbyLoadoutLayer({
 
   useEffect(() => {
     if (!persistEnabled || !storageKey) return;
+    // DB is the cross-device source of truth — when SSR delivered a saved
+    // loadout, sync localStorage TO it (so this device's cache stays fresh)
+    // and skip reading the stale local value.
+    if (hasDbLoadout && initialLoadout) {
+      try {
+        window.localStorage.setItem(storageKey, JSON.stringify(initialLoadout));
+      } catch {
+        // ignore quota / privacy-mode errors
+      }
+      return;
+    }
     try {
       const saved = window.localStorage.getItem(storageKey);
       if (!saved) return;
@@ -198,7 +209,9 @@ function LobbyLoadoutLayer({
       startTransition(() => {
         setLoadout(resolved);
       });
-      if (!hasDbLoadout && gameSlug) {
+      if (gameSlug) {
+        // No DB loadout existed — migrate this device's cached preset to the DB
+        // so other devices pick it up on next visit.
         saveLobbyLoadout(gameSlug, resolved);
       }
     } catch {
