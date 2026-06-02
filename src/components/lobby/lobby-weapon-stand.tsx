@@ -74,7 +74,7 @@ function WeaponHookLayer({ weapon, hook, index }: { weapon: WeaponItem | null; h
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-            src={weapon.image_url}
+            src={isIcefireM416 ? "/lobby-assets/weapons/m416-caucasus-icefire.png" : weapon.image_url}
             alt=""
             draggable={false}
             className="absolute inset-0 h-full w-full object-contain"
