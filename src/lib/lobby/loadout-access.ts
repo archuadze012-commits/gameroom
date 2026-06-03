@@ -43,17 +43,10 @@ async function getOwnedLoadoutIds(
   gameSlug: string,
 ): Promise<OwnedLoadoutIds> {
   const supabase = createSupabaseAdminClient();
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("user_purchases")
     .select("shop_items!inner(id, category, game_slug, metadata)")
     .eq("user_id", userId);
-
-  console.log("[getOwnedLoadoutIds] rawShape", {
-    userId,
-    error,
-    rowCount: data?.length,
-    sample: JSON.stringify(data?.slice(0, 3)),
-  });
 
   const owned: OwnedLoadoutIds = {
     comboIds: new Set<string>(),
@@ -64,17 +57,13 @@ async function getOwnedLoadoutIds(
     nameCardIds: new Set<string>(),
   };
 
-  let processed = 0, skipped = 0, weaponCount = 0, comboCount = 0;
   for (const row of (data ?? []) as Array<{ shop_items: PurchasedShopItemRow["shop_items"] | PurchasedShopItemRow["shop_items"][] | null }>) {
     // Supabase may return the joined relation as a single object OR an array,
     // depending on type inference quirks across versions. Handle both.
     const rawItem = row.shop_items;
     const items = Array.isArray(rawItem) ? rawItem : rawItem ? [rawItem] : [];
     for (const item of items) {
-      if (!item) { skipped++; continue; }
-      if (item.category === "weapon") weaponCount++;
-      if (item.category === "combo") comboCount++;
-      processed++;
+      if (!item) continue;
 
     const isSameGame = item.game_slug === null || item.game_slug === gameSlug;
     if (!isSameGame) continue;
@@ -110,19 +99,6 @@ async function getOwnedLoadoutIds(
     }
     }
   }
-
-  console.log("[getOwnedLoadoutIds] result", {
-    userId,
-    processed,
-    skipped,
-    weaponRowCount: weaponCount,
-    comboRowCount: comboCount,
-    weaponIds: [...owned.weaponIds],
-    comboIds: [...owned.comboIds],
-    characterIds: [...owned.characterIds],
-    vehicleIds: [...owned.vehicleIds],
-    effectIds: [...owned.effectIds],
-  });
 
   return owned;
 }

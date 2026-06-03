@@ -28,7 +28,7 @@ const COMBO_ITEMS: LobbyInventoryItem[] = [
 ];
 
 const VEHICLE_ITEMS: LobbyInventoryItem[] = [
-  { id: "icefire_sedan", name: "ჟიგული 06", tier: "legendary", asset: "/lobby-assets/icefire-sedan-v3.png" },
+  { id: "vehicle_none", name: "Default", tier: "common" },
 ];
 
 const LOBBY_ITEMS: LobbyInventoryItem[] = [
@@ -48,7 +48,7 @@ const NAME_CARD_ITEMS: LobbyInventoryItem[] = [];
 
 const OWNED_CHARACTER_IDS = new Set(["leo"]);
 const OWNED_COMBO_IDS     = new Set(COMBO_ITEMS.map((i) => i.id));
-const OWNED_VEHICLE_IDS   = new Set<string>();
+const OWNED_VEHICLE_IDS   = new Set<string>(["vehicle_none"]);
 const OWNED_WEAPON_IDS    = new Set<string>(["m416_icefire"]);
 const OWNED_LOBBY_IDS     = new Set(LOBBY_ITEMS.map((i) => i.id));
 const OWNED_EFFECTS_IDS   = new Set(EFFECTS_ITEMS.map((i) => i.id));
@@ -485,12 +485,10 @@ export function LobbyInventory({
       try {
         const result = await saveLobbyLoadout(gameSlug, loadoutData);
         if (!result.success) {
-          console.error("[lobby] saveLobbyLoadout failed", { payload: loadoutData, error: result.error });
-        } else {
-          console.log("[lobby] saved", loadoutData);
+          console.error("[lobby] save failed", { payload: loadoutData, error: result.error });
         }
       } catch (err) {
-        console.error("[lobby] saveLobbyLoadout threw", err);
+        console.error("[lobby] save threw", err);
       }
     }
     setSaved(true);

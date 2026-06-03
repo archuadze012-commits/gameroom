@@ -1,7 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { SiteBrand } from "./site-brand";
 
 export function SiteHeader() {
+  const pathname = usePathname();
+  if (pathname?.endsWith("/lobby")) return null;
+
   return (
     <header className="gr-site-header-root sticky top-0 z-40 border-b border-white/5 bg-[rgba(8,6,15,0.6)] backdrop-blur-2xl shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
       <span

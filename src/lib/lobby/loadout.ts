@@ -14,7 +14,10 @@ export const LOBBY_LOADOUT_DEFAULTS: Readonly<Required<LoadoutData>> = {
   combo: "combo_none",
   character: "leo",
   weapons: [],
-  vehicle: "icefire_sedan",
+  // Vehicle is opt-in — new users start with no car in the lobby. Owned
+  // vehicles still render when the user equips one. "vehicle_none" is the
+  // sentinel for "do not render any vehicle".
+  vehicle: "vehicle_none",
   lobby: "lobby_svaneti",
   effect: "fx_none",
   nameCard: "nc_default",
