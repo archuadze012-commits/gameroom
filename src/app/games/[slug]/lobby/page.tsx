@@ -233,7 +233,7 @@ export default async function GameLobbyPage({
             aspectRatio: '16 / 9',
             width: '100%',
             height: '100%',
-            maxWidth: 'calc((100svh - 4rem) * 16 / 9)', /* Restricts ultrawide monitors from stretching */
+            maxWidth: 'calc((100svh - 8rem) * 16 / 9)', /* 4rem header + 4rem container padding */
             maxHeight: 'calc(100vw * 9 / 16)' /* Restricts tall monitors from overflowing width */
           }}
         >
