@@ -593,26 +593,25 @@
     display: none !important;
   }
   .lobby-fs-wrap {
-    display: grid;
-    grid-template-rows: auto auto minmax(0, 1fr) auto;
-    gap: 0.6rem;
-    min-height: calc(100svh - 4rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.5rem !important;
     max-width: 100% !important;
-    padding: 0.6rem 1rem 0.75rem !important;
   }
   .lobby-fs-wrap .lobby-chrome {
     margin-top: 0 !important;
     margin-bottom: 0 !important;
   }
   .lobby-fs-wrap .lobby-page-header {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
-    gap: 0.4rem 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
   }
   .lobby-fs-wrap .lobby-page-title {
-    font-size: 2rem;
-    line-height: 0.98;
+    font-size: 1.75rem;
+    line-height: 1;
   }
   .lobby-fs-wrap .lobby-page-cta {
     min-height: 2.35rem;
@@ -620,18 +619,20 @@
     font-size: 11px;
   }
   .lobby-fs-wrap .lobby-card-outer {
-    width: min(100%, calc((100svh - 228px) * 16 / 9));
-    height: auto;
-    max-height: calc(100svh - 228px);
+    width: 100%;
+    max-width: 1200px;
     margin: 0 auto;
+    height: auto;
+    max-height: none;
   }
   .lobby-fs-wrap .lobby-card-inner {
     aspect-ratio: 16 / 9;
     height: auto;
     width: 100%;
-    max-height: calc(100svh - 230px);
+    max-height: none;
   }
   .lobby-fs-wrap .lobby-page-actions {
+    display: flex;
     justify-content: flex-end;
   }
 }

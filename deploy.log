@@ -1,0 +1,215 @@
+<claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+Vercel CLI 54.6.1 (Node.js 24.15.0)
+Retrieving project…
+Deploying gameroom/gameroom
+Uploading [--------------------] (0.0B/3.9MB)
+Uploading [=====---------------] (1023.4KB/3.9MB)
+Uploading [==========----------] (2.0MB/3.9MB)
+Uploading [===============-----] (3.0MB/3.9MB)
+Uploading [====================] (3.9MB/3.9MB)
+  Inspect     https://vercel.com/gameroom/gameroom/HcSZWabi7DvsLycBY9iLFQDKGXSc
+▲ Production  https://gameroom-8kaknzhpy-gameroom.vercel.app
+Building…
+Building…
+Running build in Washington, D.C., USA (East) – iad1
+Build machine configuration: 2 cores, 8 GB
+Retrieving list of deployment files...
+Downloading 622 deployment files...
+Restored build cache from previous deployment (8iBi6N55LntqrmXvva8r57hk695D)
+Running "vercel build"
+Vercel CLI 54.7.1
+Installing dependencies...
+up to date in 1s
+350 packages are looking for funding
+run `npm fund` for details
+Detected Next.js version: 16.2.6
+Running "npm run build"
+> gameroom@0.1.0 build
+> next build
+Applying modifyConfig from Vercel
+▲ Next.js 16.2.6 (Turbopack)
+Creating an optimized production build ...
+✓ Compiled successfully in 28.9s
+Running TypeScript ...
+Finished TypeScript in 23.1s ...
+Collecting page data using 1 worker ...
+Generating static pages using 1 worker (0/89) ...
+Generating static pages using 1 worker (22/89)
+Generating static pages using 1 worker (44/89)
+Generating static pages using 1 worker (66/89)
+✓ Generating static pages using 1 worker (89/89) in 579ms
+Finalizing page optimization ...
+Running onBuildComplete from Vercel
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /admin
+├ ƒ /admin/analytics
+├ ƒ /admin/announcements
+├ ƒ /admin/audit
+├ ƒ /admin/challenges
+├ ƒ /admin/content
+├ ƒ /admin/email
+├ ƒ /admin/free-pc-games
+├ ƒ /admin/games
+├ ƒ /admin/moderation
+├ ƒ /admin/moderation-queue
+├ ƒ /admin/mutes
+├ ƒ /admin/news
+├ ƒ /admin/pins
+├ ƒ /admin/reports
+├ ƒ /admin/shop
+├ ƒ /admin/tournaments
+├ ƒ /admin/users
+├ ƒ /announcements
+├ ƒ /api/admin/analytics
+├ ƒ /api/admin/audit
+├ ƒ /api/admin/blocked-words
+├ ƒ /api/admin/challenges
+├ ƒ /api/admin/challenges/[id]
+├ ƒ /api/admin/content
+├ ƒ /api/admin/cracked-games
+├ ƒ /api/admin/cracked-games/[id]
+├ ƒ /api/admin/cron/unban-expired
+├ ƒ /api/admin/email-blast
+├ ƒ /api/admin/featured
+├ ƒ /api/admin/games
+├ ƒ /api/admin/games/[slug]
+├ ƒ /api/admin/games/upload
+├ ƒ /api/admin/moderation-queue
+├ ƒ /api/admin/mutes
+├ ƒ /api/admin/pins
+├ ƒ /api/admin/reports
+├ ƒ /api/admin/shop
+├ ƒ /api/admin/shop/[id]
+├ ƒ /api/admin/shop/upload
+├ ƒ /api/admin/upload
+├ ƒ /api/admin/users
+├ ƒ /api/announcements
+├ ƒ /api/announcements/[id]/read
+├ ƒ /api/articles/[slug]
+├ ƒ /api/auth/clear
+├ ƒ /api/auth/riot
+├ ƒ /api/auth/steam/callback
+├ ƒ /api/auth/steam/start
+├ ƒ /api/badges/check
+├ ƒ /api/bio
+├ ƒ /api/bracket-generate
+├ ƒ /api/challenges/[id]/claim
+├ ƒ /api/challenges/today
+├ ƒ /api/chat/mutes
+├ ƒ /api/chatbot
+├ ƒ /api/conversations
+├ ƒ /api/conversations/[id]
+├ ƒ /api/conversations/[id]/messages
+├ ƒ /api/cracked-games
+├ ƒ /api/discord/voice
+├ ƒ /api/follows/[username]
+├ ƒ /api/forum/posts
+├ ƒ /api/forum/posts/[id]/like
+├ ƒ /api/forum/threads
+├ ƒ /api/lfg-assist
+├ ƒ /api/lfg/[id]
+├ ƒ /api/lfg/[id]/comments
+├ ƒ /api/lfg/[id]/join
+├ ƒ /api/lfg/[id]/respond
+├ ƒ /api/lfg/queue
+├ ƒ /api/lfg/queue/status
+├ ƒ /api/lfg/suggest-mates
+├ ƒ /api/linked-accounts
+├ ƒ /api/moderate
+├ ƒ /api/news/[slug]/comments
+├ ƒ /api/notifications
+├ ƒ /api/notifications/[id]
+├ ƒ /api/posts/[id]
+├ ƒ /api/posts/[id]/comments
+├ ƒ /api/posts/[id]/like
+├ ƒ /api/posts/[id]/reactions
+├ ƒ /api/profile
+├ ƒ /api/profile/[username]/friends
+├ ƒ /api/push/subscribe
+├ ƒ /api/push/test
+├ ƒ /api/reports
+├ ƒ /api/skill-assess
+├ ƒ /api/smart-replies
+├ ƒ /api/tournament-summary
+├ ƒ /api/tournaments/[slug]/checkin
+├ ƒ /api/tournaments/[slug]/register
+├ ƒ /api/translate
+├ ƒ /api/users
+├ ƒ /api/voice/token
+├ ƒ /articles
+├ ƒ /articles/[slug]
+├ ƒ /articles/[slug]/edit
+├ ƒ /articles/new
+├ ƒ /auth/callback
+├ ƒ /auth/clear
+├ ƒ /auth/google
+├ ƒ /auth/login
+├ ƒ /auth/logout
+├ ƒ /auth/signup
+├ ƒ /challenges
+├ ƒ /clans
+├ ƒ /clans/[slug]
+├ ƒ /clans/new
+├ ƒ /feed
+├ ƒ /feed/[id]
+├ ƒ /free-pc-games
+├ ƒ /free-pc-games/[id]
+├ ƒ /free-pc-games/voice-test
+├ ƒ /games
+├ ƒ /games/[slug]
+├ ƒ /games/[slug]/discordvoicechannels
+├ ƒ /games/[slug]/lobby
+├ ƒ /leaderboard
+├ ƒ /lfg
+├ ƒ /lfg/[id]
+├ ƒ /lfg/new
+├ ƒ /messages
+├ ƒ /messages/[id]
+├ ƒ /news
+├ ƒ /news/[slug]
+├ ƒ /profile/[username]
+├ ƒ /profile/[username]/[postId]
+├ ƒ /profile/[username]/[postId]/edit
+├ ƒ /pubg-mobile/chat
+├ ƒ /rooms/[code]
+├ ƒ /rooms/new
+├ ƒ /search
+├ ƒ /settings
+├ ƒ /shop
+├ ƒ /shop/[slug]
+├ ƒ /shop/products/[id]
+├ ƒ /tournaments
+└ ƒ /tournaments/[slug]
+ƒ Proxy (Middleware)
+ƒ  (Dynamic)  server-rendered on demand
+Build Completed in /vercel/output [58s]
+Deploying outputs...
+Deployment completed
+Creating build cache...
+[2K[1A[2K[G▲ Production  https://gameroom-8kaknzhpy-gameroom.vercel.app
+Completing…
+▲ Aliased     https://gameroom.com.ge
+{
+  "status": "ok",
+  "deployment": {
+    "id": "dpl_HcSZWabi7DvsLycBY9iLFQDKGXSc",
+    "url": "https://gameroom-8kaknzhpy-gameroom.vercel.app",
+    "inspectorUrl": "https://vercel.com/gameroom/gameroom/HcSZWabi7DvsLycBY9iLFQDKGXSc",
+    "readyState": "READY",
+    "target": "production",
+    "deploymentApiUrl": "https://api.vercel.com/v13/deployments/dpl_HcSZWabi7DvsLycBY9iLFQDKGXSc"
+  },
+  "message": "Deployment gameroom-8kaknzhpy-gameroom.vercel.app ready.",
+  "next": [
+    {
+      "command": "vercel inspect gameroom-8kaknzhpy-gameroom.vercel.app",
+      "when": "Inspect deployment"
+    },
+    {
+      "command": "vercel deploy --prod",
+      "when": "Promote to production"
+    }
+  ]
+}

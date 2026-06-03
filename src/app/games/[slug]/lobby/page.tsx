@@ -216,58 +216,56 @@ export default async function GameLobbyPage({
   }
 
   return (
-    <div className="relative min-h-[calc(100svh-4rem)] bg-[var(--gr-bg-0)]">
+    <div className="relative min-h-screen bg-[var(--gr-bg-0)] pb-12">
       <LobbyOrientationGuard enabled={showRotatePrompt} />
-      <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
+      
+      {/* Cleaner subtle ambient background instead of the hard dot grid */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-violet-900/10 via-transparent to-transparent opacity-60" />
 
-      <div className="lobby-fs-wrap container relative mx-auto max-w-6xl px-4 py-8 lg:py-10">
-        {/* breadcrumb / back */}
-        <nav aria-label="Breadcrumb" className="lobby-chrome mb-4">
-          <Link
-            href={`/games/${game.slug}`}
-            className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--gr-text-dim)] hover:text-[var(--gr-text-mute)]"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            {game.nameKa} / ლობი
-          </Link>
-        </nav>
-
-        {/* page header */}
-        <header className="lobby-chrome lobby-page-header mb-6 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-4">
-            <DisplayHeading as="h1" size="lg" className="lobby-page-title">
-              {game.nameKa} — ლობი
-            </DisplayHeading>
+      <div className="lobby-fs-wrap container relative mx-auto max-w-6xl px-4 py-6 sm:py-8 lg:py-10">
+        
+        {/* App-like unified header with back button integrated */}
+        <header className="lobby-chrome mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col gap-2">
+            <Link
+              href={`/games/${game.slug}`}
+              className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--gr-text-dim)] hover:text-[var(--gr-violet-hi)] transition-colors"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              უკან დაბრუნება
+            </Link>
+            <div className="flex items-center gap-3 mt-1">
+              <DisplayHeading as="h1" size="lg" className="lobby-page-title text-[24px] sm:text-[32px]">
+                {game.nameKa}
+              </DisplayHeading>
+              <Pill tone="live" pulse className="px-2 py-0.5 text-[10px]">
+                LIVE
+              </Pill>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4 self-start sm:self-center">
+            <span className="text-[11px] uppercase font-medium tracking-[0.12em] text-[var(--gr-text-dim)] bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
+              <Users className="mr-1.5 inline h-3.5 w-3.5 -translate-y-[0.5px] text-violet-400" />
+              {game.players.toLocaleString("en-US")} ონლაინ
+            </span>
             <ChevronButton
               href={`/lfg/new?game=${game.slug}`}
               variant="violet"
-              size="md"
-              className="lobby-page-cta shrink-0 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-amber-400 text-[12px] text-white shadow-[0_0_28px_rgba(139,92,246,0.45)]"
-              style={{ background: "linear-gradient(135deg, #8B5CF6 0%, #C026D3 50%, #F5A524 100%)" }}
+              size="sm"
+              className="lobby-page-cta shadow-[0_0_20px_rgba(139,92,246,0.25)]"
             >
-              <Rocket className="h-4 w-4" /> თამაშის დაწყება
+              <Rocket className="h-4 w-4" /> დაწყება
             </ChevronButton>
-          </div>
-          <div className="flex flex-col items-end gap-1.5">
-            <Pill tone="live" pulse>
-              LIVE
-            </Pill>
-            <span className="text-[10.5px] uppercase tracking-[0.16em] text-[var(--gr-text-dim)]">
-              <Users className="mr-1 inline h-3 w-3 -translate-y-px" />
-              {game.players.toLocaleString("en-US")} ონლაინ
-            </span>
           </div>
         </header>
 
-        {/* lobby card — gradient border, cut corner, image inside */}
-        <article
-          className="lobby-card-outer relative isolate"
-          style={{ background: cardBorder, padding: 1, clipPath: cutLg }}
-        >
-          <div
-            className="lobby-card-inner relative aspect-video w-full overflow-hidden bg-[#08060F]"
-            style={{ clipPath: cutLg }}
-          >
+        {/* lobby card — simplified container with subtle glow instead of heavy cut borders */}
+        <article className="lobby-card-outer relative group">
+          {/* Subtle glow behind the card */}
+          <div className="absolute -inset-[1px] bg-gradient-to-r from-violet-500/30 to-sky-500/20 rounded-2xl blur-sm transition-all duration-500 group-hover:blur-md opacity-70"></div>
+          
+          <div className="lobby-card-inner relative aspect-video w-full overflow-hidden bg-[#08060F] rounded-xl border border-white/10 shadow-2xl ring-1 ring-black/50">
             <LobbyShell imageUrl={LOBBY_BG[slug]} eyebrow={`${game.nameEn} · ლობის გახსნა`}>
             <LobbyStage
               gameName={game.nameKa}
@@ -283,16 +281,15 @@ export default async function GameLobbyPage({
               initialLoadout={lobbyInitialLoadout ?? undefined}
               hasDbLoadout={hasDbLoadout}
             />
+            {/* Subtle scanline overlay for gaming feel instead of heavy dots */}
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-0 opacity-[0.05] mix-blend-overlay"
+              className="pointer-events-none absolute inset-0 mix-blend-overlay opacity-10"
               style={{
                 backgroundImage:
-                  "repeating-linear-gradient(to bottom, transparent 0 2px, rgba(255,255,255,0.6) 2px 3px)",
+                  "repeating-linear-gradient(to bottom, transparent 0, transparent 2px, rgba(255,255,255,0.4) 2px, rgba(255,255,255,0.4) 3px)",
               }}
             />
-
-
             </LobbyShell>
           </div>
         </article>

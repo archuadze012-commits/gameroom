@@ -20,7 +20,8 @@
       "mcp__supabase__list_branches",
       "mcp__8875d494-eda9-4b27-979b-1fa06b2e68ac__list_teams",
       "mcp__8875d494-eda9-4b27-979b-1fa06b2e68ac__list_projects",
-      "mcp__8875d494-eda9-4b27-979b-1fa06b2e68ac__get_project"
+      "mcp__8875d494-eda9-4b27-979b-1fa06b2e68ac__get_project",
+      "mcp__Claude_Preview__preview_start"
     ]
   },
   "enableAllProjectMcpServers": true,
