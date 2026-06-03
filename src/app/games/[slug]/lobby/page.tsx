@@ -216,7 +216,7 @@ export default async function GameLobbyPage({
   }
 
   return (
-    <div className="lobby-fs-viewport relative h-[100svh] w-full bg-[#08060F] sm:bg-[var(--gr-bg-0)] overflow-hidden flex items-center justify-center">
+    <div className="lobby-fs-viewport relative h-[calc(100svh-4rem)] w-full bg-[#08060F] sm:bg-[var(--gr-bg-0)] overflow-hidden flex items-center justify-center">
       <LobbyOrientationGuard enabled={showRotatePrompt} />
       
       {/* Cleaner subtle ambient background for larger screens */}
@@ -227,7 +227,16 @@ export default async function GameLobbyPage({
         {/* Subtle glow behind the card (hidden on mobile landscape to maximize space) */}
         <div className="hidden sm:block absolute inset-4 lg:inset-6 bg-gradient-to-r from-violet-500/30 to-sky-500/20 rounded-2xl blur-md opacity-70"></div>
         
-        <div className="lobby-fs-card relative w-full h-full bg-[#08060F] sm:rounded-xl sm:border sm:border-white/10 sm:shadow-2xl overflow-hidden flex items-center justify-center mx-auto">
+        <div 
+          className="lobby-fs-card relative bg-[#08060F] sm:rounded-xl sm:border sm:border-white/10 sm:shadow-2xl overflow-hidden flex items-center justify-center mx-auto"
+          style={{
+            aspectRatio: '16 / 9',
+            width: '100%',
+            height: '100%',
+            maxWidth: 'calc((100svh - 4rem) * 16 / 9)', /* Restricts ultrawide monitors from stretching */
+            maxHeight: 'calc(100vw * 9 / 16)' /* Restricts tall monitors from overflowing width */
+          }}
+        >
           <LobbyShell imageUrl={LOBBY_BG[slug]} eyebrow={`${game.nameEn} · ლობის გახსნა`}>
             <LobbyStage
               gameName={game.nameKa}
