@@ -29,16 +29,24 @@ const BASE_ALLOWED_IDS = {
   nameCard: [LOBBY_LOADOUT_DEFAULTS.nameCard],
 } as const;
 
-const loadoutValueSchema = z.string().trim().min(1).max(120);
+// Treat empty strings (which the client can send for unselected slots) as
+// "not provided" rather than as validation failures. Without preprocess, one
+// empty field (e.g. nameCard: "") would fail the whole object — Zod marks
+// safeParse() as failed and downstream falls back to defaults for EVERY
+// field, silently wiping the user's loadout.
+const loadoutValueSchema = z.preprocess(
+  (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+  z.string().trim().min(1).max(120).optional(),
+);
 
 const loadoutSchema = z.object({
-  combo: loadoutValueSchema.optional(),
-  character: loadoutValueSchema.optional(),
-  weapons: z.array(loadoutValueSchema).max(4).optional(),
-  vehicle: loadoutValueSchema.optional(),
-  lobby: loadoutValueSchema.optional(),
-  effect: loadoutValueSchema.optional(),
-  nameCard: loadoutValueSchema.optional(),
+  combo: loadoutValueSchema,
+  character: loadoutValueSchema,
+  weapons: z.array(z.string().trim().min(1).max(120)).max(4).optional(),
+  vehicle: loadoutValueSchema,
+  lobby: loadoutValueSchema,
+  effect: loadoutValueSchema,
+  nameCard: loadoutValueSchema,
 });
 
 export const lobbyGameSlugSchema = z
