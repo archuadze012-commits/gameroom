@@ -98,43 +98,43 @@ export function PlayerCard({ user }: Props) {
             </div>
           </div>
           </div>
-        </div>
-        {/* Bottom info */}
-        <div className="relative z-10 flex flex-col p-4 bg-[rgba(15,12,30,0.95)]">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 mb-1">
-                {user.role && user.role !== "user" && (
-                  <RoleBadge username={user.username} defaultRole={user.role} />
-                )}
-                <p className="truncate text-[15px] font-black text-white drop-shadow-md group-hover:text-pink-400 transition-colors">
-                  {displayName}
+          {/* Bottom info */}
+          <div className="relative z-10 flex flex-1 flex-col p-4 justify-between bg-[rgba(8,6,16,0.7)] backdrop-blur-md border-t border-white/5">
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 mb-1">
+                  {user.role && user.role !== "user" && (
+                    <RoleBadge username={user.username} defaultRole={user.role} />
+                  )}
+                  <p className="truncate text-[15px] font-black text-white drop-shadow-md group-hover:text-pink-400 transition-colors">
+                    {displayName}
+                  </p>
+                </div>
+                <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-white/40">
+                  {user.region && <span>{user.region}</span>}
+                  {user.voiceChat && (
+                    <>
+                      {user.region && <span>·</span>}
+                      <Mic className="h-3 w-3 text-pink-400" />
+                    </>
+                  )}
                 </p>
               </div>
-              <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-white/40">
-                {user.region && <span>{user.region}</span>}
-                {user.voiceChat && (
-                  <>
-                    {user.region && <span>·</span>}
-                    <Mic className="h-3 w-3 text-pink-400" />
-                  </>
-                )}
-              </p>
             </div>
-          </div>
 
-          {games.length > 0 && (
-            <div className="flex shrink-0 items-center gap-1.5 mt-1">
-              {games.map((g) => (
-                <div
-                  key={g.slug}
-                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/5 backdrop-blur-md transition-colors group-hover:border-pink-500/20 group-hover:bg-pink-500/10"
-                >
-                  <GameIcon game={g} size="sm" />
-                </div>
-              ))}
-            </div>
-          )}
+            {games.length > 0 && (
+              <div className="flex shrink-0 items-center gap-1.5 mt-1">
+                {games.map((g) => (
+                  <div
+                    key={g.slug}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/5 backdrop-blur-md transition-colors group-hover:border-pink-500/20 group-hover:bg-pink-500/10"
+                  >
+                    <GameIcon game={g} size="sm" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </Link>

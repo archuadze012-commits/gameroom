@@ -65,7 +65,7 @@ const DEFAULT_LOADOUT: LobbyLoadout = {
   combo: "combo_none",
   character: "leo",
   weapons: [],
-  vehicle:   "icefire_sedan",
+  vehicle:   "vehicle_none",
   lobby:     "lobby_svaneti",
   effect:    "fx_none",
   nameCard:  "nc_default",
@@ -244,6 +244,7 @@ function LobbyLoadoutLayer({
     ? activeCombo.metadata.scene_url.trim()
     : activeCombo?.image_url ?? null;
   const hasActiveCombo = loadout.combo !== DEFAULT_LOADOUT.combo && !!comboSceneUrl;
+  const hasActiveVehicle = !!loadout.vehicle && loadout.vehicle !== "vehicle_none";
 
   return (
     <>
@@ -260,38 +261,42 @@ function LobbyLoadoutLayer({
         />
       ) : (
         <>
-          <div
-            aria-hidden
-            className="pointer-events-none absolute z-[1] rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(5,10,20,0.68)_0%,rgba(5,10,20,0.42)_42%,rgba(5,10,20,0)_75%)] blur-[10px]"
-            style={{
-              left: "calc(63% - 260px)",
-              bottom: "calc(3.2% + 80px)",
-              width: "45%",
-              height: "8%",
-              transform: "translateX(-50%)",
-            }}
-          />
-          <Image
-            src={activeRideUrl}
-            alt=""
-            aria-hidden
-            className="pointer-events-none absolute z-[2] h-auto select-none"
-            width={1536}
-            height={1024}
-            sizes="(max-width: 640px) 68vw, (max-width: 1280px) 44vw, 700px"
-            quality={75}
-            style={{
-              left: "calc(63% - 260px)",
-              bottom: "calc(4.8% + 80px)",
-              width: "45%",
-              height: "auto",
-              transform: "translateX(-50%)",
-              transformOrigin: "50% 100%",
-              opacity: 0.92,
-              filter: "drop-shadow(0 18px 20px rgba(3, 8, 20, 0.55)) drop-shadow(0 0 24px rgba(56, 189, 248, 0.2))",
-            }}
-            draggable={false}
-          />
+          {hasActiveVehicle && (
+            <>
+              <div
+                aria-hidden
+                className="pointer-events-none absolute z-[1] rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(5,10,20,0.68)_0%,rgba(5,10,20,0.42)_42%,rgba(5,10,20,0)_75%)] blur-[10px]"
+                style={{
+                  left: "calc(63% - 260px)",
+                  bottom: "calc(3.2% + 80px)",
+                  width: "45%",
+                  height: "8%",
+                  transform: "translateX(-50%)",
+                }}
+              />
+              <Image
+                src={activeRideUrl}
+                alt=""
+                aria-hidden
+                className="pointer-events-none absolute z-[2] h-auto select-none"
+                width={1536}
+                height={1024}
+                sizes="(max-width: 640px) 68vw, (max-width: 1280px) 44vw, 700px"
+                quality={75}
+                style={{
+                  left: "calc(63% - 260px)",
+                  bottom: "calc(4.8% + 80px)",
+                  width: "45%",
+                  height: "auto",
+                  transform: "translateX(-50%)",
+                  transformOrigin: "50% 100%",
+                  opacity: 0.92,
+                  filter: "drop-shadow(0 18px 20px rgba(3, 8, 20, 0.55)) drop-shadow(0 0 24px rgba(56, 189, 248, 0.2))",
+                }}
+                draggable={false}
+              />
+            </>
+          )}
           <svg
             aria-hidden
             className="absolute z-[3] pointer-events-none overflow-visible"

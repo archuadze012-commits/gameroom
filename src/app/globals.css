@@ -579,6 +579,20 @@
   }
 }
 
+.lobby-fs-viewport {
+  --lobby-pad-y: 0px;
+}
+@media (min-width: 640px) {
+  .lobby-fs-viewport {
+    --lobby-pad-y: 3rem;
+  }
+}
+@media (min-width: 1024px) {
+  .lobby-fs-viewport {
+    --lobby-pad-y: 4rem;
+  }
+}
+
 /* Lobby - tablet landscape: browser chrome + side nav leave too little vertical room.
    any-pointer:coarse limits this to touch devices (real desktops keep their layout);
    generous ceilings cover every iPad, incl. "More Space" display mode (~1496x1122). */

@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { usePathname } from "next/navigation";
 
 const MobileBottomNav = dynamic(() =>
   import("@/components/layout/mobile-bottom-nav").then((m) => m.MobileBottomNav),
@@ -39,10 +40,12 @@ function useIsWebView() {
 }
 
 export function ClientChrome({ canEdit = false }: { isAuthenticated?: boolean; canEdit?: boolean }) {
+  const pathname = usePathname();
+  const isLobby = pathname?.endsWith("/lobby");
   const [showPwaPrompt, setShowPwaPrompt] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const isWebView = useIsWebView();
-  const showRightSideNav = isWebView || isDesktop;
+  const showRightSideNav = !isLobby && (isWebView || isDesktop);
 
   useEffect(() => {
     const viewportQuery = window.matchMedia("(min-width: 1024px)");
@@ -73,6 +76,8 @@ export function ClientChrome({ canEdit = false }: { isAuthenticated?: boolean; c
       document.documentElement.classList.remove("gr-has-webview-side-nav");
     };
   }, [showRightSideNav]);
+
+  if (isLobby) return null;
 
   return (
     <>

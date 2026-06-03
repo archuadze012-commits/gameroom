@@ -15,13 +15,6 @@ export async function saveLobbyLoadout(gameSlug: string, loadout: LoadoutData) {
   }
 
   const normalizedLoadout = await normalizeUserLobbyLoadout(user.id, parsedGameSlug.data, loadout);
-  // Telemetry — keep until cross-device save bug is resolved.
-  console.log("[saveLobbyLoadout]", {
-    userId: user.id,
-    gameSlug: parsedGameSlug.data,
-    incoming: loadout,
-    normalized: normalizedLoadout,
-  });
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase
     .from("user_lobby_loadouts")

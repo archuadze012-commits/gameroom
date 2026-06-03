@@ -216,7 +216,7 @@ export default async function GameLobbyPage({
   }
 
   return (
-    <div className="lobby-fs-viewport relative h-[calc(100svh-4rem)] w-full bg-[#08060F] sm:bg-[var(--gr-bg-0)] overflow-hidden flex items-center justify-center">
+    <div className="lobby-fs-viewport relative h-[100svh] w-full bg-[#08060F] sm:bg-[var(--gr-bg-0)] overflow-hidden flex items-center justify-center">
       <LobbyOrientationGuard enabled={showRotatePrompt} />
       
       {/* Cleaner subtle ambient background for larger screens */}
@@ -233,7 +233,7 @@ export default async function GameLobbyPage({
             aspectRatio: '16 / 9',
             width: '100%',
             height: '100%',
-            maxWidth: 'calc((100svh - 8rem) * 16 / 9)', /* 4rem header + 4rem container padding */
+            maxWidth: 'calc((100svh - var(--lobby-pad-y)) * 16 / 9)',
             maxHeight: 'calc(100vw * 9 / 16)' /* Restricts tall monitors from overflowing width */
           }}
         >
