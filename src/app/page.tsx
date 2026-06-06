@@ -392,12 +392,12 @@ export default async function HomePage() {
 
                             {/* Comments Actions */}
                             <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-3 relative z-10">
-                              <Link href={`/profile/${author?.username ?? "user"}/${p.id}#comments`} className="pubg-loadout-card relative flex items-center gap-1.5 overflow-hidden px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-[#D0F8FF] transition-colors hover:text-white">
-                                <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
-                                <span className="relative z-[1] flex items-center gap-1.5">
-                                  <MessageCircle className="h-4 w-4" />
-                                  კომენტარები
-                                </span>
+                              <Link
+                                href={`/profile/${author?.username ?? "user"}/${p.id}#comments`}
+                                className="group flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/60 transition-all duration-200 hover:bg-white/10 hover:text-white/80"
+                              >
+                                <MessageCircle className="h-3.5 w-3.5" />
+                                კომენტარები
                               </Link>
                               {user && author?.username ? (
                                 <PostOwnerActions
