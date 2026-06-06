@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { Trophy, Users, Calendar, Plus, Sparkles } from "lucide-react";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { format } from "date-fns";
 import { DisplayHeading } from "@/components/ui/display-heading";
+import { PageHeader } from "@/components/page-header";
+import { CinematicBackground } from "@/components/ui/cinematic-background";
+import { unstable_cache } from "next/cache";
 
 export const metadata = { title: "ჩემპიონატები" };
-export const dynamic = "force-dynamic";
 
 const statusTone: Record<string, "online" | "amber" | "live" | "neutral"> = {
   open:      "online",
@@ -53,33 +55,41 @@ type TournamentCard = {
   game: { nameKa: string | null; emoji: string | null } | null;
 };
 
-export default async function TournamentsPage() {
-  const supabase = await createSupabaseServerClient();
-
-  const { data: dbTournaments } = await supabase
-    .from("tournaments")
-    .select(`
-      id,
-      name,
-      slug,
-      description,
-      banner_url,
-      format,
-      max_participants,
-      prize_pool,
-      starts_at,
-      status,
-      games:game_id (
+const getTournaments = unstable_cache(
+  async () => {
+    const admin = createSupabaseAdminClient();
+    const { data } = await admin
+      .from("tournaments")
+      .select(`
+        id,
+        name,
         slug,
-        name_ka,
-        emoji
-      ),
-      tournament_participants (
-        id
-      )
-    `)
-    .neq("status", "draft")
-    .order("starts_at", { ascending: true });
+        description,
+        banner_url,
+        format,
+        max_participants,
+        prize_pool,
+        starts_at,
+        status,
+        games:game_id (
+          slug,
+          name_ka,
+          emoji
+        ),
+        tournament_participants (
+          id
+        )
+      `)
+      .neq("status", "draft")
+      .order("starts_at", { ascending: true });
+    return data;
+  },
+  ["tournaments"],
+  { revalidate: 120, tags: ["tournaments"] },
+);
+
+export default async function TournamentsPage() {
+  const dbTournaments = await getTournaments();
 
   const tournaments = ((dbTournaments ?? []) as unknown as TournamentRow[]).map((t) => {
     const participantsCount = t.tournament_participants?.length || 0;
@@ -104,34 +114,28 @@ export default async function TournamentsPage() {
   };
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[#05050f]">
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
       {/* Premium Cinematic Background */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(236,72,153,0.1),transparent_70%)]" />
+      <CinematicBackground color="pink" />
 
       <div className="container relative mx-auto px-4 py-10 lg:py-14">
         
-        {/* Header - Premium Glass Wrapper */}
-        <header className="mb-12 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-[12px] font-black uppercase tracking-[0.24em] text-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.5)]">
-              ჩემპიონატები
-            </p>
-            <DisplayHeading as="h1" size="lg" className="mt-1 text-white drop-shadow-md">
-              ტურნირები
-            </DisplayHeading>
-            <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-white/50">
-              თემიდან გასული ჩემპიონატები. დარეგისტრირდი, უყურე და მოიგე პრემიუმ პრიზები.
-            </p>
-          </div>
-          <Link
-            href="/tournaments/propose"
-            className="group flex items-center justify-center gap-2 rounded-full border border-pink-500/30 bg-pink-500/10 px-6 py-3 text-[12px] font-black uppercase tracking-[0.16em] text-pink-400 shadow-[0_0_15px_rgba(236,72,153,0.2)] transition-all hover:scale-105 hover:bg-pink-500/20 hover:shadow-[0_0_25px_rgba(236,72,153,0.4)] md:shrink-0"
-          >
-            <Plus className="h-4 w-4" /> შემოთავაზება
-          </Link>
-        </header>
+        <PageHeader
+          color="pink"
+          eyebrow="ჩემპიონატები"
+          title="ტურნირები"
+          description="თემიდან გასული ჩემპიონატები. დარეგისტრირდი, უყურე და მოიგე პრემიუმ პრიზები."
+          actions={
+            <Link
+              href="/tournaments/propose"
+              className="group flex items-center justify-center gap-2 rounded-full border border-pink-500/30 bg-pink-500/10 px-6 py-3 text-[12px] font-black uppercase tracking-[0.16em] text-pink-400 shadow-[0_0_15px_rgba(236,72,153,0.2)] transition-all hover:scale-105 hover:bg-pink-500/20 hover:shadow-[0_0_25px_rgba(236,72,153,0.4)] md:shrink-0"
+            >
+              <Plus className="h-4 w-4" /> შემოთავაზება
+            </Link>
+          }
+        />
 
-        <div className="space-y-16">
+        <div className="space-y-16 mt-12">
           <Section eyebrow="მიმდინარეობს" title="LIVE" color="cyan" tournaments={grouped.live} />
           <Section eyebrow="მომავალი" title="დარეგისტრირდი" color="violet" tournaments={grouped.upcoming} />
           <Section eyebrow="არქივი" title="დასრულებული" color="neutral" tournaments={grouped.completed} />
@@ -176,13 +180,7 @@ function Section({
           
           return (
             <Link key={t.slug} href={`/tournaments/${t.slug}`} className="group block">
-              <article
-                className={`relative isolate flex h-full flex-col overflow-hidden rounded-[20px] p-[1.5px] transition-all duration-500 hover:-translate-y-1 ${
-                  isLive 
-                    ? "bg-gradient-to-br from-[#00d0ff] via-[#6366f1] to-[#f43f5e] shadow-[0_0_30px_rgba(34,211,238,0.2)] hover:shadow-[0_0_40px_rgba(34,211,238,0.4)]" 
-                    : "bg-white/5 border border-white/5 hover:border-pink-500/30 hover:bg-gradient-to-br hover:from-pink-500/30 hover:to-violet-500/30 hover:shadow-[0_0_20px_rgba(236,72,153,0.2)]"
-                }`}
-              >
+              <article className="neon-frame flex h-full flex-col rounded-[20px]">
                 <div className="relative flex h-full flex-col bg-[#0a0714] rounded-[18.5px] overflow-hidden">
                   
                   {/* Glowing background */}

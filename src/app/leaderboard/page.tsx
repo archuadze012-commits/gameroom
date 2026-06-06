@@ -1,13 +1,37 @@
 import Link from "next/link";
 import { Trophy, Crown, Medal, Coins, Sparkles } from "lucide-react";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { unstable_cache } from "next/cache";
 import { UserAvatar } from "@/components/user-avatar";
 import { VerifiedBadge } from "@/components/verified-badge";
 import { xpToLevel } from "@/lib/badges";
 import { DisplayHeading } from "@/components/ui/display-heading";
+import { PageHeader } from "@/components/page-header";
+import { CinematicBackground } from "@/components/ui/cinematic-background";
 
 export const metadata = { title: "Leaderboard" };
+
+const getLeaderboardData = unstable_cache(
+  async () => {
+    const admin = createSupabaseAdminClient();
+    const [{ data: topXp }, { data: topWallets }] = await Promise.all([
+      admin
+        .from("profiles")
+        .select("username, display_name, avatar_url, xp, level, is_verified")
+        .eq("banned", false)
+        .order("xp", { ascending: false })
+        .limit(20),
+      admin
+        .from("wallets")
+        .select("nc_balance, profiles!inner(username, display_name, avatar_url, is_verified)")
+        .order("nc_balance", { ascending: false })
+        .limit(20),
+    ]);
+    return { topXp, topWallets };
+  },
+  ["leaderboard"],
+  { revalidate: 120, tags: ["leaderboard"] },
+);
 
 type LeaderboardUser = {
   username: string;
@@ -30,21 +54,7 @@ type WalletRow = {
 };
 
 export default async function LeaderboardPage() {
-  const supabase = await createSupabaseServerClient();
-  const adminSupabase = createSupabaseAdminClient();
-
-  const { data: topXp } = await supabase
-    .from("profiles")
-    .select("username, display_name, avatar_url, xp, level, is_verified")
-    .eq("banned", false)
-    .order("xp", { ascending: false })
-    .limit(20);
-
-  const { data: topWallets } = await adminSupabase
-    .from("wallets")
-    .select("nc_balance, profiles!inner(username, display_name, avatar_url, is_verified)")
-    .order("nc_balance", { ascending: false })
-    .limit(20);
+  const { topXp, topWallets } = await getLeaderboardData();
 
   const topCoins: LeaderboardUser[] = ((topWallets ?? []) as unknown as WalletRow[]).map((w) => ({
     nc_balance: w.nc_balance,
@@ -52,33 +62,24 @@ export default async function LeaderboardPage() {
   }));
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[#05050f]">
-      {/* Cinematic Ambient Background */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.15),transparent_70%)]" />
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
+      <CinematicBackground color="violet" />
 
       <div className="container relative mx-auto max-w-5xl px-4 py-10 lg:py-14">
         
-        {/* Premium Header */}
-        <header className="mb-12 group relative rounded-[24px] p-[1.5px] bg-gradient-to-br from-[#00d0ff] via-[#6366f1] to-[#f43f5e] shadow-[0_0_40px_rgba(99,102,241,0.2)]">
-          <div className="relative flex items-center gap-5 h-full w-full overflow-hidden rounded-[22.5px] bg-[#0a0714] p-6 sm:p-8 shadow-[inset_0_0_30px_rgba(139,92,246,0.05)]">
-            <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(236,72,153,0.1),transparent_50%)]" />
-            
-            <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-pink-500/30 bg-pink-500/10 shadow-[0_0_20px_rgba(236,72,153,0.3)]">
-              <Trophy className="h-7 w-7 text-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]" />
-            </div>
-            <div className="relative">
-              <p className="text-[12px] font-black uppercase tracking-[0.24em] text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]">
-                Hall of Fame
-              </p>
-              <DisplayHeading as="h1" size="lg" className="mt-1 text-white drop-shadow-md">
-                Leaderboard
-              </DisplayHeading>
-              <p className="mt-2 text-[14px] text-white/50 font-medium">
-                Top players by Experience and Wealth
-              </p>
-            </div>
-          </div>
-        </header>
+        <PageHeader
+          color="violet"
+          eyebrow="Hall of Fame"
+          title={
+            <span className="flex items-center gap-4">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-violet-500/30 bg-violet-500/10 shadow-[0_0_15px_rgba(139,92,246,0.2)]">
+                <Trophy className="h-5 w-5 text-violet-400" />
+              </span>
+              <span>Leaderboard</span>
+            </span>
+          }
+          description="Top players by Experience and Wealth"
+        />
 
         <div className="grid gap-8 lg:grid-cols-2">
           {/* XP Leaderboard */}
@@ -173,8 +174,6 @@ function LeaderboardSection({
   const isViolet = color === "violet";
   const textColor = isViolet ? "text-violet-400" : "text-cyan-400";
   const dropShadow = isViolet ? "drop-shadow-[0_0_8px_rgba(139,92,246,0.5)]" : "drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]";
-  const glowShadow = isViolet ? "shadow-[0_0_30px_rgba(139,92,246,0.15)]" : "shadow-[0_0_30px_rgba(34,211,238,0.15)]";
-  const gradient = isViolet ? "from-violet-500/40 via-pink-500/40 to-violet-500/40" : "from-cyan-500/40 via-blue-500/40 to-cyan-500/40";
 
   return (
     <section>
@@ -184,7 +183,7 @@ function LeaderboardSection({
         {icon} {eyebrow}
       </h2>
       
-      <div className={`group relative rounded-[24px] p-[1.5px] bg-gradient-to-br ${gradient} ${glowShadow} transition-shadow duration-500 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)]`}>
+      <div className="group neon-frame rounded-[24px]">
         <div className="relative h-full w-full overflow-hidden rounded-[22.5px] bg-[#0a0714]">
           {children}
         </div>

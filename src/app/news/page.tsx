@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { Newspaper, Clock } from "lucide-react";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { PageHeader } from "@/components/page-header";
+import { CinematicBackground } from "@/components/ui/cinematic-background";
 import { DisplayHeading } from "@/components/ui/display-heading";
 import { Pill } from "@/components/ui/pill";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { format } from "date-fns";
 import { GamerCard } from "@/components/ui/gamer-card";
-
+import { unstable_cache } from "next/cache";
 
 export const metadata = { title: "სიახლეები" };
-export const dynamic = "force-dynamic";
 
 type NewsRow = {
   id: string;
@@ -29,10 +29,10 @@ type NewsRow = {
   } | null;
 };
 
-export default async function NewsPage() {
-  const supabase = await createSupabaseServerClient();
-
-  const { data: dbNews } = await supabase
+const getNews = unstable_cache(
+  async () => {
+  const admin = createSupabaseAdminClient();
+  const { data } = await admin
     .from("news_articles")
     .select(`
       id,
@@ -53,6 +53,14 @@ export default async function NewsPage() {
     `)
     .eq("status", "published")
     .order("published_at", { ascending: false });
+  return data;
+  },
+  ["news"],
+  { revalidate: 300, tags: ["news"] },
+);
+
+export default async function NewsPage() {
+  const dbNews = await getNews();
 
   const news = ((dbNews ?? []) as NewsRow[]).map((n) => {
     const readMinutes = Math.max(1, Math.ceil((n.body?.length || 0) / 800));
@@ -74,22 +82,16 @@ export default async function NewsPage() {
   const featuredGame = featured ? featured.game : undefined;
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
-      <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
-      <span aria-hidden className="pointer-events-none absolute -top-24 -right-20 h-72 w-72 rounded-full bg-[var(--gr-violet)]/20 blur-[120px]" />
-      <span aria-hidden className="pointer-events-none absolute top-40 -left-20 h-72 w-72 rounded-full bg-[var(--gr-magenta)]/15 blur-[120px]" />
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
+      <CinematicBackground color="violet" />
 
       <div className="container relative mx-auto px-4 py-10 lg:py-14 space-y-10">
-        <header>
-          <Eyebrow tone="amber">სიახლეები</Eyebrow>
-          <DisplayHeading as="h1" size="lg" className="mt-3 flex items-center gap-3">
-            <Newspaper className="h-7 w-7 text-[var(--gr-violet-hi)]" />
-            სიახლეები
-          </DisplayHeading>
-          <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-[var(--gr-text-mute)]">
-            გეიმინგ სამყაროს ბოლო ამბები — ადმინისტრაციის შერჩევით.
-          </p>
-        </header>
+        <PageHeader
+          color="violet"
+          eyebrow="სიახლეები"
+          title="სიახლეები"
+          description="გეიმინგ სამყაროს ბოლო ამბები — ადმინისტრაციის შერჩევით."
+        />
 
         {featured && (
           <GamerCard clipSize={22} hover className="group block">
