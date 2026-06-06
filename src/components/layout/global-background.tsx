@@ -69,7 +69,7 @@ export function GlobalBackground() {
     const ua = window.navigator.userAgent;
     const isWebview = /(gameroom|; wv\)|Electron|CEF|WebView|FBAN|FBAV|Instagram|Line\/|MicroMessenger)/i.test(ua) || 'ReactNativeWebView' in window || window.matchMedia('(display-mode: standalone)').matches || (/iPhone|iPad|iPod/i.test(ua) && !/Safari/i.test(ua));
     const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform));
-    let prefersReduced = !isWebview && (window.matchMedia("(prefers-reduced-motion: reduce)").matches || isMobileOrTablet || window.innerWidth < 768);
+    let prefersReduced = isMobileOrTablet && !isWebview;
 
     let animId = 0;
     let w = 0;
@@ -185,7 +185,7 @@ export function GlobalBackground() {
       const ua = window.navigator.userAgent;
       const isWebview = /(gameroom|; wv\)|Electron|CEF|WebView|FBAN|FBAV|Instagram|Line\/|MicroMessenger)/i.test(ua) || 'ReactNativeWebView' in window || window.matchMedia('(display-mode: standalone)').matches || (/iPhone|iPad|iPod/i.test(ua) && !/Safari/i.test(ua));
       const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform));
-      prefersReduced = !isWebview && (window.matchMedia("(prefers-reduced-motion: reduce)").matches || isMobileOrTablet || window.innerWidth < 768);
+      prefersReduced = isMobileOrTablet && !isWebview;
       if (prefersReduced) {
         if (animId) {
           cancelAnimationFrame(animId);
@@ -374,7 +374,7 @@ export function GlobalBackground() {
       const isMobile = w < 768;
       const ua = window.navigator.userAgent;
       const isWebview = /(gameroom|; wv\)|Electron|CEF|WebView|FBAN|FBAV|Instagram|Line\/|MicroMessenger)/i.test(ua) || 'ReactNativeWebView' in window || window.matchMedia('(display-mode: standalone)').matches || (/iPhone|iPad|iPod/i.test(ua) && !/Safari/i.test(ua));
-      const showAmbientEffects = !isMobile || isWebview;
+      const showAmbientEffects = true; // prefersReduced already completely aborts if mobile web
 
       // === STORM CLOUDS (Illuminated by lightning or visible in cloudy weather) ===
       if (cloudCanvas && showAmbientEffects) {
