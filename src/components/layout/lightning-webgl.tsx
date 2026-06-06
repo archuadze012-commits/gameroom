@@ -163,10 +163,8 @@ export function LightningWebGL({
     let raf = 0;
 
     const render = () => {
-      const ua = window.navigator.userAgent;
-      const isWebview = /(gameroom|; wv\)|Electron|CEF|WebView|FBAN|FBAV|Instagram|Line\/|MicroMessenger)/i.test(ua) || 'ReactNativeWebView' in window || window.matchMedia('(display-mode: standalone)').matches || (/iPhone|iPad|iPod/i.test(ua) && !/Safari/i.test(ua));
-      const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform));
-      const prefersReduced = isMobileOrTablet && !isWebview;
+      const isPortrait = window.matchMedia("(orientation: portrait)").matches;
+      const prefersReduced = isPortrait;
       if (prefersReduced) {
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT);
