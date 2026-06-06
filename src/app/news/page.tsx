@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 import { DisplayHeading } from "@/components/ui/display-heading";
 import { Pill } from "@/components/ui/pill";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@supabase/supabase-js";
 import { format } from "date-fns";
 import { GamerCard } from "@/components/ui/gamer-card";
 import { unstable_cache } from "next/cache";
@@ -31,8 +31,11 @@ type NewsRow = {
 
 const getNews = unstable_cache(
   async () => {
-  const admin = createSupabaseAdminClient();
-  const { data } = await admin
+  const client = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key"
+  );
+  const { data } = await client
     .from("news_articles")
     .select(`
       id,
@@ -62,7 +65,7 @@ const getNews = unstable_cache(
 export default async function NewsPage() {
   const dbNews = await getNews();
 
-  const news = ((dbNews ?? []) as NewsRow[]).map((n) => {
+  const news = ((dbNews ?? []) as unknown as NewsRow[]).map((n) => {
     const readMinutes = Math.max(1, Math.ceil((n.body?.length || 0) / 800));
     return {
       id: n.id,

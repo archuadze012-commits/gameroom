@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Trophy, Users, Calendar, Plus, Sparkles } from "lucide-react";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@supabase/supabase-js";
 import { format } from "date-fns";
 import { DisplayHeading } from "@/components/ui/display-heading";
 import { PageHeader } from "@/components/page-header";
@@ -57,8 +57,11 @@ type TournamentCard = {
 
 const getTournaments = unstable_cache(
   async () => {
-    const admin = createSupabaseAdminClient();
-    const { data } = await admin
+    const client = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key"
+    );
+    const { data } = await client
       .from("tournaments")
       .select(`
         id,
