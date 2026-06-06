@@ -1,5 +1,3 @@
-"use client";
-
 import type { MockGame } from "@/lib/mock-data";
 
 type Props = {

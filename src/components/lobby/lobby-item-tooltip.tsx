@@ -1,5 +1,3 @@
-"use client";
-
 import type { LobbyInventoryItem, LobbyInventoryTab } from "@/components/lobby/lobby-inventory";
 
 type LobbyItemTooltipProps = {

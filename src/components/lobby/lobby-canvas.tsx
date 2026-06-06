@@ -1,5 +1,3 @@
-"use client";
-
 import type React from "react";
 
 const COLORS = ["#a78bfa", "#22d3ee", "#f5a524", "#ff4d6d"];
