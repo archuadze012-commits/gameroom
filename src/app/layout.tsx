@@ -72,7 +72,7 @@ export default async function RootLayout({
           <GlobalBackground />
           <div className="relative flex flex-col w-full max-w-[100vw] overflow-x-clip min-h-[100dvh]">
             <SiteHeader />
-            <main className="flex-1 pt-20 pb-6 sm:pt-0 sm:pb-0">{children}</main>
+            <main className="flex-1 pt-20 pb-6 landscape:pt-0 landscape:pb-0 sm:pt-0 sm:pb-0">{children}</main>
             <SiteFooter />
             <ClientChrome isAuthenticated={!!user} canEdit={canEdit} />
             <Toaster richColors position="top-right" />
