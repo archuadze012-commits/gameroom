@@ -1,5 +1,3 @@
-"use client";
-
 import type { LobbyHudData } from "@/types/lobby";
 
 type LobbyPlayerCardProps = {
