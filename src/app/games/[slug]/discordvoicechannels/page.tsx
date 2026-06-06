@@ -7,7 +7,6 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { DisplayHeading } from "@/components/ui/display-heading";
 import { DiscordVoiceDashboard } from "@/components/discord-voice-dashboard";
 
-export const dynamic = "force-dynamic";
 
 const cutLg = "polygon(0 0, calc(100% - 32px) 0, 100% 32px, 100% 100%, 0 100%)";
 const cardBorder = "linear-gradient(135deg, rgba(236,72,153,0.98), rgba(192,38,211,0.95))";
@@ -59,7 +58,7 @@ export default async function DiscordVoiceChannelsPage({
   if (!game) notFound();
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
 
       {game.coverUrl && (

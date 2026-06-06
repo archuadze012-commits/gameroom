@@ -13,7 +13,6 @@ import { getSession } from "@/lib/auth";
 import { format } from "date-fns";
 import { TournamentActions } from "./tournament-actions";
 
-export const dynamic = "force-dynamic";
 
 type GameRel = { slug: string; name_ka: string | null; emoji: string | null };
 type ParticipantProfile = {

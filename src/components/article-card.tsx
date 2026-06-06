@@ -29,9 +29,9 @@ export function ArticleCard({ a }: { a: ArticleCardData }) {
       href={`/articles/${encodeURIComponent(a.slug)}`}
       className="group block relative h-full w-full"
     >
-      <div className="relative isolate flex h-full flex-col rounded-[24px] p-[1.5px] bg-gradient-to-br from-[#00d0ff] via-[#6366f1] to-[#f43f5e] transition-all duration-500 hover:shadow-[0_0_35px_rgba(99,102,241,0.4)] hover:-translate-y-1">
+      <div className="neon-frame flex h-full flex-col rounded-[24px]">
         
-        <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[22.5px] bg-[#0a0714]">
+        <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[22.5px] bg-[#0a0714]/20 backdrop-blur-md">
           {/* Thumbnail area */}
           <div className="relative h-60 w-full overflow-hidden shrink-0">
             {a.cover_url ? (

@@ -142,8 +142,8 @@ export function FindMatchButton({ gameSlug, gameName, size = "sm", variant = "de
   const ss = (remaining % 60).toString().padStart(2, "0");
 
   if (status.state === "idle") {
-    const defaultClasses = variant === "default" 
-      ? "bg-[linear-gradient(135deg,#0ea5e9,#8b5cf6)] border border-white/10 shadow-[0_8px_24px_-8px_rgba(139,92,246,0.7),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_12px_36px_-6px_rgba(139,92,246,0.9),inset_0_1px_0_rgba(255,255,255,0.35)] hover:-translate-y-0.5 hover:border-white/20 transition-all duration-300 text-white font-bold tracking-wide"
+    const defaultClasses = variant === "default"
+      ? "neon-btn rounded-full bg-[rgba(10,14,34,0.6)] backdrop-blur-md hover:-translate-y-0.5 transition-all duration-300 text-white font-bold tracking-wide"
       : "";
 
     return (

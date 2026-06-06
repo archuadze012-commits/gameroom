@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readJsonObject } from "@/lib/api/json";
-import { requirePermission } from "@/lib/admin";
+import { requirePermission, logAdminAction } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createLogger } from "@/lib/logger";
 import type { Database } from "@/lib/database.types";
 
 type GameInsert = Database["public"]["Tables"]["games"]["Insert"];
+const logger = createLogger("api:admin-games");
 
 type Body = {
   slug?: string;
@@ -73,8 +75,15 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) {
-    console.error("[admin/games POST]", error);
+    logger.error("failed to upsert game", { slug, error });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+  await logAdminAction({
+    actorId: auth.userId,
+    action: isEditing ? "content.game.update" : "content.game.create",
+    targetType: "game",
+    targetId: slug,
+    metadata: { name: payload.name_ka },
+  });
   return NextResponse.json(data, { status: 201 });
 }

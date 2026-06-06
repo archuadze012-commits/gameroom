@@ -5,11 +5,14 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
+import { createLogger } from "@/lib/logger";
 
 const sendMessageSchema = z.object({
   conversationId: z.string().uuid(),
   body: z.string().trim().min(1, "მესიჯი ცარიელია").max(2000, "მესიჯი ზედმეტად გრძელია"),
 });
+
+const logger = createLogger("messages-actions");
 
 export type DirectMessage = {
   id: string;
@@ -82,7 +85,7 @@ export async function sendMessageAction(
     .single();
 
   if (error) {
-    console.error("[sendMessageAction] insert failed:", error);
+    logger.error("failed to insert direct message", { userId: user.id, conversationId, error });
     return { success: false, message: "გაგზავნა ვერ მოხერხდა" };
   }
 
@@ -135,7 +138,7 @@ export async function deleteConversationAction(
     .maybeSingle();
 
   if (convoError) {
-    console.error("[deleteConversationAction] lookup", convoError);
+    logger.error("failed to lookup conversation before delete", { userId: user.id, conversationId, error: convoError });
     return { success: false, message: "წაშლა ვერ მოხერხდა" };
   }
 
@@ -150,7 +153,7 @@ export async function deleteConversationAction(
     .eq("conversation_id", conversationId);
 
   if (messageError) {
-    console.error("[deleteConversationAction] messages", messageError);
+    logger.error("failed to soft-delete conversation messages", { userId: user.id, conversationId, error: messageError });
     return { success: false, message: "წაშლა ვერ მოხერხდა" };
   }
 
@@ -160,7 +163,7 @@ export async function deleteConversationAction(
     .eq("id", conversationId);
 
   if (deleteError) {
-    console.error("[deleteConversationAction] conversation", deleteError);
+    logger.error("failed to delete conversation", { userId: user.id, conversationId, error: deleteError });
     return { success: false, message: "წაშლა ვერ მოხერხდა" };
   }
 

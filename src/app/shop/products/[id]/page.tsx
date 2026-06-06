@@ -27,7 +27,7 @@ export default async function ShopProductPage({ params }: { params: Promise<{ id
   const canContact = product.status !== "out_of_stock";
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[#05050f]">
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
       {/* Cinematic Ambient Background */}
       <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.15),transparent_70%)]" />
 
@@ -42,7 +42,7 @@ export default async function ShopProductPage({ params }: { params: Promise<{ id
 
         <section className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)]">
           {/* Left Column: Image Showcase */}
-          <div className="group relative rounded-[24px] p-[1.5px] bg-gradient-to-br from-[#00d0ff] via-[#6366f1] to-[#f43f5e] transition-shadow duration-500 hover:shadow-[0_0_40px_rgba(99,102,241,0.25)]">
+          <div className="group neon-frame rounded-[24px]">
             <div className="relative aspect-[16/10] min-h-[320px] overflow-hidden rounded-[22.5px] bg-[#0a0714] backdrop-blur-md">
               <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.1),transparent_60%)]" />
               

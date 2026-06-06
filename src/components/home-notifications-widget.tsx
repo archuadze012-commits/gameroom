@@ -33,7 +33,6 @@ export function HomeNotificationsWidget() {
     }
 
     load();
-    const pollId = setInterval(load, 15_000);
 
     const supabase = createSupabaseBrowserClient();
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -57,7 +56,6 @@ export function HomeNotificationsWidget() {
 
     return () => {
       cancelled = true;
-      clearInterval(pollId);
       if (channel) supabase.removeChannel(channel);
     };
   }, []);
@@ -73,8 +71,8 @@ export function HomeNotificationsWidget() {
     <div className="space-y-3">
       {items.map((n) => {
         const card = (
-          <div className="group relative overflow-hidden rounded-[16px] p-[1.5px] bg-gradient-to-br from-[#00d0ff] via-[#6366f1] to-[#f43f5e] transition-all duration-300 hover:shadow-[0_0_20px_rgba(99,102,241,0.4)]">
-            <div className="relative h-full w-full rounded-[14.5px] bg-[#0a0714] p-3 flex items-start gap-3">
+          <div className="group neon-frame rounded-[16px]">
+            <div className="relative h-full w-full overflow-hidden rounded-[13px] bg-[#0a0714] p-3 flex items-start gap-3">
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               
               <span className="relative z-10 mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_10px_rgba(34,211,238,0.2)]">

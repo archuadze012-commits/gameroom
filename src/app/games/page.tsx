@@ -4,11 +4,12 @@ import { mockGames, type MockGame } from "@/lib/mock-data";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { FavoriteGameButton } from "@/components/favorite-game-button";
+import { GameCoverImage } from "@/components/game-cover-image";
 import { GameCard } from "./game-card";
 import { NonFavoriteGamesGrid } from "./non-favorite-games-grid";
+import { CinematicBackground } from "@/components/ui/cinematic-background";
 
 export const metadata = { title: "თამაშები" };
-export const dynamic = "force-dynamic";
 
 type DbGame = {
   slug: string;
@@ -27,7 +28,7 @@ function dbToGame(g: DbGame): MockGame {
     nameKa: g.name_ka,
     nameEn: g.name_en,
     description: g.description ?? "",
-    accent: g.accent_color ?? "from-violet-500/30 to-violet-500/5",
+    accent: g.accent_color ?? "from-red-500/30 to-red-500/5",
     emoji: g.emoji ?? "🎮",
     iconUrl: g.icon_url ?? undefined,
     coverUrl: g.cover_url ?? undefined,
@@ -40,34 +41,30 @@ function dbToGame(g: DbGame): MockGame {
 
 function GameCardInner({ g }: { g: MockGame }) {
   return (
-    <div className="relative h-64 overflow-hidden rounded-[20px]">
+    <div className="relative h-64 w-full overflow-hidden">
       
       {/* cover image or fallback */}
-      {g.coverUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={g.coverUrl}
-          alt={g.nameKa}
-          className="absolute inset-0 h-full w-full object-cover opacity-60 mix-blend-luminosity transition-all duration-700 ease-out group-hover:scale-105 group-hover:opacity-100 group-hover:mix-blend-normal"
-        />
-      ) : (
-        <div className={`absolute inset-0 bg-gradient-to-br ${g.accent} opacity-20`} />
-      )}
+      <GameCoverImage
+        slug={g.slug}
+        name={g.nameKa}
+        coverUrl={g.coverUrl}
+        accent={g.accent}
+        className="absolute inset-0 h-full w-full object-cover opacity-60 mix-blend-luminosity transition-all duration-700 ease-out group-hover:scale-105 group-hover:opacity-100 group-hover:mix-blend-normal"
+      />
 
       {/* dark gradients for readability */}
       <div className="absolute inset-0 bg-gradient-to-t from-[rgba(15,12,30,0.95)] via-[rgba(15,12,30,0.4)] to-transparent pointer-events-none" />
       
       {/* ambient color overlay on hover */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 z-[5] bg-violet-500/0 duration-500 group-hover:bg-violet-500/10 mix-blend-overlay" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-[5] bg-red-500/0 duration-500 group-hover:bg-red-500/10 mix-blend-overlay" />
 
       {/* game name — bottom left */}
       <div className="absolute bottom-5 left-5 right-5 z-20 flex flex-col justify-end">
         <h3
-          className="font-display text-[22px] font-black uppercase tracking-wide text-white drop-shadow-md transition-colors duration-300 group-hover:text-violet-300 group-hover:drop-shadow-[0_0_15px_rgba(139,92,246,0.5)]"
+          className="font-display text-[22px] font-black uppercase tracking-wide text-white drop-shadow-md transition-colors duration-300 group-hover:text-red-300 group-hover:drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]"
         >
           {g.nameKa}
         </h3>
-        {g.emoji && <span className="text-xl mt-1 opacity-80">{g.emoji}</span>}
       </div>
 
       {/* favorite button — top right, always visible */}
@@ -110,17 +107,16 @@ export default async function GamesCatalogPage() {
   const otherGames = combined.filter((g) => !favSlugs.includes(g.slug));
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)] overflow-hidden">
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent overflow-hidden">
       
       {/* Cinematic Ambient Background */}
-      <div className="absolute inset-x-0 top-0 h-[600px] w-full select-none pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.1),transparent_50%)] mix-blend-screen" />
-        <div className="absolute top-0 inset-x-0 h-[200px] bg-gradient-to-b from-[rgba(15,12,30,0.8)] to-transparent" />
-        <div className="absolute bottom-0 inset-x-0 h-[300px] bg-gradient-to-t from-[var(--gr-bg-0)] to-transparent" />
+      <div className="absolute inset-0 w-full select-none pointer-events-none mix-blend-screen">
+        <CinematicBackground color="red" />
       </div>
 
       <div className="container relative z-10 mx-auto px-4 py-10 lg:py-14 space-y-12">
         <PageHeader
+          color="red"
           eyebrow="კატალოგი"
           title="თამაშები"
           description="ყველა მხარდაჭერილი თამაში — შეარჩიე და გაიცანი მისი კომუნიტი."
@@ -129,9 +125,12 @@ export default async function GamesCatalogPage() {
         {/* favourites section */}
         {favGames.length > 0 && (
           <div className="mt-8">
-            <p className="mb-5 text-[12px] font-black uppercase tracking-[0.2em] text-pink-400 drop-shadow-[0_0_10px_rgba(236,72,153,0.5)]">
-              ჩემი ფავორიტები
-            </p>
+            <div className="mb-6 flex items-center gap-4">
+              <span className="inline-flex items-center rounded-full border border-red-500/40 bg-red-500/10 px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.3)] backdrop-blur-md">
+                ჩემი ფავორიტები
+              </span>
+              <div className="h-px flex-1 bg-gradient-to-r from-red-500/40 via-red-500/10 to-transparent shadow-[0_0_10px_rgba(239,68,68,0.4)]" />
+            </div>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {favGames.map((g) => (
                 <GameCard key={g.slug}>
@@ -145,9 +144,12 @@ export default async function GamesCatalogPage() {
         )}
 
         <div className="mt-8">
-          <p className="mb-5 text-[12px] font-black uppercase tracking-[0.2em] text-violet-400 drop-shadow-[0_0_10px_rgba(139,92,246,0.5)]">
-            ყველა თამაში
-          </p>
+          <div className="mb-6 flex items-center gap-4">
+            <span className="inline-flex items-center rounded-full border border-red-500/40 bg-red-500/10 px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.3)] backdrop-blur-md">
+              ყველა თამაში
+            </span>
+            <div className="h-px flex-1 bg-gradient-to-r from-red-500/40 via-red-500/10 to-transparent shadow-[0_0_10px_rgba(239,68,68,0.4)]" />
+          </div>
           <NonFavoriteGamesGrid games={otherGames} />
         </div>
       </div>

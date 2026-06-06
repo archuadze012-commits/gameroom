@@ -5,6 +5,7 @@ import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { loadAndClearInvites, type GameInvite } from "@/components/invite-button";
+import { INVITE_TOAST_DURATION_MS, NAV_BADGE_POLL_INTERVAL_MS } from "@/lib/constants";
 import { playInviteSound } from "@/lib/sounds";
 
 type Announcement = {
@@ -52,7 +53,7 @@ export function NotificationBell() {
     checkInvites();
     checkAnnouncements();
     const id = setInterval(checkInvites, 2000);
-    const idAnn = setInterval(checkAnnouncements, 30_000);
+    const idAnn = setInterval(checkAnnouncements, NAV_BADGE_POLL_INTERVAL_MS);
     return () => {
       clearInterval(id);
       clearInterval(idAnn);
@@ -90,7 +91,7 @@ export function NotificationBell() {
       invites.forEach((invite, i) => {
         setTimeout(() => {
           toast(`${invite.fromDisplay}-ს ${invite.gameName}-ს თამაში წყურია. რას იზამ?`, {
-            duration: 15000,
+            duration: INVITE_TOAST_DURATION_MS,
             action: {
               label: "ვიყომარებ",
               onClick: () =>

@@ -99,11 +99,8 @@ export function AvatarUpload({ username, displayName, avatarUrl, isOwner }: Avat
           onCancel={() => setCropSrc(null)}
         />
       )}
-      <div className="relative inline-block">
-        <div
-          className="h-24 w-24 border-4 border-background rounded-full overflow-hidden bg-primary/15 flex items-center justify-center"
-          style={{ flexShrink: 0 }}
-        >
+      <div className="relative flex shrink-0">
+        <div className="h-24 w-24 rounded-full overflow-hidden bg-primary/15 flex items-center justify-center shrink-0">
           {src && src !== "/default-avatar.svg" ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img

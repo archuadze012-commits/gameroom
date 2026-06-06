@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requirePermission } from "@/lib/admin";
+import { requirePermission, logAdminAction } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const ALLOWED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
@@ -30,5 +30,6 @@ export async function POST(request: NextRequest) {
     data: { publicUrl },
   } = supabase.storage.from("site_uploads").getPublicUrl(path);
 
+  await logAdminAction({ actorId: auth.userId, action: "shop.asset_upload", targetType: "storage", targetId: path });
   return NextResponse.json({ url: publicUrl });
 }

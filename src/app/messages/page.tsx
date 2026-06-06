@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { MessageSquare, Inbox } from "lucide-react";
+import { MessageSquare, Inbox, ArrowRight, Sparkles } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { UserAvatar } from "@/components/user-avatar";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { DisplayHeading } from "@/components/ui/display-heading";
-import { Pill } from "@/components/ui/pill";
-import { EmptyState } from "@/components/ui/empty-state";
+import { ChevronButton } from "@/components/ui/chevron-button";
 
 export const metadata = { title: "მესიჯები" };
 
@@ -72,92 +72,112 @@ export default async function MessagesPage() {
   );
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[#05050f]">
-      <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.12),transparent_70%)]" />
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
+      {/* Dot grid background */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
 
-      <div className="container relative mx-auto max-w-3xl px-4 py-10 lg:py-14">
-        {/* Header - Premium Glass Wrapper */}
-        <header className="mb-10 group relative rounded-[24px] p-[1.5px] bg-gradient-to-br from-[#00d0ff] via-[#6366f1] to-[#f43f5e] transition-all duration-500 hover:shadow-[0_0_30px_rgba(99,102,241,0.3)]">
-          <div className="relative flex items-center gap-4 h-full w-full overflow-hidden rounded-[22.5px] bg-[#0a0714] p-5 sm:p-6 shadow-[inset_0_0_30px_rgba(139,92,246,0.05)]">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-violet-500/30 bg-violet-500/10 shadow-[0_0_15px_rgba(139,92,246,0.2)]">
-              <Inbox className="h-5 w-5 text-violet-400 drop-shadow-[0_0_5px_rgba(139,92,246,0.8)]" />
-            </span>
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.5)]">GAMEROOM DIRECT</p>
-              <DisplayHeading as="h1" size="lg" className="drop-shadow-md text-white">
-                მესენჯერი
-              </DisplayHeading>
-            </div>
-          </div>
-        </header>
+      <div className="container relative mx-auto max-w-3xl px-4 py-8 lg:py-10">
+        {/* Header */}
+        <div className="mb-8">
+          <Eyebrow tone="violet">GAMEROOM DIRECT</Eyebrow>
+          <DisplayHeading as="h1" size="display" className="mt-2 bg-[linear-gradient(180deg,#fff_0%,rgba(255,255,255,0.65)_100%)] bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(255,255,255,0.15)]">
+            მესენჯერი
+          </DisplayHeading>
+          <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-[var(--gr-text-mute)]">
+            დაიწყე საუბარი სხვა მოთამაშეებთან ან გააგრძელე არსებული მიმოწერები.
+          </p>
+        </div>
 
         {items.length === 0 ? (
-          <EmptyState
-            tone="violet"
-            illustration={<MessageSquare className="h-10 w-10 text-violet-400" />}
-            title="ჯერ მესიჯები არ გაქვს"
-            description="დაიწყე საუბარი ნებისმიერი იუზერის პროფილიდან."
-          />
+          /* Empty state — loadout card */
+          <div className="pubg-loadout-link group relative block transition-all duration-500" data-variant="room">
+            <div className="pubg-loadout-card relative overflow-hidden p-12 text-center">
+              <span aria-hidden className="pubg-loadout-field absolute inset-0" />
+              <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[5px]" />
+              <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-16 w-16 opacity-30" />
+              <span aria-hidden className="pubg-loadout-sweep absolute inset-y-0 left-0 w-1/3" />
+              
+              <div className="relative z-[1] flex flex-col items-center gap-4">
+                <MessageSquare className="h-10 w-10 text-[var(--gr-cyan-glow)] drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]" />
+                <div className="space-y-1">
+                  <h3 className="font-display text-[20px] font-black uppercase text-[var(--gr-text)] drop-shadow-md">
+                    ჯერ მესიჯები არ გაქვს
+                  </h3>
+                  <p className="text-[13px] text-[var(--gr-text-mute)]">
+                    დაიწყე საუბარი ნებისმიერი იუზერის პროფილიდან.
+                  </p>
+                </div>
+                <ChevronButton href="/search" variant="violet" size="sm" className="mt-2">
+                  მოთამაშეების ძებნა
+                </ChevronButton>
+              </div>
+            </div>
+          </div>
         ) : (
-          <div className="space-y-3">
-            {items.map((c) => {
+          <div className="space-y-3 pubg-card-stage">
+            {items.map((c, index) => {
               const name = c.other?.display_name ?? c.other?.username ?? "user";
               const isUnread = c.unread > 0;
-              
-              return (
-                <Link key={c.id} href={`/messages/${c.id}`} className="group block">
-                  <article
-                    className={`relative flex items-center gap-4 overflow-hidden rounded-[20px] p-4 transition-all duration-300 ${
-                      isUnread 
-                        ? "bg-[linear-gradient(135deg,rgba(139,92,246,0.1),rgba(236,72,153,0.05))] border border-pink-500/40 shadow-[0_0_20px_rgba(236,72,153,0.15)] group-hover:shadow-[0_0_30px_rgba(236,72,153,0.3)] group-hover:border-pink-500/60 group-hover:-translate-y-0.5" 
-                        : "bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 group-hover:-translate-y-0.5"
-                    }`}
-                  >
-                    {/* Hover Glow Effect */}
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer" />
 
-                    <div className="relative shrink-0">
-                      <UserAvatar
-                        username={c.other?.username ?? "user"}
-                        displayName={c.other?.display_name ?? undefined}
-                        avatarUrl={c.other?.avatar_url}
-                        size="md"
-                      />
-                      {isUnread && (
-                        <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-pink-500 ring-2 ring-[#05050f] shadow-[0_0_10px_rgba(236,72,153,0.8)]" />
-                      )}
-                    </div>
-                    
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="truncate font-display text-lg font-black uppercase text-white drop-shadow-sm group-hover:text-pink-400 transition-colors">
-                          {name}
-                        </span>
-                        {c.lastMessage?.created_at && (
-                          <span className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-white/40 group-hover:text-white/60 transition-colors">
-                            {new Date(c.lastMessage.created_at).toLocaleString("ka-GE", {
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
+              return (
+                <Link
+                  key={c.id}
+                  href={`/messages/${c.id}`}
+                  className="pubg-loadout-link group block"
+                  data-variant={isUnread ? "royale" : "strike"}
+                  style={{ "--pubg-card-index": index } as React.CSSProperties}
+                >
+                  <article className="pubg-loadout-card relative overflow-hidden">
+                    {/* Decorators */}
+                    <span aria-hidden className="pubg-loadout-field absolute inset-0" />
+                    <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[5px]" />
+                    <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-12 w-12 opacity-20" />
+                    <span aria-hidden className="pubg-loadout-sweep absolute inset-y-0 left-0 w-1/3" />
+
+                    <div className="relative z-[1] flex items-center gap-4 p-4">
+                      <div className="relative shrink-0">
+                        <UserAvatar
+                          username={c.other?.username ?? "user"}
+                          displayName={c.other?.display_name ?? undefined}
+                          avatarUrl={c.other?.avatar_url}
+                          size="md"
+                        />
+                        {isUnread && (
+                          <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-[var(--gr-magenta)] ring-2 ring-[var(--gr-bg-0)] shadow-[0_0_10px_rgba(236,72,153,0.8)]" />
                         )}
                       </div>
-                      
-                      <div className="mt-1 flex items-center gap-3">
-                        <p className={`truncate text-[14px] ${isUnread ? "font-medium text-pink-100/90" : "text-white/50"}`}>
-                          {c.lastMessage?.sender_id === user.id && (
-                            <span className="text-white/30 mr-1">შენ:</span>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.07] pb-2">
+                          <span className="truncate font-display text-[16px] font-black uppercase tracking-tight text-[var(--gr-text)] transition-colors group-hover:text-[var(--gr-cyan-glow)]">
+                            {name}
+                          </span>
+                          {c.lastMessage?.created_at && (
+                            <span className="pubg-loadout-code shrink-0 font-display text-[10px] font-black uppercase tracking-[0.18em] text-white/34">
+                              {new Date(c.lastMessage.created_at).toLocaleString("ka-GE", {
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
                           )}
-                          {c.lastMessage?.body ?? "ცარიელი მიმოწერა"}
-                        </p>
-                        
-                        {isUnread && (
-                          <Pill tone="accent" className="ml-auto shrink-0 bg-pink-500/20 text-pink-300 border-pink-500/30">
-                            {c.unread} ახალი
-                          </Pill>
-                        )}
+                        </div>
+
+                        <div className="mt-2 flex items-center gap-3">
+                          <p className={`truncate text-[13px] ${isUnread ? "font-semibold text-[var(--gr-text)]" : "text-[var(--gr-text-mute)]"}`}>
+                            {c.lastMessage?.sender_id === user.id && (
+                              <span className="text-[var(--gr-text-dim)] mr-1">შენ:</span>
+                            )}
+                            {c.lastMessage?.body ?? "ცარიელი მიმოწერა"}
+                          </p>
+
+                          {isUnread && (
+                            <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-sm bg-[var(--gr-magenta)]/20 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.16em] text-[var(--gr-magenta)]">
+                              <Sparkles className="h-3 w-3" /> {c.unread}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </article>

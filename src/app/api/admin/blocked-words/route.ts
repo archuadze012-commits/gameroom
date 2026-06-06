@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readJsonObject } from "@/lib/api/json";
-import { getIsAdmin } from "@/lib/auth";
+import { requirePermission, logAdminAction } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
+function permissionError(status: 401 | 403) {
+  return NextResponse.json(
+    { error: status === 401 ? "unauthorized" : "forbidden" },
+    { status },
+  );
+}
+
 export async function GET() {
-  const isAdmin = await getIsAdmin();
-  if (!isAdmin) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  const auth = await requirePermission("manage_chat");
+  if (!auth.ok) return permissionError(auth.status);
 
   const { data, error } = await createSupabaseAdminClient()
     .from("blocked_words")
@@ -16,8 +23,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const isAdmin = await getIsAdmin();
-  if (!isAdmin) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  const auth = await requirePermission("manage_chat");
+  if (!auth.ok) return permissionError(auth.status);
 
   const parsed = await readJsonObject<{ word?: string }>(request);
   if (!parsed.ok) return parsed.response;
@@ -37,12 +44,13 @@ export async function POST(request: NextRequest) {
     if (error.code === "23505") return NextResponse.json({ error: "duplicate" }, { status: 409 });
     return NextResponse.json({ error: "db_error" }, { status: 500 });
   }
+  await logAdminAction({ actorId: auth.userId, action: "chat.blocked_word.add", targetType: "blocked_word", targetId: data.id, metadata: { word } });
   return NextResponse.json(data);
 }
 
 export async function DELETE(request: NextRequest) {
-  const isAdmin = await getIsAdmin();
-  if (!isAdmin) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  const auth = await requirePermission("manage_chat");
+  if (!auth.ok) return permissionError(auth.status);
 
   const parsed = await readJsonObject<{ id?: string }>(request);
   if (!parsed.ok) return parsed.response;
@@ -52,5 +60,6 @@ export async function DELETE(request: NextRequest) {
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase.from("blocked_words").delete().eq("id", body.id);
   if (error) return NextResponse.json({ error: "db_error" }, { status: 500 });
+  await logAdminAction({ actorId: auth.userId, action: "chat.blocked_word.remove", targetType: "blocked_word", targetId: body.id });
   return NextResponse.json({ ok: true });
 }

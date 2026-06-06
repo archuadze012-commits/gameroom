@@ -11,7 +11,6 @@ import { ClanJoinButton } from "./clan-join-button";
 import { ClanRequestActions } from "./clan-request-actions";
 import { ClanKickButton } from "./clan-kick-button";
 
-export const dynamic = "force-dynamic";
 
 type ClanMemberProfile = {
   id: string;

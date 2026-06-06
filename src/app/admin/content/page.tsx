@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useAdminTable } from "@/lib/use-admin-table";
 
 type Row = {
   key: string;
@@ -71,17 +72,8 @@ function buildDraftState(
 }
 
 export default function AdminContentPage() {
-  const [rows, setRows] = useState<Row[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { rows, setRows, loading } = useAdminTable<Row>({ endpoint: "/api/admin/content" });
   const [savingKey, setSavingKey] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch("/api/admin/content")
-      .then((r) => r.json())
-      .then((data) => setRows(Array.isArray(data) ? (data as Row[]) : []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
 
   const byKey = useMemo(() => {
     const m = new Map<string, Row>();

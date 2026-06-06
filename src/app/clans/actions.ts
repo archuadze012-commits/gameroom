@@ -4,6 +4,9 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("clan-actions");
 
 const createClanSchema = z.object({
   name: z.string().min(3, "სახელი მინიმუმ 3 ასო").max(100),
@@ -73,7 +76,7 @@ export async function createClanAction(
     if (createErr?.code === "23505") {
       return { success: false, message: "სახელი ან ტეგი უკვე დაკავებულია" };
     }
-    console.error("[createClanAction]", createErr);
+    logger.error("failed to create clan", { userId: user.id, slug, error: createErr });
     return { success: false, message: "კლანის შექმნა ვერ მოხერხდა" };
   }
 
@@ -85,7 +88,7 @@ export async function createClanAction(
   });
 
   if (memberErr) {
-    console.error("[createClanAction] member insert failed:", memberErr);
+    logger.error("failed to insert clan leader membership", { userId: user.id, clanId: clan.id, error: memberErr });
     // Rollback clan creation since member insert failed
     await supabase.from("clans").delete().eq("id", clan.id);
     return { success: false, message: "კლანის შექმნა ვერ მოხერხდა (უფლებების შეცდომა)" };
@@ -123,7 +126,7 @@ export async function requestJoinClanAction(
 
   if (error) {
     if (error.code === "23505") return { success: false, message: "მოთხოვნა უკვე გაგზავნილია" };
-    console.error("[requestJoinClanAction]", error);
+    logger.error("failed to create clan join request", { userId: user.id, clanId, error });
     return { success: false, message: "მოთხოვნის გაგზავნა ვერ მოხერხდა" };
   }
 

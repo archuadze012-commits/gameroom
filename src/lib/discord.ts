@@ -1,19 +1,21 @@
 import { Client, GatewayIntentBits } from "discord.js";
+import { getFirstServerEnv } from "@/lib/env";
+import { createLogger } from "@/lib/logger";
 
 let client: Client | null = null;
+const logger = createLogger("discord");
 
 export function getDiscordClient() {
   if (client) return client;
 
-  const token = (process.env.DISCORD_BOT_TOKEN || process.env.DISCORD__BOT_TOKEN || "").replace(/^﻿/, "").trim();
-  console.log("[Discord] Token present:", !!token, "Length:", token.length);
+  const token = getFirstServerEnv(["DISCORD_BOT_TOKEN", "DISCORD__BOT_TOKEN"]);
 
   if (!token) {
-    console.error("[Discord] Missing BOT_TOKEN");
+    logger.error("missing Discord bot token");
     return null;
   }
 
-  console.log("[Discord] Initializing client...");
+  logger.info("initializing Discord client");
   client = new Client({
     intents: [
       GatewayIntentBits.Guilds,
@@ -21,11 +23,10 @@ export function getDiscordClient() {
     ],
   });
 
-  console.log("[Discord] Logging in...");
-  client.login(token)
-    .then(() => console.log("[Discord] Login successful"))
+  client.login(token.value)
+    .then(() => logger.info("Discord login successful"))
     .catch((err) => {
-      console.error("[Discord] Login failed:", err);
+      logger.error("Discord login failed", { error: err });
       client = null;
     });
 

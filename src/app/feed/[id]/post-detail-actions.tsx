@@ -39,7 +39,7 @@ export function PostDetailActions({
   }
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex flex-wrap items-center justify-between gap-y-3 gap-x-2">
       <button
         onClick={toggle}
         className={`flex items-center gap-1.5 text-sm transition-colors ${liked ? "text-red-400" : "text-muted-foreground hover:text-red-400"}`}

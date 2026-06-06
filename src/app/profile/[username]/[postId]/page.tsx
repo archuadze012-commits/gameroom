@@ -4,7 +4,6 @@ import { ArrowLeft } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { VerifiedBadge } from "@/components/verified-badge";
 import { PostContent } from "@/components/post-content";
@@ -69,7 +68,7 @@ export default async function PostDetailPage({
       .single(),
     supabase
       .from("post_comments")
-      .select("id, body, created_at, profiles!post_comments_author_id_fkey(username, display_name, avatar_url, is_verified)")
+      .select("id, body, created_at, profiles!post_comments_author_id_profiles_id_fk(username, display_name, avatar_url, is_verified)")
       .eq("post_id", postId)
       .is("deleted_at", null)
       .order("created_at", { ascending: true }),
@@ -113,10 +112,8 @@ export default async function PostDetailPage({
     displayName: profile?.display_name ?? "",
     avatarUrl: profile?.avatar_url ?? "",
   };
-  const cardClip = "polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%)";
-
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
       <div className="container relative mx-auto max-w-2xl px-4 py-10 lg:py-14 space-y-4">
         <Link
@@ -128,15 +125,15 @@ export default async function PostDetailPage({
         </Link>
 
         {/* post card */}
-        <Card
-          className="group/post relative overflow-hidden border-0 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--gr-bg-1)_96%,black),color-mix(in_srgb,var(--gr-bg-2)_88%,black))] py-0 ring-1 ring-[var(--gr-border)]"
-          style={{ clipPath: cardClip }}
-        >
-          <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--gr-cyan-glow),var(--gr-magenta),transparent)] opacity-75" />
-          <CardContent className="space-y-4 p-5">
+        <div className="pubg-loadout-link block" data-variant="strike">
+          <div className="pubg-loadout-card relative overflow-hidden p-5 sm:p-6">
+            <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+            <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[3px] z-[5]" />
+            <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-12 w-12 opacity-25 z-[5]" />
+            <div className="relative z-[1] space-y-4">
             <div className="flex items-center gap-3">
               <Link href={`/profile/${author.username}`}>
-                <Avatar className="h-10 w-10">
+                <Avatar className="h-10 w-10 border border-white/10 shadow-[0_0_18px_rgba(0,230,255,0.12)]">
                   <AvatarImage src={author.avatar_url ?? ""} alt={author.display_name} />
                   <AvatarFallback className="bg-[linear-gradient(135deg,var(--gr-magenta),var(--gr-cyan-glow))] text-sm text-white">
                     {author.display_name.slice(0, 1).toUpperCase()}
@@ -146,16 +143,16 @@ export default async function PostDetailPage({
               <div>
                 <Link
                   href={`/profile/${author.username}`}
-                  className="flex items-center gap-1 text-sm font-semibold text-[var(--gr-text)] transition-colors hover:text-[var(--gr-cyan-glow)]"
+                  className="flex items-center gap-1 font-display text-[15px] font-black uppercase tracking-[0.04em] text-[#D0F8FF] drop-shadow-[0_0_8px_rgba(0,230,255,0.45)] transition-colors hover:text-white"
                 >
                   {author.display_name || author.username}
                   {author.is_verified && <VerifiedBadge className="h-3.5 w-3.5" />}
                 </Link>
-                <p className="text-xs uppercase tracking-[0.12em] text-[var(--gr-text-dim)]">{timeAgoStr}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#D0F8FF]/72">{timeAgoStr}</p>
               </div>
             </div>
 
-            <Separator className="bg-[var(--gr-border)]" />
+            <Separator className="bg-white/10" />
 
             <PostContent
               content={post.content}
@@ -164,7 +161,7 @@ export default async function PostDetailPage({
               authorVerified={author.is_verified}
             />
 
-            <Separator className="bg-[var(--gr-border)]" />
+            <Separator className="bg-white/10" />
 
             {/* reactions */}
             <PostReactions
@@ -173,7 +170,7 @@ export default async function PostDetailPage({
               initialMine={myReactions}
             />
 
-            <Separator className="bg-[var(--gr-border)]" />
+            <Separator className="bg-white/10" />
 
             {/* like + report */}
             <PostDetailActions
@@ -185,23 +182,24 @@ export default async function PostDetailPage({
               editHref={post.author_id === user.id ? `/profile/${author.username}/${post.id}/edit` : undefined}
               deleteRedirectTo={`/profile/${author.username}`}
             />
-          </CardContent>
-        </Card>
+            </div>
+          </div>
+        </div>
 
         {/* comments card */}
-        <Card
-          className="relative overflow-hidden border-0 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--gr-bg-1)_96%,black),color-mix(in_srgb,var(--gr-magenta)_7%,var(--gr-bg-0)))] py-0 ring-1 ring-[color-mix(in_srgb,var(--gr-magenta)_30%,var(--gr-border))]"
-          style={{ clipPath: cardClip }}
-        >
-          <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-[linear-gradient(90deg,var(--gr-magenta),var(--gr-cyan-glow),transparent)] opacity-75" />
-          <CardContent className="p-5">
+        <div className="pubg-loadout-link block" data-variant="room">
+          <div className="pubg-loadout-card relative overflow-hidden p-5 sm:p-6">
+            <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+            <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[3px] z-[5]" />
+            <div className="relative z-[1]">
             <PostComments
               postId={post.id}
               initialComments={(commentRows ?? []) as unknown as Parameters<typeof PostComments>[0]["initialComments"]}
               currentUser={currentUser}
             />
-          </CardContent>
-        </Card>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

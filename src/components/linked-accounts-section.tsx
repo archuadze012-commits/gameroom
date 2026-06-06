@@ -9,7 +9,7 @@ import { Loader2, Unlink, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 type LinkedAccount = {
-  provider: "steam" | "riot";
+  provider: "steam" | "riot" | "tiktok";
   external_id: string;
   data: {
     personaName?: string;
@@ -21,6 +21,8 @@ type LinkedAccount = {
     tierName?: string;
     tierEmoji?: string;
     valShard?: string;
+    displayName?: string;
+    username?: string;
   } | null;
   verified: boolean;
   linked_at: string;
@@ -53,19 +55,30 @@ export function LinkedAccountsSection() {
         setLoading(false);
       }
     })();
-    // refresh once when redirected back from steam
+    // refresh once when redirected back from steam or tiktok
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       if (params.get("steam") === "ok") {
         toast.success("Steam ანგარიში დაკავშირდა ✅");
       } else if (params.get("steam") === "invalid") {
         toast.error("Steam-ის ვერიფიკაცია ვერ მოხერხდა");
+      } else if (params.get("tiktok") === "ok") {
+        toast.success("TikTok ანგარიში დაკავშირდა ✅");
+      } else if (params.get("tiktok") === "error") {
+        const reason = params.get("reason");
+        if (reason === "csrf") toast.error("უსაფრთხოების (CSRF) შეცდომა. თავიდან სცადე");
+        else if (reason === "config") toast.error("TikTok პარამეტრები არ არის გამართული");
+        else toast.error("TikTok-ის ვერიფიკაცია ვერ მოხერხდა");
       }
     }
   }, []);
 
   const startSteam = () => {
     window.location.href = "/api/auth/steam/start";
+  };
+
+  const startTikTok = () => {
+    window.location.href = "/api/auth/tiktok/start";
   };
 
   const linkRiot = async () => {
@@ -104,6 +117,7 @@ export function LinkedAccountsSection() {
 
   const steam = accounts.find((a) => a.provider === "steam");
   const riot = accounts.find((a) => a.provider === "riot");
+  const tiktok = accounts.find((a) => a.provider === "tiktok");
 
   if (loading) {
     return (
@@ -216,6 +230,41 @@ export function LinkedAccountsSection() {
             </p>
           )}
         </div>
+
+        {/* TikTok */}
+        <div className="rounded-md border border-border/60 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-md bg-pink-500/20 text-pink-400">
+                <TikTokIcon />
+              </div>
+              <div>
+                <p className="text-sm font-medium">TikTok</p>
+                {tiktok ? (
+                  <p className="text-xs text-muted-foreground">
+                    {tiktok.data?.displayName ?? tiktok.data?.username ?? tiktok.external_id}{" "}
+                    {tiktok.data?.username && (
+                      <span className="text-[10px] text-muted-foreground opacity-70">
+                        (@{tiktok.data.username})
+                      </span>
+                    )}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">დააკავშირე — აჩვენე შენი გეიმინგ ვიდეოები</p>
+                )}
+              </div>
+            </div>
+            {tiktok ? (
+              <Button size="sm" variant="outline" onClick={() => unlink("tiktok")}>
+                <Unlink className="mr-1 h-3.5 w-3.5" /> გათიშვა
+              </Button>
+            ) : (
+              <Button size="sm" onClick={startTikTok}>
+                Connect
+              </Button>
+            )}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
@@ -233,6 +282,14 @@ function RiotIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current">
       <path d="M22.155 3.272v17.456l-7.272-2.91v2.91h-1.819v-3.636l-1.818-.728v4.364h-1.819v-5.092l-1.818-.728V20.728H5.79v-7.273l-1.818-.728v8.001H2.155V3.272l2.728 6.546h.91l-.91-5.455h1.818l1.819 6.728h.91L8.518 4.364h1.819l1.818 7.273h.91L12.155 4.364h1.819l1.818 8h.91l-.91-8h1.819l1.818 8.728h.91l-.91-8.728h1.726Z" />
+    </svg>
+  );
+}
+
+function TikTokIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current">
+      <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.02 1.59 4.23.95 1.2 2.27 2.05 3.75 2.45v3.9c-1.36-.04-2.68-.48-3.82-1.28-.86-.6-1.57-1.39-2.1-2.31v7.6c.03 1.21-.24 2.41-.78 3.51-.55 1.1-1.35 2.04-2.34 2.76-1.02.73-2.22 1.19-3.48 1.35-1.25.15-2.53-.02-3.71-.5-1.18-.48-2.22-1.29-3.03-2.33-.8-1.04-1.32-2.28-1.5-3.59-.18-1.31.02-2.64.57-3.85.55-1.2 1.44-2.22 2.56-2.95.83-.54 1.76-.9 2.73-1.07V12c-.52.06-1.03.24-1.48.53-.51.32-.92.77-1.18 1.3-.26.54-.36 1.14-.29 1.74.07.6.31 1.17.69 1.63.38.46.88.8 1.44 1 .57.19 1.18.22 1.76.08.58-.13 1.11-.44 1.52-.88.42-.44.69-1 .78-1.6.09-.59.03-1.89.03-1.89v-13.8h.01Z" />
     </svg>
   );
 }

@@ -44,7 +44,7 @@ export function LfgComments({
       const { data } = await supabase
         .from("lfg_comments")
         .select(
-          "id, body, created_at, user_id, profiles!lfg_comments_user_id_fkey(username, display_name, avatar_url)"
+          "id, body, created_at, user_id, profiles!lfg_comments_user_id_profiles_id_fk(username, display_name, avatar_url)"
         )
         .eq("post_id", postId)
         .is("deleted_at", null)
@@ -81,11 +81,14 @@ export function LfgComments({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ body }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null) as { error?: string } | null;
+        throw new Error(payload?.error || "შეცდომა — სცადე თავიდან.");
+      }
       setBody("");
       fetchedRef.current = false;
-    } catch {
-      toast.error("შეცდომა — სცადე თავიდან.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "შეცდომა — სცადე თავიდან.");
     } finally {
       setSubmitting(false);
     }

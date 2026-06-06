@@ -33,7 +33,15 @@ export function UserAvatar({ username, displayName, avatarUrl, size = "md", clas
     }
     read();
     window.addEventListener("storage", read);
-    return () => window.removeEventListener("storage", read);
+    window.addEventListener("gameroom_avatars_updated", read);
+    const bc = new BroadcastChannel("gameroom_avatars");
+    bc.onmessage = read;
+    
+    return () => {
+      window.removeEventListener("storage", read);
+      window.removeEventListener("gameroom_avatars_updated", read);
+      bc.close();
+    };
   }, [username, avatarUrl]);
 
   const px = size === "sm" ? 32 : size === "lg" ? 56 : 40;

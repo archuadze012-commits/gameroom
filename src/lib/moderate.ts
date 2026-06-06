@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { getServerEnv } from "@/lib/env";
 
 let cachedWords: string[] = [];
 let cacheExpiry = 0;
@@ -24,7 +25,8 @@ export async function moderateText(
   content: string,
 ): Promise<{ ok: boolean; reason?: string }> {
   if (!content.trim()) return { ok: true };
-  if (!process.env.GROQ_API_KEY) return { ok: true };
+  const groqKey = getServerEnv("GROQ_API_KEY");
+  if (!groqKey) return { ok: true };
 
   const blocklist = await getBlocklist();
   if (blocklist.some((w) => content.toLowerCase().includes(w.toLowerCase()))) {
@@ -36,7 +38,7 @@ export async function moderateText(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        Authorization: `Bearer ${groqKey}`,
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",

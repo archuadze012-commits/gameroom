@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Pencil, Check, X, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,10 +20,19 @@ function readStoredUrl(gameId: string) {
 }
 
 export function AdminUrlEditor({ gameId }: { gameId: string }) {
-  const [currentUrl, setCurrentUrl] = useState(() => readStoredUrl(gameId));
+  const [currentUrl, setCurrentUrl] = useState("");
   const [editing, setEditing] = useState(false);
   const [input, setInput] = useState("");
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    function read() {
+      setCurrentUrl(readStoredUrl(gameId));
+    }
+    read();
+    window.addEventListener("storage", read);
+    return () => window.removeEventListener("storage", read);
+  }, [gameId]);
 
   function save() {
     const trimmed = input.trim();

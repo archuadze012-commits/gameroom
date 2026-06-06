@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDiscordClient } from "@/lib/discord";
 import { ChannelType, type VoiceChannel, type GuildMember } from "discord.js";
 import { getSession } from "@/lib/auth";
+import { requireAnyServerEnv } from "@/lib/env";
+import { createLogger } from "@/lib/logger";
 
-export const dynamic = "force-dynamic";
+const logger = createLogger("api:discord-voice");
 
 function matchesGame(channelName: string, categoryName: string | null, gameSlug: string): boolean {
   const name = channelName.toLowerCase();
@@ -61,25 +63,25 @@ export async function GET(request: NextRequest) {
   if (!client) return NextResponse.json({ error: "Discord not configured" }, { status: 500 });
 
   const game = request.nextUrl.searchParams.get("game");
-  const guildId = (process.env.DISCORD_GUILD_ID || process.env.DISCORD__GUILD_ID || "").replace(/^﻿/, "").trim();
-  if (!guildId) return NextResponse.json({ error: "Missing GUILD_ID" }, { status: 500 });
+  const guildEnv = requireAnyServerEnv(["DISCORD_GUILD_ID", "DISCORD__GUILD_ID"], "api:discord-voice");
+  if (!guildEnv.ok) return NextResponse.json({ error: "Missing GUILD_ID" }, { status: 500 });
 
   try {
-    console.log("[Discord API] Checking client readiness...");
+    logger.debug("checking Discord client readiness");
     // Wait for client to be ready with a 5s timeout
     if (!client.isReady()) {
-      console.log("[Discord API] Client not ready, waiting...");
+      logger.info("Discord client not ready, waiting");
       await Promise.race([
         new Promise((resolve) => client!.once("ready", () => {
-          console.log("[Discord API] Client became ready");
+          logger.info("Discord client became ready");
           resolve(true);
         })),
         new Promise((_, reject) => setTimeout(() => reject(new Error("Discord client timeout")), 8000))
       ]);
     }
 
-    console.log("[Discord API] Fetching guild:", guildId);
-    const guild = await client.guilds.fetch(guildId);
+    logger.debug("fetching Discord guild", { guildEnv: guildEnv.name });
+    const guild = await client.guilds.fetch(guildEnv.value);
     if (!guild) return NextResponse.json({ error: "Guild not found" }, { status: 404 });
 
     const channels = await guild.channels.fetch();
@@ -121,7 +123,7 @@ export async function GET(request: NextRequest) {
       channels: filteredChannels,
     });
   } catch (err) {
-    console.error("[Discord API] Error:", err);
+    logger.error("Discord voice route failed", { error: err });
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }

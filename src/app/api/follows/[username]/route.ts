@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { awardXp } from "@/lib/gamification";
+import { awardBonusXp } from "@/lib/gamification";
 
 type ResolveResult =
   | { ok: true; followerId: string; followingId: string }
@@ -57,7 +57,7 @@ export async function POST(
       });
 
       // Award XP to the followed user
-      await awardXp(ids.followingId, 5);
+      await awardBonusXp(ids.followingId, 5, "follow:received");
     }
   } catch {}
 

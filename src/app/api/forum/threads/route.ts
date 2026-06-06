@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
-import { awardXp } from "@/lib/gamification";
+import { awardBonusXp } from "@/lib/gamification";
 import { rateLimit } from "@/lib/rate-limit";
+import { createLogger } from "@/lib/logger";
+import { FORUM_THREAD_BODY_MAX_LENGTH, FORUM_THREAD_TITLE_MAX_LENGTH } from "@/lib/constants";
+
+const logger = createLogger("api:forum-threads");
 
 function slugify(s: string) {
   return s
@@ -31,8 +35,10 @@ export async function POST(request: NextRequest) {
   const postBody = (body.body ?? "").trim();
 
   if (!categorySlug) return NextResponse.json({ error: "category_slug_required" }, { status: 400 });
-  if (!title || title.length > 200) return NextResponse.json({ error: "title_invalid" }, { status: 400 });
-  if (!postBody || postBody.length > 10000) return NextResponse.json({ error: "body_invalid" }, { status: 400 });
+  if (!title || title.length > FORUM_THREAD_TITLE_MAX_LENGTH)
+    return NextResponse.json({ error: "title_invalid" }, { status: 400 });
+  if (!postBody || postBody.length > FORUM_THREAD_BODY_MAX_LENGTH)
+    return NextResponse.json({ error: "body_invalid" }, { status: 400 });
 
   const supabase = await createSupabaseServerClient();
 
@@ -41,9 +47,13 @@ export async function POST(request: NextRequest) {
     .from("forum_categories")
     .select("id, slug")
     .eq("slug", categorySlug)
-    .single();
+    .maybeSingle();
 
-  if (catErr || !cat) {
+  if (catErr) {
+    logger.error("failed to load forum category", { categorySlug, error: catErr });
+    return NextResponse.json({ error: "failed_to_load_category" }, { status: 500 });
+  }
+  if (!cat) {
     return NextResponse.json({ error: "category_not_found" }, { status: 404 });
   }
 
@@ -78,7 +88,7 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (threadErr || !thread) {
-    console.error("[POST /api/forum/threads] thread insert error", threadErr);
+    logger.error("failed to insert forum thread", { userId: user.id, categoryId: cat.id, error: threadErr });
     return NextResponse.json({ error: "failed_to_create_thread" }, { status: 500 });
   }
 
@@ -92,16 +102,20 @@ export async function POST(request: NextRequest) {
     });
 
   if (postErr) {
-    console.error("[POST /api/forum/threads] post insert error", postErr);
+    logger.error("failed to insert initial forum post", { userId: user.id, threadId: thread.id, error: postErr });
     // Delete thread to avoid orphaned threads
-    await supabase.from("forum_threads").delete().eq("id", thread.id);
+    const { error: rollbackError } = await supabase.from("forum_threads").delete().eq("id", thread.id);
+    if (rollbackError) {
+      logger.error("failed to rollback thread after initial post insert failure", {
+        threadId: thread.id,
+        error: rollbackError,
+      });
+    }
     return NextResponse.json({ error: "failed_to_create_initial_post" }, { status: 500 });
   }
 
   // Award XP for creating thread
-  try {
-    await awardXp(user.id, 10);
-  } catch {}
+  await awardBonusXp(user.id, 10, "forum:create-thread");
 
   return NextResponse.json({
     ok: true,

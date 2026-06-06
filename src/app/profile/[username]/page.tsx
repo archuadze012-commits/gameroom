@@ -205,7 +205,7 @@ export default async function ProfilePage({
   } as const;
 
   return (
-    <div className={`relative min-h-[calc(100vh-4rem)] ${equippedTheme ? `bg-gradient-to-br ${equippedTheme.metadata.bg as string}` : "bg-[#05050f]"}`}>
+    <div className={`relative min-h-[calc(100vh-4rem)] ${equippedTheme ? `bg-gradient-to-br ${equippedTheme.metadata.bg as string}` : "bg-transparent"}`}>
       {/* Ambient background glow if no theme */}
       {!equippedTheme && (
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.1),transparent_70%)]" />
@@ -236,12 +236,19 @@ export default async function ProfilePage({
       <div className="relative z-20 mx-auto max-w-7xl space-y-6 px-4 pb-12 pt-0 sm:px-6 lg:px-8">
         
         {/* Header — 2-col grid: left summary | right stats */}
-        <div className="-mt-20 flex flex-col items-center gap-6 md:flex-row md:items-end md:justify-between md:gap-8 rounded-[24px] border border-white/5 bg-white/5 p-6 backdrop-blur-md shadow-2xl">
-          
-          {/* Left — avatar + name + badge + social icons */}
+        <div className="pubg-loadout-link group relative -mt-20 block w-full transition-all duration-500" data-variant="royale">
+          <div className="pubg-loadout-card relative overflow-hidden p-6 sm:p-8 shadow-2xl">
+            <span aria-hidden className="pubg-loadout-field absolute inset-0" />
+            <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[5px]" />
+            <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-32 w-32 opacity-50" />
+            <span aria-hidden className="pubg-loadout-sweep absolute inset-y-0 left-0 w-1/2" />
+            
+            <div className="relative z-[1] flex w-full flex-col items-center gap-6 md:flex-row md:items-end md:justify-between md:gap-8">
+            
+            {/* Left — avatar + name + badge + social icons */}
           <div className="flex flex-col items-center gap-4 md:flex-row md:items-end md:gap-6">
             <div
-              className="relative -mt-12 shrink-0 rounded-full bg-[#05050f] p-1.5"
+              className="relative -mt-12 shrink-0 rounded-full bg-[#05050f] p-1.5 flex items-center justify-center"
               style={equippedFrame ? {
                 boxShadow: `0 0 30px ${equippedFrame.metadata.color as string}50, 0 0 60px ${equippedFrame.metadata.color as string}25`,
                 background: `linear-gradient(135deg, ${equippedFrame.metadata.color as string}, transparent)`,
@@ -250,7 +257,7 @@ export default async function ProfilePage({
                 background: "linear-gradient(135deg, rgba(139,92,246,0.5), rgba(236,72,153,0.5))",
               }}
             >
-              <div className="overflow-hidden rounded-full border-[3px] border-[#0a0714]">
+              <div className="flex rounded-full border-[4px] border-[#05050f]">
                 <AvatarUpload
                   username={username}
                   displayName={displayName}
@@ -336,6 +343,8 @@ export default async function ProfilePage({
             )}
           </div>
         </div>
+        </div>
+        </div>
 
         <Separator className="my-8 bg-white/5" />
 
@@ -346,10 +355,18 @@ export default async function ProfilePage({
 
         {/* Linked accounts (Riot only) */}
         {linkedAccounts.filter((a) => a.provider !== "steam").length > 0 && (
-          <div className="rounded-[20px] bg-white/5 p-4 border border-white/5">
-            <ProfileLinkedAccounts
-              accounts={linkedAccounts.filter((a) => a.provider !== "steam")}
-            />
+          <div className="pubg-loadout-link group relative mt-6 block transition-all duration-500" data-variant="support">
+            <div className="pubg-loadout-card relative overflow-hidden p-5">
+              <span aria-hidden className="pubg-loadout-field absolute inset-0" />
+              <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[5px]" />
+              <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-16 w-16 opacity-30" />
+              
+              <div className="relative z-[1]">
+                <ProfileLinkedAccounts
+                  accounts={linkedAccounts.filter((a) => a.provider !== "steam")}
+                />
+              </div>
+            </div>
           </div>
         )}
 
@@ -372,23 +389,43 @@ export default async function ProfilePage({
             ) : (
               <div className="grid gap-3 md:grid-cols-2">
                 {userPosts.map((p) => (
-                  <div
-                    key={p.id}
-                    className="flex flex-col rounded-[16px] border border-white/5 bg-white/5 p-4 transition-all hover:-translate-y-1 hover:border-cyan-500/30 hover:bg-white/10 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)]"
-                  >
-                    <p className="font-display text-[16px] font-black uppercase leading-tight text-white">{p.title}</p>
-                    <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.16em] text-cyan-400">{p.gameSlug}</p>
+                  <div key={p.id} className="pubg-loadout-link group relative block transition-all duration-500" data-variant="strike">
+                    <div className="pubg-loadout-card relative flex flex-col h-full overflow-hidden p-5">
+                      <span aria-hidden className="pubg-loadout-field absolute inset-0" />
+                      <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[5px]" />
+                      <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-12 w-12 opacity-30" />
+                      <span aria-hidden className="pubg-loadout-sweep absolute inset-y-0 left-0 w-1/3" />
+                      
+                      <div className="relative z-[1] flex flex-col justify-between h-full gap-3">
+                        <div className="border-b border-white/[0.07] pb-3 mb-1">
+                          <p className="pubg-loadout-kicker text-[10px] font-black uppercase leading-none tracking-[0.24em] text-white/58">
+                            {p.gameSlug}
+                          </p>
+                          <span aria-hidden className="pubg-loadout-marker mt-2 block h-px w-12" />
+                        </div>
+                        <p className="pubg-loadout-title font-display text-[16px] font-black uppercase leading-[1.1] text-white">{p.title}</p>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
             )
           }
           friends={
-            <div className="rounded-[24px] border border-white/5 bg-white/5 p-6">
-              <ProfileFriendsTab
-                username={username}
-                currentUserId={currentUserId}
-              />
+            <div className="pubg-loadout-link group relative block transition-all duration-500" data-variant="room">
+              <div className="pubg-loadout-card relative overflow-hidden p-6 sm:p-8">
+                <span aria-hidden className="pubg-loadout-field absolute inset-0" />
+                <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[5px]" />
+                <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-32 w-32 opacity-20" />
+                <span aria-hidden className="pubg-loadout-sweep absolute inset-y-0 left-0 w-1/3" />
+                
+                <div className="relative z-[1]">
+                  <ProfileFriendsTab
+                    username={username}
+                    currentUserId={currentUserId}
+                  />
+                </div>
+              </div>
             </div>
           }
         />

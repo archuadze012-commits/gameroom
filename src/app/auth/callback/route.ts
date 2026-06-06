@@ -4,6 +4,9 @@ import { cookies } from "next/headers";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getCanonicalOrigin, getRequestOriginFromHeaders, getSiteOrigin } from "@/lib/url";
 import { signupRateLimit } from "@/lib/rate-limit";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("auth/callback");
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin: requestOrigin } = new URL(request.url);
@@ -74,9 +77,7 @@ export async function GET(request: NextRequest) {
             "unknown";
           const allowed = signupRateLimit(clientIp);
           if (!allowed) {
-            console.warn(
-              `[auth/callback] signup rate-limited for IP ${clientIp}`
-            );
+            logger.warn("signup rate-limited", { ip: clientIp });
             return redirectWithCleanup(
               `${origin}/auth/login?error=${encodeURIComponent(
                 "დღეში მაქსიმუმ 2 ახალი ანგარიშის რეგისტრაცია შესაძლებელია ერთი IP მისამართიდან. სცადე ხვალ."
@@ -97,20 +98,31 @@ export async function GET(request: NextRequest) {
           });
         } else {
           hasProfile = true;
-          await admin.from("profiles").update({
-            avatar_url: (user.user_metadata?.avatar_url as string | undefined) ?? null,
+          const nextAvatarUrl = user.user_metadata?.avatar_url as string | undefined;
+          const profileUpdate: {
+            email: string | null;
+            updated_at: string;
+            avatar_url?: string;
+          } = {
             email: user.email ?? null,
             updated_at: new Date().toISOString(),
-          }).eq("id", user.id);
+          };
+
+          // Preserve an existing uploaded avatar when the auth provider does not return one.
+          if (typeof nextAvatarUrl === "string" && nextAvatarUrl.trim()) {
+            profileUpdate.avatar_url = nextAvatarUrl;
+          }
+
+          await admin.from("profiles").update(profileUpdate).eq("id", user.id);
         }
       } catch (e) {
-        console.error("[auth/callback] profile upsert:", e);
+        logger.error("profile upsert failed", { userId: user.id, error: e });
       }
 
       return redirectWithCleanup(hasProfile ? redirectTo : `${origin}/settings`);
     }
 
-    console.error("[auth/callback] exchangeCodeForSession error:", error);
+    logger.error("exchangeCodeForSession failed", { error });
     return redirectWithCleanup(
       `${origin}/auth/login?error=${encodeURIComponent(error.message)}`
     );

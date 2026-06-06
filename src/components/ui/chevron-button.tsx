@@ -22,6 +22,8 @@ type CommonProps = {
   uppercase?: boolean;
   /** Override notch size in px. */
   notch?: number;
+  /** Design-language treatment: rotating neon ring on a dark fill, no notch. */
+  neon?: boolean;
 };
 
 const sizeClasses = {
@@ -30,31 +32,36 @@ const sizeClasses = {
   lg: "h-12 px-6 text-[14px] tracking-[0.14em]",
 } as const;
 
-function inner(content: React.ReactNode, notch: number) {
+function inner(content: React.ReactNode, notch: number, neon: boolean) {
   return (
     <>
       <span className="relative z-10 inline-flex items-center gap-2">
         {content}
         <ChevronRight className="h-4 w-4" />
       </span>
-      {/* hover sheen */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full motion-reduce:hidden"
-        style={{ clipPath: `polygon(0 0, calc(100% - ${notch}px) 0, 100% ${notch}px, 100% 100%, 0 100%)` }}
-      />
+      {/* hover sheen — skipped in neon mode (the rotating ring is the effect) */}
+      {!neon && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full motion-reduce:hidden"
+          style={{ clipPath: `polygon(0 0, calc(100% - ${notch}px) 0, 100% ${notch}px, 100% 100%, 0 100%)` }}
+        />
+      )}
     </>
   );
 }
 
-function baseClasses(variant: Variant, size: keyof typeof sizeClasses, uppercase: boolean, className?: string) {
+const neonClasses =
+  "neon-btn rounded-full text-white bg-[rgba(10,8,20,0.55)] backdrop-blur-md hover:bg-[rgba(20,15,35,0.65)] hover:-translate-y-0.5";
+
+function baseClasses(variant: Variant, size: keyof typeof sizeClasses, uppercase: boolean, neon: boolean, className?: string) {
   return cn(
     "group relative inline-flex items-center justify-center font-semibold whitespace-nowrap",
     "transition-all duration-200 active:scale-[0.98]",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gr-violet-hi)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--gr-bg-0)]",
     uppercase && "uppercase",
     sizeClasses[size],
-    variantClasses[variant],
+    neon ? neonClasses : variantClasses[variant],
     className
   );
 }
@@ -70,8 +77,9 @@ type LinkProps = CommonProps & {
 };
 
 export function ChevronButton(props: ButtonProps | LinkProps) {
-  const { variant = "violet", size = "md", uppercase = true, notch = 12, className, children } = props as CommonProps;
-  const clip = `polygon(0 0, calc(100% - ${notch}px) 0, 100% ${notch}px, 100% 100%, 0 100%)`;
+  const { variant = "violet", size = "md", uppercase = true, notch = 12, neon = false, className, children } = props as CommonProps;
+  // Neon mode is a rounded ring (no notch); otherwise keep the signature clip.
+  const clip = neon ? undefined : `polygon(0 0, calc(100% - ${notch}px) 0, 100% ${notch}px, 100% 100%, 0 100%)`;
 
   if ("href" in props && props.href) {
     const { href, target, rel, prefetch, style } = props as LinkProps;
@@ -81,24 +89,24 @@ export function ChevronButton(props: ButtonProps | LinkProps) {
         target={target}
         rel={rel}
         prefetch={prefetch}
-        className={baseClasses(variant, size, uppercase, className)}
+        className={baseClasses(variant, size, uppercase, neon, className)}
         style={{ ...style, clipPath: clip }}
       >
-        {inner(children, notch)}
+        {inner(children, notch, neon)}
       </Link>
     );
   }
 
-  const { variant: _v, size: _s, uppercase: _u, notch: _n, className: _c, children: _ch, ...rest } = props as ButtonProps;
-  void _v; void _s; void _u; void _n; void _c; void _ch;
+  const { variant: _v, size: _s, uppercase: _u, notch: _n, neon: _neon, className: _c, children: _ch, ...rest } = props as ButtonProps;
+  void _v; void _s; void _u; void _n; void _neon; void _c; void _ch;
   return (
     <button
       type="button"
       {...rest}
-      className={baseClasses(variant, size, uppercase, className)}
+      className={baseClasses(variant, size, uppercase, neon, className)}
       style={{ clipPath: clip }}
     >
-      {inner(children, notch)}
+      {inner(children, notch, neon)}
     </button>
   );
 }

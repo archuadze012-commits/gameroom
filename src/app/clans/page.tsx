@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getSession } from "@/lib/auth";
+import { CinematicBackground } from "@/components/ui/cinematic-background";
+import { PremiumCard } from "@/components/ui/premium-card";
 
-export const dynamic = "force-dynamic";
 
 type ClanListItem = {
   id: string;
@@ -54,73 +55,78 @@ export default async function ClansPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
-      <PageHeader
-        eyebrow="გუნდები & კლანები"
-        title="გაერთიანდი და ითამაშე გუნდურად"
-        description="მოძებნე შენთვის შესაფერისი კლანი ან შექმენი ახალი, გაზარდეთ XP ერთად და მიიღეთ მონაწილეობა კლანურ ტურნირებში."
-        actions={
-          userClan ? (
-            <Button asChild>
-              <Link href={`/clans/${userClan.slug}`}>ჩემი კლანი</Link>
-            </Button>
-          ) : (
-            <Button asChild>
-              <Link href="/clans/new"><Plus className="mr-2 h-4 w-4" /> კლანის შექმნა</Link>
-            </Button>
-          )
-        }
-      />
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
+      <CinematicBackground color="indigo" />
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {((clans || []) as unknown as ClanListItem[]).map((clan) => (
-          <Link key={clan.id} href={`/clans/${clan.slug}`}>
-            <Card className="h-full border-border/60 transition-colors hover:border-primary/40 hover:bg-secondary/20">
-              <CardContent className="p-5 flex flex-col gap-4">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12 border border-primary/20">
-                    <AvatarImage src={clan.avatar_url ?? undefined} />
-                    <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                      {clan.tag}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-lg truncate flex items-center gap-2">
-                      {clan.name}
-                      <span className="text-xs font-mono text-muted-foreground px-1.5 py-0.5 rounded-md bg-secondary">
-                        [{clan.tag}]
-                      </span>
-                    </h3>
-                    <p className="text-xs text-muted-foreground capitalize">{clan.status}</p>
+      <div className="container relative mx-auto px-4 py-10 lg:py-14 max-w-5xl">
+        <PageHeader
+          color="indigo"
+          eyebrow="გუნდები & კლანები"
+          title="გაერთიანდი და ითამაშე"
+          description="მოძებნე შენთვის შესაფერისი კლანი ან შექმენი ახალი, გაზარდეთ XP ერთად და მიიღეთ მონაწილეობა კლანურ ტურნირებში."
+          actions={
+            userClan ? (
+              <Button asChild className="rounded-full bg-indigo-500 hover:bg-indigo-600 text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]">
+                <Link href={`/clans/${userClan.slug}`}>ჩემი კლანი</Link>
+              </Button>
+            ) : (
+              <Button asChild className="rounded-full bg-indigo-500 hover:bg-indigo-600 text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]">
+                <Link href="/clans/new"><Plus className="mr-2 h-4 w-4" /> კლანის შექმნა</Link>
+              </Button>
+            )
+          }
+        />
+
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {((clans || []) as unknown as ClanListItem[]).map((clan) => (
+            <Link key={clan.id} href={`/clans/${clan.slug}`} className="block h-full">
+              <PremiumCard>
+                <div className="p-5 flex flex-col gap-4 h-full">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-12 w-12 border border-indigo-500/20 shadow-[0_0_10px_rgba(99,102,241,0.2)]">
+                      <AvatarImage src={clan.avatar_url ?? undefined} />
+                      <AvatarFallback className="bg-indigo-500/10 text-indigo-400 font-bold">
+                        {clan.tag}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-lg truncate flex items-center gap-2 text-white drop-shadow-md">
+                        {clan.name}
+                        <span className="text-[10px] font-mono text-indigo-300/80 px-1.5 py-0.5 rounded border border-indigo-500/20 bg-indigo-500/10">
+                          [{clan.tag}]
+                        </span>
+                      </h3>
+                      <p className="text-xs text-white/50 capitalize">{clan.status}</p>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-white/60 line-clamp-2 h-10 font-medium">
+                    {clan.description || "აღწერის გარეშე"}
+                  </p>
+
+                  <div className="flex items-center justify-between pt-3 mt-auto border-t border-white/5 text-sm">
+                    <div className="flex items-center gap-1.5 text-white/50 font-medium">
+                      <Users className="h-4 w-4" />
+                      <span>{clan.clan_members[0]?.count ?? 1}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-indigo-400 font-bold">
+                      <Trophy className="h-4 w-4" />
+                      <span>LVL {clan.level}</span>
+                    </div>
                   </div>
                 </div>
+              </PremiumCard>
+            </Link>
+          ))}
 
-                <p className="text-sm text-muted-foreground line-clamp-2 h-10">
-                  {clan.description || "აღწერის გარეშე"}
-                </p>
-
-                <div className="flex items-center justify-between pt-2 border-t border-border/40 text-sm">
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    <span>{clan.clan_members[0].count}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-amber-500 font-medium">
-                    <Trophy className="h-4 w-4" />
-                    <span>LVL {clan.level}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-
-        {(!clans || clans.length === 0) && (
-          <div className="col-span-full py-20 text-center flex flex-col items-center">
-            <ShieldAlert className="h-12 w-12 text-muted-foreground/30 mb-4" />
-            <h3 className="text-lg font-bold text-muted-foreground">ჯერ არცერთი კლანი არ შექმნილა</h3>
-            <p className="text-sm text-muted-foreground/70 mt-1">იყავი პირველი ვინც შექმნის გუნდს!</p>
-          </div>
-        )}
+          {(!clans || clans.length === 0) && (
+            <div className="col-span-full py-20 text-center flex flex-col items-center">
+              <ShieldAlert className="h-12 w-12 text-white/20 mb-4" />
+              <h3 className="text-lg font-bold text-white/50">ჯერ არცერთი კლანი არ შექმნილა</h3>
+              <p className="text-sm text-white/30 mt-1">იყავი პირველი ვინც შექმნის გუნდს!</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

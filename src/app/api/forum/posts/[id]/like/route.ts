@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("api:forum-post-like");
 
 export async function POST(
   request: NextRequest,
@@ -21,7 +24,7 @@ export async function POST(
       // Unique violation / already liked
       return NextResponse.json({ ok: true });
     }
-    console.error("[POST /api/forum/posts/[id]/like]", error);
+    logger.error("failed to like forum post", { postId, userId: user.id, error });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
@@ -45,7 +48,7 @@ export async function DELETE(
     .eq("user_id", user.id);
 
   if (error) {
-    console.error("[DELETE /api/forum/posts/[id]/like]", error);
+    logger.error("failed to unlike forum post", { postId, userId: user.id, error });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

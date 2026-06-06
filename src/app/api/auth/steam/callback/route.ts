@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
+import { getServerEnv } from "@/lib/env";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("api:steam-callback");
 
 // Verifies the OpenID response by relaying it back to Steam with check_authentication mode.
 async function verifySteamResponse(params: URLSearchParams): Promise<boolean> {
@@ -37,7 +41,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Fetch player summary + owned games via Steam Web API
-  const apiKey = process.env.STEAM_API_KEY;
+  const apiKey = getServerEnv("STEAM_API_KEY");
   let profile: Record<string, unknown> = { steamId };
   if (apiKey) {
     try {
@@ -76,7 +80,7 @@ export async function GET(request: NextRequest) {
       profile.gameCount = ownedGames.length;
       profile.topGames = topGames;
     } catch (e) {
-      console.error("[steam callback fetch]", e);
+      logger.warn("failed to fetch Steam profile details", { steamId, error: e });
     }
   }
 

@@ -5,7 +5,6 @@ import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PostEditForm } from "./post-edit-form";
 
-export const dynamic = "force-dynamic";
 
 export default async function EditPostPage({
   params,
@@ -31,7 +30,7 @@ export default async function EditPostPage({
   }
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
       <div className="container relative mx-auto max-w-2xl px-4 py-10 lg:py-14 space-y-5">
         <Link

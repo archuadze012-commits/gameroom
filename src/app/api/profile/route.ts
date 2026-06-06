@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
+import { createLogger } from "@/lib/logger";
+import { PROFILE_MEDIUM_TEXT_MAX_LENGTH, PROFILE_SHORT_TEXT_MAX_LENGTH } from "@/lib/constants";
 import type { Database } from "@/lib/database.types";
 
 type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
+const logger = createLogger("api:profile");
 
 export async function POST(request: NextRequest) {
   const user = await getSession().catch(() => null);
@@ -24,9 +27,9 @@ export async function POST(request: NextRequest) {
     updated_at: new Date().toISOString(),
   };
   if (typeof body.username === "string" && body.username.trim())
-    update.username = body.username.trim().slice(0, 32);
+    update.username = body.username.trim().slice(0, PROFILE_SHORT_TEXT_MAX_LENGTH);
   if (typeof body.displayName === "string")
-    update.display_name = body.displayName.trim().slice(0, 64) || null;
+    update.display_name = body.displayName.trim().slice(0, PROFILE_MEDIUM_TEXT_MAX_LENGTH) || null;
   if (typeof body.bio === "string")
     update.bio = body.bio.trim() || null;
   if (typeof body.region === "string")
@@ -39,15 +42,15 @@ export async function POST(request: NextRequest) {
     update.favorite_game_slugs = Array.from(new Set([...(mainGameSlug ? [mainGameSlug] : []), ...favoriteSlugs]));
   }
   if (typeof body.youtubeHandle === "string")
-    update.youtube_handle = body.youtubeHandle.trim().replace(/^@/, "").slice(0, 64) || null;
+    update.youtube_handle = body.youtubeHandle.trim().replace(/^@/, "").slice(0, PROFILE_MEDIUM_TEXT_MAX_LENGTH) || null;
   if (typeof body.tiktokHandle === "string")
-    update.tiktok_handle = body.tiktokHandle.trim().replace(/^@/, "").slice(0, 64) || null;
+    update.tiktok_handle = body.tiktokHandle.trim().replace(/^@/, "").slice(0, PROFILE_MEDIUM_TEXT_MAX_LENGTH) || null;
   if (typeof body.tiktokFollowers === "string")
-    update.tiktok_followers = body.tiktokFollowers.trim().slice(0, 32) || null;
+    update.tiktok_followers = body.tiktokFollowers.trim().slice(0, PROFILE_SHORT_TEXT_MAX_LENGTH) || null;
   if (typeof body.inGameName === "string")
-    update.in_game_name = body.inGameName.trim().slice(0, 64) || null;
+    update.in_game_name = body.inGameName.trim().slice(0, PROFILE_MEDIUM_TEXT_MAX_LENGTH) || null;
   if (typeof body.gameId === "string")
-    update.game_id = body.gameId.trim().slice(0, 64) || null;
+    update.game_id = body.gameId.trim().slice(0, PROFILE_MEDIUM_TEXT_MAX_LENGTH) || null;
   if (typeof body.mainGameSlug === "string")
     update.main_game_slug = body.mainGameSlug.trim() || null;
 
@@ -64,7 +67,7 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({ ok: true });
   } catch (e) {
-    console.error("[/api/profile]", e);
+    logger.error("failed to update profile", { userId: user.id, error: e });
     return NextResponse.json({ error: "db_error" }, { status: 500 });
   }
 }

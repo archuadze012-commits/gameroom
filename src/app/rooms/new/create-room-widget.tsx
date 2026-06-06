@@ -15,11 +15,11 @@ export function CreateRoomWidget(props: Props) {
 
   return (
     <div className="mb-8">
-      <div className="group relative rounded-[24px] p-[1.5px] bg-gradient-to-br from-white/10 to-white/5 transition-all duration-500 hover:from-[#00d0ff] hover:via-[#6366f1] hover:to-[#f43f5e] hover:shadow-[0_0_30px_rgba(99,102,241,0.2)]">
+      <div className="group neon-frame rounded-[24px]">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="relative flex w-full items-center justify-between gap-4 rounded-[22.5px] bg-[#0a0714] px-6 py-4 font-display text-[14px] font-black uppercase tracking-[0.18em] text-white backdrop-blur-md transition-all active:scale-[0.99]"
+          className="relative flex w-full items-center justify-between gap-4 rounded-[21px] bg-[#0a0714] px-6 py-4 font-display text-[14px] font-black uppercase tracking-[0.18em] text-white backdrop-blur-md transition-all active:scale-[0.99]"
           aria-expanded={open}
         >
           <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_left,rgba(99,102,241,0.1),transparent_50%)] pointer-events-none rounded-[22.5px]" />

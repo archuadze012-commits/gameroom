@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("api:tournament-checkin");
 
 export async function POST(
   request: NextRequest,
@@ -38,7 +41,7 @@ export async function POST(
     .maybeSingle();
 
   if (pErr) {
-    console.error("[POST /api/tournaments/[slug]/checkin] update error", pErr);
+    logger.error("failed to update tournament participant check-in", { userId: user.id, tournamentSlug: slug, error: pErr });
     return NextResponse.json({ error: "database_error" }, { status: 500 });
   }
 
@@ -47,13 +50,20 @@ export async function POST(
   }
 
   // Create notification
-  await createSupabaseAdminClient().from("notifications").insert({
+  const { error: notificationError } = await createSupabaseAdminClient().from("notifications").insert({
     user_id: user.id,
     type: "tournament_checkin",
     title: "Check-in დადასტურებულია! 🏆",
     body: `თქვენ წარმატებით გაიარეთ check-in ტურნირზე: "${t.name}"`,
     link: `/tournaments/${slug}`,
   });
+  if (notificationError) {
+    logger.warn("failed to write check-in notification", {
+      userId: user.id,
+      tournamentSlug: slug,
+      error: notificationError,
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }

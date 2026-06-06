@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, useCallback, useActionState, useTransition
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Send, Loader2, Globe, Sparkles, Trash2 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
@@ -140,7 +139,7 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
        reactStartTransition(() => {
            sendFormAction(formData);
        });
-    });
+     });
   };
 
   const deleteConversation = () => {
@@ -174,25 +173,27 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
   };
 
   return (
-    <div className="relative flex h-[calc(100vh-8rem)] w-full flex-col overflow-hidden rounded-[24px] p-[1.5px] bg-gradient-to-br from-[#00d0ff] via-[#6366f1] to-[#f43f5e] shadow-[0_0_40px_rgba(99,102,241,0.2)]">
-      <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[22.5px] bg-[#05050f]">
-        
-        {/* Ambient background glow inside chat */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(139,92,246,0.1),transparent_60%)]" />
+    <div className="pubg-loadout-link relative flex h-full min-w-0 max-w-full flex-col overflow-hidden" data-variant="support">
+      <div className="pubg-loadout-card relative flex h-full flex-col overflow-hidden !p-0">
+        {/* Decorators */}
+        <span aria-hidden className="pubg-loadout-field absolute inset-0" />
+        <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[5px]" />
+        <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-16 w-16 opacity-30" />
+        <span aria-hidden className="pubg-loadout-sweep absolute inset-y-0 left-0 w-1/3" />
 
         {/* header */}
-        <div className="relative z-10 flex items-center gap-4 bg-black/60 p-4 border-b border-white/10 backdrop-blur-md">
-          <Button asChild variant="ghost" size="icon" className="h-10 w-10 shrink-0 rounded-full bg-white/5 hover:bg-white/10 hover:text-pink-400">
+        <div className="relative z-10 flex min-w-0 items-center gap-3 border-b border-white/[0.07] bg-[var(--gr-bg-0)]/60 p-3 backdrop-blur-md sm:gap-4 sm:p-4">
+          <Button asChild variant="ghost" size="icon" className="h-10 w-10 shrink-0 rounded-full bg-white/5 hover:bg-white/10 hover:text-[var(--gr-cyan-glow)]">
             <Link href="/messages"><ArrowLeft className="h-5 w-5" /></Link>
           </Button>
-          <Link href={`/profile/${other.username}`} className="group flex flex-1 items-center gap-3">
+          <Link href={`/profile/${other.username}`} className="group flex min-w-0 flex-1 items-center gap-3">
             <UserAvatar username={other.username} displayName={other.displayName ?? undefined} avatarUrl={other.avatarUrl} size="md" />
-            <div>
-              <div className="flex items-center gap-1.5 font-display text-lg font-black uppercase tracking-wide text-white drop-shadow-sm group-hover:text-pink-400 transition-colors">
-                {other.displayName ?? other.username}
+            <div className="min-w-0">
+              <div className="flex min-w-0 items-center gap-1.5 font-display text-base font-black uppercase tracking-wide text-[var(--gr-text)] drop-shadow-sm transition-colors group-hover:text-[var(--gr-cyan-glow)] sm:text-lg">
+                <span className="truncate">{other.displayName ?? other.username}</span>
                 {other.isVerified && <VerifiedBadge className="h-4 w-4" />}
               </div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-white/40">@{other.username}</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gr-text-dim)]">@{other.username}</p>
             </div>
           </Link>
           <Button
@@ -200,7 +201,7 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
             size="icon"
             onClick={deleteConversation}
             disabled={isDeleting}
-            className="h-10 w-10 shrink-0 rounded-full bg-white/5 text-white/50 hover:bg-red-500/20 hover:text-red-400"
+            className="h-10 w-10 shrink-0 rounded-full bg-white/5 text-[var(--gr-text-dim)] hover:bg-red-500/20 hover:text-red-400"
             title="მიმოწერის წაშლა"
           >
             {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
@@ -208,16 +209,16 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
         </div>
 
         {/* messages */}
-        <div ref={scrollRef} className="relative z-10 flex-1 space-y-4 overflow-y-auto p-5 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
+        <div ref={scrollRef} className="relative z-10 flex-1 space-y-4 overflow-x-hidden overflow-y-auto p-4 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 sm:p-5">
           {loading && (
-            <div className="flex justify-center pt-8 text-white/30">
+            <div className="flex justify-center pt-8 text-[var(--gr-text-dim)]">
               <Loader2 className="h-6 w-6 animate-spin" />
             </div>
           )}
           {!loading && messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Sparkles className="mb-4 h-12 w-12 text-pink-500/40 drop-shadow-[0_0_20px_rgba(236,72,153,0.5)]" />
-              <p className="text-sm font-bold uppercase tracking-widest text-white/40">
+              <Sparkles className="mb-4 h-12 w-12 text-[var(--gr-cyan-glow)]/40 drop-shadow-[0_0_20px_rgba(34,211,238,0.5)]" />
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-[var(--gr-text-dim)]">
                 ჯერ მესიჯები არ არის.<br/>შენ იყავი პირველი.
               </p>
             </div>
@@ -227,29 +228,30 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
             return (
               <div key={m.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
                 <div className={`group relative max-w-[80%] ${isMe ? "" : "flex flex-col gap-1"}`}>
+                  {/* Message bubble */}
                   <div
-                    className={`relative rounded-2xl px-4 py-3 text-[15px] shadow-lg backdrop-blur-md ${
-                      isMe 
-                        ? "rounded-br-sm border border-pink-500/30 bg-gradient-to-br from-pink-500/20 to-violet-500/20 shadow-[0_4px_20px_rgba(236,72,153,0.15)] text-white" 
-                        : "rounded-bl-sm border border-white/10 bg-white/5 shadow-[0_4px_20px_rgba(0,0,0,0.5)] text-white/90"
+                    className={`msg-bubble relative overflow-hidden px-4 py-3 text-[15px] text-[var(--gr-text)] ${
+                      isMe
+                        ? "msg-bubble--mine rounded-[16px] rounded-br-[3px]"
+                        : "msg-bubble--theirs rounded-[16px] rounded-bl-[3px]"
                     }`}
                   >
-                    <p className="whitespace-pre-wrap break-words leading-relaxed font-medium">
+                    <p className="relative whitespace-pre-wrap break-words leading-relaxed font-medium">
                       {m.body}
                     </p>
                     {translations[m.id] && (
-                      <p className="mt-2 border-t border-white/10 pt-2 text-sm text-cyan-200/80 italic">
+                      <p className="relative mt-2 border-t border-white/[0.07] pt-2 text-sm text-[var(--gr-cyan-glow)]/80 italic">
                         {translations[m.id]}
                       </p>
                     )}
-                    <div className="mt-1 flex items-center justify-between gap-3">
-                      <p className={`text-[10px] font-bold tracking-widest uppercase ${isMe ? "text-pink-200/50" : "text-white/30"}`}>
+                    <div className="relative mt-1 flex items-center justify-between gap-3">
+                      <p className={`text-[10px] font-black tracking-[0.18em] uppercase ${isMe ? "text-[var(--gr-violet-hi)]/70" : "text-[var(--gr-cyan-glow)]/55"}`}>
                         {timeOnly(m.created_at)}
                       </p>
                       {!isMe && (
                         <button
                           onClick={() => translate(m.id, m.body)}
-                          className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-cyan-400/60 opacity-0 transition-opacity hover:text-cyan-400 group-hover:opacity-100"
+                          className="flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.16em] text-[var(--gr-cyan-glow)]/60 opacity-0 transition-opacity hover:text-[var(--gr-cyan-glow)] group-hover:opacity-100"
                         >
                           {translating[m.id]
                             ? <Loader2 className="h-3 w-3 animate-spin" />
@@ -267,15 +269,15 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
 
         {/* smart replies */}
         {(smartReplies.length > 0 || loadingReplies) && (
-          <div className="relative z-10 flex items-center gap-3 border-t border-white/5 bg-black/40 px-4 py-3 overflow-x-auto scrollbar-hide backdrop-blur-md">
-            <Sparkles className="h-4 w-4 shrink-0 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
+          <div className="relative z-10 flex max-w-full items-center gap-3 overflow-x-auto border-t border-white/[0.07] bg-[var(--gr-bg-0)]/40 px-4 py-3 scrollbar-hide backdrop-blur-md">
+            <Sparkles className="h-4 w-4 shrink-0 text-[var(--gr-cyan-glow)] drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
             {loadingReplies
-              ? <Loader2 className="h-4 w-4 animate-spin text-white/30" />
+              ? <Loader2 className="h-4 w-4 animate-spin text-[var(--gr-text-dim)]" />
               : smartReplies.map((r) => (
                 <button
                   key={r}
                   onClick={() => handleSmartReply(r)}
-                  className="shrink-0 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-1.5 text-[12px] font-black tracking-wider text-cyan-400 transition-all hover:bg-cyan-500/20 hover:shadow-[0_0_15px_rgba(34,211,238,0.3)] hover:scale-105 disabled:opacity-50"
+                  className="shrink-0 rounded-full border border-[var(--gr-violet-hi)]/30 bg-[var(--gr-violet)]/10 px-4 py-1.5 text-[12px] font-black tracking-[0.12em] text-[var(--gr-violet-hi)] transition-all hover:bg-[var(--gr-violet)]/20 hover:shadow-[0_0_15px_rgba(139,92,246,0.3)] hover:scale-105 disabled:opacity-50"
                   disabled={isSending}
                 >
                   {r}
@@ -286,15 +288,15 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
         )}
 
         {/* composer */}
-        <div className="relative z-10 bg-black/60 p-4 border-t border-white/10 backdrop-blur-md">
-          <form action={sendFormAction} className="flex items-center gap-3">
+        <div className="relative z-10 border-t border-white/[0.07] bg-[var(--gr-bg-0)]/60 p-3 backdrop-blur-md sm:p-4">
+          <form action={sendFormAction} className="flex min-w-0 items-center gap-2 sm:gap-3">
             <input type="hidden" name="conversationId" value={conversationId} />
             <Input
               name="body"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="დაწერე მესიჯი..."
-              className="h-12 rounded-full border-white/10 bg-white/5 px-6 text-[15px] font-medium text-white shadow-inner transition-all focus-visible:border-pink-500/50 focus-visible:bg-white/10 focus-visible:ring-1 focus-visible:ring-pink-500/50 focus-visible:shadow-[0_0_20px_rgba(236,72,153,0.2)]"
+              className="h-12 rounded-full border-white/[0.07] bg-white/5 px-6 text-[15px] font-medium text-[var(--gr-text)] shadow-inner transition-all focus-visible:border-[var(--gr-cyan-glow)]/50 focus-visible:bg-white/10 focus-visible:ring-1 focus-visible:ring-[var(--gr-cyan-glow)]/50 focus-visible:shadow-[0_0_20px_rgba(34,211,238,0.15)]"
               autoFocus
               disabled={isSending}
               autoComplete="off"
@@ -302,7 +304,7 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
             <Button
               type="submit"
               disabled={!input.trim() || isSending}
-              className="h-12 w-12 shrink-0 rounded-full border border-pink-500/40 bg-[linear-gradient(135deg,#ec4899,#8b5cf6)] text-white shadow-[0_0_20px_rgba(236,72,153,0.3)] transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(236,72,153,0.5)] disabled:opacity-50"
+              className="h-12 w-12 shrink-0 rounded-full border border-[var(--gr-violet-hi)]/40 bg-[linear-gradient(135deg,var(--gr-violet),var(--gr-cyan-glow))] text-white shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] disabled:opacity-50"
             >
               {isSending
                 ? <Loader2 className="h-5 w-5 animate-spin" />
@@ -311,7 +313,6 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
             </Button>
           </form>
         </div>
-
       </div>
     </div>
   );

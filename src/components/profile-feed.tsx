@@ -12,7 +12,6 @@ import { PostContent } from "@/components/post-content";
 import { ReportButton } from "@/components/report-button";
 import { PostComposer, type PostComposerUser } from "@/components/post-composer";
 import { PostOwnerActions } from "@/components/post-owner-actions";
-import { GamerCard } from "@/components/ui/gamer-card";
 
 export type ProfileFeedPost = {
   id: string;
@@ -103,15 +102,14 @@ export function ProfileFeed({
       )}
 
       {posts.length === 0 && (
-        <GamerCard
-          clipSize={16}
-          className="border-0"
-          surfaceClassName="bg-[linear-gradient(180deg,color-mix(in_srgb,var(--gr-bg-1)_96%,black),color-mix(in_srgb,var(--gr-bg-2)_88%,black))]"
-        >
-          <div className="p-8 text-center text-sm text-[var(--gr-text-mute)]">
-            პოსტები არ არის
+        <div className="pubg-loadout-link block" data-variant="strike">
+          <div className="pubg-loadout-card relative overflow-hidden px-8 py-10 text-center text-sm text-[var(--gr-text-mute)]">
+            <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+            <div className="relative z-[1]">
+              პოსტები არ არის
+            </div>
           </div>
-        </GamerCard>
+        </div>
       )}
 
       {posts.map((post) => {
@@ -119,19 +117,15 @@ export function ProfileFeed({
         const author = post.profiles;
         const authorName = author.display_name || author.username;
         return (
-          <GamerCard
-            key={post.id}
-            clipSize={16}
-            hover
-            sideGlow={false}
-            innerGlow="soft"
-            className="border-0 transition-transform duration-200 hover:-translate-y-0.5"
-            surfaceClassName="bg-[linear-gradient(180deg,color-mix(in_srgb,var(--gr-bg-1)_96%,black),color-mix(in_srgb,var(--gr-bg-2)_88%,black))]"
-          >
-            <div className="relative space-y-3 p-4">
+          <div key={post.id} className="pubg-loadout-link group block" data-variant="strike">
+            <div className="pubg-loadout-card relative overflow-hidden p-5 sm:p-6">
+              <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+              <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[3px] z-[5]" />
+              <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-12 w-12 opacity-25 z-[5]" />
+              <div className="relative z-[1] space-y-4">
               <div className="flex items-center gap-3">
                 <Link href={`/profile/${author.username}`} className="relative z-10">
-                  <Avatar className="h-9 w-9">
+                  <Avatar className="h-10 w-10 border border-white/10 shadow-[0_0_18px_rgba(0,230,255,0.12)]">
                     <AvatarImage src={author.avatar_url ?? ""} alt={authorName} />
                     <AvatarFallback className="bg-[linear-gradient(135deg,var(--gr-magenta),var(--gr-cyan-glow))] text-white">
                       {authorName.slice(0, 1).toUpperCase()}
@@ -141,18 +135,19 @@ export function ProfileFeed({
                 <div className="min-w-0">
                   <Link
                     href={`/profile/${author.username}`}
-                    className="relative z-10 flex items-center gap-1 text-sm font-semibold text-[var(--gr-text)] transition-colors hover:text-[var(--gr-cyan-glow)]"
+                    className="relative z-10 flex items-center gap-1 font-display text-[15px] font-black uppercase tracking-[0.04em] text-[#D0F8FF] drop-shadow-[0_0_8px_rgba(0,230,255,0.45)] transition-colors hover:text-white"
                   >
                     <span className="truncate">{authorName}</span>
                     {author.is_verified && <VerifiedBadge className="h-3.5 w-3.5 shrink-0" />}
                   </Link>
-                  <p className="text-xs uppercase tracking-[0.12em] text-[var(--gr-text-dim)]">{timeAgo(post.created_at)}</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#D0F8FF]/70">{timeAgo(post.created_at)}</p>
                 </div>
                 <Link
                   href={`/profile/${author.username}/${post.id}`}
-                  className="relative z-10 ml-auto text-[10px] font-black uppercase tracking-[0.16em] text-[var(--gr-text-dim)] transition-colors hover:text-[var(--gr-cyan-glow)]"
+                  className="pubg-loadout-card relative z-10 ml-auto flex items-center overflow-hidden px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#D0F8FF] transition-colors hover:text-white"
                 >
-                  გახსნა
+                  <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+                  <span className="relative z-[1]">გახსნა</span>
                 </Link>
               </div>
 
@@ -165,24 +160,30 @@ export function ProfileFeed({
                 />
               </div>
 
-              <Separator className="bg-[var(--gr-border)]" />
+              <Separator className="bg-white/10" />
 
-              <div className="relative z-10 flex items-center gap-4">
+              <div className="relative z-10 flex flex-wrap items-center gap-x-4 gap-y-3">
                 <button
                   onClick={() => toggleLike(post.id)}
-                  className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.1em] transition-colors ${
+                  className={`pubg-loadout-card relative flex items-center gap-1.5 overflow-hidden px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.14em] transition-colors ${
                     liked ? "text-[var(--gr-magenta)]" : "text-[var(--gr-text-dim)] hover:text-[var(--gr-magenta)]"
                   }`}
                 >
+                  <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+                  <span className="relative z-[1] flex items-center gap-1.5">
                   <Heart className={`h-4 w-4 ${liked ? "fill-[var(--gr-magenta)]" : ""}`} />
                   {post.likes_count}
+                  </span>
                 </button>
                 <Link
                   href={`/profile/${author.username}/${post.id}`}
-                  className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--gr-text-dim)] transition-colors hover:text-[var(--gr-cyan-glow)]"
+                  className="pubg-loadout-card relative flex items-center gap-1.5 overflow-hidden px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-[var(--gr-text-dim)] transition-colors hover:text-[#D0F8FF]"
                 >
-                  <MessageCircle className="h-4 w-4" />
-                  {post.comments_count}
+                  <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+                  <span className="relative z-[1] flex items-center gap-1.5">
+                    <MessageCircle className="h-4 w-4" />
+                    {post.comments_count}
+                  </span>
                 </Link>
                 <div className="ml-auto">
                   <div className="flex items-center gap-2">
@@ -197,8 +198,9 @@ export function ProfileFeed({
                   </div>
                 </div>
               </div>
+              </div>
             </div>
-          </GamerCard>
+          </div>
         );
       })}
     </div>

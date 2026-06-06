@@ -3,6 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("clan-manage-actions");
 
 export async function processClanRequestAction(
   requestId: string,
@@ -68,7 +71,7 @@ export async function processClanRequestAction(
     });
 
     if (insertErr) {
-      console.error("[processClanRequestAction]", insertErr);
+      logger.error("failed to add clan member from request", { requestId, clanSlug, error: insertErr });
       return { success: false, message: "გაწევრიანება ვერ მოხერხდა" };
     }
 
@@ -131,7 +134,7 @@ export async function kickClanMemberAction(
     .eq("id", memberId);
 
   if (error) {
-    console.error("[kickClanMemberAction]", error);
+    logger.error("failed to kick clan member", { memberId, clanSlug, error });
     return { success: false, message: "წევრის გაგდება ვერ მოხერხდა" };
   }
 

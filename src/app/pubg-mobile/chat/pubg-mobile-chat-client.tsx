@@ -211,8 +211,8 @@ export function PubgMobileChatClient({
   };
 
   return (
-    <section className="group relative mx-auto flex h-full w-full max-w-4xl flex-col rounded-[24px] p-[1.5px] bg-gradient-to-br from-[#00d0ff] via-[#6366f1] to-[#f43f5e] transition-all duration-500 hover:shadow-[0_0_40px_rgba(99,102,241,0.3)]">
-      <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[22.5px] bg-[#0a0714] backdrop-blur-md">
+    <section className="group neon-frame neon-frame--overlay mx-auto flex h-full w-full max-w-4xl flex-col rounded-[24px]">
+      <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[21px] bg-[#0a0714] backdrop-blur-md">
         <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.08),transparent_50%)] pointer-events-none" />
 
         <header className="relative z-[1] flex items-center gap-4 border-b border-white/5 bg-black/40 px-5 py-5 sm:px-7 backdrop-blur-md">
@@ -318,13 +318,11 @@ export function PubgMobileChatClient({
                       )}
                       
                       <div
-                        className={`group/msg relative rounded-[20px] px-5 py-3.5 ${
-                          isMine 
-                            ? "rounded-br-[8px] border border-cyan-500/30 bg-[linear-gradient(135deg,rgba(34,211,238,0.1),rgba(99,102,241,0.1))] shadow-[0_0_20px_rgba(34,211,238,0.1)]" 
-                            : "rounded-bl-[8px] border border-white/10 bg-white/5"
+                        className={`msg-bubble group/msg relative rounded-[20px] px-5 py-3.5 ${
+                          isMine ? "msg-bubble--mine rounded-br-[8px]" : "msg-bubble--theirs rounded-bl-[8px]"
                         }`}
                       >
-                        {isMine && <div className="absolute inset-0 rounded-[inherit] bg-[radial-gradient(ellipse_at_top_right,rgba(34,211,238,0.15),transparent_50%)] pointer-events-none" />}
+                        {isMine && <div className="absolute inset-0 rounded-[inherit] bg-[radial-gradient(ellipse_at_top_right,rgba(138,43,226,0.18),transparent_55%)] pointer-events-none" />}
                         <p
                           className="relative z-10 whitespace-pre-wrap break-words text-[14px] font-medium leading-relaxed text-white sm:text-[15px]"
                         >

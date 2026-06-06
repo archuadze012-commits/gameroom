@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { sendPushToUser } from "@/lib/push";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("api:lfg-respond");
 
 export async function POST(
   request: NextRequest,
@@ -62,17 +65,25 @@ export async function POST(
       .eq("id", responseId);
 
     if (updateError) {
-      console.error("[POST /api/lfg/[id]/respond] update response", updateError);
+      logger.error("failed to accept LFG response", { postId, responseId, error: updateError });
       return NextResponse.json({ error: "database error" }, { status: 500 });
     }
 
     const newFilled = post.slots_filled + 1;
     const newStatus = newFilled >= post.slots_total ? "filled" : "open";
     
-    await supabase
+    const { error: postUpdateError } = await supabase
       .from("lfg_posts")
       .update({ slots_filled: newFilled, status: newStatus })
       .eq("id", postId);
+    if (postUpdateError) {
+      logger.error("failed to update LFG post slots after accepting response", {
+        postId,
+        responseId,
+        error: postUpdateError,
+      });
+      return NextResponse.json({ error: "database error" }, { status: 500 });
+    }
 
     // Send push notification to accepted user
     sendPushToUser(response.user_id, {
@@ -80,7 +91,14 @@ export async function POST(
       body: `ავტორმა დაადასტურა შენი მოთხოვნა პოსტზე: ${post.title}`,
       url: `/lfg/${postId}`,
       tag: `lfg-accept-${postId}`,
-    }).catch(() => {});
+    }).catch((error) => {
+      logger.warn("failed to send LFG accept push", {
+        postId,
+        responseId,
+        recipientId: response.user_id,
+        error,
+      });
+    });
 
   } else {
     // Process rejection
@@ -90,6 +108,7 @@ export async function POST(
       .eq("id", responseId);
 
     if (updateError) {
+      logger.error("failed to reject LFG response", { postId, responseId, error: updateError });
       return NextResponse.json({ error: "database error" }, { status: 500 });
     }
   }

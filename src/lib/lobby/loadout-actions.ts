@@ -4,6 +4,9 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { lobbyGameSlugSchema, type LoadoutData } from "@/lib/lobby/loadout";
 import { normalizeUserLobbyLoadout } from "@/lib/lobby/loadout-access";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("lobby-loadout-actions");
 
 export async function saveLobbyLoadout(gameSlug: string, loadout: LoadoutData) {
   const user = await getSession();
@@ -29,7 +32,7 @@ export async function saveLobbyLoadout(gameSlug: string, loadout: LoadoutData) {
     );
 
   if (error) {
-    console.error("[saveLobbyLoadout] upsert error", error);
+    logger.error("failed to save lobby loadout", { userId: user.id, gameSlug: parsedGameSlug.data, error });
     return { success: false, error: error.message } as const;
   }
   return { success: true } as const;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { Ban, ShieldCheck, Shield, MonitorPlay, Trophy, Gamepad2, User, Loader2, RefreshCw, BadgeCheck, Download, Clock, PenLine } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { UserAvatar } from "@/components/user-avatar";
+import { useAdminTable } from "@/lib/use-admin-table";
 import type { AdminUserRow, UserRole } from "@/lib/types";
 
 const ROLE_CONFIG: Record<UserRole, { label: string; className: string; icon: React.ReactNode }> = {
@@ -23,50 +24,16 @@ const ROLE_CONFIG: Record<UserRole, { label: string; className: string; icon: Re
 const ALL_ROLES: UserRole[] = ["user", "moderator", "organizer", "streamer", "esports", "journalist", "admin"];
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<AdminUserRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const {
+    rows: users,
+    setRows: setUsers,
+    loading,
+    query: search,
+    setQuery: setSearch,
+    refresh: load,
+  } = useAdminTable<AdminUserRow>({ endpoint: "/api/admin/users" });
   const [changingRole, setChangingRole] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/users");
-      if (!res.ok) throw new Error("forbidden");
-      const data: AdminUserRow[] = await res.json();
-      setUsers(data);
-    } catch {
-      setUsers([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const res = await fetch("/api/admin/users");
-        if (!res.ok) throw new Error("forbidden");
-        const data: AdminUserRow[] = await res.json();
-        if (!cancelled) {
-          setUsers(data);
-        }
-      } catch {
-        if (!cancelled) {
-          setUsers([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const filtered = users.filter(
     (u) =>

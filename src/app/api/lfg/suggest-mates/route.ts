@@ -3,14 +3,18 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { requireRateLimitedUser } from "@/lib/api/guards";
 import { readJsonObject } from "@/lib/api/json";
+import { getServerEnv } from "@/lib/env";
+import { createLogger } from "@/lib/logger";
 
 type LfgPost = { id: string; title: string; description: string | null; rank: string | null };
+const logger = createLogger("api:lfg-suggest-mates");
 
 export async function POST(request: NextRequest) {
   const guard = await requireRateLimitedUser(request, "ai:lfg-suggest-mates", 10, 60_000);
   if (!guard.ok) return guard.response;
 
-  if (!process.env.GROQ_API_KEY) return NextResponse.json({ suggestions: [] });
+  const groqKey = getServerEnv("GROQ_API_KEY");
+  if (!groqKey) return NextResponse.json({ suggestions: [] });
 
   const body = await readJsonObject<{ postId?: string; gameSlug?: string; title?: string; description?: string }>(
     request,
@@ -43,7 +47,7 @@ export async function POST(request: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        Authorization: `Bearer ${groqKey}`,
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
@@ -79,7 +83,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ suggestions: enriched });
   } catch (e) {
-    console.error("[/api/lfg/suggest-mates]", e);
+    logger.warn("LFG mate suggestion failed", { error: e });
     return NextResponse.json({ suggestions: [] });
   }
 }

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getIsAdmin, getSession } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { requirePermission } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const updatePostSchema = z.object({
@@ -59,7 +60,11 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const [{ id }, user, isAdmin] = await Promise.all([params, getSession(), getIsAdmin()]);
+  const [{ id }, user, contentAdmin] = await Promise.all([
+    params,
+    getSession(),
+    requirePermission("manage_content"),
+  ]);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -74,7 +79,7 @@ export async function DELETE(
   if (!post) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  if (post.author_id !== user.id && !isAdmin) {
+  if (post.author_id !== user.id && !contentAdmin.ok) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

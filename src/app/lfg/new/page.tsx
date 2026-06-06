@@ -7,7 +7,6 @@ import { DisplayHeading } from "@/components/ui/display-heading";
 import { GamerCard } from "@/components/ui/gamer-card";
 
 export const metadata = { title: "ახალი ლოკალი" };
-export const dynamic = "force-dynamic";
 
 const neonText = {
   color: "#ffffff",
@@ -61,7 +60,7 @@ export default async function NewLfgPage() {
   });
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
 
       <div className="container relative mx-auto max-w-2xl px-4 py-10 lg:py-14">

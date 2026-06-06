@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Check, ImageIcon, Loader2, PackagePlus, Pencil, Power, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { formatGel, STATUS_LABELS, type ShopProduct, type ShopProductStatus } from "@/lib/shop-products/types";
+import { useAdminTable } from "@/lib/use-admin-table";
 
 type ProductForm = {
   title: string;
@@ -49,36 +50,17 @@ function toPayload(form: ProductForm) {
 }
 
 export default function AdminShopPage() {
-  const [products, setProducts] = useState<ShopProduct[]>([]);
+  const {
+    rows: products,
+    setRows: setProducts,
+    loading,
+  } = useAdminTable<ShopProduct>({ endpoint: "/api/admin/shop" });
   const [form, setForm] = useState<ProductForm>(BLANK_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    let alive = true;
-
-    async function loadProducts() {
-      try {
-        const res = await fetch("/api/admin/shop", { cache: "no-store" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const rows = await res.json();
-        if (alive && Array.isArray(rows)) setProducts(rows);
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "პროდუქტები ვერ ჩაიტვირთა");
-      } finally {
-        if (alive) setLoading(false);
-      }
-    }
-
-    loadProducts();
-    return () => {
-      alive = false;
-    };
-  }, []);
 
   function set<K extends keyof ProductForm>(key: K, value: ProductForm[K]) {
     setForm((current) => ({ ...current, [key]: value }));

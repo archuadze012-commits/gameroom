@@ -17,7 +17,6 @@ import { VerifiedBadge } from "@/components/verified-badge";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 
-export const dynamic = "force-dynamic";
 
 type LfgRow = {
   id: string;
@@ -64,7 +63,7 @@ export default async function LfgDetailPage({
   const { data: commentsData } = await supabase
     .from("lfg_comments")
     .select(
-      "id, body, created_at, user_id, profiles!lfg_comments_user_id_fkey(username, display_name, avatar_url)"
+      "id, body, created_at, user_id, profiles!lfg_comments_user_id_profiles_id_fk(username, display_name, avatar_url)"
     )
     .eq("post_id", id)
     .is("deleted_at", null)

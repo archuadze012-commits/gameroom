@@ -1,6 +1,7 @@
 import { AccessToken } from "livekit-server-sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
+import { requireServerEnv } from "@/lib/env";
 
 export async function GET(request: NextRequest) {
   const user = await getSession().catch(() => null);
@@ -15,22 +16,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing room name" }, { status: 400 });
   }
 
-  const apiKey = (process.env.LIVEKIT_API_KEY ?? "").replace(/^﻿/, "").trim();
-  const apiSecret = (process.env.LIVEKIT_API_SECRET ?? "").replace(/^﻿/, "").trim();
-  const wsUrl = (process.env.NEXT_PUBLIC_LIVEKIT_URL ?? "").replace(/^﻿/, "").trim();
+  const apiKey = requireServerEnv("LIVEKIT_API_KEY", "api:voice-token");
+  const apiSecret = requireServerEnv("LIVEKIT_API_SECRET", "api:voice-token");
+  const wsUrl = requireServerEnv("NEXT_PUBLIC_LIVEKIT_URL", "api:voice-token");
 
-  console.log("[VoiceToken] API Key length:", apiKey.length);
-  console.log("[VoiceToken] API Secret length:", apiSecret.length);
-  console.log("[VoiceToken] WS URL:", wsUrl);
-
-  if (!apiKey || !apiSecret || !wsUrl) {
+  if (!apiKey.ok || !apiSecret.ok || !wsUrl.ok) {
     return NextResponse.json(
       { error: "Server misconfigured: LiveKit keys missing" },
       { status: 500 }
     );
   }
 
-  const at = new AccessToken(apiKey, apiSecret, {
+  const at = new AccessToken(apiKey.value, apiSecret.value, {
     identity: user.id,
     name: username,
   });

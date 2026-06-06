@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Cropper from "react-easy-crop";
 import { Button } from "@/components/ui/button";
 import { getCroppedImg, type Area } from "@/lib/crop-image";
@@ -23,13 +24,21 @@ export function ImageCropModal({ imageSrc, aspect, shape = "rect", onConfirm, on
     setCroppedAreaPixels(pixels);
   }, []);
 
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const handleConfirm = async () => {
     if (!croppedAreaPixels) return;
     const result = await getCroppedImg(imageSrc, croppedAreaPixels);
     onConfirm(result);
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
       <div className="flex w-full max-w-lg flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-2xl">
         <div className="flex items-center justify-between">
@@ -95,6 +104,7 @@ export function ImageCropModal({ imageSrc, aspect, shape = "rect", onConfirm, on
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

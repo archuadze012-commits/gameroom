@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { Plus, Pencil, Trash2, X, Check, Loader2, Upload, ImageIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { mockGames } from "@/lib/mock-data";
+import { useAdminTable } from "@/lib/use-admin-table";
 
 type DbGame = {
   slug: string;
@@ -53,7 +54,9 @@ function makeTempGameSlug() {
 }
 
 export default function AdminGamesPage() {
-  const [dbGames, setDbGames] = useState<DbGame[]>([]);
+  const { rows: dbGames, setRows: setDbGames } = useAdminTable<DbGame>({
+    endpoint: "/api/admin/games",
+  });
   const [form, setForm] = useState<FormState>(BLANK);
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -113,13 +116,6 @@ export default function AdminGamesPage() {
       if (iconInputRef.current) iconInputRef.current.value = "";
     }
   }
-
-  useEffect(() => {
-    fetch("/api/admin/games")
-      .then((r) => r.json())
-      .then((rows) => { if (Array.isArray(rows)) setDbGames(rows); })
-      .catch(() => {});
-  }, []);
 
   function set(key: keyof FormState, value: string) {
     setForm((f) => ({ ...f, [key]: value }));

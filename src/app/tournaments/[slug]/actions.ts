@@ -3,6 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("tournament-actions");
 
 export type TournamentActionState = {
   success: boolean;
@@ -49,7 +52,7 @@ export async function registerForTournamentAction(
 
   if (error) {
     if (error.code === "23505") return { success: false, message: "უკვე დარეგისტრირებული ხარ" };
-    console.error("[registerForTournamentAction]", error);
+    logger.error("failed to register for tournament", { userId: user.id, tournamentId, error });
     return { success: false, message: "რეგისტრაცია ვერ მოხერხდა" };
   }
 
@@ -84,7 +87,7 @@ export async function checkinForTournamentAction(
     .eq("user_id", user.id);
 
   if (error) {
-    console.error("[checkinForTournamentAction]", error);
+    logger.error("failed to check in for tournament", { userId: user.id, tournamentId, error });
     return { success: false, message: "Check-in ვერ მოხერხდა" };
   }
 
@@ -130,7 +133,7 @@ export async function reportMatchScoreAction(
     .eq("id", matchId);
 
   if (error) {
-    console.error("[reportMatchScoreAction]", error);
+    logger.error("failed to report match score", { userId: user.id, matchId, error });
     return { success: false, message: "შედეგის შენახვა ვერ მოხერხდა" };
   }
 

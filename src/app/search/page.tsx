@@ -4,11 +4,10 @@ import { useState, useMemo, useEffect } from "react";
 import { Search, Users, Gamepad2, Download, ShieldCheck, Shield, Trophy, MonitorPlay, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
-import { mockGames, crackedGames } from "@/lib/mock-data";
+import { mockGames, crackedGames, type CrackedGame } from "@/lib/mock-data";
 import { DisplayHeading } from "@/components/ui/display-heading";
 import { Pill } from "@/components/ui/pill";
 import type { PublicProfile, UserRole } from "@/lib/types";
-import { GamerCard } from "@/components/ui/gamer-card";
 
 const neonText = { color: "#ffffff", textShadow: "0 0 4px rgba(196,30,58,0.45), 0 0 10px rgba(196,30,58,0.2)" } as const;
 const neonMute = { color: "rgba(255,255,255,0.75)", textShadow: "0 0 3px rgba(196,30,58,0.3), 0 0 8px rgba(196,30,58,0.14)" } as const;
@@ -17,6 +16,26 @@ const neonMagenta = { color: "rgba(196,30,58,0.92)", textShadow: "0 0 4px rgba(1
 
 type Tab = "players" | "games" | "cracked";
 type RoleFilter = "all" | Exclude<UserRole, "user">;
+type DbCrackedGameRow = {
+  id: string;
+  title: string;
+  emoji: string;
+  cover_url: string | null;
+  release_year: number;
+  rating: number;
+  description: string;
+  download_url: string;
+  gameplay_url: string | null;
+  accent: string;
+  genres: string[];
+  platforms: string[];
+  trending: boolean;
+  system_reqs: {
+    min: { os: string; cpu: string; ram: string; gpu: string; storage: string };
+    rec: { os: string; cpu: string; ram: string; gpu: string; storage: string };
+  };
+  metacritic_score?: number | null;
+};
 
 type RoleTone = "neutral" | "live" | "amber" | "violet" | "cyan";
 
@@ -29,13 +48,33 @@ const ROLE_FILTERS: { role: RoleFilter; label: string; icon: React.ReactNode; to
   { role: "esports",   label: "კიბერსპორტსმენი",  icon: <Gamepad2 className="h-3.5 w-3.5" />,      tone: "cyan" },
 ];
 
+function dbRowToCrackedGame(row: DbCrackedGameRow): CrackedGame {
+  return {
+    id: row.id,
+    title: row.title,
+    emoji: row.emoji,
+    coverUrl: row.cover_url ?? undefined,
+    releaseYear: row.release_year,
+    rating: row.rating,
+    description: row.description,
+    downloadUrl: row.download_url,
+    gameplayUrl: row.gameplay_url ?? undefined,
+    accent: row.accent,
+    genre: row.genres,
+    platform: row.platforms,
+    trending: row.trending,
+    systemReqs: row.system_reqs,
+    metacriticScore: row.metacritic_score ?? undefined,
+  };
+}
+
 function SearchPlayerCard({ user }: { user: PublicProfile }) {
   return (
-    <GamerCard clipSize={14} hover sideGlow={false} innerGlow="none" className="transition-transform duration-300 hover:-translate-y-0.5" surfaceClassName="bg-[linear-gradient(180deg,color-mix(in_srgb,var(--gr-bg-1)_96%,black),color-mix(in_srgb,var(--gr-bg-2)_88%,black))]">
-      <div className="relative flex min-h-[112px] items-center gap-4 p-4 sm:min-h-[124px] sm:gap-5 sm:p-5">
+    <div className="player-card-stable relative w-full rounded-[20px] bg-[rgba(15,12,30,0.6)] backdrop-blur-md premium-card-glow-tight transition-all duration-300 p-[2px]">
+      <div className="relative z-10 flex min-h-[112px] items-center gap-4 overflow-hidden rounded-[18px] p-4 sm:min-h-[124px] sm:gap-5 sm:p-5">
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_4%,rgba(7,6,16,0.06)_40%,rgba(7,6,16,0.86)_100%)] z-0" />
         <div className="relative z-[3] shrink-0">
           <div
-            className="transition-transform duration-300 group-hover:scale-105"
             style={{
               width: 72, height: 72, borderRadius: "50%",
               border: "2px solid rgba(196,30,58,0.38)",
@@ -98,7 +137,7 @@ function SearchPlayerCard({ user }: { user: PublicProfile }) {
           )}
         </div>
       </div>
-    </GamerCard>
+    </div>
   );
 }
 
@@ -115,8 +154,8 @@ function SearchMediaCard({
 }) {
   return (
     <Link href={href} className="group block">
-      <GamerCard clipSize={14} hover sideGlow={false} innerGlow="none" className="h-32 transition-transform duration-300 hover:-translate-y-0.5">
-        <div className="relative h-full w-full overflow-hidden">
+      <div className="relative w-full h-32 rounded-[20px] bg-[rgba(15,12,30,0.8)] backdrop-blur-md premium-card-glow-tight transition-all duration-300 p-[2px]">
+        <div className="relative z-10 h-full w-full overflow-hidden rounded-[18px]">
           {coverUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -130,7 +169,7 @@ function SearchMediaCard({
 
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/6 to-red-600/8 opacity-28" />
           <div className="absolute inset-0 bg-gradient-to-r from-[var(--gr-bg-0)]/76 via-[var(--gr-bg-0)]/18 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)]/84 via-[var(--gr-bg-0)]/8 to-transparent" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_4%,rgba(7,6,16,0.06)_40%,rgba(7,6,16,0.86)_100%)] z-0" />
 
           <div className="absolute bottom-2.5 left-4 right-3 z-10">
             <h4
@@ -142,17 +181,21 @@ function SearchMediaCard({
             </h4>
           </div>
         </div>
-      </GamerCard>
+      </div>
     </Link>
   );
 }
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
   const [tab, setTab] = useState<Tab>("players");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [allUsers, setAllUsers] = useState<PublicProfile[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const [dbCrackedGames, setDbCrackedGames] = useState<CrackedGame[]>([]);
+  const [hiddenCrackedIds, setHiddenCrackedIds] = useState<Set<string>>(new Set());
+  const [loadingCrackedGames, setLoadingCrackedGames] = useState(true);
 
   useEffect(() => {
     fetch("/api/users")
@@ -160,6 +203,22 @@ export default function SearchPage() {
       .then((data: PublicProfile[]) => setAllUsers(Array.isArray(data) ? data : []))
       .catch(() => setAllUsers([]))
       .finally(() => setLoadingUsers(false));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/cracked-games", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((payload: { games?: DbCrackedGameRow[]; hiddenIds?: string[] } | DbCrackedGameRow[]) => {
+        const rows = Array.isArray(payload) ? payload : (payload.games ?? []);
+        const hiddenIds = Array.isArray(payload) ? [] : (payload.hiddenIds ?? []);
+        setDbCrackedGames(rows.map(dbRowToCrackedGame));
+        setHiddenCrackedIds(new Set(hiddenIds));
+      })
+      .catch(() => {
+        setDbCrackedGames([]);
+        setHiddenCrackedIds(new Set());
+      })
+      .finally(() => setLoadingCrackedGames(false));
   }, []);
 
   const q = query.toLowerCase().trim();
@@ -186,9 +245,16 @@ export default function SearchPage() {
     );
   }, [q]);
 
+  const allCrackedGames = useMemo(() => {
+    const byId = new Map<string, CrackedGame>();
+    crackedGames.forEach((game) => byId.set(game.id, game));
+    dbCrackedGames.forEach((game) => byId.set(game.id, game));
+    return Array.from(byId.values()).filter((game) => !hiddenCrackedIds.has(game.id));
+  }, [dbCrackedGames, hiddenCrackedIds]);
+
   const crackedResults = useMemo(() => {
-    if (!q) return crackedGames;
-    return crackedGames.filter(
+    if (!q) return allCrackedGames;
+    return allCrackedGames.filter(
       (g) =>
         g.title.toLowerCase().includes(q) ||
         g.description.toLowerCase().includes(q) ||
@@ -196,7 +262,7 @@ export default function SearchPage() {
         g.platform.some((p) => p.toLowerCase().includes(q)) ||
         String(g.releaseYear).includes(q),
     );
-  }, [q]);
+  }, [allCrackedGames, q]);
 
   const onlineCount = useMemo(
     () => allUsers.filter((u) => u.isOnline).length,
@@ -223,7 +289,7 @@ export default function SearchPage() {
   ];
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
       {/* faint light leaks like the home hero */}
       <span aria-hidden className="pointer-events-none absolute -top-24 -right-20 h-72 w-72 rounded-full bg-[var(--gr-violet)]/12 blur-[120px]" />
@@ -238,22 +304,26 @@ export default function SearchPage() {
           </p>
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: "#ffffff", filter: "drop-shadow(0 0 3px rgba(196,30,58,0.38))" }} />
-          <Input
-            autoFocus
-            placeholder="username, თამაში, ჟანრი, პლატფორმა..."
-            className="h-12 bg-[var(--gr-bg-1)] pl-10 text-base text-white placeholder:text-white/40"
-            style={{ color: "#ffffff", textShadow: "0 0 5px rgba(196,30,58,0.55), 0 0 12px rgba(196,30,58,0.24)" }}
-            onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 2px rgba(196,30,58,0.26), 0 0 8px rgba(196,30,58,0.18)"; e.currentTarget.style.borderColor = "rgba(196,30,58,0.58)"; }}
-            onBlur={(e) => { e.currentTarget.style.boxShadow = ""; e.currentTarget.style.borderColor = ""; }}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+        <div className="relative group">
+          <div className={`relative flex items-center overflow-visible rounded-[12px] border border-white/10 bg-[var(--gr-bg-1)] backdrop-blur-md transition-all duration-300 premium-nav-item-glow ${isFocused ? 'premium-nav-item-glow-active shadow-[0_0_20px_rgba(239,68,68,0.2)]' : ''}`}>
+            <div className="pl-4 pr-2">
+              <Search className={`h-4 w-4 transition-colors duration-300 ${isFocused ? 'text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]' : 'text-white/40'}`} />
+            </div>
+            <Input
+              autoFocus
+              placeholder="username, თამაში, ჟანრი, პლატფორმა..."
+              className="h-12 w-full bg-transparent border-0 px-2 text-base text-white placeholder:text-white/40 shadow-none focus-visible:ring-0"
+              style={{ color: "#ffffff", textShadow: "0 0 5px rgba(196,30,58,0.55), 0 0 12px rgba(196,30,58,0.24)" }}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
         </div>
 
-        {/* Tabs — underline slide */}
-        <div className="flex flex-wrap gap-1" style={{ borderBottom: "1px solid rgba(196,30,58,0.2)" }}>
+        {/* Tabs */}
+        <div className="flex flex-wrap gap-3">
           {tabs.map((t) => {
             const active = tab === t.id;
             return (
@@ -261,15 +331,13 @@ export default function SearchPage() {
                 key={t.id}
                 type="button"
                 onClick={() => setTab(t.id)}
-                className="relative flex items-center gap-2 px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] transition-colors"
-                style={active ? neonText : neonMute}
+                className={`group relative flex items-center gap-2 overflow-visible rounded-[12px] px-5 py-3 text-[12px] font-semibold uppercase tracking-[0.14em] transition-all duration-300 premium-nav-item-glow ${active ? 'premium-nav-item-glow-active bg-[rgba(15,12,30,0.8)] shadow-[0_0_20px_rgba(236,72,153,0.2)] text-white' : 'bg-white/5 border border-white/10 text-white/50 hover:text-white'}`}
               >
-                {t.icon}
-                {t.label}
-                <Pill tone={active ? "accent" : "neutral"}>{t.count}</Pill>
-                {active && (
-                  <span aria-hidden className="absolute inset-x-2 -bottom-px h-[2px]" style={{ background: "rgba(196,30,58,0.92)", boxShadow: "0 0 4px rgba(196,30,58,0.34)" }} />
-                )}
+                <div className="relative z-10 flex items-center gap-2">
+                  {t.icon}
+                  {t.label}
+                  <Pill tone={active ? "accent" : "neutral"}>{t.count}</Pill>
+                </div>
               </button>
             );
           })}
@@ -295,34 +363,17 @@ export default function SearchPage() {
                 <button
                   key={f.role}
                   onClick={() => setRoleFilter(f.role)}
-                  className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] transition-all duration-200"
-                  style={isActive ? {
-                    background: "rgba(196,30,58,0.18)",
-                    border: "1px solid rgba(196,30,58,0.7)",
-                    boxShadow: "0 0 5px rgba(196,30,58,0.16)",
-                    color: "#ffffff",
-                    textShadow: "0 0 4px rgba(196,30,58,0.28)",
-                  } : {
-                    background: "rgba(255,255,255,0.03)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    color: "rgba(255,255,255,0.6)",
-                    textShadow: "0 0 2px rgba(196,30,58,0.2)",
-                  }}
+                  className={`group relative flex shrink-0 items-center gap-1.5 overflow-visible rounded-[12px] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] transition-all duration-300 premium-nav-item-glow ${isActive ? 'premium-nav-item-glow-active bg-[rgba(15,12,30,0.8)] shadow-[0_0_20px_rgba(236,72,153,0.2)] text-white' : 'bg-white/5 border border-white/10 text-white/50 hover:text-white'}`}
                 >
-                  {f.icon}
-                  {f.label}
-                  <span
-                    className="rounded-full px-1.5 text-[10px] tabular-nums"
-                    style={isActive ? {
-                      background: "rgba(196,30,58,0.25)",
-                      color: "#ffffff",
-                    } : {
-                      background: "rgba(255,255,255,0.05)",
-                      color: "rgba(255,255,255,0.45)",
-                    }}
-                  >
-                    {count}
-                  </span>
+                  <div className="relative z-10 flex items-center gap-1.5">
+                    {f.icon}
+                    {f.label}
+                    <span
+                      className={`rounded-full px-1.5 text-[10px] tabular-nums ${isActive ? 'bg-[rgba(196,30,58,0.3)] text-white' : 'bg-white/10 text-white/50'}`}
+                    >
+                      {count}
+                    </span>
+                  </div>
                 </button>
               );
             })}
@@ -385,9 +436,17 @@ export default function SearchPage() {
       {tab === "cracked" && (
         <div className="space-y-4">
           <p className="text-[12.5px]" style={neonDim}>
-            {q ? `${crackedResults.length} შედეგი "${query}"-სთვის` : `სულ ${crackedResults.length} cracked game`}
+            {loadingCrackedGames
+              ? "იტვირთება..."
+              : q
+                ? `${crackedResults.length} შედეგი "${query}"-სთვის`
+                : `სულ ${crackedResults.length} თამაში`}
           </p>
-          {crackedResults.length === 0 ? (
+          {loadingCrackedGames ? (
+            <div className="flex items-center justify-center py-16 text-[var(--gr-text-mute)]">
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" /> იტვირთება...
+            </div>
+          ) : crackedResults.length === 0 ? (
             <EmptyResult label="Cracked game ვერ მოიძებნა" />
           ) : (
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -411,13 +470,11 @@ export default function SearchPage() {
 
 function EmptyResult({ label }: { label: string }) {
   return (
-    <div
-      className="relative border border-[var(--gr-border-hi)] bg-[var(--gr-bg-1)] py-16 text-center"
-      style={{ clipPath: "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)" }}
-    >
-      <span aria-hidden className="absolute left-0 top-0 h-[2px] w-full bg-[var(--gr-grad-violet)]" />
-      <Search className="mx-auto mb-3 h-8 w-8 opacity-70" style={{ color: "#ffffff", filter: "drop-shadow(0 0 6px rgba(196,30,58,0.9))" }} />
-      <p className="text-[13.5px]" style={{ color: "rgba(255,255,255,0.75)", textShadow: "0 0 6px rgba(196,30,58,0.7)" }}>{label}</p>
+    <div className="relative w-full overflow-visible rounded-[20px] bg-[rgba(15,12,30,0.8)] py-16 text-center backdrop-blur-md premium-card-glow-tight group">
+      <div className="relative z-10">
+        <Search className="mx-auto mb-3 h-8 w-8 opacity-70" style={{ color: "#ffffff", filter: "drop-shadow(0 0 6px rgba(196,30,58,0.9))" }} />
+        <p className="text-[13.5px]" style={{ color: "rgba(255,255,255,0.75)", textShadow: "0 0 6px rgba(196,30,58,0.7)" }}>{label}</p>
+      </div>
     </div>
   );
 }

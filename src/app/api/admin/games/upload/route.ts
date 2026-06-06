@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getIsAdmin } from "@/lib/auth";
+import { requirePermission, logAdminAction } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: NextRequest) {
-  const isAdmin = await getIsAdmin().catch(() => false);
-  if (!isAdmin) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  const auth = await requirePermission("manage_content");
+  if (!auth.ok) {
+    return NextResponse.json(
+      { error: auth.status === 401 ? "Unauthorized" : "Forbidden" },
+      { status: auth.status },
+    );
+  }
 
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
@@ -23,5 +28,6 @@ export async function POST(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const { data: { publicUrl } } = admin.storage.from("site_uploads").getPublicUrl(path);
+  await logAdminAction({ actorId: auth.userId, action: "content.game.asset_upload", targetType: "storage", targetId: path });
   return NextResponse.json({ url: publicUrl });
 }

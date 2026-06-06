@@ -42,10 +42,19 @@ const loadoutValueSchema = z.preprocess(
   z.string().trim().min(1).max(120).optional(),
 );
 
+const loadoutWeaponsSchema = z.preprocess((value) => {
+  if (!Array.isArray(value)) return undefined;
+
+  return value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}, z.array(z.string().min(1).max(120)).optional());
+
 const loadoutSchema = z.object({
   combo: loadoutValueSchema,
   character: loadoutValueSchema,
-  weapons: z.array(z.string().trim().min(1).max(120)).max(4).optional(),
+  weapons: loadoutWeaponsSchema,
   vehicle: loadoutValueSchema,
   lobby: loadoutValueSchema,
   effect: loadoutValueSchema,
@@ -95,6 +104,8 @@ export function normalizeLobbyLoadout(
   input: unknown,
   allowedIds: AllowedLoadoutIds = {},
 ): Required<LoadoutData> {
+  const rawInput =
+    typeof input === "object" && input !== null ? (input as Record<string, unknown>) : null;
   const parsed = loadoutSchema.safeParse(input);
   const candidate = parsed.success ? parsed.data : {};
 
@@ -106,7 +117,8 @@ export function normalizeLobbyLoadout(
   const allowedEffects = buildAllowedIds(BASE_ALLOWED_IDS.effect, allowedIds.effectIds);
   const allowedNameCards = buildAllowedIds(BASE_ALLOWED_IDS.nameCard, allowedIds.nameCardIds);
 
-  const legacyWeapon = (candidate as any).weapon;
+  const legacyWeapon =
+    rawInput && typeof rawInput.weapon === "string" ? rawInput.weapon.trim() : undefined;
   let candidateWeapons = candidate.weapons;
   if (!candidateWeapons && typeof legacyWeapon === "string") {
     candidateWeapons = [legacyWeapon];

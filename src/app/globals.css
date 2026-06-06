@@ -278,32 +278,126 @@
 }
 
 .pubg-loadout-card {
-  --huashu-purple: rgba(139, 92, 246, 0.15);
-  --huashu-blue: rgba(14, 165, 233, 0.15);
-  --huashu-red: rgba(239, 68, 68, 0.08);
-  --huashu-bg: rgba(10, 8, 20, 0.75);
+  --huashu-purple: rgba(0, 208, 255, 0.15);
+  --huashu-blue: rgba(59, 130, 246, 0.15);
+  --huashu-red: rgba(255, 255, 255, 0.08);
+  --huashu-bg: rgba(10, 8, 20, 0.15);
   
-  --huashu-border-purple: rgba(167, 139, 250, 0.8);
-  --huashu-border-blue: rgba(56, 189, 248, 0.8);
+  --huashu-border-purple: rgba(0, 208, 255, 0.8);
+  --huashu-border-blue: rgba(59, 130, 246, 0.8);
   
-  --huashu-glow-purple: rgba(139, 92, 246, 0.18);
-  --huashu-glow-blue: rgba(14, 165, 233, 0.12);
-  --huashu-glow-purple-hover: rgba(139, 92, 246, 0.45);
-  --huashu-glow-blue-hover: rgba(14, 165, 233, 0.35);
+  --glow-cyan: rgba(0, 208, 255, 0.4);
+  --glow-uv: rgba(138, 43, 226, 0.4);
+  --glow-red: rgba(255, 0, 60, 0.3);
+
+  --glow-cyan-hover: rgba(0, 208, 255, 0.8);
+  --glow-uv-hover: rgba(138, 43, 226, 0.8);
+  --glow-red-hover: rgba(255, 0, 60, 0.6);
   
   position: relative;
   border-radius: 16px;
-  background: var(--huashu-bg);
-  backdrop-filter: blur(16px);
-  overflow: hidden;
-  box-shadow: 
-    0 8px 32px -8px rgba(0, 0, 0, 0.7),
-    0 0 15px -3px var(--huashu-glow-purple),
-    0 0 10px -5px var(--huashu-glow-blue),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  background: rgba(10, 8, 20, 0.05);
   transform: rotateX(0deg) rotateY(0deg) translateZ(0);
   transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+@keyframes text-gradient-pan {
+  0% { background-position: 0% center; }
+  100% { background-position: -200% center; }
+}
+
+.text-neon-animated {
+  background: linear-gradient(
+    90deg,
+    #0044ff,
+    #8a2be2,
+    #ff003c,
+    #0044ff,
+    #8a2be2
+  );
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: text-gradient-pan 8s linear infinite;
+  display: inline-block;
+}
+
+.group:hover .text-neon-animated,
+.text-neon-animated:hover {
+  animation: text-gradient-pan 3s linear infinite;
+  filter: drop-shadow(0 0 12px rgba(138, 43, 226, 0.5));
+}
+
+.bg-neon-animated {
+  background: linear-gradient(
+    90deg,
+    #0044ff,
+    #8a2be2,
+    #ff003c,
+    #0044ff,
+    #8a2be2
+  );
+  background-size: 200% auto;
+  animation: text-gradient-pan 8s linear infinite;
+}
+
+@property --border-angle {
+  syntax: '<angle>';
+  inherits: true;
+  initial-value: 0deg;
+}
+
+@keyframes border-rotate {
+  0% { --border-angle: 0deg; }
+  100% { --border-angle: 360deg; }
+}
+
+@keyframes border-pan-loop {
+  0% { background-position: 0% 50%; }
+  100% { background-position: -200% 50%; }
+}
+
+/* Base properties for both glow layers */
+.pubg-loadout-card::before,
+.pubg-loadout-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(from var(--border-angle), #0044ff, #8a2be2, #ff003c, #0044ff);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: opacity 0.25s ease, filter 0.25s ease;
+  animation: border-rotate 8s linear infinite;
+  /* Keep ring thickness stable so hover cannot leave an inner band. */
+  padding: 3px;
+}
+
+/* The Halo (Wide blurred glow) */
+.pubg-loadout-card::before {
+  filter: blur(12px);
+  opacity: 0.3;
+  z-index: 10;
+}
+
+/* The Core (Tight bright tube) */
+.pubg-loadout-card::after {
+  filter: blur(3px);
+  opacity: 0.5;
+  z-index: 11;
+}
+
+.pubg-loadout-card--free-game::before,
+.pubg-loadout-card--free-game::after {
+  inset: -6px;
+  padding: 6px;
+  border-radius: 22px;
 }
 
 .pubg-loadout-link[data-variant="royale"] .pubg-loadout-card {
@@ -312,10 +406,10 @@
   --huashu-border-purple: rgba(245, 158, 11, 0.8);
   --huashu-border-blue: rgba(167, 139, 250, 0.8);
   
-  --huashu-glow-purple: rgba(217, 119, 6, 0.18);
-  --huashu-glow-blue: rgba(139, 92, 246, 0.12);
-  --huashu-glow-purple-hover: rgba(217, 119, 6, 0.45);
-  --huashu-glow-blue-hover: rgba(139, 92, 246, 0.35);
+  --huashu-glow-purple: rgba(217, 119, 6, 0.5);
+  --huashu-glow-blue: rgba(139, 92, 246, 0.4);
+  --huashu-glow-purple-hover: rgba(217, 119, 6, 0.9);
+  --huashu-glow-blue-hover: rgba(139, 92, 246, 0.8);
 }
 
 .pubg-loadout-link[data-variant="room"] .pubg-loadout-card {
@@ -324,10 +418,10 @@
   --huashu-border-purple: rgba(56, 189, 248, 0.8);
   --huashu-border-blue: rgba(167, 139, 250, 0.8);
   
-  --huashu-glow-purple: rgba(14, 165, 233, 0.18);
-  --huashu-glow-blue: rgba(139, 92, 246, 0.12);
-  --huashu-glow-purple-hover: rgba(14, 165, 233, 0.45);
-  --huashu-glow-blue-hover: rgba(139, 92, 246, 0.35);
+  --huashu-glow-purple: rgba(14, 165, 233, 0.5);
+  --huashu-glow-blue: rgba(139, 92, 246, 0.4);
+  --huashu-glow-purple-hover: rgba(14, 165, 233, 0.9);
+  --huashu-glow-blue-hover: rgba(139, 92, 246, 0.8);
 }
 
 .pubg-loadout-link[data-variant="support"] .pubg-loadout-card {
@@ -336,26 +430,10 @@
   --huashu-border-purple: rgba(74, 222, 128, 0.8);
   --huashu-border-blue: rgba(129, 140, 248, 0.8);
   
-  --huashu-glow-purple: rgba(22, 163, 74, 0.18);
-  --huashu-glow-blue: rgba(79, 70, 229, 0.12);
-  --huashu-glow-purple-hover: rgba(22, 163, 74, 0.45);
-  --huashu-glow-blue-hover: rgba(79, 70, 229, 0.35);
-}
-
-.pubg-loadout-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1.5px;
-  background: linear-gradient(135deg, var(--huashu-border-purple), var(--huashu-border-blue), rgba(239, 68, 68, 0.3));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0.85;
-  transition: opacity 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), padding 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
-  z-index: 10;
-  pointer-events: none;
+  --huashu-glow-purple: rgba(22, 163, 74, 0.5);
+  --huashu-glow-blue: rgba(79, 70, 229, 0.4);
+  --huashu-glow-purple-hover: rgba(22, 163, 74, 0.9);
+  --huashu-glow-blue-hover: rgba(79, 70, 229, 0.8);
 }
 
 .pubg-loadout-field {
@@ -375,31 +453,269 @@
   );
   background-size: 250% 250%;
   animation: gradient-pan 12s ease-in-out infinite;
-  opacity: 0.6;
+  opacity: 0.15;
   transition: opacity 0.5s ease;
 }
 
-/* Hover effects */
-.pubg-loadout-link:hover .pubg-loadout-card,
-.pubg-loadout-link:focus-visible .pubg-loadout-card {
-  transform: translateY(-6px) scale(1.02) rotateX(2deg) rotateY(-1deg);
-  background: rgba(14, 11, 26, 0.9);
-  box-shadow: 
-    0 24px 48px -12px rgba(0, 0, 0, 0.85),
-    0 0 35px -5px var(--huashu-glow-purple-hover),
-    0 0 25px -8px var(--huashu-glow-blue-hover),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.1);
+.pubg-loadout-link:hover > .pubg-loadout-card,
+.pubg-loadout-link:focus-visible > .pubg-loadout-card {
+  background: rgba(14, 11, 26, 0.3);
+  box-shadow:
+    0 30px 60px -15px rgba(0, 0, 0, 0.9),
+    0 0 12px rgba(0, 68, 255, 0.45),
+    0 0 28px rgba(138, 43, 226, 0.4),
+    0 0 48px rgba(255, 0, 60, 0.3);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
-.pubg-loadout-link:hover .pubg-loadout-card::before,
-.pubg-loadout-link:focus-visible .pubg-loadout-card::before {
+.pubg-loadout-link:hover > .pubg-loadout-card::before,
+.pubg-loadout-link:focus-visible > .pubg-loadout-card::before,
+.pubg-loadout-link:hover > .pubg-loadout-card::after,
+.pubg-loadout-link:focus-visible > .pubg-loadout-card::after {
+  animation: border-rotate 3s linear infinite; /* Speeds up dramatically on hover */
+}
+
+.pubg-loadout-link:hover > .pubg-loadout-card::before,
+.pubg-loadout-link:focus-visible > .pubg-loadout-card::before {
   opacity: 1;
-  padding: 2.2px;
+  filter: blur(16px);
 }
 
-.pubg-loadout-link:hover .pubg-loadout-field,
-.pubg-loadout-link:focus-visible .pubg-loadout-field {
+.pubg-loadout-link:hover > .pubg-loadout-card::after,
+.pubg-loadout-link:focus-visible > .pubg-loadout-card::after {
+  opacity: 1;
+  filter: blur(2px);
+}
+
+/* Carousel wrapper — same hover treatment as .pubg-loadout-link, but the carousel
+   has no link wrapper, so it needs its own hover trigger. Base ring geometry,
+   transitions and box-shadow are inherited from the shared .pubg-loadout-card rules. */
+.pubg-carousel-wrap:hover > .pubg-loadout-card::before,
+.pubg-carousel-wrap:hover > .pubg-loadout-card::after {
+  animation: border-rotate 3s linear infinite;
+}
+
+.pubg-carousel-wrap:hover > .pubg-loadout-card {
+  box-shadow:
+    0 0 12px rgba(0, 68, 255, 0.45),
+    0 0 28px rgba(138, 43, 226, 0.4),
+    0 0 48px rgba(255, 0, 60, 0.3);
+}
+
+.pubg-carousel-wrap:hover > .pubg-loadout-card::before {
+  opacity: 1;
+  filter: blur(16px);
+}
+
+.pubg-carousel-wrap:hover > .pubg-loadout-card::after {
+  opacity: 1;
+  filter: blur(2px);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   .neon-frame — reusable carousel design language for any card.
+   Wrap an inner content div; rings live in this element's padding.
+   Hover is driven by an ancestor `.group:hover` (the `group block`
+   Link wrapper these cards already use).
+   ───────────────────────────────────────────────────────────── */
+.neon-frame {
+  position: relative;
+  isolation: isolate;
+  padding: 3px;
+  transition: box-shadow 0.25s ease;
+}
+
+.neon-frame::before,
+.neon-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(from var(--border-angle), #0044ff, #8a2be2, #ff003c, #0044ff);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: opacity 0.25s ease, filter 0.25s ease;
+  animation: border-rotate 8s linear infinite;
+  padding: 3px;
+}
+
+.neon-frame::before { filter: blur(12px); opacity: 0.3; z-index: 0; }
+.neon-frame::after  { filter: blur(3px);  opacity: 0.5; z-index: 0; }
+
+/* Keep inner content above the rings */
+.neon-frame > * { position: relative; z-index: 1; }
+
+/* Hover trigger works whether `group` sits on an ancestor or on .neon-frame itself */
+.group:hover .neon-frame::before,
+.group:hover .neon-frame::after,
+.neon-frame:hover::before,
+.neon-frame:hover::after {
+  animation: border-rotate 3s linear infinite;
+}
+
+.group:hover .neon-frame::before,
+.neon-frame:hover::before { opacity: 1; filter: blur(16px); }
+
+.group:hover .neon-frame::after,
+.neon-frame:hover::after  { opacity: 1; filter: blur(2px); padding: 6px; }
+
+.group:hover .neon-frame,
+.neon-frame:hover {
+  box-shadow:
+    0 0 12px rgba(0, 68, 255, 0.45),
+    0 0 28px rgba(138, 43, 226, 0.4),
+    0 0 48px rgba(255, 0, 60, 0.3);
+}
+
+/* Overlay variant — for panels whose inner content has opaque, edge-to-edge
+   bands (e.g. chat header/footer) that would otherwise paint over the ring.
+   The sharp core ring is raised above the inner content so it always stays on
+   top at the edges and corners; the blurred halo stays behind. */
+.neon-frame--overlay::after { z-index: 2; }
+.neon-frame--overlay > * { z-index: 1; }
+
+/* ── Neon rail ── always-on rotating conic ring for nav bars.
+   Same moving palette as .neon-frame, but no hover gating (a nav bar isn't a
+   hover target as a unit) and the ring renders above the bar's own fill so the
+   bar background/border never covers it. Apply to a positioned element; the
+   element keeps its own background, the ring hugs its border-radius. */
+.neon-rail { position: relative; isolation: isolate; }
+
+.neon-rail::before,
+.neon-rail::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(from var(--border-angle), #0044ff, #8a2be2, #ff003c, #0044ff);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: border-rotate 8s linear infinite;
+  padding: 1.5px;
+  z-index: 3;
+}
+
+/* Blurred halo gives the neon glow; sharp line keeps the edge crisp */
+.neon-rail::before { filter: blur(9px); opacity: 0.7; }
+.neon-rail::after  { filter: blur(0.4px); opacity: 0.95; }
+
+/* Keep the bar's own content above the ring's stacking context */
+.neon-rail > * { position: relative; z-index: 4; }
+
+/* ── Neon button ── rotating conic ring for CTA buttons. Brightens (never
+   darkens) on hover. Apply to a positioned, rounded element with NO clipPath
+   and NO overflow-hidden (the halo must be able to bleed outside). */
+.neon-btn { position: relative; isolation: isolate; }
+
+.neon-btn::before,
+.neon-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(from var(--border-angle), #0044ff, #8a2be2, #ff003c, #0044ff);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: border-rotate 8s linear infinite;
+  padding: 1.5px;
+  z-index: 3;
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+.neon-btn::before { filter: blur(6px); opacity: 0.55; }
+.neon-btn::after  { filter: blur(0.4px); opacity: 0.9; }
+
+.neon-btn:hover::before { opacity: 0.9; filter: blur(8px); }
+.neon-btn:hover::after  { opacity: 1; }
+
+.neon-btn > * { position: relative; z-index: 4; }
+
+/* Chat message bubbles: compact version of the site's loadout card language. */
+.msg-bubble {
+  --msg-accent: var(--gr-cyan-glow);
+  --msg-accent-soft: rgba(0, 230, 255, 0.16);
+  --msg-accent-faint: rgba(0, 230, 255, 0.07);
+  position: relative;
+  isolation: isolate;
+  border: 1px solid color-mix(in srgb, var(--msg-accent) 36%, transparent);
+  background:
+    linear-gradient(135deg, var(--msg-accent-soft) 0%, rgba(7, 7, 16, 0.74) 38%, var(--msg-accent-faint) 100%),
+    rgba(2, 2, 4, 0.82);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.07) inset,
+    0 0 18px color-mix(in srgb, var(--msg-accent) 20%, transparent),
+    0 14px 28px -18px rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(14px);
+}
+
+.msg-bubble::before,
+.msg-bubble::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.msg-bubble::before {
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--msg-accent) 24%, transparent), transparent 32%);
+  opacity: 0.85;
+}
+
+.msg-bubble::after {
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--msg-accent), color-mix(in srgb, var(--msg-accent) 12%, transparent));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--msg-accent) 58%, transparent);
+}
+
+.msg-bubble > * {
+  position: relative;
+  z-index: 1;
+}
+
+.msg-bubble--mine {
+  --msg-accent: var(--gr-violet-hi);
+  --msg-accent-soft: rgba(255, 30, 50, 0.19);
+  --msg-accent-faint: rgba(255, 107, 53, 0.08);
+}
+
+.msg-bubble--theirs {
+  --msg-accent: var(--gr-cyan-glow);
+  --msg-accent-soft: rgba(0, 230, 255, 0.12);
+  --msg-accent-faint: rgba(59, 130, 246, 0.08);
+}
+
+.msg-bubble--mine::after {
+  right: 0;
+}
+
+.msg-bubble--theirs::after {
+  left: 0;
+}
+
+.msg-bubble--compact {
+  backdrop-filter: blur(10px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 0 12px color-mix(in srgb, var(--msg-accent) 16%, transparent),
+    0 10px 22px -18px rgba(0, 0, 0, 0.92);
+}
+
+.pubg-loadout-link:hover > .pubg-loadout-card > .pubg-loadout-field,
+.pubg-loadout-link:focus-visible > .pubg-loadout-card > .pubg-loadout-field {
   opacity: 1;
   background: linear-gradient(
     135deg,
@@ -447,6 +763,266 @@
 
 .pubg-loadout-link:hover .pubg-loadout-code {
   color: rgba(255, 255, 255, 0.5);
+}
+
+/* PremiumCard Glow Classes */
+.premium-card-glow::before,
+.premium-card-glow::after,
+.premium-card-glow-tight::before,
+.premium-card-glow-tight::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(from var(--border-angle), #0044ff, #8a2be2, #ff003c, #0044ff);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  /* padding snaps instantly (no transition) so inner thickness appears with no lag */
+  transition: opacity 0.25s ease, filter 0.25s ease;
+  animation: border-rotate 8s linear infinite;
+}
+
+
+/* PremiumCard Normal Glow */
+/* halo + core share the same inset so they read as ONE frame, not two offset lines */
+.premium-card-glow::before {
+  padding: 3px;
+  filter: blur(12px);
+  opacity: 0.3;
+  z-index: 1;
+}
+.premium-card-glow::after {
+  padding: 3px;
+  filter: blur(3px);
+  opacity: 0.5;
+  z-index: 2;
+}
+.group:hover .premium-card-glow::before,
+.group:hover .premium-card-glow::after,
+.group:hover .premium-card-glow-tight::before,
+.group:hover .premium-card-glow-tight::after {
+  animation: border-rotate 3s linear infinite; /* Speeds up on hover */
+}
+.group:hover .premium-card-glow::before {
+  opacity: 1;
+  filter: blur(16px);
+}
+.group:hover .premium-card-glow::after {
+  opacity: 1;
+  filter: blur(2px);
+  padding: 6px; /* inner side doubles, outer edge fixed */
+}
+
+/* PremiumCard Tight Glow */
+.premium-card-glow-tight::before {
+  padding: 1.5px;
+  filter: blur(8px);
+  opacity: 0.6;
+  z-index: 1;
+}
+.premium-card-glow-tight::after {
+  padding: 1.5px;
+  filter: blur(2px);
+  opacity: 0.6;
+  z-index: 2;
+}
+.group:hover .premium-card-glow-tight::before {
+  opacity: 1;
+  filter: blur(10px);
+  padding: 3px;
+}
+.group:hover .premium-card-glow-tight::after {
+  opacity: 1;
+  filter: blur(1px);
+  padding: 3px;
+}
+
+.group:hover .player-card-stable.premium-card-glow-tight::before {
+  padding: 1.5px;
+  filter: blur(8px);
+}
+
+.group:hover .player-card-stable.premium-card-glow-tight::after {
+  padding: 1.5px;
+  filter: blur(2px);
+}
+
+/* Outer neon spill on hover — same as the carousel design language */
+.premium-card-glow,
+.premium-card-glow-tight {
+  transition: box-shadow 0.25s ease;
+}
+.group:hover .premium-card-glow,
+.group:hover .premium-card-glow-tight {
+  box-shadow:
+    0 0 12px rgba(0, 68, 255, 0.45),
+    0 0 28px rgba(138, 43, 226, 0.4),
+    0 0 48px rgba(255, 0, 60, 0.3);
+}
+
+/* Premium Nav Item Glow */
+.premium-nav-item-glow::before,
+.premium-nav-item-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(from var(--border-angle), #0044ff, #8a2be2, #ff003c, #0044ff);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: all 0.4s ease;
+  animation: border-rotate 8s linear infinite;
+  opacity: 0;
+}
+
+.premium-nav-item-glow::before {
+  padding: 3px;
+  filter: blur(8px);
+}
+
+.premium-nav-item-glow::after {
+  padding: 1.5px;
+  filter: blur(2px);
+}
+
+/* Active State always glows slightly, glows brighter on hover */
+.premium-nav-item-glow-active::before,
+.premium-nav-item-glow-active::after {
+  opacity: 0.4;
+}
+
+.premium-nav-item-glow-active::before {
+  filter: blur(6px);
+}
+
+/* Slide-inspired post surfaces */
+.gr-slide-surface {
+  position: relative;
+  overflow: hidden;
+  border-radius: 28px;
+  padding: 1.5px;
+  background:
+    linear-gradient(135deg, rgba(0, 208, 255, 0.88) 0%, rgba(102, 74, 255, 0.74) 48%, rgba(255, 30, 50, 0.88) 100%);
+  box-shadow:
+    0 0 0 1px rgba(186, 230, 253, 0.12),
+    0 0 44px rgba(0, 208, 255, 0.12),
+    0 28px 70px rgba(0, 0, 0, 0.55);
+}
+
+.gr-slide-surface::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(0, 208, 255, 0.15), transparent 32%),
+    radial-gradient(circle at 84% 100%, rgba(255, 30, 50, 0.16), transparent 30%),
+    linear-gradient(180deg, rgba(14, 18, 36, 0.92) 0%, rgba(7, 10, 23, 0.97) 52%, rgba(5, 7, 18, 0.99) 100%);
+  pointer-events: none;
+}
+
+.gr-slide-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(214, 244, 255, 0.16);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 1px 18px rgba(255, 255, 255, 0.03);
+  pointer-events: none;
+}
+
+.gr-slide-inner {
+  position: relative;
+  z-index: 1;
+  border-radius: 26px;
+}
+
+.gr-slide-kicker {
+  color: rgba(147, 232, 255, 0.88);
+  text-shadow: 0 0 12px rgba(0, 208, 255, 0.34);
+}
+
+.gr-slide-title {
+  color: #e7fbff;
+  text-shadow:
+    0 0 14px rgba(165, 241, 255, 0.3),
+    0 0 28px rgba(0, 208, 255, 0.16);
+}
+
+.gr-slide-body {
+  color: rgba(228, 239, 255, 0.84);
+}
+
+.gr-slide-body a {
+  color: #8fe7ff;
+  text-shadow: 0 0 10px rgba(0, 208, 255, 0.24);
+}
+
+.gr-slide-chip {
+  border: 1px solid rgba(123, 92, 255, 0.28);
+  background: linear-gradient(180deg, rgba(17, 22, 46, 0.86), rgba(11, 14, 31, 0.94));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 0 20px rgba(0, 208, 255, 0.08);
+}
+
+.gr-slide-action {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgba(123, 92, 255, 0.38);
+  background:
+    linear-gradient(180deg, rgba(22, 18, 42, 0.94), rgba(10, 10, 24, 0.98));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 0 0 1px rgba(0, 208, 255, 0.12),
+    0 0 26px rgba(93, 52, 255, 0.14);
+}
+
+.gr-slide-action::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(0, 208, 255, 0.12), transparent 36%, transparent 64%, rgba(255, 30, 50, 0.1));
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.gr-slide-divider {
+  border-color: rgba(148, 198, 255, 0.12);
+}
+
+.gr-slide-media {
+  border: 1px solid rgba(146, 202, 255, 0.14);
+  background: rgba(4, 8, 19, 0.82);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 0 20px rgba(0, 208, 255, 0.05);
+}
+
+/* Hover States */
+.group:hover .premium-nav-item-glow::before,
+.group:hover .premium-nav-item-glow::after {
+  opacity: 1;
+  animation: border-rotate 3s linear infinite;
+}
+
+.group:hover .premium-nav-item-glow::before {
+  filter: blur(10px);
+  padding: 4px;
+}
+
+.group:hover .premium-nav-item-glow::after {
+  filter: blur(1px);
+  padding: 1.5px;
 }
 
 .pubg-loadout-title {
@@ -522,6 +1098,16 @@
 
 .gr-has-webview-side-nav .gr-site-header-root {
   padding-right: 4.75rem;
+}
+
+.gr-route-conversation body {
+  overflow-x: hidden;
+}
+
+.gr-route-conversation body main {
+  min-width: 0;
+  overflow-x: clip;
+  padding-bottom: 0 !important;
 }
 
 /* Vertical light pillar slow sweep */
@@ -600,8 +1186,8 @@
   .gr-has-webview-side-nav body main {
     padding: 0 !important;
   }
-  .gr-site-header-root,
-  .gr-webview-side-nav-panel {
+  .gr-has-webview-side-nav .gr-site-header-root,
+  .gr-has-webview-side-nav .gr-webview-side-nav-panel {
     display: none !important;
   }
   
@@ -698,41 +1284,40 @@
 }
 
 .dark {
-  /* Gameroom v2 — global rebrand. Every shadcn surface (Card, Button, Badge…)
-     picks up the violet/magenta palette through these tokens, so we don't need
-     to per-page rewrite. Hex chosen to match --gr-* tokens exactly. */
-  --background: #08060F;          /* gr-bg-0 */
-  --foreground: #F5F2FF;          /* gr-text */
-  --card: #0E0B1A;                /* gr-bg-1 */
-  --card-foreground: #F5F2FF;
-  --popover: #0E0B1A;
-  --popover-foreground: #F5F2FF;
-  --primary: #8B5CF6;             /* gr-violet */
+  /* Gameroom v3 — Opera GX inspired: dark base, neon red/cyan accents,
+     aggressive gaming aesthetic. All shadcn surfaces inherit these tokens. */
+  --background: #020204;
+  --foreground: #E8EAF0;
+  --card: #070710;
+  --card-foreground: #E8EAF0;
+  --popover: #070710;
+  --popover-foreground: #E8EAF0;
+  --primary: #FF1E32;             /* neon red */
   --primary-foreground: #FFFFFF;
-  --secondary: #15102A;           /* gr-bg-2 */
-  --secondary-foreground: #F5F2FF;
-  --muted: #15102A;
-  --muted-foreground: #A99CC9;    /* gr-text-mute */
-  --accent: #C026D3;              /* gr-magenta */
-  --accent-foreground: #FFFFFF;
-  --destructive: oklch(0.62 0.22 22);   /* keep red for truly destructive */
+  --secondary: #0E0E16;
+  --secondary-foreground: #E8EAF0;
+  --muted: #0E0E16;
+  --muted-foreground: #7A7D8E;
+  --accent: #00E6FF;              /* cyan */
+  --accent-foreground: #0B0B0F;
+  --destructive: oklch(0.62 0.22 22);
   --destructive-foreground: #FFFFFF;
-  --border: rgba(168, 85, 247, 0.14);   /* gr-border — faint violet line */
-  --input: #15102A;
-  --ring: #A78BFA;                /* gr-violet-hi */
-  --chart-1: #8B5CF6;
-  --chart-2: #C026D3;
-  --chart-3: #F5A524;
-  --chart-4: #22D3EE;
-  --chart-5: #A78BFA;
-  --sidebar: #08060F;
-  --sidebar-foreground: #F5F2FF;
-  --sidebar-primary: #8B5CF6;
+  --border: rgba(255, 30, 50, 0.12);
+  --input: #0E0E16;
+  --ring: #FF1E32;
+  --chart-1: #FF1E32;
+  --chart-2: #00E6FF;
+  --chart-3: #A3E635;
+  --chart-4: #FF6B35;
+  --chart-5: #8B5CF6;
+  --sidebar: #020204;
+  --sidebar-foreground: #E8EAF0;
+  --sidebar-primary: #FF1E32;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #C026D3;
-  --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: rgba(168, 85, 247, 0.14);
-  --sidebar-ring: #A78BFA;
+  --sidebar-accent: #00E6FF;
+  --sidebar-accent-foreground: #0B0B0F;
+  --sidebar-border: rgba(255, 30, 50, 0.12);
+  --sidebar-ring: #FF1E32;
   --font-sans: var(--font-firago), var(--font-alk-sanet), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -752,41 +1337,39 @@
   --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
 
-  /* ===== Gameroom v2 design tokens — "CODX × Tier One" direction =====
-     Cinematic dark canvas, violet/magenta light leaks, amber secondary,
-     uppercase brutalist typography. Used by new pages (forum, games, home)
-     and primitives in src/components/ui/. Old surfaces migrate progressively. */
+  /* ===== Gameroom v3 — Opera GX gaming aesthetic =====
+     Dark canvas, neon red/cyan accents, aggressive angular feel.
+     Used by all pages and primitives in src/components/ui/. */
 
   /* canvas */
-  --gr-bg-0:       #08060F;   /* near-black, violet undertone */
-  --gr-bg-1:       #0E0B1A;   /* dark cards */
-  --gr-bg-2:       #15102A;   /* hover / inner panels */
-  --gr-bg-light:   #F1ECE6;   /* cream — light section inversion */
+  --gr-bg-0:       #020204;
+  --gr-bg-1:       #070710;
+  --gr-bg-2:       #0A0A12;
+  --gr-bg-light:   #F1ECE6;
   --gr-bg-light-2: #FFFFFF;
 
-  /* aliases for backward compat with earlier primitives (Pill, StatChip…) */
   --gr-bg-base:    var(--gr-bg-0);
   --gr-bg-elev-1:  var(--gr-bg-1);
   --gr-bg-elev-2:  var(--gr-bg-2);
 
   /* borders */
-  --gr-border:     rgba(168, 85, 247, 0.14);
-  --gr-border-hi:  rgba(168, 85, 247, 0.35);
+  --gr-border:     rgba(255, 30, 50, 0.12);
+  --gr-border-hi:  rgba(255, 30, 50, 0.30);
   --gr-divider-lt: rgba(10, 8, 20, 0.08);
 
-  /* text — shifted from violet-tinted near-white to cyan-tinted light blue */
-  --gr-text:       #DCEEFE;   /* bright light cyan (was #F5F2FF violet-tint) */
-  --gr-text-hi:    #BAE6FD;   /* slightly deeper cyan, for emphasis on dark covers */
-  --gr-text-mute:  #A99CC9;
-  --gr-text-dim:   #6B5F88;
+  /* text */
+  --gr-text:       #E8EAF0;
+  --gr-text-hi:    #FFFFFF;
+  --gr-text-mute:  #7A7D8E;
+  --gr-text-dim:   #4A4D5E;
   --gr-text-on-lt: #14101F;
 
   /* accents */
-  --gr-violet:     #8B5CF6;
-  --gr-violet-hi:  #A78BFA;
-  --gr-magenta:    #C026D3;
-  --gr-amber:      #A78BFA;
-  --gr-cyan-glow:  #22D3EE;
+  --gr-violet:     #FF1E32;    /* remapped: primary neon red */
+  --gr-violet-hi:  #FF4D5E;
+  --gr-magenta:    #00E6FF;    /* remapped: cyan accent */
+  --gr-amber:      #FF6B35;
+  --gr-cyan-glow:  #00E6FF;
 
   --tier-bronze:   #B87333;
   --tier-silver:   #C0C0C0;
@@ -797,21 +1380,20 @@
   --tier-ace:      #FF4D6D;
   --tier-conqueror: linear-gradient(135deg, #FF4D6D, #FFB300, #C44EFF);
 
-  /* aliases — keep older tone names working in Pill etc. */
   --gr-accent:     var(--gr-violet);
   --gr-accent-2:   var(--gr-amber);
   --gr-cyan:       var(--gr-cyan-glow);
   --gr-lime:       #A3E635;
 
   /* gradients */
-  --gr-grad-hero:   linear-gradient(135deg, #2A1056 0%, #08060F 60%);
-  --gr-grad-violet: linear-gradient(135deg, #8B5CF6 0%, #C026D3 100%);
-  --gr-grad-amber:  linear-gradient(135deg, #F5A524 0%, #FF6B35 100%);
-  --gr-grad-card:   linear-gradient(180deg, rgba(139, 92, 246, 0.08), rgba(139, 92, 246, 0) 70%);
+  --gr-grad-hero:   linear-gradient(135deg, #1A0A0A 0%, #0B0B0F 60%);
+  --gr-grad-violet: linear-gradient(135deg, #FF1E32 0%, #FF6B35 100%);
+  --gr-grad-amber:  linear-gradient(135deg, #FF6B35 0%, #FFB300 100%);
+  --gr-grad-card:   linear-gradient(180deg, rgba(255, 30, 50, 0.06), rgba(255, 30, 50, 0) 70%);
 
   /* glows */
-  --gr-glow-violet: 0 0 40px rgba(168, 85, 247, 0.45);
-  --gr-glow-amber:  0 0 30px rgba(245, 165, 36, 0.40);
+  --gr-glow-violet: 0 0 40px rgba(255, 30, 50, 0.35);
+  --gr-glow-amber:  0 0 30px rgba(255, 107, 53, 0.40);
 
   /* card shadow */
   --gr-card-shadow:
@@ -916,12 +1498,20 @@
   html {
     @apply font-sans antialiased;
     color-scheme: dark;
+    background-color: #020204;
   }
   body {
     @apply text-foreground;
-    background-color: var(--gr-bg-0);
+    background-color: transparent;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply tracking-tight;
+  }
+}
+
+/* Disable all animations on mobile to improve performance and save battery */
+@media (max-width: 639px) {
+  *, *::before, *::after {
+    animation: none !important;
   }
 }

@@ -4,15 +4,23 @@
 
 type Bucket = { count: number; reset: number };
 const buckets = new Map<string, Bucket>();
-let callsSinceCleanup = 0;
+let lastCleanup = Date.now();
+const CLEANUP_INTERVAL_MS = 60_000; // 1 minute
+const MAX_BUCKETS = 5000;
 
 function cleanupExpiredBuckets(now: number) {
-  callsSinceCleanup++;
-  if (callsSinceCleanup < 100) return;
-  callsSinceCleanup = 0;
+  const needsCleanup = (now - lastCleanup >= CLEANUP_INTERVAL_MS) || (buckets.size > MAX_BUCKETS);
+  if (!needsCleanup) return;
+  lastCleanup = now;
 
   for (const [key, bucket] of buckets) {
-    if (now > bucket.reset) buckets.delete(key);
+    if (now > bucket.reset) {
+      buckets.delete(key);
+    }
+  }
+
+  if (buckets.size > MAX_BUCKETS) {
+    buckets.clear();
   }
 }
 

@@ -5,15 +5,26 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSession } from "@/lib/auth";
 import { moderateText } from "@/lib/moderate";
-import { awardXp } from "@/lib/gamification";
+import { awardBonusXp } from "@/lib/gamification";
+import { createLogger } from "@/lib/logger";
+import {
+  LFG_DESCRIPTION_MAX_LENGTH,
+  LFG_SLOTS_DEFAULT,
+  LFG_SLOTS_MAX,
+  LFG_TITLE_MAX_LENGTH,
+  PROFILE_MEDIUM_TEXT_MAX_LENGTH,
+  PROFILE_SHORT_TEXT_MAX_LENGTH,
+} from "@/lib/constants";
+
+const logger = createLogger("lfg-new-actions");
 
 const createLfgSchema = z.object({
   gameSlug: z.string().min(1, "თამაში აუცილებელია"),
-  title: z.string().max(140, "სათაური ზედმეტად გრძელია").optional(),
-  description: z.string().max(2000, "აღწერა ზედმეტად გრძელია").optional(),
-  rank: z.string().max(64).optional(),
-  region: z.string().max(32).optional(),
-  slotsTotal: z.number().min(1).max(10).default(4),
+  title: z.string().max(LFG_TITLE_MAX_LENGTH, "სათაური ზედმეტად გრძელია").optional(),
+  description: z.string().max(LFG_DESCRIPTION_MAX_LENGTH, "აღწერა ზედმეტად გრძელია").optional(),
+  rank: z.string().max(PROFILE_MEDIUM_TEXT_MAX_LENGTH).optional(),
+  region: z.string().max(PROFILE_SHORT_TEXT_MAX_LENGTH).optional(),
+  slotsTotal: z.number().min(1).max(LFG_SLOTS_MAX).default(LFG_SLOTS_DEFAULT),
   voiceRequired: z.boolean().default(false),
   modes: z.array(z.string()).optional(),
   ranked: z.string().optional(),
@@ -46,7 +57,7 @@ export async function createLfgAction(
     description: optionalString("description"),
     rank: optionalString("rank"),
     region: optionalString("region"),
-    slotsTotal: Number(formData.get("slotsTotal") || 4),
+    slotsTotal: Number(formData.get("slotsTotal") || LFG_SLOTS_DEFAULT),
     voiceRequired: formData.get("voiceRequired") === "on",
     modes: formData.getAll("modes") as string[],
     ranked: optionalString("ranked"),
@@ -113,10 +124,10 @@ export async function createLfgAction(
     author_id: user.id,
     game_id: gameRow.id,
     game_slug: gameSlug,
-    title: title.slice(0, 140),
-    description: (body.description ?? "").trim().slice(0, 2000),
-    rank: body.rank?.trim().slice(0, 64) || null,
-    region: body.region?.trim().slice(0, 32) || null,
+    title: title.slice(0, LFG_TITLE_MAX_LENGTH),
+    description: (body.description ?? "").trim().slice(0, LFG_DESCRIPTION_MAX_LENGTH),
+    rank: body.rank?.trim().slice(0, PROFILE_MEDIUM_TEXT_MAX_LENGTH) || null,
+    region: body.region?.trim().slice(0, PROFILE_SHORT_TEXT_MAX_LENGTH) || null,
     slots_total: body.slotsTotal,
     voice_required: body.voiceRequired,
     mode: modeSlug,
@@ -125,11 +136,11 @@ export async function createLfgAction(
   const { error } = await supabase.from("lfg_posts").insert(row);
 
   if (error) {
-    console.error("[createLfgAction]", error);
+    logger.error("failed to create LFG post", { userId: user.id, gameSlug, error });
     return { success: false, message: "ლოკალის გამოქვეყნება ვერ მოხერხდა" };
   }
 
-  await awardXp(user.id, 5).catch(() => {});
+  await awardBonusXp(user.id, 5, "lfg:create-post");
 
   revalidatePath("/lfg");
   revalidatePath("/");

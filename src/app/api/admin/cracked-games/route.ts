@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { readJsonObject } from "@/lib/api/json";
 import { requirePermission, logAdminAction } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createLogger } from "@/lib/logger";
 
 type SysReqRow = { os: string; cpu: string; ram: string; gpu: string; storage: string };
 
@@ -24,6 +25,7 @@ type Body = {
 };
 
 const BLANK_REQ: SysReqRow = { os: "", cpu: "", ram: "", gpu: "", storage: "" };
+const logger = createLogger("api:admin-cracked-games");
 
 function slugify(s: string) {
   return s
@@ -76,7 +78,7 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) {
-    console.error("[/api/admin/cracked-games POST]", error);
+    logger.error("failed to upsert cracked game", { id, error });
     return NextResponse.json({ error: error.message, code: error.code }, { status: 500 });
   }
 

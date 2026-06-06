@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { logAdminAction, requirePermission } from "@/lib/admin";
 import { readJsonObject } from "@/lib/api/json";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createLogger } from "@/lib/logger";
 
 type MutePayload = {
   channelId?: string;
@@ -19,6 +20,7 @@ const MUTE_DURATIONS = {
 } as const;
 
 const DEFAULT_MUTE_KEY: keyof typeof MUTE_DURATIONS = "1d";
+const logger = createLogger("api:chat-mutes");
 
 function getActiveMute(rows: Array<{ id: string; expires_at: string | null }>) {
   const now = Date.now();
@@ -136,7 +138,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true, expiresAt, alreadyMuted, durationKey });
   } catch (error) {
-    console.error("[/api/chat/mutes POST]", error);
+    logger.error("failed to mute user", { actorId: auth.userId, channelId, username, displayName, error });
     return NextResponse.json({ error: "db_error" }, { status: 500 });
   }
 }

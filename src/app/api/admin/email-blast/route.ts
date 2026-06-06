@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { readJsonObject } from "@/lib/api/json";
 import { requirePermission, logAdminAction } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getServerEnv } from "@/lib/env";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("api:admin-email-blast");
 
 // Sends an email blast via Resend. Requires RESEND_API_KEY env var.
 // Falls back to a "stub" mode (logs & saves to audit) if no API key set.
@@ -31,7 +35,7 @@ export async function POST(request: NextRequest) {
   const { data: profiles } = await query;
   const emails = (profiles ?? []).map((p) => p.email).filter((e): e is string => !!e);
 
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = getServerEnv("RESEND_API_KEY");
   let sent = 0;
   let stubbed = false;
 
@@ -39,7 +43,7 @@ export async function POST(request: NextRequest) {
     stubbed = true;
   } else {
     // Send via Resend in batches
-    const fromAddress = process.env.RESEND_FROM ?? "Gameroom <noreply@gameroom.com.ge>";
+    const fromAddress = getServerEnv("RESEND_FROM") ?? "Gameroom <noreply@gameroom.com.ge>";
     for (let i = 0; i < emails.length; i += 50) {
       const batch = emails.slice(i, i + 50);
       try {
@@ -59,7 +63,7 @@ export async function POST(request: NextRequest) {
         });
         sent += batch.length;
       } catch (e) {
-        console.error("[email-blast batch]", e);
+        logger.error("email blast batch failed", { batchSize: batch.length, error: e });
       }
     }
   }
