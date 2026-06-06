@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/page-header";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 import { unstable_cache } from "next/cache";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "ჩემპიონატები" };
 
 const statusTone: Record<string, "online" | "amber" | "live" | "neutral"> = {
