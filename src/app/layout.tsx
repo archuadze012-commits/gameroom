@@ -31,14 +31,14 @@ const alkSanet = localFont({
 
 export const metadata: Metadata = {
   title: {
-    default: "Gameroom — ქართველი გეიმერების სახლი",
-    template: "%s · Gameroom",
+    default: "PLAYGAME.GE — ქართველი გეიმერების სახლი",
+    template: "%s · PLAYGAME.GE",
   },
   description:
     "იპოვე გუნდი, შეუერთდი ჩემპიონატებს და განიხილე საყვარელი თამაშები — eFootball, FIFA Mobile, PUBG, Warzone.",
   manifest: "/manifest.json",
   openGraph: {
-    title: "Gameroom",
+    title: "PLAYGAME.GE",
     description: "ქართველი გეიმერების სათემო პლატფორმა.",
     locale: "ka_GE",
     type: "website",
