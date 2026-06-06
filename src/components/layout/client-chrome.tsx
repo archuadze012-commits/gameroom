@@ -1,17 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { MobileTopNav } from "@/components/layout/mobile-top-nav";
 
 const WebViewSideNav = dynamic(() =>
   import("@/components/layout/webview-side-nav").then((m) => m.WebViewSideNav),
-  { ssr: false },
-);
-
-const PWAInstallFloater = dynamic(() =>
-  import("@/components/pwa-install-floater").then((m) => m.PWAInstallFloater),
   { ssr: false },
 );
 
@@ -25,13 +20,7 @@ export function ClientChrome({ canEdit = false }: { isAuthenticated?: boolean; c
   const isLobby = pathname?.endsWith("/lobby");
   const isConversation = /^\/messages\/[^/]+$/.test(pathname ?? "");
   const showAdminEditBar = canEdit && pathname !== "/";
-  const [showPwaPrompt, setShowPwaPrompt] = useState(false);
   const showRightSideNav = false;
-
-  useEffect(() => {
-    const pwaId = window.setTimeout(() => setShowPwaPrompt(true), 15_000);
-    return () => window.clearTimeout(pwaId);
-  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("gr-has-webview-side-nav", showRightSideNav);
@@ -52,7 +41,6 @@ export function ClientChrome({ canEdit = false }: { isAuthenticated?: boolean; c
   return (
     <>
       {showRightSideNav ? <WebViewSideNav canEdit={canEdit} /> : <MobileTopNav />}
-      {showPwaPrompt ? <PWAInstallFloater delay={0} locale="ka" /> : null}
       {showAdminEditBar ? <AdminEditBar /> : null}
     </>
   );
