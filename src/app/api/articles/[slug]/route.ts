@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getIsAdmin, getSession } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { requirePermission } from "@/lib/admin";
 import { deleteArticleBySlug, getArticleForEditor, updateArticleBySlug } from "@/lib/articles-db";
 
 const updateArticleSchema = z.object({
@@ -60,7 +61,11 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  const [{ slug }, user, isAdmin] = await Promise.all([params, getSession(), getIsAdmin()]);
+  const [{ slug }, user, contentAdmin] = await Promise.all([
+    params,
+    getSession(),
+    requirePermission("manage_content"),
+  ]);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -69,7 +74,7 @@ export async function DELETE(
   if (!article) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  if (article.author_id !== user.id && !isAdmin) {
+  if (article.author_id !== user.id && !contentAdmin.ok) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

@@ -8,7 +8,6 @@ import { listPublishedArticles } from "@/lib/articles-db";
 import { PenLine } from "lucide-react";
 
 export const metadata = { title: "სტატიები" };
-export const dynamic = "force-dynamic";
 
 export default async function ArticlesPage() {
   const supabase = await createSupabaseServerClient();
@@ -44,7 +43,7 @@ export default async function ArticlesPage() {
   const canWrite = ["admin", "moderator", "journalist"].includes(userRole);
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
       <div className="container relative mx-auto px-4 py-10 lg:py-14">
         <PageHeader

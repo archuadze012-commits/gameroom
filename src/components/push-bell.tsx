@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Bell, BellOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -14,14 +14,29 @@ function urlBase64ToUint8Array(base64String: string) {
   return out;
 }
 
-export function PushBell({ className }: { className?: string }) {
-  const [subscribed, setSubscribed] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const supported =
+const subscribeToPushSupport = () => () => {};
+
+export function getPushSupportServerSnapshot() {
+  return false;
+}
+
+export function getPushSupportSnapshot() {
+  return (
     typeof window !== "undefined" &&
     "serviceWorker" in navigator &&
     "PushManager" in window &&
-    "Notification" in window;
+    "Notification" in window
+  );
+}
+
+export function PushBell({ className }: { className?: string }) {
+  const [subscribed, setSubscribed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const supported = useSyncExternalStore(
+    subscribeToPushSupport,
+    getPushSupportSnapshot,
+    getPushSupportServerSnapshot,
+  );
 
   useEffect(() => {
     if (!supported) return;

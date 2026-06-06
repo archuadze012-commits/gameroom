@@ -43,6 +43,7 @@ interface Bolt {
   multiStrikeDelay: number; // frames before companion bolt spawns
   hue: number;     // HSV hue for the WebGL plasma visual
   xOffset: number; // horizontal position in shader space
+  startTime?: number; // time when bolt animation started
 }
 
 export function GlobalBackground() {
@@ -65,8 +66,10 @@ export function GlobalBackground() {
 
     // Decorative ambient: freeze entirely for users who prefer reduced motion
     // (a11y + perf), and never animate while the tab is backgrounded.
-    const prefersReduced =
-      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    const ua = window.navigator.userAgent;
+    const isWebview = /(gameroom|; wv\)|Electron|CEF|WebView|FBAN|FBAV|Instagram|Line\/|MicroMessenger|App)/i.test(ua) || 'ReactNativeWebView' in window || window.matchMedia('(display-mode: standalone)').matches || (/iPhone|iPad|iPod/i.test(ua) && !/Safari/i.test(ua));
+    const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform));
+    let prefersReduced = !isWebview && (window.matchMedia("(prefers-reduced-motion: reduce)").matches || isMobileOrTablet || window.innerWidth < 768);
 
     let animId = 0;
     let w = 0;
@@ -178,6 +181,23 @@ export function GlobalBackground() {
       canvas!.height = h * dpr;
       canvas!.style.width = w + "px";
       canvas!.style.height = h + "px";
+      
+      const ua = window.navigator.userAgent;
+      const isWebview = /(gameroom|; wv\)|Electron|CEF|WebView|FBAN|FBAV|Instagram|Line\/|MicroMessenger|App)/i.test(ua) || 'ReactNativeWebView' in window || window.matchMedia('(display-mode: standalone)').matches || (/iPhone|iPad|iPod/i.test(ua) && !/Safari/i.test(ua));
+      const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform));
+      prefersReduced = !isWebview && (window.matchMedia("(prefers-reduced-motion: reduce)").matches || isMobileOrTablet || window.innerWidth < 768);
+      if (prefersReduced) {
+        if (animId) {
+          cancelAnimationFrame(animId);
+          animId = 0;
+        }
+        const cctx = canvas?.getContext("2d");
+        if (cctx) cctx.clearRect(0, 0, canvas!.width, canvas!.height);
+      } else {
+        if (!animId) {
+          animId = requestAnimationFrame(draw);
+        }
+      }
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       if (!cloudCanvas && w > 0) {
@@ -265,7 +285,7 @@ export function GlobalBackground() {
       return {
         points, branches, drawProgress: 0, phase: "drawing" as const,
         strobeTimer: 0, strobeCount: 0,
-        maxStrobes: 3 + Math.floor(Math.random() * 3),
+        maxStrobes: 3,
         color, alpha: 0.2 + Math.random() * 0.15,
         width: 1.2 + Math.random() * 0.8,
         totalLen, segLens, multiStrikeDelay: 0,
@@ -291,6 +311,7 @@ export function GlobalBackground() {
     }
 
     function draw() {
+      if (prefersReduced) return; // Completely abort if reduced motion is active
       const c = ctx!;
       c.clearRect(0, 0, w, h);
       frameCount++;
@@ -312,7 +333,8 @@ export function GlobalBackground() {
           "200,20,60",   // red aura
           "60,10,120",   // dark purple
         ];
-        for (let i = 0; i < 5; i++) {
+        const blobCount = w < 768 ? 2 : 5; // Reduce aurora blobs on mobile
+        for (let i = 0; i < blobCount; i++) {
           const color = colors[i % colors.length];
           auroraBlobs.push({
             x: Math.random() * w,
@@ -349,8 +371,13 @@ export function GlobalBackground() {
         c.globalAlpha = 1;
       }
 
+      const isMobile = w < 768;
+      const ua = window.navigator.userAgent;
+      const isWebview = /(gameroom|; wv\)|Electron|CEF|WebView|FBAN|FBAV|Instagram|Line\/|MicroMessenger|App)/i.test(ua) || 'ReactNativeWebView' in window || window.matchMedia('(display-mode: standalone)').matches || (/iPhone|iPad|iPod/i.test(ua) && !/Safari/i.test(ua));
+      const showAmbientEffects = !isMobile || isWebview;
+
       // === STORM CLOUDS (Illuminated by lightning or visible in cloudy weather) ===
-      if (cloudCanvas) {
+      if (cloudCanvas && showAmbientEffects) {
         cloudOffset += 0.4; // pan clouds right
         const halfW = cloudCanvas.width / 2;
         if (cloudOffset >= halfW) cloudOffset = 0;
@@ -417,35 +444,30 @@ export function GlobalBackground() {
       // === UPDATE BOLTS → feed the WebGL plasma visual ===
       // Behaviour (timing, strobing, double/triple strikes) stays here; the actual
       // bolt is now drawn by the WebGL shader via lightningRef.
+      const now = Date.now();
       const lightningFrame: LightningBoltState[] = [];
       for (let i = bolts.length - 1; i >= 0; i--) {
         const b = bolts[i];
+        if (!b.startTime) {
+          b.startTime = now;
+        }
+        const elapsed = now - b.startTime;
 
-        if (b.phase === "drawing") {
-          b.drawProgress += 0.06;
-          if (b.drawProgress >= 1) {
-            b.drawProgress = 1;
-            b.phase = "strobing";
-            b.strobeTimer = 0;
-            b.strobeCount = 0;
-          }
-        } else if (b.phase === "strobing") {
-          b.strobeTimer++;
-          const cycleLen = 13;
-          const currentCycle = Math.floor(b.strobeTimer / cycleLen);
-          if (currentCycle >= b.maxStrobes) {
-            bolts.splice(i, 1);
-            continue;
-          }
+        if (elapsed >= 1000) {
+          bolts.splice(i, 1);
+          continue;
         }
 
-        // Normalised 0..1 intensity from the bolt lifecycle.
         let intensity: number;
-        if (b.phase === "strobing") {
-          const posInCycle = b.strobeTimer % 13;
-          intensity = posInCycle < 8 ? 1 : 0.14;
+        if (elapsed < 250) {
+          b.phase = "drawing";
+          b.drawProgress = elapsed / 250;
+          intensity = b.drawProgress;
         } else {
-          intensity = b.drawProgress; // ramps in as the bolt forms
+          b.phase = "strobing";
+          const strobeElapsed = elapsed - 250;
+          const posInCycle = strobeElapsed % 250;
+          intensity = posInCycle < 150 ? 1 : 0.14;
         }
 
         lightningFrame.push({ offset: b.xOffset, hue: b.hue, intensity });
@@ -463,7 +485,8 @@ export function GlobalBackground() {
       // === PRECIPITATION (Rain or Snow) ===
       if (!rainInited && w > 0) {
         rainInited = true;
-        for (let i = 0; i < 150; i++) {
+        const dropCount = w < 768 ? 40 : 150; // Reduce drops heavily on mobile to save battery
+        for (let i = 0; i < dropCount; i++) {
           rainDrops.push({
             x: Math.random() * w,
             y: Math.random() * h,
@@ -472,7 +495,7 @@ export function GlobalBackground() {
         }
       }
 
-      if (weather === "storm" || weather === "rain" || weather === "snow") {
+      if ((weather === "storm" || weather === "rain" || weather === "snow") && showAmbientEffects) {
         c.lineCap = "round";
         const isSnow = weather === "snow";
         const wind = isSnow ? -0.5 : -1.5;
@@ -515,11 +538,11 @@ export function GlobalBackground() {
         }
       }
 
-      animId = !prefersReduced && !document.hidden ? requestAnimationFrame(draw) : 0;
+      animId = !prefersReduced ? requestAnimationFrame(draw) : 0;
     }
 
     const onVisibility = () => {
-      if (!document.hidden && !prefersReduced && !animId) {
+      if (!prefersReduced && !animId) {
         animId = requestAnimationFrame(draw);
       }
     };
@@ -537,16 +560,10 @@ export function GlobalBackground() {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[-100] overflow-hidden bg-[linear-gradient(135deg,rgba(0,230,255,0.15)_0%,var(--gr-bg-0)_35%,var(--gr-bg-0)_65%,rgba(255,30,50,0.15)_100%)] select-none pointer-events-none">
-      <canvas ref={canvasRef} className="absolute inset-0" />
+    <div className="fixed inset-0 z-[-100] overflow-hidden bg-[var(--gr-bg-0)] select-none pointer-events-none">
+      <canvas ref={canvasRef} className="absolute inset-0 z-[1]" />
       <LightningWebGL boltsRef={lightningRef} active={weatherState === "storm"} />
-      <svg className="absolute inset-0 w-full h-full opacity-[0.03]" style={{ pointerEvents: 'none' }}>
-        <filter id="gxN7">
-          <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch" />
-          <feColorMatrix type="saturate" values="0" />
-        </filter>
-        <rect width="100%" height="100%" filter="url(#gxN7)" />
-      </svg>
+      <div className="absolute inset-0 z-[2] bg-[linear-gradient(135deg,rgba(0,230,255,0.15)_0%,transparent_35%,transparent_65%,rgba(255,30,50,0.15)_100%)] pointer-events-none" />
     </div>
   );
 }

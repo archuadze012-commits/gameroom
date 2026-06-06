@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -18,124 +18,7 @@ import {
   Trophy,
   Users,
 } from "lucide-react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-
-function useMsgCount() {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function tick() {
-      try {
-        const supabase = createSupabaseBrowserClient();
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) {
-          setCount(0);
-          return;
-        }
-
-        const res = await fetch("/api/conversations");
-        if (!res.ok || cancelled) return;
-        const data = await res.json();
-        const total = Array.isArray(data)
-          ? data.reduce((sum: number, item: { unread?: number }) => sum + (item.unread ?? 0), 0)
-          : 0;
-        setCount(total);
-      } catch {}
-    }
-
-    tick();
-    const id = window.setInterval(tick, 30_000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, []);
-
-  return count;
-}
-
-function useAnnouncementCount() {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function tick() {
-      try {
-        const res = await fetch("/api/announcements");
-        if (!res.ok || cancelled) return;
-        const data = await res.json();
-        const readSet = new Set<string>(data.readIds ?? []);
-        const unread = (data.announcements ?? []).filter((item: { id: string }) => !readSet.has(item.id));
-        setCount(unread.length);
-      } catch {}
-    }
-
-    tick();
-    const id = window.setInterval(tick, 30_000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, []);
-
-  return count;
-}
-
-function useSideNavProfile() {
-  const [profile, setProfile] = useState<{ username: string; displayName: string; avatarUrl: string } | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        const supabase = createSupabaseBrowserClient();
-        const { data: { session } } = await supabase.auth.getSession();
-        const user = session?.user;
-        if (!user) {
-          setProfile(null);
-          return;
-        }
-
-        const { data: dbProfile } = await supabase
-          .from("profiles")
-          .select("username, display_name, avatar_url")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        const username =
-          dbProfile?.username ||
-          (user.user_metadata?.username as string | undefined) ||
-          user.email?.split("@")[0] ||
-          "";
-        if (!username || cancelled) return;
-
-        const displayName =
-          dbProfile?.display_name ||
-          (user.user_metadata?.display_name as string | undefined) ||
-          username;
-        const avatarUrl =
-          dbProfile?.avatar_url ||
-          (user.user_metadata?.avatar_url as string | undefined) ||
-          "/default-avatar.svg";
-
-        setProfile({ username, displayName, avatarUrl });
-      } catch {
-        if (!cancelled) setProfile(null);
-      }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  return profile;
-}
+import { useNavAnnouncementCount, useNavMessageCount, useNavProfile } from "./use-nav-data";
 
 const moreLinks = [
   { href: "/lfg", label: "ლოკალი", icon: Users },
@@ -161,9 +44,9 @@ const iconActiveGlowClassName =
 
 export function WebViewSideNav({ canEdit = false }: { canEdit?: boolean }) {
   const pathname = usePathname();
-  const msgCount = useMsgCount();
-  const annCount = useAnnouncementCount();
-  const profile = useSideNavProfile();
+  const msgCount = useNavMessageCount();
+  const annCount = useNavAnnouncementCount();
+  const profile = useNavProfile();
 
   const tabs = [
     { href: "/", label: "მთავარი", icon: Home },
@@ -293,7 +176,7 @@ function SideNavIconLink({
   href: string;
   label: string;
   active: boolean;
-  icon: React.ReactNode;
+  icon: ReactNode;
 }) {
   return (
     <Link

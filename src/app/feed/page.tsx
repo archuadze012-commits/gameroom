@@ -66,7 +66,7 @@ export default async function FeedPage() {
   }));
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[#05050f]">
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
       {/* Cinematic Ambient Background */}
       <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.1),transparent_70%)]" />
       

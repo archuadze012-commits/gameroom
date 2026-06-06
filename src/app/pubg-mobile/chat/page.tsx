@@ -6,7 +6,6 @@ import { mockChatChannels, mockChatMessages, mockGames } from "@/lib/mock-data";
 import { PubgMobileChatClient } from "./pubg-mobile-chat-client";
 
 export const metadata = { title: "PUBG Mobile Chat" };
-export const dynamic = "force-dynamic";
 
 export default async function PubgMobileChatPage() {
   const game = mockGames.find((entry) => entry.slug === "pubg-mobile");
@@ -63,7 +62,7 @@ export default async function PubgMobileChatPage() {
   const messages = mockChatMessages[channel.id] ?? [];
 
   return (
-    <div className="relative h-[calc(100dvh-8rem)] overflow-hidden bg-[#05050f] xl:h-[calc(100dvh-4rem)]">
+    <div className="relative h-[calc(100dvh-8rem)] overflow-hidden bg-transparent xl:h-[calc(100dvh-4rem)]">
       {/* Cinematic Ambient Background */}
       <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.15),transparent_70%)]" />
 

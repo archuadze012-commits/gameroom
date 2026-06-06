@@ -1,41 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useNavMessageCount } from "./use-nav-data";
 
 export function MessagesLink() {
-  const [unread, setUnread] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function tick() {
-      try {
-        const supabase = createSupabaseBrowserClient();
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) {
-          setUnread(0);
-          return;
-        }
-        const res = await fetch("/api/conversations");
-        if (!res.ok) return;
-        const data = await res.json();
-        if (cancelled) return;
-        const total = Array.isArray(data)
-          ? data.reduce((sum: number, c: { unread: number }) => sum + (c.unread ?? 0), 0)
-          : 0;
-        setUnread(total);
-      } catch {}
-    }
-    tick();
-    const id = setInterval(tick, 30_000);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
-  }, []);
+  const unread = useNavMessageCount();
 
   return (
     <Button asChild variant="ghost" size="icon" className="relative">

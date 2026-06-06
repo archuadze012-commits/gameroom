@@ -4,40 +4,36 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { FavoriteGameButton } from "@/components/favorite-game-button";
-import { Input } from "@/components/ui/input";
+import { GameCoverImage } from "@/components/game-cover-image";
 import { type MockGame } from "@/lib/mock-data";
 import { GameCard } from "./game-card";
 
 function CatalogGameCard({ game }: { game: MockGame }) {
   return (
-    <div className="relative h-64 overflow-hidden rounded-[20px]">
+    <div className="relative h-64 w-full overflow-hidden">
       
       {/* cover image or fallback */}
-      {game.coverUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={game.coverUrl}
-          alt={game.nameKa}
-          className="absolute inset-0 h-full w-full object-cover opacity-60 mix-blend-luminosity transition-all duration-700 ease-out group-hover:scale-105 group-hover:opacity-100 group-hover:mix-blend-normal"
-        />
-      ) : (
-        <div className={`absolute inset-0 bg-gradient-to-br ${game.accent} opacity-20`} />
-      )}
+      <GameCoverImage
+        slug={game.slug}
+        name={game.nameKa}
+        coverUrl={game.coverUrl}
+        accent={game.accent}
+        className="absolute inset-0 h-full w-full object-cover opacity-60 mix-blend-luminosity transition-all duration-700 ease-out group-hover:scale-105 group-hover:opacity-100 group-hover:mix-blend-normal"
+      />
 
       {/* dark gradients for readability */}
       <div className="absolute inset-0 bg-gradient-to-t from-[rgba(15,12,30,0.95)] via-[rgba(15,12,30,0.4)] to-transparent pointer-events-none" />
       
       {/* ambient color overlay on hover */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 z-[5] bg-violet-500/0 duration-500 group-hover:bg-violet-500/10 mix-blend-overlay" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-[5] bg-red-500/0 duration-500 group-hover:bg-red-500/10 mix-blend-overlay" />
 
       {/* game name — bottom left */}
       <div className="absolute bottom-5 left-5 right-5 z-20 flex flex-col justify-end">
         <h3
-          className="font-display text-[22px] font-black uppercase tracking-wide text-white drop-shadow-md transition-colors duration-300 group-hover:text-violet-300 group-hover:drop-shadow-[0_0_15px_rgba(139,92,246,0.5)]"
+          className="font-display text-[22px] font-black uppercase tracking-wide text-white drop-shadow-md transition-colors duration-300 group-hover:text-red-300 group-hover:drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]"
         >
           {game.nameKa}
         </h3>
-        {game.emoji && <span className="text-xl mt-1 opacity-80">{game.emoji}</span>}
       </div>
 
       {/* favorite button — top right, always visible */}
@@ -69,15 +65,14 @@ export function NonFavoriteGamesGrid({ games }: { games: MockGame[] }) {
     <section>
       <div className="mb-8 max-w-xl">
         <div className="relative group">
-          <div className={`absolute -inset-1 rounded-full blur opacity-30 transition-all duration-500 ${isFocused ? 'bg-violet-500 opacity-60' : 'bg-transparent'}`}></div>
-          <div className="relative flex items-center overflow-hidden rounded-full border border-white/10 bg-white/5 backdrop-blur-md transition-all duration-300 focus-within:border-violet-500/50 focus-within:bg-[rgba(15,12,30,0.8)] focus-within:shadow-[0_0_20px_rgba(139,92,246,0.2)]">
+          <div className={`relative flex items-center overflow-visible rounded-[12px] border border-white/10 bg-[var(--gr-bg-1)] backdrop-blur-md transition-all duration-300 premium-nav-item-glow ${isFocused ? 'premium-nav-item-glow-active shadow-[0_0_20px_rgba(239,68,68,0.2)]' : ''}`}>
             <div className="pl-4 pr-2">
-              <Search className={`h-4 w-4 transition-colors duration-300 ${isFocused ? 'text-violet-400 drop-shadow-[0_0_8px_rgba(139,92,246,0.8)]' : 'text-white/40'}`} />
+              <Search className={`h-4 w-4 transition-colors duration-300 ${isFocused ? 'text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]' : 'text-white/40'}`} />
             </div>
             <input
               type="text"
               placeholder="მოძებნე თამაში..."
-              className="h-12 w-full bg-transparent px-2 text-[14px] font-medium text-white outline-none placeholder:text-white/30"
+              className="h-12 w-full bg-transparent border-0 px-2 text-[14px] font-medium text-white outline-none placeholder:text-white/40 shadow-none focus-visible:ring-0"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onFocus={() => setIsFocused(true)}
@@ -99,10 +94,13 @@ export function NonFavoriteGamesGrid({ games }: { games: MockGame[] }) {
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-16 rounded-[24px] border border-white/5 bg-white/5 backdrop-blur-md">
-          <p className="text-[14px] text-white/40 font-medium">
-            &quot;{query}&quot;-ზე შედეგი ვერ მოიძებნა.
-          </p>
+        <div className="relative w-full overflow-visible rounded-[20px] bg-[rgba(15,12,30,0.8)] py-16 text-center backdrop-blur-md premium-card-glow-tight group">
+          <div className="relative z-10">
+            <Search className="mx-auto mb-3 h-8 w-8 opacity-70" style={{ color: "#ffffff", filter: "drop-shadow(0 0 6px rgba(196,30,58,0.9))" }} />
+            <p className="text-[14px] text-[rgba(255,255,255,0.75)] font-medium" style={{ textShadow: "0 0 6px rgba(196,30,58,0.7)" }}>
+              &quot;{query}&quot;-ზე შედეგი ვერ მოიძებნა.
+            </p>
+          </div>
         </div>
       )}
     </section>

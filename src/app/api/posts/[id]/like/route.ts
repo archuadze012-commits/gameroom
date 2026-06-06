@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { awardXp } from "@/lib/gamification";
+import { awardBonusXp } from "@/lib/gamification";
 
 export async function POST(
   _request: NextRequest,
@@ -29,7 +29,7 @@ export async function POST(
         .eq("id", id)
         .maybeSingle();
       if (post?.author_id && post.author_id !== user.id) {
-        await awardXp(post.author_id, 1);
+        await awardBonusXp(post.author_id, 1, "post:liked");
       }
     } catch {}
   }

@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireRateLimitedUser } from "@/lib/api/guards";
 import { readJsonObject } from "@/lib/api/json";
+import { requireServerEnv } from "@/lib/env";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("api:skill-assess");
 
 export async function POST(request: NextRequest) {
   const guard = await requireRateLimitedUser(request, "ai:skill-assess", 10, 60_000);
   if (!guard.ok) return guard.response;
 
-  if (!process.env.GROQ_API_KEY) return NextResponse.json({ error: "no_key" }, { status: 500 });
+  const groqKey = requireServerEnv("GROQ_API_KEY", "api:skill-assess");
+  if (!groqKey.ok) return NextResponse.json({ error: "no_key" }, { status: 500 });
 
   const body = await readJsonObject<{ game?: string; rank?: string; description?: string }>(request, 8 * 1024);
   if (!body.ok) return body.response;
@@ -23,7 +28,7 @@ export async function POST(request: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        Authorization: `Bearer ${groqKey.value}`,
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
@@ -54,7 +59,7 @@ export async function POST(request: NextRequest) {
     if (!parsed.tier) throw new Error("bad format");
     return NextResponse.json(parsed);
   } catch (e) {
-    console.error("[/api/skill-assess]", e);
+    logger.error("skill assessment failed", { error: e });
     return NextResponse.json({ error: "ai_error" }, { status: 500 });
   }
 }

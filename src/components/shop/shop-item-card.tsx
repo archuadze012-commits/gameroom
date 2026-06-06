@@ -198,12 +198,12 @@ export function ShopItemCard({ item, hasSession }: { item: ShopItem; hasSession:
   }
 
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-[24px] border border-white/5 bg-white/5 p-[1.5px] transition-all duration-300 hover:-translate-y-1 hover:border-pink-500/30 hover:shadow-[0_0_30px_rgba(236,72,153,0.15)]">
-      <div className={`absolute inset-0 bg-gradient-to-br ${topGrad} opacity-0 transition-opacity duration-300 group-hover:opacity-10`} />
+    <article className="group neon-frame flex h-full flex-col rounded-[24px]">
+      <div className={`pointer-events-none absolute inset-[3px] rounded-[21px] bg-gradient-to-br ${topGrad} opacity-0 transition-opacity duration-300 group-hover:opacity-10`} />
 
-      <div className="relative flex flex-1 flex-col rounded-[22.5px] bg-[#0a0714]/80 backdrop-blur-md">
+      <div className="relative flex flex-1 flex-col overflow-hidden rounded-[21px] bg-[#0a0714]/80 backdrop-blur-md">
         
-        <div className="relative grid min-h-[190px] place-items-center overflow-hidden rounded-t-[22.5px] bg-[radial-gradient(circle_at_50%_12%,rgba(255,255,255,0.05),transparent_60%)] border-b border-white/5">
+        <div className="relative grid min-h-[190px] place-items-center overflow-hidden rounded-t-[21px] bg-[radial-gradient(circle_at_50%_12%,rgba(255,255,255,0.05),transparent_60%)] border-b border-white/5">
           <div aria-hidden className="absolute inset-0 bg-[linear-gradient(115deg,transparent_0%,rgba(255,255,255,0.06)_46%,transparent_52%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
           <span
@@ -246,11 +246,7 @@ export function ShopItemCard({ item, hasSession }: { item: ShopItem; hasSession:
               <p className="font-display text-[18px] font-black uppercase leading-tight text-white transition-colors group-hover:text-pink-400">
                 {item.name}
               </p>
-              {item.description && (
-                <p className="mt-2 line-clamp-2 min-h-10 text-[13px] font-medium leading-relaxed text-white/50">
-                  {item.description}
-                </p>
-              )}
+
             </div>
 
             {/* price + action */}

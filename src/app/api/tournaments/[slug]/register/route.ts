@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("api:tournament-register");
 
 export async function POST(
   request: NextRequest,
@@ -34,7 +37,7 @@ export async function POST(
     .eq("tournament_id", t.id);
 
   if (countErr) {
-    console.error("[POST /api/tournaments/[slug]/register] count error", countErr);
+    logger.error("failed to count tournament participants", { tournamentId: t.id, error: countErr });
     return NextResponse.json({ error: "database_error" }, { status: 500 });
   }
 
@@ -66,7 +69,7 @@ export async function POST(
     });
 
   if (insertErr) {
-    console.error("[POST /api/tournaments/[slug]/register] insert error", insertErr);
+    logger.error("failed to register tournament participant", { userId: user.id, tournamentId: t.id, error: insertErr });
     return NextResponse.json({ error: "registration_failed" }, { status: 500 });
   }
 

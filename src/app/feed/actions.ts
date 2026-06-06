@@ -4,8 +4,11 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
-import { awardXp } from "@/lib/gamification";
+import { awardBonusXp } from "@/lib/gamification";
+import { createLogger } from "@/lib/logger";
 import { type FeedPost } from "./page";
+
+const logger = createLogger("feed-actions");
 
 const createPostSchema = z.object({
   content: z.string().min(1, "ტექსტი აუცილებელია").max(2000, "პოსტი ზედმეტად გრძელია"),
@@ -57,11 +60,11 @@ export async function createPostAction(
     .single();
 
   if (error) {
-    console.error("[createPostAction]", error);
+    logger.error("failed to create feed post", { userId: user.id, error });
     return { success: false, message: "პოსტის გამოქვეყნება ვერ მოხერხდა" };
   }
 
-  await awardXp(user.id, 10).catch(() => {});
+  await awardBonusXp(user.id, 10, "feed:create-post");
 
   revalidatePath("/feed");
   revalidatePath("/");

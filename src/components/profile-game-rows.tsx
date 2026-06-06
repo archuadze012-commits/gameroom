@@ -4,21 +4,21 @@ import { mockGames, type MockGame } from "@/lib/mock-data";
 import { GameIcon } from "@/components/game-icon";
 import { Pill } from "@/components/ui/pill";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { GamerCard } from "@/components/ui/gamer-card";
 
 const LOBBY_GAMES = new Set<string>(["pubg-mobile"]);
 
 export async function ProfileGameRows({ slugs, username }: { slugs: string[]; username: string }) {
   if (slugs.length === 0) {
     return (
-      <GamerCard
-        clipSize={14}
-        surfaceClassName="bg-[linear-gradient(180deg,color-mix(in_srgb,var(--gr-bg-1)_94%,black),color-mix(in_srgb,var(--gr-bg-2)_88%,black))]"
-      >
-        <div className="py-8 text-center text-[13px] text-[var(--gr-text-mute)]">
-          ჯერ არცერთი თამაში არ არის არჩეული.
+      <div className="pubg-loadout-link group relative block transition-all duration-500" data-variant="room">
+        <div className="pubg-loadout-card relative overflow-hidden p-8 text-center text-[13px] text-[var(--gr-text-mute)]">
+          <span aria-hidden className="pubg-loadout-field absolute inset-0" />
+          <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[5px]" />
+          <div className="relative z-[1]">
+            ჯერ არცერთი თამაში არ არის არჩეული.
+          </div>
         </div>
-      </GamerCard>
+      </div>
     );
   }
 
@@ -54,14 +54,15 @@ export async function ProfileGameRows({ slugs, username }: { slugs: string[]; us
 
   if (games.length === 0) {
     return (
-      <GamerCard
-        clipSize={14}
-        surfaceClassName="bg-[linear-gradient(180deg,color-mix(in_srgb,var(--gr-bg-1)_94%,black),color-mix(in_srgb,var(--gr-bg-2)_88%,black))]"
-      >
-        <div className="py-8 text-center text-[13px] text-[var(--gr-text-mute)]">
-          ჯერ არცერთი თამაში არ არის არჩეული.
+      <div className="pubg-loadout-link group relative block transition-all duration-500" data-variant="room">
+        <div className="pubg-loadout-card relative overflow-hidden p-8 text-center text-[13px] text-[var(--gr-text-mute)]">
+          <span aria-hidden className="pubg-loadout-field absolute inset-0" />
+          <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[5px]" />
+          <div className="relative z-[1]">
+            ჯერ არცერთი თამაში არ არის არჩეული.
+          </div>
         </div>
-      </GamerCard>
+      </div>
     );
   }
 
@@ -71,19 +72,19 @@ export async function ProfileGameRows({ slugs, username }: { slugs: string[]; us
         const isPrimary = i === 0;
         const hasLobby = LOBBY_GAMES.has(g.slug);
         return (
-          <GamerCard
-            key={g.slug}
-            clipSize={14}
-            hover
-            className="transition-transform duration-200 hover:-translate-y-0.5"
-            surfaceClassName="bg-[linear-gradient(180deg,color-mix(in_srgb,var(--gr-bg-1)_96%,black),color-mix(in_srgb,var(--gr-bg-2)_88%,black))]"
-          >
-            <Link
-              href={`/games/${g.slug}`}
-              aria-label={g.nameKa}
-              className="absolute inset-0 z-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gr-magenta)]"
-            />
-            <div className="relative z-[1] flex items-center gap-3 p-3">
+          <div key={g.slug} className="pubg-loadout-link group relative block transition-all duration-500" data-variant="royale">
+            <div className="pubg-loadout-card relative overflow-hidden p-3">
+              <span aria-hidden className="pubg-loadout-field absolute inset-0" />
+              <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[5px]" />
+              <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-12 w-12 opacity-30" />
+              <span aria-hidden className="pubg-loadout-sweep absolute inset-y-0 left-0 w-1/3" />
+              
+              <Link
+                href={`/games/${g.slug}`}
+                aria-label={g.nameKa}
+                className="absolute inset-0 z-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gr-magenta)]"
+              />
+              <div className="relative z-[1] flex items-center gap-3">
               <div className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-md bg-[var(--gr-bg-2)] ring-1 ring-[var(--gr-border)]">
                 <GameIcon game={g} size="sm" />
               </div>
@@ -114,7 +115,8 @@ export async function ProfileGameRows({ slugs, username }: { slugs: string[]; us
                 </div>
               )}
             </div>
-          </GamerCard>
+            </div>
+          </div>
         );
       })}
     </div>

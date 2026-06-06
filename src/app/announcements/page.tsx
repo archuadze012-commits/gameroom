@@ -6,6 +6,8 @@ import { PushBell } from "@/components/push-bell";
 import { DisplayHeading } from "@/components/ui/display-heading";
 import { Pill } from "@/components/ui/pill";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/page-header";
+import { CinematicBackground } from "@/components/ui/cinematic-background";
 
 type NotificationType =
   | "lfg_response"
@@ -161,32 +163,35 @@ export default function AnnouncementsPage() {
   ].sort((a, b) => new Date(b.data.created_at).getTime() - new Date(a.data.created_at).getTime());
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
-      <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
+      <CinematicBackground color="pink" />
 
       <div className="container relative mx-auto max-w-3xl px-4 py-10 lg:py-14">
-        <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <DisplayHeading as="h1" size="lg" className="mt-1 flex items-center gap-3" style={neonText}>
+        <PageHeader
+          color="pink"
+          title={
+            <span className="flex items-center gap-3">
               უწყებები
               {unreadCount > 0 && <Pill tone="accent">{unreadCount > 99 ? "99+" : unreadCount}</Pill>}
-            </DisplayHeading>
-          </div>
-          <div className="flex items-center gap-2">
-            <PushBell />
-            {unreadCount > 0 && (
-              <button
-                onClick={markAllRead}
-                disabled={markingAll}
-                className="flex items-center gap-1.5 border bg-[var(--gr-bg-1)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors"
-                style={{ clipPath: cutSm, borderColor: "rgba(236,72,153,0.35)", ...neonMute }}
-              >
-                {markingAll ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCheck className="h-3.5 w-3.5" />}
-                ყველა წაღებულად
-              </button>
-            )}
-          </div>
-        </header>
+            </span>
+          }
+          actions={
+            <div className="flex items-center gap-2">
+              <PushBell />
+              {unreadCount > 0 && (
+                <button
+                  onClick={markAllRead}
+                  disabled={markingAll}
+                  className="flex items-center gap-1.5 border bg-[var(--gr-bg-1)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors"
+                  style={{ clipPath: cutSm, borderColor: "rgba(236,72,153,0.35)", ...neonMute }}
+                >
+                  {markingAll ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCheck className="h-3.5 w-3.5" />}
+                  ყველა წაღებულად
+                </button>
+              )}
+            </div>
+          }
+        />
 
         {/* Tabs */}
         <div className="mb-5 flex gap-1" style={{ borderBottom: "1px solid rgba(236,72,153,0.2)" }}>

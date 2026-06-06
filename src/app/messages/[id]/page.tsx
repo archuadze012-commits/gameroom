@@ -33,7 +33,10 @@ export default async function ConversationPage({
     .maybeSingle();
 
   return (
-    <div className="container mx-auto max-w-2xl px-4 py-6">
+    <div className="relative mx-auto h-[calc(100dvh-1rem)] w-full max-w-2xl overflow-hidden px-3 py-2 sm:h-[calc(100vh-6rem)] sm:px-4 sm:py-6">
+      {/* Dot grid background */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
+      
       <ConversationClient
         conversationId={id}
         currentUserId={user.id}

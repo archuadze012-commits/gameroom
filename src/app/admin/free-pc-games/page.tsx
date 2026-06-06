@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { crackedGames, type CrackedGame } from "@/lib/mock-data";
 import { toast } from "sonner";
 
-export function getObjectPosition(url?: string) {
+function getObjectPosition(url?: string) {
   if (!url) return "center";
   try {
     const parsed = new URL(url, url.startsWith("/") ? "https://example.com" : undefined);
@@ -23,7 +23,7 @@ export function getObjectPosition(url?: string) {
   return "center";
 }
 
-export function getYParam(url?: string): number {
+function getYParam(url?: string): number {
   if (!url) return 50;
   try {
     const parsed = new URL(url, url.startsWith("/") ? "https://example.com" : undefined);
@@ -33,7 +33,7 @@ export function getYParam(url?: string): number {
   return 50;
 }
 
-export function updateUrlParam(urlStr: string, param: string, value: string): string {
+function updateUrlParam(urlStr: string, param: string, value: string): string {
   if (!urlStr) return "";
   try {
     const isRelative = !urlStr.startsWith("http://") && !urlStr.startsWith("https://");

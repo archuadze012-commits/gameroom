@@ -41,13 +41,13 @@ export function SiteBrand({
     <span className={cn("flex items-center gap-3.5 group cursor-pointer", className)}>
       {showIcon ? (
         <div className="relative">
-          <div className="absolute -inset-1 rounded-xl bg-[linear-gradient(90deg,#22d3ee,#f43f5e)] opacity-30 blur-md transition-all duration-500 group-hover:opacity-70 group-hover:blur-lg" />
+          <div className="absolute -inset-2 rounded-xl bg-neon-animated opacity-30 blur-[10px] transition-all duration-500 group-hover:opacity-80 group-hover:blur-[14px]" />
           <Image
             src="/logo.png"
             alt="Gameroom"
             width={iconSize}
             height={iconSize}
-            className={cn("relative z-10 transition-transform duration-500 group-hover:scale-[1.04]", imageClassName)}
+            className={cn("relative z-10 transition-transform duration-500 group-hover:scale-[1.08] drop-shadow-[0_0_12px_rgba(0,68,255,0.4)]", imageClassName)}
           />
         </div>
       ) : null}
@@ -58,26 +58,8 @@ export function SiteBrand({
           wordmarkClassName,
         )}
       >
-        <span className="relative inline-block">
-          {/* Cybernetic Glow Layer */}
-          <span aria-hidden className="absolute inset-0 blur-[8px] opacity-80 bg-gradient-to-br from-[#22d3ee] to-[#0ea5e9] bg-clip-text text-transparent select-none mix-blend-screen">
-            GAME
-          </span>
-          {/* Metallic Top Layer */}
-          <span className="relative bg-gradient-to-b from-white via-[#67e8f9] to-[#0891b2] bg-clip-text text-transparent drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
-            GAME
-          </span>
-        </span>
-        
-        <span className="relative inline-block ml-1">
-          {/* Cybernetic Glow Layer */}
-          <span aria-hidden className="absolute inset-0 blur-[8px] opacity-80 bg-gradient-to-br from-[#f43f5e] to-[#be123c] bg-clip-text text-transparent select-none mix-blend-screen">
-            ROOM
-          </span>
-          {/* Metallic Top Layer */}
-          <span className="relative bg-gradient-to-b from-white via-[#fda4af] to-[#c41e3a] bg-clip-text text-transparent drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
-            ROOM
-          </span>
+        <span className="text-neon-animated drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] px-1">
+          GAMEROOM
         </span>
       </span>
     </span>

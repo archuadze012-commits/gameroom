@@ -5,6 +5,7 @@ import { Swords, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { mockGames } from "@/lib/mock-data";
+import { INVITE_SENT_FEEDBACK_MS } from "@/lib/constants";
 
 export interface GameInvite {
   id: string;
@@ -87,7 +88,7 @@ export function InviteButton({ username, displayName, gameSlugs }: InviteButtonP
       duration: 4000,
     });
 
-    setTimeout(() => setSent(false), 5000);
+    setTimeout(() => setSent(false), INVITE_SENT_FEEDBACK_MS);
   };
 
   return (

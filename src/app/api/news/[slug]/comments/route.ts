@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSession } from "@/lib/auth";
-import { awardXp } from "@/lib/gamification";
+import { awardBonusXp } from "@/lib/gamification";
 import { sendPushToUser } from "@/lib/push";
 import { rateLimit } from "@/lib/rate-limit";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("api:news-comments");
 
 export async function POST(
   request: NextRequest,
@@ -55,7 +58,7 @@ export async function POST(
     .single();
 
   if (commentErr || !comment) {
-    console.error("[POST /api/news/[slug]/comments]", commentErr);
+    logger.error("failed to insert news comment", { userId: user.id, articleId: article.id, error: commentErr });
     return NextResponse.json({ error: "failed_to_create_comment" }, { status: 500 });
   }
 
@@ -64,13 +67,20 @@ export async function POST(
     const commenterName = user.user_metadata?.username || user.email?.split("@")[0] || "ვიღაცამ";
 
     // 1. Save to notifications table
-    await createSupabaseAdminClient().from("notifications").insert({
+    const { error: notificationError } = await createSupabaseAdminClient().from("notifications").insert({
       user_id: article.author_id,
       type: "news_comment",
       title: "ახალი კომენტარი სიახლეზე 📰",
       body: `${commenterName}-მა კომენტარი დატოვა შენს სტატიაზე: "${article.title}"`,
       link: `/news/${slug}`,
     });
+    if (notificationError) {
+      logger.warn("failed to write news comment notification", {
+        articleId: article.id,
+        recipientId: article.author_id,
+        error: notificationError,
+      });
+    }
 
     // 2. Send push notification
     sendPushToUser(article.author_id, {
@@ -82,9 +92,7 @@ export async function POST(
   }
 
   // Award XP for posting comment
-  try {
-    await awardXp(user.id, 2);
-  } catch {}
+  await awardBonusXp(user.id, 2, "news:create-comment");
 
   return NextResponse.json(comment, { status: 201 });
 }

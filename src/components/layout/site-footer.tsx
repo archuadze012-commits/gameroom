@@ -9,7 +9,7 @@ export function SiteFooter() {
   if (pathname !== "/") return null;
 
   return (
-    <footer className="relative mt-20 bg-[rgba(5,4,11,0.6)] backdrop-blur-3xl border-t border-white/5">
+    <footer className="relative mt-20 bg-[#05040b] backdrop-blur-3xl border-t border-white/5">
       {/* faint violet glow */}
       <span
         aria-hidden

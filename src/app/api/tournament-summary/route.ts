@@ -4,12 +4,17 @@ type MatchResult = { player1: string; player2: string; score1: number; score2: n
 
 import { requireRateLimitedUser } from "@/lib/api/guards";
 import { readJsonObject } from "@/lib/api/json";
+import { requireServerEnv } from "@/lib/env";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("api:tournament-summary");
 
 export async function POST(request: NextRequest) {
   const guard = await requireRateLimitedUser(request, "ai:tournament-summary", 10, 60_000);
   if (!guard.ok) return guard.response;
 
-  if (!process.env.GROQ_API_KEY) return NextResponse.json({ error: "no_key" }, { status: 500 });
+  const groqKey = requireServerEnv("GROQ_API_KEY", "api:tournament-summary");
+  if (!groqKey.ok) return NextResponse.json({ error: "no_key" }, { status: 500 });
 
   const body = await readJsonObject<{ tournamentName?: string; game?: string; matches?: MatchResult[] }>(
     request,
@@ -34,7 +39,7 @@ export async function POST(request: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        Authorization: `Bearer ${groqKey.value}`,
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
@@ -62,7 +67,7 @@ export async function POST(request: NextRequest) {
     if (!summary) throw new Error("empty");
     return NextResponse.json({ summary });
   } catch (e) {
-    console.error("[/api/tournament-summary]", e);
+    logger.error("tournament summary generation failed", { error: e });
     return NextResponse.json({ error: "ai_error" }, { status: 500 });
   }
 }

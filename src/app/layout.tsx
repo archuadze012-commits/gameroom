@@ -64,16 +64,18 @@ export default async function RootLayout({
     <html
       lang="ka"
       data-scroll-behavior="smooth"
-      className={`dark ${firaGO.variable} ${alkSanet.variable} h-full antialiased scroll-smooth`}
+      className={`dark ${firaGO.variable} ${alkSanet.variable} antialiased`}
     >
-      <body suppressHydrationWarning className="min-h-full flex flex-col relative bg-transparent">
+      <body suppressHydrationWarning className="bg-transparent text-foreground">
         <EditModeProvider canEdit={canEdit}>
           <GlobalBackground />
-          <SiteHeader />
-          <main className="flex-1 pb-16 sm:pb-0">{children}</main>
-          <SiteFooter />
-          <ClientChrome isAuthenticated={!!user} canEdit={canEdit} />
-          <Toaster richColors position="top-right" />
+          <div className="relative flex flex-col w-full max-w-[100vw] overflow-x-clip min-h-[100dvh]">
+            <SiteHeader />
+            <main className="flex-1 pt-20 pb-6 sm:pt-0 sm:pb-0">{children}</main>
+            <SiteFooter />
+            <ClientChrome isAuthenticated={!!user} canEdit={canEdit} />
+            <Toaster richColors position="top-right" />
+          </div>
         </EditModeProvider>
       </body>
     </html>

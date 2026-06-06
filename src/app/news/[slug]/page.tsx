@@ -14,7 +14,6 @@ import { formatDistanceToNow } from "date-fns";
 import { ka } from "date-fns/locale";
 import { NewsCommentsClient } from "./news-comments-client";
 
-export const dynamic = "force-dynamic";
 
 type GameRel = { name_ka: string | null; emoji: string | null };
 type CommentRow = {
@@ -90,7 +89,7 @@ export default async function NewsArticlePage({
   const coverGradient = article.cover_url || "from-violet-500/40 to-violet-500/0";
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
       <span aria-hidden className="pointer-events-none absolute -top-24 -right-20 h-72 w-72 rounded-full bg-[var(--gr-violet)]/20 blur-[120px]" />
 

@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRateLimitedUser } from "@/lib/api/guards";
 import { readJsonObject } from "@/lib/api/json";
+import { requireServerEnv } from "@/lib/env";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("api:lfg-assist");
 
 export async function POST(request: NextRequest) {
   const guard = await requireRateLimitedUser(request, "ai:lfg-assist", 10, 60_000);
   if (!guard.ok) return guard.response;
 
-  if (!process.env.GROQ_API_KEY) return NextResponse.json({ error: "no_key" }, { status: 500 });
+  const groqKey = requireServerEnv("GROQ_API_KEY", "api:lfg-assist");
+  if (!groqKey.ok) return NextResponse.json({ error: "no_key" }, { status: 500 });
 
   const body = await readJsonObject<{ prompt?: string; game?: string }>(request, 8 * 1024);
   if (!body.ok) return body.response;
@@ -21,7 +26,7 @@ export async function POST(request: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        Authorization: `Bearer ${groqKey.value}`,
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
@@ -44,7 +49,7 @@ export async function POST(request: NextRequest) {
     const json = await res.json();
 
     if (!res.ok) {
-      console.error("[/api/lfg-assist] OpenAI error:", JSON.stringify(json));
+      logger.error("Groq returned an error", { status: res.status, error: json?.error });
       return NextResponse.json({ error: "openai_error", detail: json?.error?.message }, { status: 500 });
     }
 
@@ -55,7 +60,7 @@ export async function POST(request: NextRequest) {
     if (!parsed.title || !parsed.description) throw new Error("bad format");
     return NextResponse.json({ title: parsed.title, description: parsed.description });
   } catch (e) {
-    console.error("[/api/lfg-assist]", e);
+    logger.error("LFG assist generation failed", { error: e });
     return NextResponse.json({ error: "ai_error" }, { status: 500 });
   }
 }

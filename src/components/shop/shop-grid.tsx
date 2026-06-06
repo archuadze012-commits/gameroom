@@ -76,18 +76,12 @@ export function ShopGrid({ items, hasSession, variant = "global", premiumBoxes =
       {activeMeta && (
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.24em] text-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.5)]">
-              Elite market
-            </p>
             <h2 className="font-display text-3xl font-black uppercase text-white drop-shadow-md">
               <span className="mr-3">{activeMeta.emoji}</span>
               {activeMeta.label}
               <span className="ml-3 text-[20px] text-white/30">({activeCount})</span>
             </h2>
           </div>
-          <p className="max-w-xl text-[14px] leading-relaxed text-white/50">
-            {activeDescription}
-          </p>
         </div>
       )}
 

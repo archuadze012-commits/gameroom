@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requirePermission, logAdminAction } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("api:admin-cracked-game");
 
 export async function DELETE(
   _request: NextRequest,
@@ -20,7 +23,7 @@ export async function DELETE(
     .from("hidden_cracked_games")
     .upsert({ id }, { onConflict: "id" });
   if (hideError) {
-    console.error("[/api/admin/cracked-games DELETE]", hideError);
+    logger.error("failed to hide cracked game", { id, error: hideError });
     return NextResponse.json({ error: hideError.message }, { status: 500 });
   }
 

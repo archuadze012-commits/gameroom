@@ -1,14 +1,22 @@
 import webpush from "web-push";
 import { createSupabaseServerClient } from "./supabase/server";
+import { getServerEnv } from "@/lib/env";
+import { createLogger } from "@/lib/logger";
 
 let configured = false;
+let missingConfigLogged = false;
+const logger = createLogger("push");
 
 function ensureConfigured() {
   if (configured) return;
-  const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-  const priv = process.env.VAPID_PRIVATE_KEY;
-  const contact = process.env.VAPID_CONTACT ?? "mailto:admin@gameroom.com.ge";
+  const pub = getServerEnv("NEXT_PUBLIC_VAPID_PUBLIC_KEY");
+  const priv = getServerEnv("VAPID_PRIVATE_KEY");
+  const contact = getServerEnv("VAPID_CONTACT") ?? "mailto:admin@gameroom.com.ge";
   if (!pub || !priv) {
+    if (!missingConfigLogged) {
+      missingConfigLogged = true;
+      logger.warn("VAPID keys not configured, skipping push sends");
+    }
     return;
   }
   webpush.setVapidDetails(contact, pub, priv);
@@ -26,7 +34,6 @@ export type PushPayload = {
 export async function sendPushToUser(userId: string, payload: PushPayload) {
   ensureConfigured();
   if (!configured) {
-    console.warn("[push] VAPID keys not configured, skipping");
     return;
   }
 
@@ -57,13 +64,14 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
           // Subscription is gone, clean it up
           deadSubs.push(s.id);
         } else {
-          console.error("[push] send error", err);
+          logger.error("push send failed", { userId, subscriptionId: s.id, error: err });
         }
       }
     })
   );
 
   if (deadSubs.length > 0) {
-    await supabase.from("push_subscriptions").delete().in("id", deadSubs);
+    const { error } = await supabase.from("push_subscriptions").delete().in("id", deadSubs);
+    if (error) logger.warn("failed to delete dead push subscriptions", { deadSubs, error });
   }
 }

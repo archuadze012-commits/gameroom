@@ -20,8 +20,8 @@ export function ShopProductCard({ product }: { product: ShopProduct }) {
   const StatusIcon = statusIcons[product.status];
 
   return (
-    <article className="group relative block rounded-[20px] p-[1.5px] bg-gradient-to-br from-[#00d0ff] via-[#6366f1] to-[#f43f5e] transition-all duration-500 hover:shadow-[0_0_30px_rgba(99,102,241,0.4)] hover:-translate-y-1">
-      <div className="relative h-full w-full overflow-hidden rounded-[18.5px] bg-[#0a0714] flex flex-col">
+    <article className="group neon-frame block rounded-[20px]">
+      <div className="relative h-full w-full overflow-hidden rounded-[17px] bg-[#0a0714] flex flex-col">
         <div className="relative aspect-[4/3] overflow-hidden bg-[radial-gradient(ellipse_at_center,rgba(139,92,246,0.15),transparent_70%)] shrink-0">
           <div aria-hidden className="absolute inset-x-5 bottom-6 h-[1px] bg-[linear-gradient(90deg,transparent,rgba(34,211,238,0.5),rgba(236,72,153,0.5),transparent)]" />
           <div aria-hidden className="absolute inset-0 bg-[linear-gradient(115deg,transparent_0%,rgba(255,255,255,0.06)_46%,transparent_52%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />

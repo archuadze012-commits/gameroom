@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requirePermission, logAdminAction } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createLogger } from "@/lib/logger";
 
 const MAX_BYTES = 10 * 1024 * 1024;
+const logger = createLogger("api:admin-upload");
 const ALLOWED_MIME = new Set([
   "image/png",
   "image/jpeg",
@@ -63,7 +65,7 @@ export async function POST(request: NextRequest) {
     });
 
   if (upErr) {
-    console.error("[/api/admin/upload]", upErr);
+    logger.error("failed to upload admin asset", { path, mime: file.type, size: file.size, error: upErr });
     return NextResponse.json({ error: "upload_failed", detail: upErr.message }, { status: 500 });
   }
 

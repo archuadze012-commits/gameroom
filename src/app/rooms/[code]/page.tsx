@@ -11,7 +11,6 @@ import { CloseRoomButton } from "../new/close-room-button";
 import { RoomChat } from "./room-chat";
 import { RoomElapsed } from "./room-elapsed";
 
-export const dynamic = "force-dynamic";
 
 type RoomRow = {
   id: string;
@@ -76,7 +75,7 @@ export default async function RoomDetailPage({
   const isHost = user?.id === room.host_id;
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
 
       <div className="container relative mx-auto max-w-5xl px-4 py-8 lg:py-10">

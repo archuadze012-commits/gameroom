@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { createLogger } from "@/lib/logger";
 import type { PublicProfile } from "@/lib/types";
+
+const logger = createLogger("api:users");
 
 function client() {
   return createClient(
@@ -66,7 +69,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(profiles);
   } catch (e) {
-    console.error("[/api/users]", e);
+    logger.error("failed to fetch users", { error: e });
     return NextResponse.json({ error: "db_error" }, { status: 500 });
   }
 }

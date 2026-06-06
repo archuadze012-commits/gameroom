@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireRateLimitedUser } from "@/lib/api/guards";
 import { readJsonObject } from "@/lib/api/json";
+import { getServerEnv } from "@/lib/env";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("api:smart-replies");
 
 export async function POST(request: NextRequest) {
   const guard = await requireRateLimitedUser(request, "ai:smart-replies", 30, 60_000);
   if (!guard.ok) return guard.response;
 
-  if (!process.env.GROQ_API_KEY) return NextResponse.json({ replies: [] });
+  const groqKey = getServerEnv("GROQ_API_KEY");
+  if (!groqKey) return NextResponse.json({ replies: [] });
 
   const body = await readJsonObject<{ lastMessage?: string }>(request, 4 * 1024);
   if (!body.ok) return NextResponse.json({ replies: [] });
@@ -20,7 +25,7 @@ export async function POST(request: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        Authorization: `Bearer ${groqKey}`,
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
@@ -46,7 +51,7 @@ export async function POST(request: NextRequest) {
     const parsed = JSON.parse(match?.[0] ?? '{"replies":[]}');
     return NextResponse.json({ replies: (parsed.replies ?? []).slice(0, 3) });
   } catch (e) {
-    console.error("[/api/smart-replies]", e);
+    logger.warn("smart replies failed", { error: e });
     return NextResponse.json({ replies: [] });
   }
 }

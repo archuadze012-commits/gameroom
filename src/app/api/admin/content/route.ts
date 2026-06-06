@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { readJsonObject } from "@/lib/api/json";
 import { requirePermission, logAdminAction } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("api:admin-content");
 
 type Row = {
   key: string;
@@ -36,7 +39,7 @@ export async function GET() {
     if (error) throw error;
     return NextResponse.json((data ?? []) as Row[]);
   } catch (e) {
-    console.error("[/api/admin/content GET]", e);
+    logger.error("failed to fetch site content", { error: e });
     return NextResponse.json({ error: "db_error" }, { status: 500 });
   }
 }
@@ -73,7 +76,7 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) {
-    console.error("[/api/admin/content POST]", error);
+    logger.error("failed to upsert site content", { key, error });
     return NextResponse.json({ error: error.message, code: error.code }, { status: 500 });
   }
 

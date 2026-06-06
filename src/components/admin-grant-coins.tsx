@@ -50,8 +50,13 @@ export function AdminGrantCoins({ targetUserId, targetUsername }: Props) {
   }
 
   return (
-    <section className="mt-6 border border-dashed border-[color-mix(in_srgb,var(--gr-amber)_35%,transparent)] bg-[color-mix(in_srgb,var(--gr-amber)_4%,transparent)] p-4 [clip-path:polygon(0_0,calc(100%-14px)_0,100%_14px,100%_100%,0_100%)]">
-      <div className="mb-3 flex items-center gap-2">
+    <div className="pubg-loadout-link group relative mt-6 block transition-all duration-500" data-variant="support">
+      <section className="pubg-loadout-card relative overflow-hidden p-5">
+        <span aria-hidden className="pubg-loadout-field absolute inset-0" />
+        <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[5px]" />
+        <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-16 w-16 opacity-30" />
+        <div className="relative z-[1] space-y-3">
+          <div className="mb-3 flex items-center gap-2">
         <ShieldCheck className="h-4 w-4 text-[var(--gr-amber)]" />
         <span className="text-[11px] font-black uppercase tracking-[0.18em] text-[var(--gr-amber)]">
           ადმინი — ქოინების დარიცხვა
@@ -128,6 +133,8 @@ export function AdminGrantCoins({ targetUserId, targetUsername }: Props) {
           )}
         </div>
       </form>
-    </section>
+        </div>
+      </section>
+    </div>
   );
 }

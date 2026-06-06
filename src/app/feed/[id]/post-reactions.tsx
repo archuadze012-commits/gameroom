@@ -89,7 +89,7 @@ export function PostReactions({ postId, initialCounts, initialMine, hideHeading 
   return (
     <div className="space-y-2">
       {!hideHeading && (
-        <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/60">React</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#D0F8FF]/72">React</p>
       )}
       <div className="flex flex-wrap gap-2">
         {REACTIONS.map((r) => {
@@ -103,8 +103,8 @@ export function PostReactions({ postId, initialCounts, initialMine, hideHeading 
               disabled={!!pending}
               title={r.sub}
               className={`
-                group relative flex items-center gap-2 rounded-lg border px-3 py-1.5
-                text-xs font-bold uppercase tracking-wide
+                pubg-loadout-card group relative flex items-center gap-2 overflow-hidden px-3 py-1.5
+                text-[11px] font-black uppercase tracking-[0.14em]
                 shadow-sm transition-all duration-200
                 hover:shadow-md hover:-translate-y-px active:translate-y-0
                 disabled:cursor-not-allowed disabled:opacity-60

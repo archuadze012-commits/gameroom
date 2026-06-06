@@ -77,13 +77,9 @@ export function ChallengesList({ hasSession }: { hasSession: boolean }) {
         return (
           <li
             key={c.id}
-            className={`group relative flex items-center gap-5 overflow-hidden rounded-[20px] p-[1.5px] transition-all duration-300 hover:-translate-y-1 ${
-              isClaimed
-                ? "bg-gradient-to-br from-cyan-500/30 to-blue-500/30 shadow-[0_0_20px_rgba(34,211,238,0.15)]"
-                : "bg-white/5 border border-white/5 hover:border-pink-500/30 hover:bg-gradient-to-br hover:from-pink-500/30 hover:to-violet-500/30 hover:shadow-[0_0_20px_rgba(236,72,153,0.2)]"
-            }`}
+            className="group neon-frame flex items-center gap-5 rounded-[20px]"
           >
-            <div className={`relative flex w-full items-center gap-5 rounded-[18.5px] bg-[#0a0714] p-5 sm:p-6 backdrop-blur-md ${isClaimed ? "bg-[#0a0714]/80" : ""}`}>
+            <div className={`relative flex w-full items-center gap-5 overflow-hidden rounded-[17px] bg-[#0a0714] p-5 sm:p-6 backdrop-blur-md ${isClaimed ? "bg-[#0a0714]/80" : ""}`}>
               
               <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border ${
                 isClaimed 

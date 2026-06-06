@@ -4,12 +4,17 @@ type Participant = { name: string; rank?: string; winRate?: number };
 
 import { requireRateLimitedUser } from "@/lib/api/guards";
 import { readJsonObject } from "@/lib/api/json";
+import { requireServerEnv } from "@/lib/env";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("api:bracket-generate");
 
 export async function POST(request: NextRequest) {
   const guard = await requireRateLimitedUser(request, "ai:bracket-generate", 10, 60_000);
   if (!guard.ok) return guard.response;
 
-  if (!process.env.GROQ_API_KEY) return NextResponse.json({ error: "no_key" }, { status: 500 });
+  const groqKey = requireServerEnv("GROQ_API_KEY", "api:bracket-generate");
+  if (!groqKey.ok) return NextResponse.json({ error: "no_key" }, { status: 500 });
 
   const body = await readJsonObject<{ participants?: Participant[]; format?: string; game?: string }>(
     request,
@@ -43,7 +48,7 @@ export async function POST(request: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        Authorization: `Bearer ${groqKey.value}`,
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
@@ -72,7 +77,7 @@ export async function POST(request: NextRequest) {
     const parsed = JSON.parse(match?.[0] ?? '{"seedings":[]}');
     return NextResponse.json({ seedings: parsed.seedings ?? [] });
   } catch (e) {
-    console.error("[/api/bracket-generate]", e);
+    logger.error("bracket seed generation failed", { error: e });
     return NextResponse.json({ error: "ai_error" }, { status: 500 });
   }
 }

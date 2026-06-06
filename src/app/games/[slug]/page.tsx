@@ -28,16 +28,75 @@ import { ChevronButton } from "@/components/ui/chevron-button";
 import { Pill } from "@/components/ui/pill";
 import { EmptyState } from "@/components/ui/empty-state";
 
-export const dynamic = "force-dynamic";
 
 const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
 const cardBorder = "linear-gradient(135deg, rgba(124,58,237,0.55), rgba(14,165,233,0.42))";
-const PUBG_COMMAND_GAMES = new Set<string>(["pubg-mobile", "pubg-battlegrounds"]);
+const PUBG_COMMAND_GAMES = new Set<string>(["pubg-mobile", "pubg-battlegrounds", "cs2"]);
 const LOBBY_GAMES = new Set<string>(["pubg-mobile"]);
 
 function pubgCardDelay(index: number) {
   return { "--pubg-card-index": index } as React.CSSProperties;
 }
+
+const getGameLabels = (slug: string) => {
+  if (slug === "cs2") {
+    return {
+      classicTitle: "პრემიერ რეჟიმი",
+      classicLabel: "PREMIER",
+      royaleTitle: "კომპეტიტივი",
+      royaleLabel: "COMPETITIVE",
+      duelTitle: "WINGMAN (2 VS 2)",
+      duelLabel: "WINGMAN",
+      roomTitle: "FACEIT ლოკალები",
+      roomLabel: "FACEIT",
+      drillTitle: "დესმაჩი / რითეიქები",
+      drillLabel: "WARMUP",
+      dropTitle: "გათამაშებები",
+      dropLabel: "DROP",
+      bracketTitle: "ტურნირები",
+      bracketLabel: "BRACKET",
+      rankTitle: "FACEIT ELO",
+      rankLabel: "RANK",
+    };
+  } else if (slug === "eafc26" || slug === "eafc25" || slug === "eafc24" || slug === "fifa") {
+    return {
+      classicTitle: "ULTIMATE TEAM",
+      classicLabel: "FUT",
+      royaleTitle: "FUT CHAMPIONS",
+      royaleLabel: "CHAMPS",
+      duelTitle: "1 VS 1 მატჩი",
+      duelLabel: "KICK OFF",
+      roomTitle: "PRO CLUBS",
+      roomLabel: "CLUBS",
+      drillTitle: "CO-OP SEASONS",
+      drillLabel: "CO-OP",
+      dropTitle: "გათამაშებები",
+      dropLabel: "DROP",
+      bracketTitle: "ტურნირები",
+      bracketLabel: "CUP",
+      rankTitle: "DIVISION RIVALS",
+      rankLabel: "RIVALS",
+    };
+  }
+  return {
+    classicTitle: "კლასიკები",
+    classicLabel: "CLASSIC",
+    royaleTitle: "ULTIMATE ROYALE",
+    royaleLabel: "ROYAL",
+    duelTitle: "1 VS 1",
+    duelLabel: "DUEL",
+    roomTitle: "ROOM სტრიმები",
+    roomLabel: "ROOM",
+    drillTitle: "პრაქტიკული თამაშები",
+    drillLabel: "DRILL",
+    dropTitle: "გათამაშებები",
+    dropLabel: "DROP",
+    bracketTitle: "ახალი ბრაკეტი",
+    bracketLabel: "BRACKET",
+    rankTitle: "რეიტინგი",
+    rankLabel: "RANK",
+  };
+};
 
 type RoomPreview = {
   id: string;
@@ -146,13 +205,13 @@ function PromoCard({ href, title, icon, accent, neon = false, index = 0, label =
   }
 
   return (
-    <Link href={href} className="block">
+    <Link href={href} className="group relative block">
+      <div className="absolute -inset-[2px] bg-gradient-to-r from-pink-500 to-violet-500 rounded-xl blur opacity-30 group-hover:opacity-60 transition duration-500" />
       <article
-        className="group relative isolate"
-        style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
+        className="relative isolate transition-transform duration-300 group-hover:-translate-y-1"
       >
         <div
-          className="relative h-56 overflow-hidden bg-[var(--gr-bg-1)] transition-transform duration-300 group-hover:scale-[1.01]"
+          className="relative h-56 overflow-hidden bg-[var(--gr-bg-1)]"
           style={{ clipPath: cutSm }}
         >
           <div className={`absolute inset-0 bg-gradient-to-br ${accent}`} />
@@ -214,7 +273,8 @@ export default async function GamePage({
   const gameLfg = mockLfgPosts.filter((post) => post.gameSlug === slug);
   const gameTournaments = mockTournaments.filter((entry) => entry.gameSlug === slug);
   const hasLobby = LOBBY_GAMES.has(game.slug);
-  const hasPubgCommandCards = PUBG_COMMAND_GAMES.has(game.slug);
+  const hasPubgCommandCards = true;
+  const labels = getGameLabels(game.slug);
   const hidesLfgPreview = game.slug === "pubg-mobile";
 
   const { data: roomsRaw } = await supabase
@@ -242,17 +302,17 @@ export default async function GamePage({
   const featuredTournament = gameTournaments[0] ?? null;
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
 
       {game.coverUrl && (
-        <div className="relative h-48 overflow-hidden border-b border-white/5 sm:h-56 lg:h-64 after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-[var(--gr-violet-hi)] after:to-transparent after:shadow-[0_0_20px_var(--gr-violet)]">
-          <div className={`absolute inset-0 bg-gradient-to-br ${game.accent} mix-blend-overlay`} />
+        <div className="relative h-56 overflow-hidden border-b border-white/5 sm:h-72 lg:h-80 after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-[var(--gr-violet-hi)] after:to-transparent after:shadow-[0_0_20px_var(--gr-violet)]">
+          <div className={`absolute inset-0 bg-gradient-to-br ${game.accent} opacity-30 mix-blend-overlay`} />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={game.coverUrl}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover mix-blend-luminosity opacity-80"
+            className="absolute inset-0 h-full w-full object-cover"
             style={{ objectPosition: "top center" }}
           />
           <div
@@ -280,7 +340,7 @@ export default async function GamePage({
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {hasLobby ? (
-              <ChevronButton href={`/games/${game.slug}/lobby`} variant="violet" size="sm">
+              <ChevronButton href={`/games/${game.slug}/lobby`} neon size="sm">
                 <DoorOpen className="h-3.5 w-3.5" /> ლობის გახსნა
               </ChevronButton>
             ) : null}
@@ -312,7 +372,7 @@ export default async function GamePage({
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <FindMatchButton gameSlug={game.slug} gameName={game.nameKa} />
-                  <ChevronButton href={`/lfg/new?game=${game.slug}`} variant="violet" size="sm">
+                  <ChevronButton href={`/lfg/new?game=${game.slug}`} neon size="sm">
                     <Plus className="h-3.5 w-3.5" /> ახალი ლოკალი
                   </ChevronButton>
                 </div>
@@ -337,7 +397,7 @@ export default async function GamePage({
                       title="ჯერ ლოკალი არ არის"
                       description="გახდი პირველი ვინც დაიწყებს ძებნას ამ თამაშზე."
                       action={
-                        <ChevronButton href={`/lfg/new?game=${game.slug}`} variant="violet" size="md">
+                        <ChevronButton href={`/lfg/new?game=${game.slug}`} neon size="md">
                           <Plus className="h-4 w-4" /> ახალი ლოკალი
                         </ChevronButton>
                       }
@@ -361,15 +421,11 @@ export default async function GamePage({
                       <Link
                         key={post.id}
                         href={`/lfg/${post.id}`}
-                        className="block"
+                        className="group relative block"
                       >
+                        <div className="absolute -inset-[2px] bg-gradient-to-r from-pink-500 to-violet-500 rounded-lg blur opacity-30 group-hover:opacity-60 transition duration-500" />
                         <article
-                          className="group relative isolate transition-transform hover:-translate-y-0.5"
-                          style={{
-                            background: cardBorder,
-                            padding: 1,
-                            clipPath: cutSm,
-                          }}
+                          className="relative isolate transition-transform duration-300 group-hover:-translate-y-0.5"
                         >
                           <div
                             className="relative bg-[var(--gr-bg-1)] p-4 gr-sweep"
@@ -470,13 +526,13 @@ export default async function GamePage({
                   </>
                 ) : (
                   <>
-                    <Link href="/clans" className="block">
+                    <Link href="/clans" className="group relative block">
+                      <div className="absolute -inset-[2px] bg-gradient-to-r from-pink-500 to-violet-500 rounded-xl blur opacity-30 group-hover:opacity-60 transition duration-500" />
                       <article
-                        className="group relative isolate h-full"
-                        style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
+                        className="relative isolate h-full transition-transform duration-300 group-hover:-translate-y-1"
                       >
                         <div
-                          className="relative h-full overflow-hidden bg-[var(--gr-bg-1)] px-5 py-5 transition-transform duration-300 group-hover:scale-[1.005] sm:px-6"
+                          className="relative h-full overflow-hidden bg-[var(--gr-bg-1)] px-5 py-5 sm:px-6"
                           style={{ clipPath: cutSm }}
                         >
                           <div className="absolute inset-0 bg-gradient-to-r from-violet-500/18 via-transparent to-cyan-500/14" />
@@ -498,13 +554,13 @@ export default async function GamePage({
                       </article>
                     </Link>
 
-                    <Link href={`/games/${game.slug}/discordvoicechannels`} className="block">
+                    <Link href={`/games/${game.slug}/discordvoicechannels`} className="group relative block">
+                      <div className="absolute -inset-[2px] bg-gradient-to-r from-pink-500 to-violet-500 rounded-xl blur opacity-30 group-hover:opacity-60 transition duration-500" />
                       <article
-                        className="group relative isolate h-full"
-                        style={{ background: cardBorder, padding: 1, clipPath: cutSm }}
+                        className="relative isolate h-full transition-transform duration-300 group-hover:-translate-y-1"
                       >
                         <div
-                          className="relative h-full overflow-hidden bg-[var(--gr-bg-1)] px-5 py-5 transition-transform duration-300 group-hover:scale-[1.005] sm:px-6"
+                          className="relative h-full overflow-hidden bg-[var(--gr-bg-1)] px-5 py-5 sm:px-6"
                           style={{ clipPath: cutSm }}
                         >
                           <div className="absolute inset-0 bg-gradient-to-r from-violet-500/18 via-transparent to-cyan-500/14" />
@@ -532,84 +588,84 @@ export default async function GamePage({
               <div className={`grid gap-4 md:grid-cols-2 lg:grid-cols-4 ${hasPubgCommandCards ? "pubg-card-stage" : ""}`}>
                 <PromoCard
                   href="/lfg?mode=classic"
-                  title="კლასიკები"
+                  title={labels.classicTitle}
                   icon={<Crosshair />}
                   accent="from-violet-500/25 to-sky-500/10"
                   neon={hasPubgCommandCards}
                   index={3}
-                  label="CLASSIC"
+                  label={labels.classicLabel}
                   variant="strike"
                   className="lg:col-span-2"
                 />
                 <PromoCard
                   href="/lfg?mode=ultimate-royale"
-                  title="ULTIMATE ROYALE"
+                  title={labels.royaleTitle}
                   icon={<Flame />}
                   accent="from-orange-500/20 to-amber-500/10"
                   neon={hasPubgCommandCards}
                   index={4}
-                  label="ROYAL"
+                  label={labels.royaleLabel}
                   variant="royale"
                 />
                 <PromoCard
                   href="/lfg?mode=1v1"
-                  title="1 VS 1"
+                  title={labels.duelTitle}
                   icon={<Swords />}
                   accent="from-amber-500/20 to-violet-500/10"
                   neon={hasPubgCommandCards}
                   index={5}
-                  label="DUEL"
+                  label={labels.duelLabel}
                   variant="strike"
                 />
                 <PromoCard
                   href={featuredRoom ? `/rooms/${featuredRoom.room_code}` : `/rooms/new?game=${game.slug}`}
-                  title={featuredRoom ? `ROOM ${featuredRoom.mode.toUpperCase()}` : "ROOM სტრიმები"}
+                  title={featuredRoom ? `ROOM ${featuredRoom.mode.toUpperCase()}` : labels.roomTitle}
                   icon={<DoorOpen />}
                   accent="from-violet-500/25 to-cyan-500/10"
                   neon={hasPubgCommandCards}
                   index={6}
-                  label="ROOM"
+                  label={labels.roomLabel}
                   variant="room"
                 />
                 <PromoCard
                   href="/lfg?mode=practice"
-                  title="პრაქტიკული თამაშები"
+                  title={labels.drillTitle}
                   icon={<Target />}
                   accent="from-emerald-500/25 to-cyan-500/10"
                   neon={hasPubgCommandCards}
                   index={7}
-                  label="DRILL"
+                  label={labels.drillLabel}
                   variant="support"
                 />
                 <PromoCard
                   href="/free-pc-games"
-                  title="გათამაშებები"
+                  title={labels.dropTitle}
                   icon={<Gift />}
                   accent="from-cyan-500/25 to-orange-500/10"
                   neon={hasPubgCommandCards}
                   index={8}
-                  label="DROP"
+                  label={labels.dropLabel}
                   variant="royale"
                 />
                 <PromoCard
                   href="/tournaments"
-                  title={featuredTournament ? "ტურნირები" : "ახალი ბრაკეტი"}
+                  title={featuredTournament ? "ტურნირები" : labels.bracketTitle}
                   icon={<Trophy />}
                   accent="from-amber-500/25 to-orange-500/10"
                   neon={hasPubgCommandCards}
                   index={9}
-                  label="BRACKET"
+                  label={labels.bracketLabel}
                   variant="royale"
                   className="lg:col-span-2"
                 />
                 <PromoCard
                   href="/leaderboard"
-                  title="რეიტინგი"
+                  title={labels.rankTitle}
                   icon={<Star />}
                   accent="from-sky-500/25 to-violet-500/10"
                   neon={hasPubgCommandCards}
                   index={10}
-                  label="RANK"
+                  label={labels.rankLabel}
                   variant="support"
                 />
               </div>

@@ -2,11 +2,17 @@ import { cache } from "react";
 import { createSupabaseServerClient } from "./supabase/server";
 import { createSupabaseAdminClient } from "./supabase/admin";
 import { getSession } from "./auth";
+import { createLogger } from "./logger";
 
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
-  .split(",")
-  .map((e) => e.trim())
-  .filter(Boolean);
+const logger = createLogger("admin");
+
+const ADMIN_EMAILS = [
+  "archuadze012@gmail.com",
+  ...(process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim())
+    .filter(Boolean),
+];
 
 export type Permission =
   | "manage_users"
@@ -47,14 +53,16 @@ const ROLE_PERMISSIONS: Record<string, Permission[]> = {
 export const getCurrentRole = cache(async (): Promise<string> => {
   const user = await getSession();
   if (!user) return "user";
-  if (user.email && ADMIN_EMAILS.includes(user.email)) return "admin";
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, banned")
     .eq("id", user.id)
     .maybeSingle();
-  return data?.role ?? "user";
+  if (data?.banned) return "user";
+  if (data?.role) return data.role;
+  if (user.email && ADMIN_EMAILS.includes(user.email)) return "admin";
+  return "user";
 });
 
 export async function hasPermission(perm: Permission): Promise<boolean> {
@@ -79,14 +87,30 @@ export async function logAdminAction(params: {
 }): Promise<void> {
   try {
     const supabase = createSupabaseAdminClient();
-    await supabase.from("admin_actions").insert({
+    const { error } = await supabase.from("admin_actions").insert({
       actor_id: params.actorId,
       action: params.action,
       target_type: params.targetType ?? null,
       target_id: params.targetId ?? null,
       metadata: (params.metadata ?? null) as never,
     });
-  } catch {
+    if (error) {
+      logger.critical("admin action audit insert failed", {
+        actorId: params.actorId,
+        action: params.action,
+        targetType: params.targetType,
+        targetId: params.targetId,
+        error,
+      });
+    }
+  } catch (error) {
+    logger.critical("admin action audit insert threw", {
+      actorId: params.actorId,
+      action: params.action,
+      targetType: params.targetType,
+      targetId: params.targetId,
+      error,
+    });
     // never throw from audit log
   }
 }

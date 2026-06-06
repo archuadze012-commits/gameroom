@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ImagePlus, Loader2, Send, Sparkles, X, Activity } from "lucide-react";
+import { ImagePlus, Loader2, Send, X, Activity } from "lucide-react";
 import { toast } from "sonner";
 import { createPostAction } from "@/app/feed/actions";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -119,8 +119,12 @@ export function PostComposer({
   }
 
   return (
-    <div className={`relative w-full ${className}`}>
-      <div className="relative p-5">
+    <div className={`pubg-loadout-link group block ${className}`} data-variant="strike">
+      <div className="pubg-loadout-card relative overflow-hidden p-5 sm:p-6">
+        <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+        <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[3px] z-[5]" />
+        <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-12 w-12 opacity-25 z-[5]" />
+        <div className="relative z-[1]">
         <form
           action={(formData) => {
             void submitPost(formData);
@@ -129,29 +133,25 @@ export function PostComposer({
         >
           {/* Header Row */}
           <div className="flex items-start gap-4">
-            <Avatar className="h-12 w-12 shrink-0 border border-violet-500/30 shadow-[0_0_15px_rgba(139,92,246,0.2)]">
+            <Avatar className="h-12 w-12 shrink-0 border border-white/10 shadow-[0_0_18px_rgba(0,230,255,0.15)]">
               <AvatarImage src={currentUser.avatarUrl ?? ""} alt={authorName} />
-              <AvatarFallback className="bg-violet-500/10 text-sm font-black text-violet-400">
+              <AvatarFallback className="bg-[linear-gradient(135deg,var(--gr-magenta),var(--gr-violet-hi))] text-sm font-black text-white">
                 {authorName.slice(0, 1).toUpperCase()}
               </AvatarFallback>
             </Avatar>
 
             <div className="min-w-0 flex-1 pt-0.5">
               <div className="flex items-center gap-2 mb-1">
-                <span className="font-display text-[16px] font-black uppercase text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">
+                <span className="font-display text-[16px] font-black uppercase tracking-[0.04em] text-[#D0F8FF] drop-shadow-[0_0_8px_rgba(0,230,255,0.45)]">
                   {authorName}
                 </span>
-                <Pill tone="magenta" icon={<Activity className="h-3 w-3" />} pulse>
+                <Pill tone="magenta" icon={<Activity className="h-3 w-3" />} pulse className="text-[10px]">
                   LIVE POST
                 </Pill>
-                <Pill tone="cyan" icon={<Sparkles className="h-3 w-3" />}>
-                  მთავარი ფიდი
-                </Pill>
               </div>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[11px] font-bold uppercase tracking-[0.16em] text-white/40">
-                <span>@{currentUser.username}</span>
-                <span className="text-cyan-400 drop-shadow-[0_0_6px_rgba(34,211,238,0.5)]">MATCH CLIPS / UPDATES / LFG</span>
-              </div>
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#D0F8FF]/75 drop-shadow-[0_0_6px_rgba(0,230,255,0.3)]">
+                share a moment
+              </p>
             </div>
           </div>
 
@@ -160,8 +160,8 @@ export function PostComposer({
             <Textarea
               name="content"
               maxLength={2000}
-              placeholder="გააზიარე მატჩის კლიპი, აზრი, ან LFG განახლება..."
-              className="min-h-[120px] w-full resize-none bg-transparent border-0 px-0 py-2 text-[16px] leading-relaxed text-white/90 placeholder:text-white/30 focus-visible:ring-0 focus-visible:outline-none"
+              placeholder="დაგვიპოსტე, რა ხდება ახალი. დღეს ვინ გაგზავნე ელექტრონულ საიქიოში"
+              className="min-h-[132px] w-full resize-none rounded-[18px] border border-white/8 bg-black/35 px-4 py-4 text-[16px] leading-relaxed text-white/90 shadow-inner placeholder:text-white/28 focus-visible:ring-0 focus-visible:outline-none focus-visible:border-[var(--gr-magenta)]/25 focus-visible:bg-black/45"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               disabled={isPending}
@@ -175,7 +175,7 @@ export function PostComposer({
                 {mediaUrls.map((url, index) => (
                   <div
                     key={url}
-                    className="group relative aspect-square overflow-hidden rounded-xl border border-white/10"
+                    className="group relative aspect-square overflow-hidden rounded-[18px] border border-white/10 bg-black/25"
                   >
                     <Image src={url} alt="" fill sizes="120px" className="object-cover transition-transform duration-500 group-hover:scale-105" unoptimized />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -206,39 +206,44 @@ export function PostComposer({
           />
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-between pt-2 border-t border-white/5 mt-4">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-y-3 gap-x-2 border-t border-white/10 pt-3">
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading || mediaUrls.length >= 4 || isPending}
-                className="group flex h-10 items-center justify-center gap-2 rounded-full bg-white/5 px-4 text-[11px] font-black uppercase tracking-[0.16em] text-white/70 transition-all hover:bg-white/10 hover:text-white disabled:opacity-50"
+                className="pubg-loadout-card group relative flex h-10 items-center justify-center gap-2 overflow-hidden px-4 text-[11px] font-black uppercase tracking-[0.16em] text-[#D0F8FF] transition-all hover:text-white disabled:opacity-50"
                 title="დაამატე სურათი"
               >
+                <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
                 {uploading ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-pink-400" />
+                  <Loader2 className="relative z-[1] h-4 w-4 animate-spin text-[var(--gr-magenta)]" />
                 ) : (
-                  <ImagePlus className="h-4 w-4 text-violet-400 group-hover:text-pink-400 transition-colors" />
+                  <ImagePlus className="relative z-[1] h-4 w-4 text-[var(--gr-magenta)] group-hover:text-white transition-colors" />
                 )}
-                <span className="hidden sm:inline">მედია</span>
+                <span className="relative z-[1] hidden sm:inline">მედია</span>
               </button>
-              <span className="text-[11px] font-bold text-white/30">{draft.length}/2000</span>
+              <span className="text-[11px] font-bold text-[#D0F8FF]/55">{draft.length}/2000</span>
             </div>
 
             <button
               type="submit"
               disabled={!draft.trim() || isPending || uploading}
-              className="relative inline-flex h-11 items-center justify-center gap-2 overflow-hidden rounded-full bg-[linear-gradient(90deg,#ec4899,#8b5cf6)] px-6 text-[12px] font-black uppercase tracking-[0.18em] text-white shadow-[0_0_20px_rgba(236,72,153,0.4)] transition-all hover:shadow-[0_0_30px_rgba(236,72,153,0.6)] hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+              className="pubg-loadout-card group relative flex h-12 min-w-[170px] items-center justify-center overflow-hidden px-6 transition-all duration-500 disabled:pointer-events-none disabled:opacity-50"
             >
-              {isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-              {isPending ? "იგზავნება..." : "გამოქვეყნება"}
+              <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+              <div className="relative z-[1] flex items-center gap-2 text-[12px] font-black uppercase tracking-[0.18em] text-white">
+                {isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-[var(--gr-magenta)]" />
+                ) : (
+                  <Send className="h-4 w-4 text-[var(--gr-magenta)]" />
+                )}
+                {isPending ? "იგზავნება..." : "გამოქვეყნება"}
+              </div>
             </button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   );

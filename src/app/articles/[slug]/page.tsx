@@ -8,7 +8,6 @@ import { UserAvatar } from "@/components/user-avatar";
 import { ArticleOwnerActions } from "@/components/article-owner-actions";
 import { getIsAdmin, getSession } from "@/lib/auth";
 
-export const dynamic = "force-dynamic";
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug: rawSlug } = await params;
@@ -25,7 +24,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   const readingMinutes = Math.max(1, Math.round(article.content.split(/\s+/).length / 180));
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-40" />
 
       {/* HERO — cover with overlaid title at the bottom-left */}

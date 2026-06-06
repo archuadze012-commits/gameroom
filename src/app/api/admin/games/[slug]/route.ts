@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requirePermission } from "@/lib/admin";
+import { requirePermission, logAdminAction } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export async function DELETE(
@@ -13,5 +13,6 @@ export async function DELETE(
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase.from("games").delete().eq("slug", slug);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  await logAdminAction({ actorId: auth.userId, action: "content.game.delete", targetType: "game", targetId: slug });
   return NextResponse.json({ ok: true });
 }

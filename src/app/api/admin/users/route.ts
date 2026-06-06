@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { readJsonObject } from "@/lib/api/json";
 import { requirePermission, logAdminAction } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createLogger } from "@/lib/logger";
 import type { UserRole } from "@/lib/types";
 import type { Database } from "@/lib/database.types";
 
 const USER_ROLES = new Set<UserRole>(["user", "moderator", "organizer", "streamer", "esports", "admin"]);
+const logger = createLogger("api:admin-users");
 
 export async function GET(request: NextRequest) {
   const auth = await requirePermission("manage_users");
@@ -67,7 +69,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(rows);
   } catch (e) {
-    console.error("[/api/admin/users GET]", e);
+    logger.error("failed to fetch admin users", { error: e });
     return NextResponse.json({ error: "db_error" }, { status: 500 });
   }
 }
@@ -132,7 +134,7 @@ export async function PATCH(request: NextRequest) {
     });
     return NextResponse.json({ ok: true });
   } catch (e) {
-    console.error("[/api/admin/users PATCH]", e);
+    logger.error("failed to update admin user", { userId: body.userId, error: e });
     return NextResponse.json({ error: "db_error" }, { status: 500 });
   }
 }

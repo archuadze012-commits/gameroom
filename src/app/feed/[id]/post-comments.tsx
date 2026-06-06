@@ -56,12 +56,15 @@ export function PostComments({ postId, initialComments, currentUser }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ body: text }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null) as { error?: string } | null;
+        throw new Error(payload?.error || "კომენტარის გამოქვეყნება ვერ მოხერხდა");
+      }
       const newComment: Comment = await res.json();
       setComments((prev) => [...prev, newComment]);
       setDraft("");
-    } catch {
-      toast.error("კომენტარის გამოქვეყნება ვერ მოხერხდა");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "კომენტარის გამოქვეყნება ვერ მოხერხდა");
     } finally {
       setSubmitting(false);
     }

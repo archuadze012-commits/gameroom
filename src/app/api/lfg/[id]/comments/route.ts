@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("api:lfg-comments");
 
 export async function POST(
   request: NextRequest,
@@ -21,13 +24,17 @@ export async function POST(
 
   const supabase = await createSupabaseServerClient();
 
-  const { data: post } = await supabase
+  const { data: post, error: postError } = await supabase
     .from("lfg_posts")
     .select("id")
     .eq("id", postId)
     .is("deleted_at", null)
     .maybeSingle();
 
+  if (postError) {
+    logger.error("failed to load LFG post before comment", { postId, userId: user.id, error: postError });
+    return NextResponse.json({ error: "database error" }, { status: 500 });
+  }
   if (!post) return NextResponse.json({ error: "not found" }, { status: 404 });
 
   const { data, error } = await supabase
@@ -37,7 +44,7 @@ export async function POST(
     .single();
 
   if (error) {
-    console.error("[POST /api/lfg/[id]/comments]", error);
+    logger.error("failed to insert LFG comment", { postId, userId: user.id, error });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

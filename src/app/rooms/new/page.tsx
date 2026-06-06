@@ -14,7 +14,6 @@ import { CopyRoomCodeButton } from "./copy-room-code-button";
 import { CloseRoomButton } from "./close-room-button";
 
 export const metadata = { title: "Classic რუმები" };
-export const dynamic = "force-dynamic";
 
 type RoomRow = {
   id: string;
@@ -82,7 +81,7 @@ export default async function NewRoomsPage({
   }
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[#05050f]">
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
       {/* Cinematic Ambient Background */}
       <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.15),transparent_70%)]" />
 
@@ -168,9 +167,9 @@ export default async function NewRoomsPage({
                   return (
                     <article
                       key={room.id}
-                      className="group relative rounded-[24px] p-[1.5px] bg-gradient-to-br from-white/10 to-white/5 transition-all duration-500 hover:from-[#00d0ff] hover:via-[#6366f1] hover:to-[#f43f5e] hover:shadow-[0_0_30px_rgba(99,102,241,0.2)]"
+                      className="group neon-frame rounded-[24px]"
                     >
-                      <div className="relative h-full w-full rounded-[22.5px] bg-[#0a0714] p-5 sm:p-6 backdrop-blur-md">
+                      <div className="relative h-full w-full rounded-[21px] bg-[#0a0714] p-5 sm:p-6 backdrop-blur-md">
                         <Link
                           href={`/rooms/${room.room_code}`}
                           aria-label={`რუმი ${room.room_code}`}

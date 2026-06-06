@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
+import { CinematicBackground } from "@/components/ui/cinematic-background";
 import { SettingsForm } from "./settings-form";
 import { LinkedAccountsSection } from "@/components/linked-accounts-section";
 import { SkillAssessment } from "@/components/skill-assessment";
@@ -71,11 +72,13 @@ export default async function SettingsPage() {
     : allGames;
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
-      <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
+      {/* Cinematic Ambient Background */}
+      <CinematicBackground color="violet" />
 
       <div className="container relative mx-auto max-w-3xl px-4 py-10 lg:py-14 space-y-6">
         <PageHeader
+          color="violet"
           eyebrow="ანგარიში"
           title="პარამეტრები"
           description="შენი პროფილი, ხელმისაწვდომობა, თამაშების ცნობარი."

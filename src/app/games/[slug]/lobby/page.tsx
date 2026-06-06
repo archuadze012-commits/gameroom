@@ -10,14 +10,14 @@ import { LobbyShell } from "@/components/lobby/lobby-shell";
 import { LobbyStage } from "@/components/lobby/lobby-stage";
 import { LobbyOrientationGuard } from "@/components/lobby/lobby-orientation";
 import { getSession } from "@/lib/auth";
+import { buildLobbyHudData } from "@/lib/lobby/hud";
+import type { Database } from "@/lib/database.types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { getMockHud } from "@/lib/lobby/mock-hud";
 import { getWallet, getDailyBonusAvailable } from "@/lib/wallet/queries";
 import { getEquippedItems } from "@/lib/shop/equip-queries";
 import { getLobbyLoadout } from "@/lib/lobby/loadout-queries";
 
-export const dynamicParams = true;
 
 // slug → background image. Add a new entry per supported lobby.
 const LOBBY_BG: Record<string, string> = {
@@ -27,6 +27,11 @@ const LOBBY_BG: Record<string, string> = {
 const cutLg = "polygon(0 0, calc(100% - 32px) 0, 100% 32px, 100% 100%, 0 100%)";
 const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.5))";
 const WEBVIEW_USER_AGENT_RE = /(; wv\)|Electron|CEF|WebView|FBAN|FBAV|Instagram|Line\/|MicroMessenger)/i;
+
+type LobbyProfileRow = Pick<
+  Database["public"]["Tables"]["profiles"]["Row"],
+  "id" | "username" | "display_name" | "avatar_url" | "level" | "xp"
+>;
 
 export async function generateMetadata({
   params,
@@ -63,31 +68,34 @@ export default async function GameLobbyPage({
   let username: string | null = null;
   let avatarUrl: string | null = null;
   let level = 1;
+  let xp = 0;
 
   let lobbyUserId: string | null = null;
   if (requestedUsername) {
     const { data } = await supabase
       .from("profiles")
-      .select("id, username, display_name, avatar_url, level")
+      .select("id, username, display_name, avatar_url, level, xp")
       .eq("username", requestedUsername)
-      .maybeSingle();
+      .maybeSingle<LobbyProfileRow>();
     if (!data) notFound();
     lobbyUserId = data?.id ?? null;
     username = data?.username ?? null;
     displayName = data?.display_name ?? null;
     avatarUrl = data?.avatar_url ?? null;
     level = data?.level ?? 1;
+    xp = data?.xp ?? 0;
   } else if (user) {
     const { data } = await supabase
       .from("profiles")
-      .select("id, username, display_name, avatar_url, level")
+      .select("id, username, display_name, avatar_url, level, xp")
       .eq("id", user.id)
-      .maybeSingle();
+      .maybeSingle<LobbyProfileRow>();
     lobbyUserId = data?.id ?? user.id;
     username = data?.username ?? null;
     displayName = data?.display_name ?? null;
     avatarUrl = data?.avatar_url ?? null;
     level = data?.level ?? 1;
+    xp = data?.xp ?? 0;
   }
   const canPersistLobby = !!(user?.id && lobbyUserId && user.id === lobbyUserId);
 
@@ -99,9 +107,9 @@ export default async function GameLobbyPage({
   let ownedWeapons: { id: string; name: string; tier: string; image_url: string | null; metadata: Record<string, unknown> }[] = [];
   let lobbyInitialLoadout: { combo?: string; character?: string; vehicle?: string; lobby?: string; effect?: string; nameCard?: string } | null = null;
   let hasDbLoadout = false;
+  const resolvedDisplayName = displayName ?? username ?? "მოთამაშე";
 
   if (lobbyUserId) {
-    const hud = getMockHud(username ?? displayName ?? lobbyUserId);
     const [wallet, dailyBonusAvailable, equippedItems, comboRows, charRows, vehicleRows, weaponRows, savedLoadout] = await Promise.all([
       getWallet(lobbyUserId),
       getDailyBonusAvailable(lobbyUserId),
@@ -178,20 +186,17 @@ export default async function GameLobbyPage({
       if (aKey.includes("m416") && !bKey.includes("m416")) return -1;
       if (!aKey.includes("m416") && bKey.includes("m416")) return 1;
       return a.name.localeCompare(b.name);
-    });
+      });
     hudData = {
-      ...hud,
-      gameSlug: slug,
-      player: {
-        ...hud.player,
-        displayName: displayName ?? username ?? "მოთამაშე",
+      ...buildLobbyHudData({
+        gameSlug: slug,
+        displayName: resolvedDisplayName,
         avatarUrl,
         level,
-      },
-      currencies: canPersistLobby
-        ? { pro: wallet.pro_balance, nc: wallet.nc_balance }
-        : null,
-      dailyBonusAvailable: canPersistLobby ? dailyBonusAvailable : false,
+        xp,
+        wallet: canPersistLobby ? wallet : null,
+        dailyBonusAvailable: canPersistLobby ? dailyBonusAvailable : false,
+      }),
     };
 
     const lobbyEffectItem = equippedItems.find((i) => i.category === "lobby_effect");
@@ -216,7 +221,7 @@ export default async function GameLobbyPage({
   }
 
   return (
-    <div className="lobby-fs-viewport relative h-[100svh] w-full bg-[#08060F] sm:bg-[var(--gr-bg-0)] overflow-hidden flex items-center justify-center">
+    <div className="lobby-fs-viewport relative h-[100svh] w-full bg-[#08060F] sm:bg-transparent overflow-hidden flex items-center justify-center">
       <LobbyOrientationGuard enabled={showRotatePrompt} />
       
       {/* Cleaner subtle ambient background for larger screens */}

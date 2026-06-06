@@ -3,7 +3,6 @@ import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NewArticleForm } from "./new-article-form";
 
-export const dynamic = "force-dynamic";
 
 const ALLOWED = ["admin", "moderator", "journalist"];
 
@@ -26,12 +25,9 @@ export default async function NewArticlePage() {
     .order("name_ka");
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-[var(--gr-bg-0)]">
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
-      <div className="container relative mx-auto max-w-2xl px-4 py-10 lg:py-14">
-        <h1 className="font-display text-[24px] font-extrabold uppercase tracking-tight text-[var(--gr-text)] mb-8">
-          ახალი სტატია
-        </h1>
+      <div className="container relative mx-auto max-w-5xl px-4 py-10 lg:py-14">
         <NewArticleForm games={games ?? []} authorId={session.id} />
       </div>
     </div>

@@ -152,8 +152,8 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
       <div className="space-y-8 lg:col-span-8">
         
         {/* Header */}
-        <div className="group relative overflow-hidden rounded-[24px] p-[1.5px] bg-gradient-to-br from-[#00d0ff] via-[#6366f1] to-[#f43f5e] shadow-[0_0_30px_rgba(99,102,241,0.15)] transition-shadow duration-500 hover:shadow-[0_0_40px_rgba(99,102,241,0.25)]">
-          <div className="relative flex flex-col items-start gap-4 rounded-[22.5px] bg-[#0a0714] p-6 backdrop-blur-md sm:flex-row sm:items-center">
+        <div className="group neon-frame rounded-[24px]">
+          <div className="relative flex flex-col items-start gap-4 overflow-hidden rounded-[21px] bg-[#0a0714] p-6 backdrop-blur-md sm:flex-row sm:items-center">
             <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.1),transparent_50%)]" />
             <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-violet-500/30 bg-violet-500/10 shadow-[0_0_15px_rgba(139,92,246,0.3)]">
               <Rss className="h-6 w-6 text-violet-400 drop-shadow-[0_0_8px_rgba(139,92,246,0.8)]" />
@@ -170,20 +170,33 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
         </div>
 
         {/* Composer */}
-        <div className="relative overflow-hidden rounded-[24px] border border-white/5 bg-white/5 p-6 backdrop-blur-md transition-all focus-within:border-pink-500/30 focus-within:bg-white/10 focus-within:shadow-[0_0_30px_rgba(236,72,153,0.15)]">
-          <form action={formAction} className="flex gap-4">
-            <Avatar className="h-12 w-12 shrink-0 border-2 border-[#0a0714] shadow-[0_0_10px_rgba(0,0,0,0.5)]">
+        <div className="pubg-loadout-link block" data-variant="royale">
+          <form action={formAction} className="pubg-loadout-card relative flex gap-4 overflow-hidden p-5 sm:p-6">
+            <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+            <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[3px] z-[5]" />
+            <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-12 w-12 opacity-25 z-[5]" />
+            <Avatar className="relative z-[1] h-12 w-12 shrink-0 border border-white/10 shadow-[0_0_18px_rgba(0,230,255,0.12)]">
               <AvatarImage src={currentUser.avatarUrl} alt={currentUser.displayName} className="object-cover" />
-              <AvatarFallback className="bg-[#0a0714] text-[14px] font-black text-white">
+              <AvatarFallback className="bg-[linear-gradient(135deg,var(--gr-magenta),var(--gr-violet-hi))] text-[14px] font-black text-white">
                 {(currentUser.displayName || currentUser.username).slice(0, 1).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-1 flex-col gap-3">
+            <div className="relative z-[1] flex flex-1 flex-col gap-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#D0F8FF]/72 drop-shadow-[0_0_6px_rgba(0,230,255,0.3)]">
+                    შენი broadcast
+                  </p>
+                  <h2 className="mt-1 font-display text-[18px] font-black uppercase tracking-[0.04em] text-[#D0F8FF] drop-shadow-[0_0_8px_rgba(0,230,255,0.45)]">
+                    ახალი პოსტი
+                  </h2>
+                </div>
+              </div>
               <Textarea
                 name="content"
                 ref={textareaRef}
                 placeholder="გააზიარე ახალი ამბები, კლიპი ან მოსაზრება..."
-                className="min-h-[90px] resize-none rounded-xl border-none bg-black/40 px-4 py-3 text-[14.5px] text-white shadow-inner transition-all focus-visible:ring-1 focus-visible:ring-pink-500/50"
+                className="min-h-[108px] resize-none rounded-[18px] border border-white/8 bg-black/35 px-4 py-4 text-[14.5px] text-white/90 shadow-inner transition-all placeholder:text-white/28 focus-visible:ring-0 focus-visible:border-[var(--gr-magenta)]/25"
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 disabled={isPending}
@@ -192,7 +205,7 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
               {mediaUrls.length > 0 && (
                 <div className="grid grid-cols-4 gap-3">
                   {mediaUrls.map((url, i) => (
-                    <div key={url} className="relative aspect-square overflow-hidden rounded-xl border border-white/10">
+                    <div key={url} className="relative aspect-square overflow-hidden rounded-[18px] border border-white/10 bg-black/25">
                       <Image src={url} alt="" fill sizes="120px" className="object-cover" unoptimized />
                       <input type="hidden" name="mediaUrls" value={url} />
                       <button
@@ -218,29 +231,35 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
                 disabled={isPending}
               />
               
-              <div className="flex items-center justify-between pt-1">
+              <div className="mt-1 flex items-center justify-between border-t border-white/10 pt-3">
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => fileRef.current?.click()}
                     disabled={uploading || mediaUrls.length >= 4 || isPending}
-                    className="flex h-9 items-center gap-1.5 rounded-full bg-white/5 px-4 text-[12px] font-bold tracking-wide text-white/50 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50"
+                    className="pubg-loadout-card relative flex h-10 items-center gap-1.5 overflow-hidden px-4 text-[11px] font-black uppercase tracking-[0.16em] text-[#D0F8FF] transition-colors hover:text-white disabled:opacity-50"
                     title="დაამატე სურათი"
                   >
-                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-                    სურათი
+                    <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+                    <span className="relative z-[1] flex items-center gap-1.5">
+                      {uploading ? <Loader2 className="h-4 w-4 animate-spin text-[var(--gr-magenta)]" /> : <ImagePlus className="h-4 w-4 text-[var(--gr-magenta)]" />}
+                      სურათი
+                    </span>
                   </button>
-                  <span className="text-[11px] font-bold text-white/30 tabular-nums">{draft.length}/2000</span>
+                  <span className="text-[11px] font-bold tabular-nums text-[#D0F8FF]/55">{draft.length}/2000</span>
                 </div>
                 
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   type="submit" 
                   disabled={!draft.trim() || isPending || uploading}
-                  className="h-9 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 px-6 text-[12px] font-black uppercase tracking-widest text-white shadow-[0_0_15px_rgba(236,72,153,0.3)] transition-all hover:scale-105 hover:shadow-[0_0_25px_rgba(236,72,153,0.5)] disabled:opacity-50"
+                  className="pubg-loadout-card relative h-12 overflow-hidden px-6 text-[12px] font-black uppercase tracking-[0.18em] text-white transition-all hover:scale-[1.02] disabled:opacity-50"
                 >
-                  <Send className="mr-1.5 h-3.5 w-3.5" />
-                  {isPending ? "იგზავნება..." : "გამოქვეყნება"}
+                  <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+                  <span className="relative z-[1] flex items-center">
+                    <Send className="mr-1.5 h-3.5 w-3.5 text-[var(--gr-magenta)]" />
+                    {isPending ? "იგზავნება..." : "გამოქვეყნება"}
+                  </span>
                 </Button>
               </div>
             </div>
@@ -291,17 +310,21 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
             const liked = likedIds.has(post.id);
             const author = post.profiles;
             return (
-              <div key={post.id} className="group relative overflow-hidden rounded-[24px] border border-white/5 bg-white/5 backdrop-blur-md transition-all duration-300 hover:border-pink-500/30 hover:bg-gradient-to-br hover:from-white/10 hover:to-white/5 hover:shadow-[0_0_30px_rgba(236,72,153,0.1)]">
+              <div key={post.id} className="pubg-loadout-link group block" data-variant="strike">
                 <Link
                   href={`/profile/${author.username}/${post.id}`}
                   className="absolute inset-0 z-0"
                   aria-label="პოსტის გახსნა"
                 />
                 
-                <div className="relative p-6 space-y-5">
-                  <div className="flex items-center gap-4">
+                <div className="pubg-loadout-card relative overflow-hidden p-5 sm:p-6">
+                  <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+                  <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[3px] z-[5]" />
+                  <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-12 w-12 opacity-25 z-[5]" />
+                  <div className="relative z-[1] space-y-5">
+                    <div className="flex items-center gap-4">
                     <Link href={`/profile/${author.username}`} className="relative z-10 shrink-0">
-                      <Avatar className="h-12 w-12 border border-white/10 transition-colors group-hover:border-pink-500/50">
+                      <Avatar className="h-12 w-12 border border-white/10 shadow-[0_0_18px_rgba(0,230,255,0.12)] transition-colors group-hover:border-pink-500/50">
                         <AvatarImage src={author.avatar_url ?? ""} alt={author.display_name} className="object-cover" />
                         <AvatarFallback className="bg-white/10 text-[14px] font-black text-white">
                           {author.display_name.slice(0, 1).toUpperCase()}
@@ -309,18 +332,21 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
                       </Avatar>
                     </Link>
                     <div className="min-w-0 flex-1">
-                      <Link href={`/profile/${author.username}`} className="relative z-10 flex items-center gap-1.5 font-display text-[16px] font-black uppercase tracking-tight text-white transition-colors hover:text-pink-400">
+                      <Link href={`/profile/${author.username}`} className="relative z-10 flex items-center gap-1.5 font-display text-[16px] font-black uppercase tracking-[0.04em] text-[#D0F8FF] drop-shadow-[0_0_8px_rgba(0,230,255,0.45)] transition-colors hover:text-white">
                         <span className="truncate">{author.display_name || author.username}</span>
                         {author.is_verified && <VerifiedBadge className="h-4 w-4 shrink-0" />}
                       </Link>
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-white/40">{timeAgo(post.created_at)}</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#D0F8FF]/72">{timeAgo(post.created_at)}</p>
                     </div>
-                    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-violet-400">
+                    <span className="pubg-loadout-card relative inline-flex shrink-0 items-center gap-1.5 overflow-hidden px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-[#D0F8FF]">
+                      <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+                      <span className="relative z-[1] flex items-center gap-1.5">
                       <Rss className="h-3 w-3" /> პოსტი
+                      </span>
                     </span>
                   </div>
                   
-                  <div className="relative z-10 pointer-events-none text-[15px] font-medium leading-relaxed text-white/90">
+                  <div className="relative z-10 pointer-events-none">
                     <PostContent
                       content={post.content}
                       mediaUrls={post.media_urls}
@@ -335,15 +361,18 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
                   
                   <Separator className="bg-white/10" />
                   
-                  <div className="relative z-10 flex items-center justify-between">
+                  <div className="relative z-10 flex flex-wrap items-center justify-between gap-y-3 gap-x-2">
                     <button
                       onClick={() => toggleLike(post.id)}
-                      className={`flex items-center gap-2 text-[12px] font-bold tracking-widest transition-all ${
+                      className={`pubg-loadout-card relative flex items-center gap-2 overflow-hidden px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.14em] transition-all ${
                         liked ? "text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.5)]" : "text-white/40 hover:text-pink-400"
                       }`}
                     >
-                      <Heart className={`h-4 w-4 ${liked ? "fill-pink-500" : ""}`} />
-                      {post.likes_count}
+                      <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+                      <span className="relative z-[1] flex items-center gap-2">
+                        <Heart className={`h-4 w-4 ${liked ? "fill-pink-500" : ""}`} />
+                        {post.likes_count}
+                      </span>
                     </button>
                     <div className="ml-auto flex items-center gap-2">
                       <PostOwnerActions
@@ -355,6 +384,7 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
                       />
                       <ReportButton targetType="post" targetId={post.id} />
                     </div>
+                  </div>
                   </div>
                 </div>
               </div>
@@ -373,8 +403,8 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
 
           {news.map((n) => (
             <Link key={n.slug} href={`/news/${n.slug}`}>
-              <div className="group relative overflow-hidden rounded-[24px] border border-white/5 bg-white/5 p-[1.5px] transition-all hover:-translate-y-1 hover:bg-gradient-to-br hover:from-cyan-500/30 hover:to-blue-500/30 hover:shadow-[0_0_30px_rgba(34,211,238,0.15)]">
-                <div className="flex flex-col gap-4 rounded-[22.5px] bg-[#0a0714]/80 p-5 backdrop-blur-md sm:flex-row sm:items-center">
+              <div className="group neon-frame rounded-[24px]">
+                <div className="flex flex-col gap-4 overflow-hidden rounded-[21px] bg-[#0a0714]/80 p-5 backdrop-blur-md sm:flex-row sm:items-center">
                   <div className={`h-20 w-full sm:w-32 shrink-0 rounded-xl bg-gradient-to-br ${n.cover} shadow-inner`} />
                   
                   <div className="min-w-0 flex-1 space-y-2">
