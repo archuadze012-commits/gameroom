@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Orbitron } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -27,6 +28,13 @@ const alkSanet = localFont({
   variable: "--font-alk-sanet",
   display: "swap",
   preload: true,
+});
+
+const orbitron = Orbitron({
+  subsets: ["latin"],
+  variable: "--font-orbitron",
+  display: "swap",
+  weight: ["700", "800", "900"],
 });
 
 export const metadata: Metadata = {
@@ -65,7 +73,7 @@ export default async function RootLayout({
     <html
       lang="ka"
       data-scroll-behavior="smooth"
-      className={`dark ${firaGO.variable} ${alkSanet.variable} antialiased`}
+      className={`dark ${firaGO.variable} ${alkSanet.variable} ${orbitron.variable} antialiased`}
     >
       <body suppressHydrationWarning className="bg-transparent text-foreground">
         <EditModeProvider canEdit={canEdit}>
