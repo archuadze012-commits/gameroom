@@ -15,7 +15,7 @@ const AdminEditBar = dynamic(() =>
   { ssr: false },
 );
 
-export function ClientChrome({ canEdit = false }: { isAuthenticated?: boolean; canEdit?: boolean }) {
+export function ClientChrome({ isAuthenticated = false, canEdit = false }: { isAuthenticated?: boolean; canEdit?: boolean }) {
   const pathname = usePathname();
   const isLobby = pathname?.endsWith("/lobby");
   const isConversation = /^\/messages\/[^/]+$/.test(pathname ?? "");
@@ -40,7 +40,7 @@ export function ClientChrome({ canEdit = false }: { isAuthenticated?: boolean; c
 
   return (
     <>
-      {showRightSideNav ? <WebViewSideNav canEdit={canEdit} /> : <MobileTopNav />}
+      {isAuthenticated && (showRightSideNav ? <WebViewSideNav canEdit={canEdit} /> : <MobileTopNav />)}
       {showAdminEditBar ? <AdminEditBar /> : null}
     </>
   );
