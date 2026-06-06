@@ -68,7 +68,7 @@ export function SiteFooter() {
 
       <div className="border-t border-white/[0.04]">
         <div className="container mx-auto flex flex-col items-center justify-between gap-2 px-4 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 md:flex-row">
-          <span>© {new Date().getFullYear()} Gameroom</span>
+          <span>© {new Date().getFullYear()} PLAYGAME.GE</span>
           <span className="flex items-center gap-1">გაკეთებულია <span className="text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]">❤️</span>-ით საქართველოში</span>
         </div>
       </div>

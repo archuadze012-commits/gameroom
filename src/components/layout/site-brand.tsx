@@ -59,7 +59,7 @@ export function SiteBrand({
         )}
       >
         <span className="text-neon-animated drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] px-1">
-          GAMEROOM
+          PLAYGAME.GE
         </span>
       </span>
     </span>
