@@ -10,6 +10,7 @@ import { ClientChrome } from "@/components/layout/client-chrome";
 import { getSession } from "@/lib/auth";
 import { hasPermission } from "@/lib/admin";
 import { EditModeProvider } from "@/components/admin/edit-mode-context";
+import { GlobalBackground } from "@/components/layout/global-background";
 
 const firaGO = localFont({
   src: [
@@ -18,14 +19,14 @@ const firaGO = localFont({
   ],
   variable: "--font-firago",
   display: "swap",
-  preload: false,
+  preload: true,
 });
 
 const alkSanet = localFont({
   src: "./fonts/alk-sanet.ttf",
   variable: "--font-alk-sanet",
   display: "swap",
-  preload: false,
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -65,10 +66,11 @@ export default async function RootLayout({
       data-scroll-behavior="smooth"
       className={`dark ${firaGO.variable} ${alkSanet.variable} h-full antialiased scroll-smooth`}
     >
-      <body suppressHydrationWarning className="min-h-full flex flex-col">
+      <body suppressHydrationWarning className="min-h-full flex flex-col relative bg-transparent">
         <EditModeProvider canEdit={canEdit}>
+          <GlobalBackground />
           <SiteHeader />
-          <main className="flex-1 pb-16 xl:pb-0">{children}</main>
+          <main className="flex-1 pb-16 sm:pb-0">{children}</main>
           <SiteFooter />
           <ClientChrome isAuthenticated={!!user} canEdit={canEdit} />
           <Toaster richColors position="top-right" />

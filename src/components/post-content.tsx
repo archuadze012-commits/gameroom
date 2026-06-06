@@ -1,4 +1,3 @@
-"use client";
 
 type EmbedKind = "youtube" | "tiktok" | "twitch" | "twitter";
 
@@ -65,34 +64,37 @@ function linkifyAndExtractEmbeds(text: string): { parts: (string | { url: string
 function EmbedFrame({ embed }: { embed: Embed }) {
   if (embed.kind === "youtube") {
     return (
-      <div className="aspect-video w-full overflow-hidden rounded-md border border-border/60">
+      <div className="pubg-loadout-card relative aspect-video w-full overflow-hidden !p-0">
+        <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
         <iframe
           src={`https://www.youtube.com/embed/${embed.id}`}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
-          className="h-full w-full"
+          className="relative z-[1] h-full w-full"
         />
       </div>
     );
   }
   if (embed.kind === "tiktok") {
     return (
-      <div className="overflow-hidden rounded-md border border-border/60">
+      <div className="pubg-loadout-card relative overflow-hidden !p-0">
+        <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
         <iframe
           src={`https://www.tiktok.com/embed/v2/${embed.id}`}
           allowFullScreen
-          className="h-[600px] w-full"
+          className="relative z-[1] h-[600px] w-full"
         />
       </div>
     );
   }
   if (embed.kind === "twitch") {
     return (
-      <div className="aspect-video w-full overflow-hidden rounded-md border border-border/60">
+      <div className="pubg-loadout-card relative aspect-video w-full overflow-hidden !p-0">
+        <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
         <iframe
           src={`https://player.twitch.tv${embed.id}?parent=${typeof window !== "undefined" ? window.location.hostname : "gameroom.com.ge"}`}
           allowFullScreen
-          className="h-full w-full"
+          className="relative z-[1] h-full w-full"
         />
       </div>
     );
@@ -113,7 +115,7 @@ export function PostContent({ content, mediaUrls, authorRole, authorVerified }: 
 
   return (
     <div className="space-y-3">
-      <p className="text-[14.5px] leading-relaxed whitespace-pre-wrap break-words">
+      <p className="text-[14.5px] leading-relaxed whitespace-pre-wrap break-words text-white/88">
         {parts.map((p, i) =>
           typeof p === "string" ? (
             <span key={i}>{p}</span>
@@ -140,9 +142,10 @@ export function PostContent({ content, mediaUrls, authorRole, authorVerified }: 
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="block overflow-hidden rounded-md border border-border/60"
+              className="pubg-loadout-card relative block overflow-hidden !p-0"
             >
-              <img src={url} alt="" className="h-auto w-full object-cover" />
+              <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+              <img src={url} alt="" className="relative z-[1] h-auto w-full object-cover" />
             </a>
           ))}
         </div>
