@@ -166,7 +166,7 @@ export function LightningWebGL({
       const ua = window.navigator.userAgent;
       const isWebview = /(gameroom|; wv\)|Electron|CEF|WebView|FBAN|FBAV|Instagram|Line\/|MicroMessenger)/i.test(ua) || 'ReactNativeWebView' in window || window.matchMedia('(display-mode: standalone)').matches || (/iPhone|iPad|iPod/i.test(ua) && !/Safari/i.test(ua));
       const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform));
-      const prefersReduced = !isWebview && (window.matchMedia("(prefers-reduced-motion: reduce)").matches || isMobileOrTablet || window.innerWidth < 768);
+      const prefersReduced = isMobileOrTablet && !isWebview;
       if (prefersReduced) {
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT);
