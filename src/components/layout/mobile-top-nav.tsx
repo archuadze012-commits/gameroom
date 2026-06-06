@@ -59,7 +59,7 @@ export function MobileTopNav() {
   return (
     <>
       {/* top nav bar */}
-      <div className="fixed left-1/2 -translate-x-1/2 top-3 z-50 w-[calc(100%-24px)] max-w-sm sm:max-w-md md:hidden">
+      <div className="landscape:hidden fixed left-1/2 -translate-x-1/2 top-3 z-50 w-[calc(100%-24px)] max-w-sm sm:max-w-md md:hidden">
         <nav className="neon-rail w-full grid grid-cols-5 gap-1 rounded-[28px] bg-[linear-gradient(135deg,rgba(11,8,22,0.9),rgba(5,4,11,0.95))] p-1.5 shadow-[0_20px_54px_rgba(0,0,0,0.7),inset_0_0_26px_rgba(139,92,246,0.1)] backdrop-blur-2xl">
           {tabs.map(({ href, label, icon: Icon, badge }) => {
             const active = isActive(href);
@@ -109,7 +109,7 @@ export function MobileTopNav() {
       {moreOpen && (
         <div
           ref={sheetRef}
-          className="fixed top-[5.75rem] left-3 right-3 z-50 overflow-hidden rounded-[30px] border border-[rgba(236,72,153,0.25)] bg-[linear-gradient(145deg,rgba(13,9,27,0.95),rgba(5,4,12,0.98))] shadow-[0_26px_76px_rgba(0,0,0,0.75),0_0_34px_rgba(236,72,153,0.15)] backdrop-blur-3xl sm:hidden"
+          className="landscape:hidden fixed top-[5.75rem] left-3 right-3 z-50 overflow-hidden rounded-[30px] border border-[rgba(236,72,153,0.25)] bg-[linear-gradient(145deg,rgba(13,9,27,0.95),rgba(5,4,12,0.98))] shadow-[0_26px_76px_rgba(0,0,0,0.75),0_0_34px_rgba(236,72,153,0.15)] backdrop-blur-3xl sm:hidden"
         >
           {/* Profile header */}
           {profile ? (
