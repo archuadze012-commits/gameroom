@@ -66,10 +66,8 @@ export function GlobalBackground() {
 
     // Decorative ambient: freeze entirely for users who prefer reduced motion
     // (a11y + perf), and never animate while the tab is backgrounded.
-    const ua = window.navigator.userAgent;
-    const isWebview = /(gameroom|; wv\)|Electron|CEF|WebView|FBAN|FBAV|Instagram|Line\/|MicroMessenger)/i.test(ua) || 'ReactNativeWebView' in window || window.matchMedia('(display-mode: standalone)').matches || (/iPhone|iPad|iPod/i.test(ua) && !/Safari/i.test(ua));
-    const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform));
-    let prefersReduced = isMobileOrTablet && !isWebview;
+    const isPortrait = window.matchMedia("(orientation: portrait)").matches;
+    let prefersReduced = isPortrait;
 
     let animId = 0;
     let w = 0;
@@ -182,10 +180,8 @@ export function GlobalBackground() {
       canvas!.style.width = w + "px";
       canvas!.style.height = h + "px";
       
-      const ua = window.navigator.userAgent;
-      const isWebview = /(gameroom|; wv\)|Electron|CEF|WebView|FBAN|FBAV|Instagram|Line\/|MicroMessenger)/i.test(ua) || 'ReactNativeWebView' in window || window.matchMedia('(display-mode: standalone)').matches || (/iPhone|iPad|iPod/i.test(ua) && !/Safari/i.test(ua));
-      const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform));
-      prefersReduced = isMobileOrTablet && !isWebview;
+      const isPortrait = window.matchMedia("(orientation: portrait)").matches;
+      prefersReduced = isPortrait;
       if (prefersReduced) {
         if (animId) {
           cancelAnimationFrame(animId);
@@ -372,9 +368,7 @@ export function GlobalBackground() {
       }
 
       const isMobile = w < 768;
-      const ua = window.navigator.userAgent;
-      const isWebview = /(gameroom|; wv\)|Electron|CEF|WebView|FBAN|FBAV|Instagram|Line\/|MicroMessenger)/i.test(ua) || 'ReactNativeWebView' in window || window.matchMedia('(display-mode: standalone)').matches || (/iPhone|iPad|iPod/i.test(ua) && !/Safari/i.test(ua));
-      const showAmbientEffects = true; // prefersReduced already completely aborts if mobile web
+      const showAmbientEffects = true; // prefersReduced already completely aborts if portrait
 
       // === STORM CLOUDS (Illuminated by lightning or visible in cloudy weather) ===
       if (cloudCanvas && showAmbientEffects) {
