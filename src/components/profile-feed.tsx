@@ -165,25 +165,21 @@ export function ProfileFeed({
               <div className="relative z-10 flex flex-wrap items-center gap-x-4 gap-y-3">
                 <button
                   onClick={() => toggleLike(post.id)}
-                  className={`pubg-loadout-card relative flex items-center gap-1.5 overflow-hidden px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.14em] transition-colors ${
-                    liked ? "text-[var(--gr-magenta)]" : "text-[var(--gr-text-dim)] hover:text-[var(--gr-magenta)]"
+                  className={`group flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${
+                    liked
+                      ? "border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/15 hover:text-rose-300"
+                      : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80"
                   }`}
                 >
-                  <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
-                  <span className="relative z-[1] flex items-center gap-1.5">
-                  <Heart className={`h-4 w-4 ${liked ? "fill-[var(--gr-magenta)]" : ""}`} />
+                  <Heart className={`h-3.5 w-3.5 ${liked ? "fill-current" : ""}`} />
                   {post.likes_count}
-                  </span>
                 </button>
                 <Link
                   href={`/profile/${author.username}/${post.id}`}
-                  className="pubg-loadout-card relative flex items-center gap-1.5 overflow-hidden px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-[var(--gr-text-dim)] transition-colors hover:text-[#D0F8FF]"
+                  className="group flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/60 transition-all duration-200 hover:bg-white/10 hover:text-white/80"
                 >
-                  <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
-                  <span className="relative z-[1] flex items-center gap-1.5">
-                    <MessageCircle className="h-4 w-4" />
-                    {post.comments_count}
-                  </span>
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  {post.comments_count}
                 </Link>
                 <div className="ml-auto">
                   <div className="flex items-center gap-2">

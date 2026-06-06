@@ -7,29 +7,25 @@ const REACTIONS = [
     key: "heart",
     label: "❤️",
     sub: "Heart",
-    base: "border-rose-500/30 text-rose-400 bg-rose-500/5 hover:border-rose-400/60 hover:bg-rose-500/15 hover:shadow-rose-500/20",
-    active: "border-rose-400 bg-rose-500/25 text-rose-300 shadow-rose-500/30",
+    active: "border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/15 hover:text-rose-300",
   },
   {
     key: "gg",
     label: "GG",
     sub: "Good Game",
-    base: "border-emerald-500/30 text-emerald-400 bg-emerald-500/5 hover:border-emerald-400/60 hover:bg-emerald-500/15 hover:shadow-emerald-500/20",
-    active: "border-emerald-400 bg-emerald-500/25 text-emerald-300 shadow-emerald-500/30",
+    active: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/15 hover:text-emerald-300",
   },
   {
     key: "pro",
     label: "PRO",
     sub: "Pro Gamer",
-    base: "border-blue-500/30 text-blue-400 bg-blue-500/5 hover:border-blue-400/60 hover:bg-blue-500/15 hover:shadow-blue-500/20",
-    active: "border-blue-400 bg-blue-500/25 text-blue-300 shadow-blue-500/30",
+    active: "border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/15 hover:text-blue-300",
   },
   {
     key: "noob",
-    label: "Noob",
+    label: "NOOB",
     sub: "Beginner",
-    base: "border-violet-500/30 text-violet-400 bg-violet-500/5 hover:border-violet-400/60 hover:bg-violet-500/15 hover:shadow-violet-500/20",
-    active: "border-violet-400 bg-violet-500/25 text-violet-300 shadow-violet-500/30",
+    active: "border-violet-500/30 bg-violet-500/10 text-violet-400 hover:bg-violet-500/15 hover:text-violet-300",
   },
 ] as const;
 
@@ -103,12 +99,13 @@ export function PostReactions({ postId, initialCounts, initialMine, hideHeading 
               disabled={!!pending}
               title={r.sub}
               className={`
-                pubg-loadout-card group relative flex items-center gap-2 overflow-hidden px-3 py-1.5
-                text-[11px] font-black uppercase tracking-[0.14em]
-                shadow-sm transition-all duration-200
-                hover:shadow-md hover:-translate-y-px active:translate-y-0
+                group relative flex items-center gap-1.5 rounded-full border px-3 py-1
+                text-[10px] font-bold uppercase tracking-wider transition-all duration-200
                 disabled:cursor-not-allowed disabled:opacity-60
-                ${active ? r.active + " shadow-md" : r.base}
+                ${active 
+                  ? r.active 
+                  : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white/80"
+                }
               `}
             >
               {/* active dot */}
@@ -120,8 +117,8 @@ export function PostReactions({ postId, initialCounts, initialMine, hideHeading 
               </span>
               {count > 0 && (
                 <span className={`
-                  rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none
-                  ${active ? "bg-current/20 text-current" : "bg-muted text-muted-foreground"}
+                  rounded-full px-1.5 py-0.5 text-[9px] font-bold leading-none
+                  ${active ? "bg-current/20 text-current" : "bg-white/10 text-white/60"}
                 `}>
                   {count}
                 </span>
