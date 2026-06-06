@@ -22,7 +22,7 @@ import { EditableImage } from "@/components/admin/editable-image";
 import { PostComposer } from "@/components/post-composer";
 import { PostOwnerActions } from "@/components/post-owner-actions";
 import { PostContent } from "@/components/post-content";
-
+export const dynamic = "force-dynamic";
 
 type HomePost = {
   id: string;

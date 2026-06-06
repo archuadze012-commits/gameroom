@@ -7,6 +7,7 @@ import { getLiveStreams } from "@/lib/streams/youtube-live";
 import { Pill } from "@/components/ui/pill";
 
 export const metadata = { title: "ლაივ სტრიმები" };
+export const dynamic = "force-dynamic";
 
 export default async function StreamsPage() {
   const streams = await getLiveStreams(30);
