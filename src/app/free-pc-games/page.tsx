@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
-import { Monitor, Smartphone, Gamepad2 } from "lucide-react";
+import { Monitor, Smartphone, Gamepad2, ChevronDown, Search } from "lucide-react";
 import { crackedGames, mockGames, type CrackedGame } from "@/lib/mock-data";
 
 function getObjectPosition(url?: string) {
@@ -86,11 +87,31 @@ const PLATFORM_ICON: Record<string, React.ReactNode> = {
 
 export default function CrackedGamesPage() {
   const [activeGenre, setActiveGenre] = useState("ყველა");
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerRect, setPickerRect] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [genreSearch, setGenreSearch] = useState("");
+  const [mounted, setMounted] = useState(false);
+  const genreBtnRef = useRef<HTMLButtonElement>(null);
   const [dbGames, setDbGames] = useState<CrackedGame[]>([]);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const [userFavSlugs, setUserFavSlugs] = useState<string[]>([]);
   const [favCounts, setFavCounts] = useState<Record<string, number>>({});
   const [dbRosterGames, setDbRosterGames] = useState<typeof mockGames>([]);
+
+  useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const close = (e: MouseEvent) => {
+      if (genreBtnRef.current && !genreBtnRef.current.contains(e.target as Node)) {
+        const panel = document.getElementById("genre-picker-panel");
+        if (panel && panel.contains(e.target as Node)) return;
+        setPickerOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [pickerOpen]);
 
   useEffect(() => {
     (async () => {
@@ -167,22 +188,58 @@ export default function CrackedGamesPage() {
           </h1>
         </div>
 
-        {/* Genre filter */}
-        <div className="flex flex-wrap items-center justify-center gap-2 max-w-4xl mx-auto">
-          {ALL_GENRES.map((genre) => (
-            <button
-              key={genre}
-              onClick={() => setActiveGenre(genre)}
-              className={`px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.15em] rounded-full transition-all duration-300 border ${
-                activeGenre === genre
-                  ? "bg-[#D0F8FF]/20 text-[#D0F8FF] border-[#D0F8FF]/50 shadow-[0_0_15px_rgba(0,230,255,0.4)] drop-shadow-[0_0_6px_rgba(0,230,255,0.35)]"
-                  : "bg-white/5 text-[#D0F8FF]/60 border-white/5 hover:bg-[#D0F8FF]/10 hover:text-[#D0F8FF] hover:border-[#D0F8FF]/30"
-              }`}
-            >
-              {genre}
-            </button>
-          ))}
+        {/* Genre picker */}
+        <div className="flex justify-center">
+          <button
+            type="button"
+            ref={genreBtnRef}
+            onClick={() => {
+              if (!pickerOpen && genreBtnRef.current) {
+                const rect = genreBtnRef.current.getBoundingClientRect();
+                setPickerRect({ top: rect.bottom + 4, left: rect.left, width: Math.max(rect.width, 220) });
+              }
+              setPickerOpen((v) => !v);
+            }}
+            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-[#D0F8FF]/80 transition-colors hover:border-[#D0F8FF]/40 hover:text-[#D0F8FF] min-w-[220px] justify-between"
+          >
+            <span className="font-semibold">
+              {activeGenre === "ყველა" ? <span className="text-white/50">ჟანრი</span> : activeGenre}
+            </span>
+            <ChevronDown className={`h-4 w-4 text-white/40 transition-transform ${pickerOpen ? "rotate-180" : ""}`} />
+          </button>
         </div>
+
+        {mounted && pickerOpen && pickerRect && createPortal(
+          <div
+            id="genre-picker-panel"
+            className="fixed z-[9999] rounded-xl border border-white/10 bg-[#0a0714] shadow-2xl overflow-hidden"
+            style={{ top: pickerRect.top, left: pickerRect.left, width: pickerRect.width }}
+          >
+            <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2 bg-[#0a0714]">
+              <Search className="h-3.5 w-3.5 text-white/40" />
+              <input
+                autoFocus
+                value={genreSearch}
+                onChange={e => setGenreSearch(e.target.value)}
+                placeholder="ძებნა..."
+                className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/30"
+              />
+            </div>
+            <div className="max-h-52 overflow-y-auto py-1 bg-[#0a0714] scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
+              {ALL_GENRES.filter(g => g.toLowerCase().includes(genreSearch.toLowerCase())).map((genre) => (
+                <button
+                  key={genre}
+                  type="button"
+                  onClick={() => { setActiveGenre(genre); setPickerOpen(false); setGenreSearch(""); }}
+                  className={`flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-white/5 ${activeGenre === genre ? "text-[#D0F8FF]" : "text-white/60"}`}
+                >
+                  {genre}
+                </button>
+              ))}
+            </div>
+          </div>,
+          document.body
+        )}
 
         {/* Grid */}
         <div className="space-y-4">
