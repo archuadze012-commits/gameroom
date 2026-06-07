@@ -314,7 +314,7 @@ export default function CrackedGamesPage() {
                         <div className="flex flex-wrap gap-1.5">
                           {game.genre.slice(0, 2).map((g) => (
                             <span key={g} className="rounded-full border border-black bg-black/80 px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-[#D0F8FF]/90 shadow-[inset_0_0_0_1px_rgba(0,230,255,0.3),0_0_14px_rgba(0,230,255,0.15)] transition-all duration-300 group-hover:border-[#D0F8FF]/70 group-hover:text-white group-hover:shadow-[inset_0_0_0_1px_rgba(0,230,255,0.6),0_0_18px_rgba(0,230,255,0.3)]">
-                              {g}
+                              {GENRE_KA[g] ?? g}
                             </span>
                           ))}
                         </div>
