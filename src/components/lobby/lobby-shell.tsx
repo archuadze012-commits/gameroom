@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { SITE_BRAND_WORDMARK_STYLE } from "@/components/layout/site-brand";
+import { SITE_BRAND_WORDMARK_CLASSNAME } from "@/components/layout/site-brand";
 
 type Props = {
   children: React.ReactNode;
@@ -125,7 +125,7 @@ export function LobbyShell({
             <h1
               className="font-display text-[26px] font-extrabold uppercase leading-none tracking-tight text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)] sm:text-[40px]"
             >
-              <span style={SITE_BRAND_WORDMARK_STYLE}>Gameroom</span>
+              <span className={SITE_BRAND_WORDMARK_CLASSNAME}>Gameroom</span>
             </h1>
 
             {/* progress bar */}
