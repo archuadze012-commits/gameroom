@@ -53,7 +53,7 @@ export default async function HomePage() {
   ]);
   const guestHero = await getSiteContentValue("home.guest.hero", {
     headline: "ყველაფერი, რის გამოც თამაშები გიყვარს",
-    logoUrl: "/logo.png",
+    logoUrl: "/playgame-logo.png",
   });
   const userCta = await getSiteContentValue("home.user.cta", {
     heading: "იპოვე გუნდი ან მოწინააღმდეგე წამებში",
@@ -133,6 +133,20 @@ export default async function HomePage() {
     console.error("[HomePage] Exception during fetch:", e);
   }
 
+  const homeFreeGames = freePcGamesDb.length > 0
+    ? freePcGamesDb.map((g) => ({
+        id: String(g.id),
+        title: String(g.title ?? ""),
+        coverUrl: g.cover_url as string | null | undefined,
+        rating: typeof g.rating === "number" ? g.rating : Number(g.rating ?? 0),
+      }))
+    : crackedGames.slice(0, 4).map((game) => ({
+        id: game.id,
+        title: game.title,
+        coverUrl: game.coverUrl,
+        rating: game.rating,
+      }));
+
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-transparent overflow-x-clip">
       
@@ -156,13 +170,12 @@ export default async function HomePage() {
         {!user ? (
           <section className="relative z-10 mx-auto max-w-5xl text-center flex flex-col items-center pt-8">
             <div className="mb-8 relative group">
-              <div className="absolute -inset-4 bg-gradient-to-r from-[var(--gr-violet)] to-[var(--gr-magenta)] blur-2xl rounded-full opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
               <EditableImage
                 siteKey="home.guest.hero"
                 field="logoUrl"
-                value={String(guestHero.logoUrl ?? "/logo.png")}
+                value={String(guestHero.logoUrl ?? "/playgame-logo.png")}
                 alt="Gameroom"
-                imgClassName="relative z-10 w-28 h-28 lg:w-32 lg:h-32 rounded-3xl shadow-[0_0_50px_rgba(139,92,246,0.3)] transition-transform duration-700 group-hover:scale-105"
+                imgClassName="relative z-10 h-44 w-44 object-contain transition-transform duration-700 group-hover:scale-105 lg:h-56 lg:w-56"
                 folder="home"
                 label="ლოგო"
               />
@@ -283,7 +296,7 @@ export default async function HomePage() {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                {crackedGames.slice(0, 4).map((game) => (
+                {homeFreeGames.slice(0, 4).map((game) => (
                   <Link key={game.id} href={`/free-pc-games/${game.id}`} className="pubg-loadout-link group block" data-variant="strike">
                     <article className="pubg-loadout-card relative h-28 overflow-hidden !p-0">
                       <span aria-hidden className="pubg-loadout-field absolute inset-0" />

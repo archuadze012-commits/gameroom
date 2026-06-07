@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { SITE_BRAND_WORDMARK_STYLE } from "@/components/layout/site-brand";
+import { SITE_BRAND_WORDMARK_CLASSNAME } from "@/components/layout/site-brand";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoginForm } from "./login-form";
 import { getSiteContentValue } from "@/lib/site-content";
@@ -35,7 +35,7 @@ export default async function LoginPage() {
             <div>
               <h2 className="whitespace-nowrap font-display text-[1.25rem] font-extrabold uppercase leading-tight sm:text-[1.5rem] lg:text-[1.75rem]">
                 <span className="text-[var(--gr-text)]">{String(heading.pre ?? "SIGN IN TO")}</span>{" "}
-                <span style={SITE_BRAND_WORDMARK_STYLE}>
+                <span className={SITE_BRAND_WORDMARK_CLASSNAME}>
                   {String(heading.game ?? "GAME")}
                   {String(heading.room ?? "room")}
                 </span>
