@@ -41,6 +41,7 @@ jobs:
         env:
           # Optional: only required for GitHub organizations, free for personal repos.
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   codeql:
     name: CodeQL (JS/TS)
