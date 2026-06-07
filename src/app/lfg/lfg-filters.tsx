@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useCallback } from "react";
+import React, { useCallback, useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Filter, X, Radio } from "lucide-react";
+import { Filter, X, Radio, ChevronDown, Search } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { mockGames } from "@/lib/mock-data";
@@ -21,8 +22,8 @@ function PremiumCard({
 }) {
   return (
     <div className={`group relative block rounded-[20px] transition-all duration-500 ${noHover ? "" : "hover:-translate-y-1"}`}>
-      <div 
-        className={`relative z-10 w-full rounded-[20px] bg-[#0a0714]/5 border border-white/5 transition-all duration-500 group-hover:bg-[#0a0714]/10 ${glowVariant === 'tight' ? 'premium-card-glow-tight' : 'premium-card-glow'} ${className}`}
+      <div
+        className={`relative z-10 w-full rounded-[20px] bg-[#0a0714]/5 border border-white/5 transition-all duration-500 group-hover:bg-[#0a0714]/10 overflow-visible ${glowVariant === 'tight' ? 'premium-card-glow-tight' : 'premium-card-glow'} ${className}`}
       >
         {children}
       </div>
@@ -30,11 +31,29 @@ function PremiumCard({
   );
 }
 
-const regions = ["GE", "EU", "RU", "MENA"];
-
 export function LfgFilters({ favoriteSlugs = [] }: { favoriteSlugs?: string[] }) {
   const router = useRouter();
   const params = useSearchParams();
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [pickerRect, setPickerRect] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const close = (e: MouseEvent) => {
+      if (btnRef.current && !btnRef.current.contains(e.target as Node)) {
+        const panel = document.getElementById("lfg-game-picker-panel");
+        if (panel && panel.contains(e.target as Node)) return;
+        setPickerOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [pickerOpen]);
 
   const games = [...mockGames].sort((a, b) => {
     const aFav = favoriteSlugs.includes(a.slug) ? 1 : 0;
@@ -56,14 +75,15 @@ export function LfgFilters({ favoriteSlugs = [] }: { favoriteSlugs?: string[] })
   const hasActive = params.toString().length > 0;
 
   return (
-    <PremiumCard noHover className="p-4 space-y-5">
+    <>
+    <PremiumCard noHover className="p-4 space-y-5 overflow-visible">
       <div className="flex items-center justify-between gap-3">
-        <div>
+        <div className="min-w-0 flex-1">
           <p className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-400 drop-shadow-[0_0_6px_rgba(34,211,238,0.5)]">
             live filters
           </p>
           <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">
-            <Filter className="h-4 w-4 text-cyan-400" /> ფილტრები
+            <Filter className="h-4 w-4 shrink-0 text-cyan-400" /> ფილტრები
           </h2>
         </div>
         {hasActive ? (
@@ -71,7 +91,7 @@ export function LfgFilters({ favoriteSlugs = [] }: { favoriteSlugs?: string[] })
             variant="ghost"
             size="sm"
             onClick={() => router.push("/lfg")}
-            className="h-8 rounded-full border border-pink-500/30 bg-pink-500/5 px-3 text-[11px] uppercase tracking-[0.12em] text-pink-400 hover:bg-pink-500/10 hover:text-pink-300 shadow-[0_0_10px_rgba(236,72,153,0.15)] transition-all"
+            className="h-8 shrink-0 rounded-full border border-pink-500/30 bg-pink-500/5 px-3 text-[11px] uppercase tracking-[0.12em] text-pink-400 hover:bg-pink-500/10 hover:text-pink-300 shadow-[0_0_10px_rgba(236,72,153,0.15)] transition-all"
           >
             <X className="mr-1 h-3 w-3" /> გასუფთავება
           </Button>
@@ -80,34 +100,34 @@ export function LfgFilters({ favoriteSlugs = [] }: { favoriteSlugs?: string[] })
 
       <div className="space-y-5">
         <FilterGroup label="თამაში">
-          {games.map((g) => (
-            <FilterButton
-              key={g.slug}
-              icon={<GameIcon game={g} size="sm" />}
-              label={g.nameKa}
-              active={params.get("game") === g.slug}
-              variant="cyan"
-              onClick={() => update("game", g.slug)}
-            />
-          ))}
-          <FilterButton
-            label="ყველა"
-            active={!params.get("game")}
-            variant="cyan"
-            onClick={() => update("game", null)}
-          />
-        </FilterGroup>
+          {/* Game Picker */}
+          <div className="relative w-full z-[200]">
+            <button
+              type="button"
+              ref={btnRef}
+              onClick={() => {
+                if (!pickerOpen && btnRef.current) {
+                  const rect = btnRef.current.getBoundingClientRect();
+                  setPickerRect({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+                }
+                setPickerOpen((v) => !v);
+              }}
+              className="flex w-full items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/80 transition-colors hover:border-cyan-400/40 hover:text-white"
+            >
+              <span className="flex items-center gap-2">
+                {params.get("game") ? (
+                  <>
+                    <GameIcon game={games.find(g => g.slug === params.get("game"))!} size="sm" />
+                    <span className="font-semibold">{games.find(g => g.slug === params.get("game"))?.nameKa}</span>
+                  </>
+                ) : (
+                  <span className="text-white/50">ყველა თამაში</span>
+                )}
+              </span>
+              <ChevronDown className={`h-4 w-4 text-white/40 transition-transform ${pickerOpen ? "rotate-180" : ""}`} />
+            </button>
 
-        <FilterGroup label="რეგიონი">
-          {regions.map((region) => (
-            <FilterButton
-              key={region}
-              label={region}
-              active={params.get("region") === region}
-              variant="violet"
-              onClick={() => update("region", params.get("region") === region ? null : region)}
-            />
-          ))}
+          </div>
         </FilterGroup>
 
         <FilterGroup label="დამატებითი">
@@ -116,13 +136,52 @@ export function LfgFilters({ favoriteSlugs = [] }: { favoriteSlugs?: string[] })
             label="მხოლოდ voice-ით"
             active={params.get("voice") === "1"}
             variant="pink"
-            onClick={() =>
-              update("voice", params.get("voice") === "1" ? null : "1")
-            }
+            onClick={() => update("voice", params.get("voice") === "1" ? null : "1")}
           />
         </FilterGroup>
       </div>
     </PremiumCard>
+
+    {mounted && pickerOpen && pickerRect && createPortal(
+      <div
+        id="lfg-game-picker-panel"
+        className="fixed z-[9999] rounded-xl border border-white/10 bg-[#0a0714] shadow-2xl overflow-hidden"
+        style={{ top: pickerRect.top, left: pickerRect.left, width: pickerRect.width }}
+      >
+        <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2 bg-[#0a0714]">
+          <Search className="h-3.5 w-3.5 text-white/40" />
+          <input
+            autoFocus
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="ძებნა..."
+            className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/30"
+          />
+        </div>
+        <div className="max-h-52 overflow-y-auto py-1 bg-[#0a0714] scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
+          <button
+            type="button"
+            onClick={() => { update("game", null); setPickerOpen(false); setSearch(""); }}
+            className={`flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-white/5 ${!params.get("game") ? "text-cyan-400" : "text-white/60"}`}
+          >
+            ყველა თამაში
+          </button>
+          {games.filter(g => g.nameKa.toLowerCase().includes(search.toLowerCase())).map((g) => (
+            <button
+              key={g.slug}
+              type="button"
+              onClick={() => { update("game", g.slug); setPickerOpen(false); setSearch(""); }}
+              className={`flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-white/5 ${params.get("game") === g.slug ? "text-cyan-400" : "text-white/70"}`}
+            >
+              <GameIcon game={g} size="sm" />
+              {g.nameKa}
+            </button>
+          ))}
+        </div>
+      </div>,
+      document.body
+    )}
+    </>
   );
 }
 

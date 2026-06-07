@@ -10,7 +10,7 @@ export async function getEquippedItems(userId: string): Promise<EquippedItem[]> 
   const supabase = createSupabaseAdminClient();
   const { data } = await supabase
     .from("user_equipped")
-    .select("category, item_id, shop_items(metadata)")
+    .select("category, item_id, shop_items!user_equipped_item_id_shop_items_id_fk(metadata)")
     .eq("user_id", userId);
 
   if (!data?.length) return [];

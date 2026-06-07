@@ -31,8 +31,10 @@ export function ClientChrome({ isAuthenticated = false, canEdit = false }: { isA
 
   useEffect(() => {
     document.documentElement.classList.toggle("gr-route-conversation", isConversation);
+    document.body.classList.toggle("no-bottom-nav", isConversation);
     return () => {
       document.documentElement.classList.remove("gr-route-conversation");
+      document.body.classList.remove("no-bottom-nav");
     };
   }, [isConversation]);
 
