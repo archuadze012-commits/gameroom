@@ -277,7 +277,7 @@ export default function CrackedGamesPage() {
                   onClick={() => { setActiveGenre(genre); setPickerOpen(false); setGenreSearch(""); }}
                   className={`flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-white/5 ${activeGenre === genre ? "text-[#D0F8FF]" : "text-white/60"}`}
                 >
-                  {GENRE_KA[genre] ?? genre}
+                  {genreKa(genre)}
                 </button>
               ))}
             </div>
