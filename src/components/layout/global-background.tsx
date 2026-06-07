@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { LightningWebGL, type LightningBoltState } from "@/components/layout/lightning-webgl";
 
 type WeatherState = "clear" | "clouds" | "rain" | "storm" | "snow";
@@ -52,6 +53,16 @@ export function GlobalBackground() {
   const weatherRef = useRef<WeatherState>("storm");
   const [weatherState, setWeatherState] = useState<WeatherState>("storm");
 
+  // The lobby renders a full-screen opaque scene on top of this background, so
+  // the storm/lightning canvas is invisible there — yet on mobile *landscape*
+  // it keeps animating (portrait pauses it), stacking a wasted full-screen
+  // canvas + WebGL pass on top of the heavy 1920×1080 lobby render. On low-memory
+  // phones that exhausts GPU memory → the tab crashes → the browser auto-reloads
+  // → it crashes again (infinite reload). Skip the animated background entirely
+  // on lobby routes; a static dark backdrop is all that could ever show.
+  const pathname = usePathname();
+  const isLobby = pathname?.endsWith("/lobby") ?? false;
+
   useEffect(() => {
     // Weather logic removed per user request, hardcoded to storm
     weatherRef.current = "storm";
@@ -59,6 +70,7 @@ export function GlobalBackground() {
   }, []);
 
   useEffect(() => {
+    if (isLobby) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -551,7 +563,12 @@ export function GlobalBackground() {
       window.removeEventListener("resize", resize);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, []);
+  }, [isLobby]);
+
+  // Lobby: static dark backdrop only — no canvas, no WebGL, no animation.
+  if (isLobby) {
+    return <div className="fixed inset-0 z-[-100] bg-[var(--gr-bg-0)] pointer-events-none" />;
+  }
 
   return (
     <div className="fixed inset-0 z-[-100] overflow-hidden bg-[var(--gr-bg-0)] select-none pointer-events-none">
