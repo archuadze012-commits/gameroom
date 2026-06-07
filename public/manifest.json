@@ -1,7 +1,7 @@
 {
-  "name": "Gameroom",
-  "short_name": "Gameroom",
-  "description": "ქართველი გეიმერების პორტალი",
+  "name": "PLAYGAME.GE",
+  "short_name": "PLAYGAME",
+  "description": "ქართველი გეიმერების სახლი",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0b",
