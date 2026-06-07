@@ -211,7 +211,7 @@ export default async function ProfilePage({
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.1),transparent_70%)]" />
       )}
 
-      <div className="relative">
+      <div className="relative mb-0">
         {dbProfile?.banner_url || !equippedCover ? (
           <BannerUpload
             isOwner={isOwner}
@@ -236,8 +236,7 @@ export default async function ProfilePage({
       <div className="relative z-20 mx-auto max-w-7xl space-y-6 px-4 pb-12 pt-0 sm:px-6 lg:px-8">
         
         {/* Header — 2-col grid: left summary | right stats */}
-        <div className="pubg-loadout-link group relative -mt-20 block w-full transition-all duration-500" data-variant="royale">
-          <div className="pubg-loadout-card relative overflow-hidden p-6 sm:p-8 shadow-2xl">
+        <div className="pubg-loadout-card group relative w-full overflow-hidden px-6 pb-6 pt-16 sm:px-8 sm:pb-8 sm:pt-20 shadow-2xl">
             <span aria-hidden className="pubg-loadout-field absolute inset-0" />
             <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[5px]" />
             <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-32 w-32 opacity-50" />
@@ -248,7 +247,7 @@ export default async function ProfilePage({
             {/* Left — avatar + name + badge + social icons */}
           <div className="flex flex-col items-center gap-4 md:flex-row md:items-end md:gap-6">
             <div
-              className="relative -mt-12 shrink-0 rounded-full bg-[#05050f] p-1.5 flex items-center justify-center"
+              className="relative shrink-0 rounded-full bg-[#05050f] p-1.5 flex items-center justify-center"
               style={equippedFrame ? {
                 boxShadow: `0 0 30px ${equippedFrame.metadata.color as string}50, 0 0 60px ${equippedFrame.metadata.color as string}25`,
                 background: `linear-gradient(135deg, ${equippedFrame.metadata.color as string}, transparent)`,
@@ -342,7 +341,6 @@ export default async function ProfilePage({
               </div>
             )}
           </div>
-        </div>
         </div>
         </div>
 

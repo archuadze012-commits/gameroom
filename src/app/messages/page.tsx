@@ -77,17 +77,9 @@ export default async function MessagesPage() {
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
 
       <div className="container relative mx-auto max-w-3xl px-4 py-8 lg:py-10">
-        {/* Header */}
-        <div className="mb-8">
-          <Eyebrow tone="violet">GAMEROOM DIRECT</Eyebrow>
-          <DisplayHeading as="h1" size="display" className="mt-2 bg-[linear-gradient(180deg,#fff_0%,rgba(255,255,255,0.65)_100%)] bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(255,255,255,0.15)]">
-            მესენჯერი
-          </DisplayHeading>
-          <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-[var(--gr-text-mute)]">
-            დაიწყე საუბარი სხვა მოთამაშეებთან ან გააგრძელე არსებული მიმოწერები.
-          </p>
-        </div>
-
+        <DisplayHeading as="h1" size="display" className="mb-8 bg-[linear-gradient(180deg,#fff_0%,rgba(255,255,255,0.65)_100%)] bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(255,255,255,0.15)]">
+          მესენჯერი
+        </DisplayHeading>
         {items.length === 0 ? (
           /* Empty state — loadout card */
           <div className="pubg-loadout-link group relative block transition-all duration-500" data-variant="room">

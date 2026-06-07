@@ -33,7 +33,7 @@ export default async function ConversationPage({
     .maybeSingle();
 
   return (
-    <div className="relative mx-auto h-[calc(100dvh-1rem)] w-full max-w-2xl overflow-hidden px-3 py-2 sm:h-[calc(100vh-6rem)] sm:px-4 sm:py-6">
+    <div className="relative mx-auto h-dvh w-full max-w-2xl overflow-hidden px-3 py-2 -mt-16 -mb-6 sm:mt-0 sm:mb-0 sm:h-[calc(100vh-6rem)] sm:px-4 sm:py-6">
       {/* Dot grid background */}
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
       

@@ -50,7 +50,11 @@ export function AvatarUpload({ username, displayName, avatarUrl, isOwner }: Avat
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const blob = await fetch(croppedDataUrl).then((r) => r.blob());
+      const base64 = croppedDataUrl.split(",")[1];
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: "image/jpeg" });
       const path = `${user.id}/avatar.jpg`;
 
       const { error: uploadError } = await supabase.storage

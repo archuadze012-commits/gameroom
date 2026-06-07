@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { SiteBrand } from "./site-brand";
 import { useNavProfile } from "./use-nav-data";
 import { MessagesLink } from "./messages-link";
@@ -40,23 +41,37 @@ const itemIdleClassName =
 export function SiteHeader() {
   const pathname = usePathname();
   const profile = useNavProfile();
-  
+  const [visible, setVisible] = useState(true);
+  const [lastY, setLastY] = useState(0);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      setVisible(y < lastY || y < 10);
+      setLastY(y);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [lastY]);
+
   if (pathname?.endsWith("/lobby")) return null;
+  if (/^\/messages\/[^/]+$/.test(pathname ?? "")) return null;
 
   const isActive = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <header className="gr-site-header-root hidden sm:block sticky top-0 z-40 bg-[rgba(8,6,15,0.6)] backdrop-blur-2xl shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
-      <div className="neon-rail gr-site-header-shell container mx-auto my-2 flex h-14 items-center justify-between rounded-2xl bg-[rgba(8,6,15,0.5)] px-4 relative">
+    <header className={`gr-site-header-root block fixed top-0 left-0 right-0 z-40 bg-[rgba(8,6,15,0.6)] backdrop-blur-2xl shadow-[0_4px_30px_rgba(0,0,0,0.5)] transition-transform duration-300 sm:translate-y-0 ${visible ? "translate-y-0" : "-translate-y-full"}`}>
+      <div className="neon-rail gr-site-header-shell gr-site-header-inner sm:container mx-0 sm:mx-auto my-2 flex h-14 items-center justify-between rounded-none sm:rounded-2xl bg-[rgba(8,6,15,0.5)] px-4 relative">
         {/* Left: Brand Logo */}
-        <div className="flex items-center justify-start flex-shrink-0">
+        <div className="gr-site-header-brand flex items-center flex-shrink-0 relative z-10 w-fit mr-[-12rem]">
           <Link href="/">
-            <SiteBrand iconSize={36} wordmarkClassName="hidden min-[450px]:block text-[20px] lg:text-[24px]" />
+            <SiteBrand iconSize={36} wordmarkClassName="text-[20px] lg:text-[24px]" />
           </Link>
         </div>
 
-        {/* Center: Main Navigation (scrollable on mobile) */}
-        <nav className="flex items-center gap-2 xl:gap-3 h-full py-3 px-4 -mx-4 overflow-x-auto flex-nowrap scrollbar-none max-w-[40vw] xs:max-w-[45vw] sm:max-w-none">
+        {/* Center: Main Navigation */}
+        <nav className="hidden sm:flex flex-1 justify-center items-center h-full py-3 flex-nowrap">
+          <div className="flex items-center h-full pointer-events-auto">
           {navItems.map((item) => {
             const active = isActive(item.href);
             const Icon = item.icon;
@@ -83,10 +98,11 @@ export function SiteHeader() {
               </div>
             );
           })}
+          </div>
         </nav>
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="gr-site-header-actions hidden sm:flex items-center gap-2 flex-shrink-0 relative z-10">
           {/* Desktop Actions */}
           <div className="flex items-center gap-3">
             {profile && (

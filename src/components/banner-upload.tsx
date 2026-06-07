@@ -34,7 +34,11 @@ export function BannerUpload({ isOwner, userId, initialBannerUrl }: BannerUpload
     setLoading(true);
     try {
       const supabase = createSupabaseBrowserClient();
-      const blob = await fetch(croppedDataUrl).then((r) => r.blob());
+      const base64 = croppedDataUrl.split(",")[1];
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: "image/jpeg" });
       const path = `${userId}/banner.jpg`;
 
       const { error: uploadError } = await supabase.storage
@@ -91,7 +95,7 @@ export function BannerUpload({ isOwner, userId, initialBannerUrl }: BannerUpload
         {bannerSrc ? (
           <img src={bannerSrc} alt="banner" className="h-full w-full object-cover" />
         ) : (
-          <div className="h-full w-full bg-gradient-to-br from-primary/30 via-accent/20 to-transparent" />
+          <div className="h-full w-full bg-gradient-to-br from-[#0d0a2e] via-[#1a0533] to-[#0a1a2e]" />
         )}
         {isOwner && (
           <div className="absolute inset-0 flex items-center justify-center gap-3 bg-black/40 opacity-0 transition-opacity hover:opacity-100">
