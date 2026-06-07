@@ -76,26 +76,49 @@ const ALL_GENRES = [
   "Social Deduction",
 ];
 
-const GENRE_KA: Record<string, string> = {
+const GENRE_KA_MAP: Record<string, string> = {
   "ყველა": "ყველა",
-  "RPG": "როლური",
-  "Action": "ეკშენი",
-  "Open World": "ღია სამყარო",
-  "FPS": "პირველი პირი",
-  "Battle Royale": "ბეთლ როიალი",
-  "Strategy": "სტრატეგია",
-  "MOBA": "MOBA",
-  "Sandbox": "სენდბოქსი",
-  "Sports": "სპორტი",
-  "Racing": "რბოლა",
-  "Roguelike": "როგლაიქი",
-  "Metroidvania": "მეტროიდვანია",
-  "Simulation": "სიმულაცია",
-  "Adventure": "თავგადასავალი",
-  "Party": "პარტი",
-  "Hero Shooter": "ჰირო შუთერი",
-  "Social Deduction": "სოციალური",
+  "rpg": "როლური",
+  "action": "ეკშენი",
+  "open world": "ღია სამყარო",
+  "fps": "პირველი პირი",
+  "1st person": "პირველი პირი",
+  "first person": "პირველი პირი",
+  "third person": "მესამე პირი",
+  "3rd person": "მესამე პირი",
+  "battle royale": "ბეთლ როიალი",
+  "strategy": "სტრატეგია",
+  "moba": "MOBA",
+  "sandbox": "სენდბოქსი",
+  "sports": "სპორტი",
+  "racing": "რბოლა",
+  "roguelike": "როგლაიქი",
+  "roguelite": "როგლაიქი",
+  "metroidvania": "მეტროიდვანია",
+  "simulation": "სიმულაცია",
+  "adventure": "თავგადასავალი",
+  "party": "პარტი",
+  "hero shooter": "ჰირო შუთერი",
+  "social deduction": "სოციალური",
+  "survival": "გადარჩენა",
+  "horror": "საშინელება",
+  "stealth": "სტელსი",
+  "platformer": "პლატფორმერი",
+  "fighting": "ჩხუბი",
+  "puzzle": "პაზლი",
+  "shooter": "შუთერი",
+  "mmo": "MMO",
+  "mmorpg": "MMORPG",
+  "tactical": "ტაქტიკური",
 };
+
+function genreKa(g: string): string {
+  return GENRE_KA_MAP[g.toLowerCase()] ?? g;
+}
+
+const GENRE_KA: Record<string, string> = Object.fromEntries(
+  Object.entries(GENRE_KA_MAP).map(([k, v]) => [k, v])
+);
 
 const PLATFORM_ICON: Record<string, React.ReactNode> = {
   PC: <Monitor className="h-3 w-3" />,
@@ -224,7 +247,7 @@ export default function CrackedGamesPage() {
             className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-[#D0F8FF]/80 transition-colors hover:border-[#D0F8FF]/40 hover:text-[#D0F8FF] min-w-[220px] justify-between"
           >
             <span className="font-semibold">
-              {activeGenre === "ყველა" ? <span className="text-white/50">ჟანრი</span> : GENRE_KA[activeGenre] ?? activeGenre}
+              {activeGenre === "ყველა" ? <span className="text-white/50">ჟანრი</span> : genreKa(activeGenre)}
             </span>
             <ChevronDown className={`h-4 w-4 text-white/40 transition-transform ${pickerOpen ? "rotate-180" : ""}`} />
           </button>
@@ -247,7 +270,7 @@ export default function CrackedGamesPage() {
               />
             </div>
             <div className="max-h-52 overflow-y-auto py-1 bg-[#0a0714] scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
-              {ALL_GENRES.filter(g => (GENRE_KA[g] ?? g).toLowerCase().includes(genreSearch.toLowerCase())).map((genre) => (
+              {ALL_GENRES.filter(g => (genreKa(g)).toLowerCase().includes(genreSearch.toLowerCase())).map((genre) => (
                 <button
                   key={genre}
                   type="button"
@@ -266,7 +289,7 @@ export default function CrackedGamesPage() {
         <div className="space-y-4">
           <div className="flex justify-between items-end px-2 border-b border-white/[0.07] pb-3">
             <h2 className="font-display text-[18px] font-black uppercase tracking-tight text-[var(--gr-text)] drop-shadow-[0_0_12px_rgba(236,72,153,0.5)]">
-              {activeGenre === "ყველა" ? "ყველა თამაში" : GENRE_KA[activeGenre] ?? activeGenre}
+              {activeGenre === "ყველა" ? "ყველა თამაში" : genreKa(activeGenre)}
             </h2>
             <span className="text-[11px] font-bold text-[var(--gr-text-dim)] uppercase tracking-wider">ნაპოვნია {filtered.length}</span>
           </div>
@@ -314,7 +337,7 @@ export default function CrackedGamesPage() {
                         <div className="flex flex-wrap gap-1.5">
                           {game.genre.slice(0, 2).map((g) => (
                             <span key={g} className="rounded-full border border-black bg-black/80 px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-[#D0F8FF]/90 shadow-[inset_0_0_0_1px_rgba(0,230,255,0.3),0_0_14px_rgba(0,230,255,0.15)] transition-all duration-300 group-hover:border-[#D0F8FF]/70 group-hover:text-white group-hover:shadow-[inset_0_0_0_1px_rgba(0,230,255,0.6),0_0_18px_rgba(0,230,255,0.3)]">
-                              {GENRE_KA[g] ?? g}
+                              {genreKa(g)}
                             </span>
                           ))}
                         </div>
