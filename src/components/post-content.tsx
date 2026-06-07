@@ -145,6 +145,7 @@ export function PostContent({ content, mediaUrls, authorRole, authorVerified }: 
               className="pubg-loadout-card relative block overflow-hidden !p-0"
             >
               <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={url} alt="" className="relative z-[1] h-auto w-full object-cover" />
             </a>
           ))}
