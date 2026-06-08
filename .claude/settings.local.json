@@ -11,7 +11,8 @@
       "mcp__claude_ai_Supabase__apply_migration",
       "mcp__claude_ai_Supabase__get_publishable_keys",
       "mcp__supabase__apply_migration",
-      "mcp__supabase__list_branches"
+      "mcp__supabase__list_branches",
+      "mcp__8875d494-eda9-4b27-979b-1fa06b2e68ac__get_deployment_build_logs"
     ]
   },
   "enableAllProjectMcpServers": true,

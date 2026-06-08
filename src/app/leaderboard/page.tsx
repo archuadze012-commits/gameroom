@@ -9,6 +9,7 @@ import { DisplayHeading } from "@/components/ui/display-heading";
 import { PageHeader } from "@/components/page-header";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Leaderboard" };
 
 const getLeaderboardData = unstable_cache(

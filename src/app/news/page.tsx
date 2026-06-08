@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { GamerCard } from "@/components/ui/gamer-card";
 import { unstable_cache } from "next/cache";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "სიახლეები" };
 
 type NewsRow = {
