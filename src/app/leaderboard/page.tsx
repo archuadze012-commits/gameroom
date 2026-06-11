@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Trophy, Crown, Medal, Coins, Sparkles } from "lucide-react";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@supabase/supabase-js";
 import { unstable_cache } from "next/cache";
 import { UserAvatar } from "@/components/user-avatar";
 import { VerifiedBadge } from "@/components/verified-badge";
@@ -13,15 +13,23 @@ export const metadata = { title: "Leaderboard" };
 
 const getLeaderboardData = unstable_cache(
   async () => {
-    const admin = createSupabaseAdminClient();
+    // During prerendering, Next.js executes this code, which can fail if it uses
+    // `createSupabaseAdminClient` directly when admin vars are unavailable.
+    // Instead we create a fresh client with standard variables that exist
+    // locally, or the anon key (assuming the data is public).
+    const client = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key"
+    );
+
     const [{ data: topXp }, { data: topWallets }] = await Promise.all([
-      admin
+      client
         .from("profiles")
         .select("username, display_name, avatar_url, xp, level, is_verified")
         .eq("banned", false)
         .order("xp", { ascending: false })
         .limit(20),
-      admin
+      client
         .from("wallets")
         .select("nc_balance, profiles!inner(username, display_name, avatar_url, is_verified)")
         .order("nc_balance", { ascending: false })
