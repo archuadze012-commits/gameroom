@@ -1,10 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import crypto from "crypto";
 
 async function sweepExpiredBansAndMutes(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   const secret = process.env.CRON_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
+
+  if (!secret || !authHeader) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  // Prevent timing attacks by using a constant-time string comparison
+  const expectedAuth = `Bearer ${secret}`;
+  const authHeaderBuffer = Buffer.from(authHeader);
+  const expectedAuthBuffer = Buffer.from(expectedAuth);
+
+  if (
+    authHeaderBuffer.byteLength !== expectedAuthBuffer.byteLength ||
+    !crypto.timingSafeEqual(authHeaderBuffer, expectedAuthBuffer)
+  ) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
