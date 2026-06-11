@@ -35,20 +35,6 @@ const nextConfig: NextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error"] } : false,
   },
-  async headers() {
-    return [
-      {
-        source: "/:path*",
-        headers: securityHeaders,
-      },
-      {
-        source: "/api/:path*",
-        headers: [
-          { key: "X-Robots-Tag", value: "noindex" }
-        ],
-      },
-    ];
-  },
   images: {
     remotePatterns: [
       {
