@@ -1,20 +1,22 @@
 import 'server-only';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
+import { asPlayManagerDb } from './db';
 
 export async function getBalance(teamId: string): Promise<number> {
-  const supabase = createSupabaseAdminClient();
-  const { data, error } = await supabase
-    .from('pm_wallets')
+  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const { data, error } = await db
+    .from<{ balance: number }>('pm_wallets')
     .select('balance')
     .eq('team_id', teamId)
     .single();
   if (error) throw new Error(error.message);
+  if (!data) throw new Error('wallet_not_found');
   return data.balance;
 }
 
 export async function creditPm(teamId: string, amount: number, reason: string): Promise<void> {
-  const supabase = createSupabaseAdminClient();
-  const { error } = await supabase.rpc('pm_credit', {
+  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const { error } = await db.rpc('pm_credit', {
     p_team_id: teamId,
     p_amount: amount,
     p_reason: reason,
@@ -23,8 +25,8 @@ export async function creditPm(teamId: string, amount: number, reason: string): 
 }
 
 export async function debitPm(teamId: string, amount: number, reason: string): Promise<void> {
-  const supabase = createSupabaseAdminClient();
-  const { error } = await supabase.rpc('pm_debit', {
+  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const { error } = await db.rpc('pm_debit', {
     p_team_id: teamId,
     p_amount: amount,
     p_reason: reason,

@@ -1,5 +1,6 @@
-import { generateUniqueName } from './names.js';
-import type { GeneratedPlayer, Position } from './types.js';
+import { generateUniqueName } from './names';
+import { getBaseTransferValueGel, getCurrentTransferValueGel } from './economy';
+import type { GeneratedPlayer, Position } from './types';
 
 export function ovrGrowthCap(talent: number): number {
   if (talent === 10) return 25;
@@ -44,9 +45,37 @@ export async function generateVirtualPlayer(
     display_name: display,
     talent,
     ovr_base,
+    base_transfer_value_gel: getBaseTransferValueGel(ovr_base),
+    current_transfer_value_gel: getCurrentTransferValueGel(ovr_base, ovr_base),
     age: rollAge(),
     position,
   };
+}
+
+export async function generateAcademyProspects(
+  excluded: Set<string>,
+  count = 3,
+): Promise<Array<GeneratedPlayer & { potential_ovr: number; signing_cost: number }>> {
+  const positions: Position[] = ['GK', 'CB', 'CM', 'CAM', 'LW', 'RW', 'ST', 'CDM'];
+  const prospects: Array<GeneratedPlayer & { potential_ovr: number; signing_cost: number }> = [];
+  const localExcluded = new Set(excluded);
+
+  for (let index = 0; index < count; index += 1) {
+    const position = positions[index % positions.length];
+    const player = await generateVirtualPlayer(localExcluded, position);
+    const age = 15 + Math.floor(Math.random() * 4);
+    const potential_ovr = Math.min(95, player.ovr_base + 12 + Math.floor(Math.random() * 10));
+    const signing_cost = 80_000 + player.talent * 10_000 + (potential_ovr - player.ovr_base) * 2_500;
+    localExcluded.add(player.normalized_name);
+    prospects.push({
+      ...player,
+      age,
+      potential_ovr,
+      signing_cost,
+    });
+  }
+
+  return prospects;
 }
 
 // 4-3-3 base: 11 starters + 4 subs = 15 total
