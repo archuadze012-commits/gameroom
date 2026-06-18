@@ -878,6 +878,10 @@ function getModulePhoto(moduleKey: string) {
     capacity: { src: '/playmanager/city/buildings/residence.webp', position: '50% 52%' },
     hotel: { src: '/playmanager/city/buildings/residence.webp', position: '38% 58%' },
     staff: { src: '/playmanager/city/buildings/residence.webp', position: '64% 46%' },
+    'cup:champions': { src: '/playmanager/module-cards/arena/daily-cups.webp', position: '16% 50%' },
+    'cup:open': { src: '/playmanager/module-cards/arena/daily-cups.webp', position: '42% 50%' },
+    'cup:active': { src: '/playmanager/module-cards/arena/daily-cups.webp', position: '66% 50%' },
+    'cup:completed': { src: '/playmanager/module-cards/arena/daily-cups.webp', position: '88% 50%' },
     'staff:head_coach': { src: '/playmanager/module-cards/staff/head-coach.webp', position: '50% 42%' },
     'staff:gk_coach': { src: '/playmanager/module-cards/staff/gk-coach.webp', position: '50% 42%' },
     'staff:defence_coach': { src: '/playmanager/module-cards/staff/defence-coach.webp', position: '50% 42%' },
@@ -2910,33 +2914,31 @@ function CupCard({
   slot: ArenaTournamentSlot;
 }) {
   const cup = slot.cup;
+  const photoKey = `cup:${slot.key}`;
+
   if (!cup) {
     return (
-      <div className="group relative block min-w-[248px] basis-[248px] overflow-hidden rounded-none border border-dashed border-white/10 bg-black/55 lg:min-w-0 lg:flex-1">
-        <div className="aspect-[4/3]">
-          <div className="relative flex h-full flex-col bg-gradient-to-br from-[#111] via-[#080808] to-[#020202] p-4">
-            <div className="flex items-start justify-between gap-2">
-              <span className="inline-flex rounded-full border border-white/14 bg-white/[0.05] px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-white/62">
-                {slot.eyebrow}
-              </span>
-              <span className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-white/42">
-                Empty
-              </span>
-            </div>
+      <div className="group/module relative block aspect-[4/3] min-w-[248px] basis-[248px] overflow-hidden rounded-xl border border-dashed border-white/12 bg-black/65 lg:min-w-0 lg:flex-1">
+        <ModulePhoto moduleKey="daily_cups" photoKey={photoKey} />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/96 via-black/56 to-black/20" />
+        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/10 via-white/[0.03] to-transparent" />
 
-            <div className="flex flex-1 items-center justify-center px-4">
-              <div className="relative grid h-28 w-28 place-items-center rounded-full border border-white/12 bg-white/[0.03]">
-                <div className="absolute inset-2 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.08),transparent_72%)]" />
-                <Trophy className="relative h-12 w-12 text-white/22" />
-              </div>
-            </div>
+        <div className="relative flex h-full flex-col p-4">
+          <div className="flex items-start justify-between gap-2">
+            <span className="inline-flex rounded-full border border-white/16 bg-black/36 px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-white/70 backdrop-blur">
+              {slot.eyebrow}
+            </span>
+            <span className="shrink-0 rounded-full border border-white/12 bg-black/42 px-2 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-white/48 backdrop-blur">
+              Empty
+            </span>
+          </div>
 
-            <div className="mt-auto">
-              <h4 className="text-lg font-black uppercase tracking-[0.04em] text-white">{slot.title}</h4>
-              <p className="mt-1 text-[11px] font-bold text-white/46">{slot.emptyLabel}</p>
-              <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/8">
-                <span className="block h-full w-1/4 rounded-full bg-gradient-to-r from-white/20 to-white/5" />
-              </div>
+          <div className="mt-auto">
+            <div className="mb-3 h-px w-16 border-t border-white/24" />
+            <h4 className="line-clamp-2 text-lg font-black uppercase tracking-[0.04em] text-white">{slot.title}</h4>
+            <p className="mt-1 text-[11px] font-bold text-white/52">{slot.emptyLabel}</p>
+            <div className="mt-4 h-1 overflow-hidden rounded-full bg-white/10">
+              <span className="block h-full w-1/4 rounded-full bg-gradient-to-r from-white/30 to-white/5" />
             </div>
           </div>
         </div>
@@ -2954,52 +2956,48 @@ function CupCard({
   return (
     <Link
       href={`/playmanager/cups/${cup.templateId}`}
-      className="group relative block min-w-[248px] basis-[248px] overflow-hidden rounded-none border border-white/10 bg-black/70 transition hover:border-yellow-300/30 hover:shadow-[0_0_28px_rgba(234,179,8,0.12)] lg:min-w-0 lg:flex-1"
+      className={`group/module relative block aspect-[4/3] min-w-[248px] basis-[248px] overflow-hidden rounded-xl border bg-black/65 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_55px_rgba(0,0,0,0.38)] lg:min-w-0 lg:flex-1 ${cupTheme.cardBorder}`}
     >
-      <div className="aspect-[4/3]">
-        <div className={`relative flex h-full flex-col ${cupTheme.shell}`}>
-          <div className="absolute inset-0 opacity-90" aria-hidden="true">
-            <div className={`absolute inset-0 ${cupTheme.backdrop}`} />
-            <div className="absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_70%)]" />
-            <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black via-black/82 to-transparent" />
+      <ModulePhoto moduleKey="daily_cups" photoKey={photoKey} />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/96 via-black/54 to-black/16" />
+      <div className={`absolute inset-x-0 top-0 h-24 bg-gradient-to-b ${cupTheme.accentGlow}`} />
+      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black via-black/72 to-transparent" />
+
+      <div className="relative flex h-full flex-col p-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <span className={`inline-flex rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] backdrop-blur ${cupTheme.kicker}`}>
+              {slot.eyebrow}
+            </span>
+            <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-white/46">{slot.title}</p>
+          </div>
+          <span className={`shrink-0 rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.1em] backdrop-blur ${statusMeta.cls}`}>
+            {statusMeta.label}
+          </span>
+        </div>
+
+        <div className="flex flex-1 items-center justify-center px-4">
+          <div className={`relative grid h-20 w-20 place-items-center rounded-full border backdrop-blur-sm ${cupTheme.trophyRing}`}>
+            <div className={`absolute inset-1 rounded-full ${cupTheme.trophyGlow}`} />
+            <Trophy className={`relative h-9 w-9 ${cupTheme.trophyIcon}`} />
+          </div>
+        </div>
+
+        <div className="mt-auto">
+          <div className={`mb-3 h-px w-16 border-t ${cupTheme.rule}`} />
+          <div className="min-w-0">
+            <h4 className="line-clamp-2 text-lg font-black uppercase tracking-[0.04em] text-white">{cup.name}</h4>
+            <p className="mt-1 text-[11px] font-bold text-white/70">საპრიზო {cup.prizePoolLabel}</p>
           </div>
 
-          <div className="relative flex flex-1 flex-col p-4">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <span className={`inline-flex rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] ${cupTheme.kicker}`}>
-                  {slot.eyebrow}
-                </span>
-                <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-white/42">{slot.title}</p>
-              </div>
-              <span className={`shrink-0 rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.1em] ${statusMeta.cls}`}>
-                {statusMeta.label}
-              </span>
-            </div>
-
-            <div className="flex flex-1 items-center justify-center px-4">
-              <div className={`relative grid h-28 w-28 place-items-center rounded-full border ${cupTheme.trophyRing}`}>
-                <div className={`absolute inset-2 rounded-full ${cupTheme.trophyGlow}`} />
-                <Trophy className={`relative h-12 w-12 ${cupTheme.trophyIcon}`} />
-              </div>
-            </div>
-
-            <div className="mt-auto">
-              <div className="min-w-0">
-                <h4 className="line-clamp-2 text-lg font-black uppercase tracking-[0.04em] text-white">{cup.name}</h4>
-                <p className="mt-1 text-[11px] font-bold text-white/68">საპრიზო {cup.prizePoolLabel}</p>
-              </div>
-
-              <div className="mt-4 flex items-center justify-between text-[10px] font-black text-white/55">
-                <span>{cup.participantCount}/{cup.maxTeams} გუნდი</span>
-                <span className={cup.isRegistered ? 'text-emerald-300' : 'text-white/50'}>
-                  {cup.isRegistered ? '✓ ჩართული' : `შესვლა ${cup.entryFeeLabel}`}
-                </span>
-              </div>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/8">
-                <span style={{ width: `${fillPct}%` }} className={`block h-full rounded-full bg-gradient-to-r ${cupTheme.progress}`} />
-              </div>
-            </div>
+          <div className="mt-4 flex items-center justify-between gap-3 text-[10px] font-black text-white/58">
+            <span>{cup.participantCount}/{cup.maxTeams} გუნდი</span>
+            <span className={cup.isRegistered ? 'text-emerald-300' : 'text-white/56'}>
+              {cup.isRegistered ? '✓ ჩართული' : `შესვლა ${cup.entryFeeLabel}`}
+            </span>
+          </div>
+          <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10">
+            <span style={{ width: `${fillPct}%` }} className={`block h-full rounded-full bg-gradient-to-r ${cupTheme.progress}`} />
           </div>
         </div>
       </div>
@@ -3075,55 +3073,60 @@ function ArenaTournaments({ cups }: { cups: PlayManagerCitySnapshot['cups'] }) {
 function getCupTheme(templateId: string) {
   const themes: Record<string, {
     label: string;
-    shell: string;
-    backdrop: string;
+    cardBorder: string;
+    accentGlow: string;
     kicker: string;
     trophyRing: string;
     trophyGlow: string;
     trophyIcon: string;
     progress: string;
+    rule: string;
   }> = {
     champions_cup: {
       label: 'Elite Cup',
-      shell: 'bg-gradient-to-br from-[#3a2500] via-[#120d04] to-[#040404]',
-      backdrop: 'bg-[radial-gradient(circle_at_50%_18%,rgba(255,214,102,0.34),transparent_38%),linear-gradient(135deg,rgba(255,204,77,0.2),transparent_50%,rgba(20,10,0,0.94))]',
-      kicker: 'border-yellow-300/28 bg-yellow-300/12 text-yellow-100',
-      trophyRing: 'border-yellow-300/30 bg-yellow-300/10',
-      trophyGlow: 'bg-[radial-gradient(circle,rgba(250,204,21,0.22),transparent_72%)]',
+      cardBorder: 'border-yellow-300/22 hover:border-yellow-300/42',
+      accentGlow: 'from-yellow-300/24 via-yellow-300/8 to-transparent',
+      kicker: 'border-yellow-300/28 bg-black/34 text-yellow-100',
+      trophyRing: 'border-yellow-300/32 bg-yellow-300/12',
+      trophyGlow: 'bg-[radial-gradient(circle,rgba(250,204,21,0.26),transparent_72%)]',
       trophyIcon: 'text-yellow-300',
       progress: 'from-yellow-300 via-amber-300 to-emerald-400',
+      rule: 'border-yellow-200/34',
     },
     daily_cup: {
       label: 'Daily Cup',
-      shell: 'bg-gradient-to-br from-[#00281e] via-[#07110f] to-[#020303]',
-      backdrop: 'bg-[radial-gradient(circle_at_50%_18%,rgba(16,185,129,0.28),transparent_38%),linear-gradient(135deg,rgba(16,185,129,0.18),transparent_46%,rgba(0,0,0,0.94))]',
-      kicker: 'border-emerald-300/28 bg-emerald-300/12 text-emerald-100',
+      cardBorder: 'border-emerald-300/18 hover:border-emerald-300/38',
+      accentGlow: 'from-emerald-300/20 via-emerald-300/7 to-transparent',
+      kicker: 'border-emerald-300/28 bg-black/34 text-emerald-100',
       trophyRing: 'border-emerald-300/30 bg-emerald-300/10',
       trophyGlow: 'bg-[radial-gradient(circle,rgba(16,185,129,0.24),transparent_72%)]',
       trophyIcon: 'text-emerald-300',
       progress: 'from-emerald-300 via-teal-300 to-cyan-300',
+      rule: 'border-emerald-200/28',
     },
     weekend_cup: {
       label: 'Weekend Cup',
-      shell: 'bg-gradient-to-br from-[#1d1400] via-[#0f0b05] to-[#030303]',
-      backdrop: 'bg-[radial-gradient(circle_at_50%_18%,rgba(251,191,36,0.26),transparent_38%),linear-gradient(135deg,rgba(245,158,11,0.16),transparent_46%,rgba(0,0,0,0.94))]',
-      kicker: 'border-amber-300/28 bg-amber-300/12 text-amber-100',
+      cardBorder: 'border-amber-300/18 hover:border-amber-300/38',
+      accentGlow: 'from-amber-300/22 via-amber-300/7 to-transparent',
+      kicker: 'border-amber-300/28 bg-black/34 text-amber-100',
       trophyRing: 'border-amber-300/30 bg-amber-300/10',
       trophyGlow: 'bg-[radial-gradient(circle,rgba(245,158,11,0.24),transparent_72%)]',
       trophyIcon: 'text-amber-300',
       progress: 'from-yellow-300 via-lime-300 to-emerald-400',
+      rule: 'border-amber-200/30',
     },
   };
 
   return themes[templateId] ?? {
     label: 'Open Cup',
-    shell: 'bg-gradient-to-br from-[#151515] via-[#090909] to-[#020202]',
-    backdrop: 'bg-[radial-gradient(circle_at_50%_18%,rgba(255,255,255,0.14),transparent_38%),linear-gradient(135deg,rgba(255,255,255,0.08),transparent_46%,rgba(0,0,0,0.94))]',
-    kicker: 'border-white/16 bg-white/[0.06] text-white/72',
+    cardBorder: 'border-white/12 hover:border-white/24',
+    accentGlow: 'from-white/16 via-white/5 to-transparent',
+    kicker: 'border-white/16 bg-black/34 text-white/72',
     trophyRing: 'border-white/16 bg-white/[0.05]',
     trophyGlow: 'bg-[radial-gradient(circle,rgba(255,255,255,0.12),transparent_72%)]',
     trophyIcon: 'text-white/82',
     progress: 'from-white/60 via-white/35 to-emerald-300',
+    rule: 'border-white/20',
   };
 }
 
