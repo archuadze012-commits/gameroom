@@ -39,6 +39,70 @@
   0%, 100% { opacity: 0.18; transform: translateY(-18%); }
   50% { opacity: 0.6; transform: translateY(18%); }
 }
+@keyframes vanguard-float {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-9px) scale(1.03); }
+}
+@keyframes vanguard-float-b {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-7px) scale(1.025); }
+}
+@keyframes vanguard-ring-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0; transform: scale(1.6); }
+}
+@keyframes pm-loading-scan {
+  0% { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
+  18% { opacity: 0.8; }
+  72% { opacity: 0.8; }
+  100% { transform: translateX(220%) skewX(-18deg); opacity: 0; }
+}
+@keyframes pm-loading-ball {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  38% { transform: translate(9px, -5px) scale(1.08); }
+  68% { transform: translate(15px, 2px) scale(0.96); }
+}
+@keyframes pm-loading-pitch-pulse {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 1px rgba(134, 239, 172, 0.28),
+      inset 0 0 36px rgba(34, 197, 94, 0.1),
+      0 0 34px rgba(34, 197, 94, 0.14);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 1px rgba(134, 239, 172, 0.48),
+      inset 0 0 44px rgba(34, 197, 94, 0.18),
+      0 0 54px rgba(34, 197, 94, 0.24);
+  }
+}
+@keyframes pm-loading-dot {
+  0%, 100% { opacity: 0.2; transform: scale(0.82); }
+  45% { opacity: 1; transform: scale(1.16); }
+}
+@keyframes pm-loading-orbit {
+  0% { transform: translate(-50%, -50%) rotate(0deg) scale(0.98); opacity: 0.18; }
+  50% { opacity: 0.48; }
+  100% { transform: translate(-50%, -50%) rotate(360deg) scale(1.04); opacity: 0.18; }
+}
+@keyframes pm-loading-card-glow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(134, 239, 172, 0.18), 0 0 52px rgba(34, 197, 94, 0.16); }
+  50% { box-shadow: 0 0 0 1px rgba(134, 239, 172, 0.34), 0 0 82px rgba(34, 197, 94, 0.26); }
+}
+@keyframes pm-loading-progress {
+  0% { transform: translateX(-100%); }
+  54% { transform: translateX(-12%); }
+  100% { transform: translateX(100%); }
+}
+@keyframes pm-loading-flood {
+  0% { transform: translateX(-140%) skewX(-18deg); opacity: 0; }
+  16% { opacity: 0.72; }
+  76% { opacity: 0.72; }
+  100% { transform: translateX(220%) skewX(-18deg); opacity: 0; }
+}
+.animate-vanguard-float   { animation: vanguard-float   3s ease-in-out infinite; }
+.animate-vanguard-float-b { animation: vanguard-float-b 3.6s ease-in-out infinite 0.5s; }
+.animate-ring-pulse       { animation: vanguard-ring-pulse 2s ease-out infinite; }
 @keyframes crate-speed-lines {
   0% { transform: translateX(0); opacity: 0.32; }
   100% { transform: translateX(-46px); opacity: 0.65; }
@@ -970,6 +1034,1274 @@
   filter: blur(6px);
 }
 
+/* PlayManager green/red variant of the premium nav glow */
+.pm-neon-frame {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+}
+
+.pm-playmanager-frame {
+  display: flex;
+  /* Full-bleed: fill the viewport below the 64px (pt-16) site header so the
+     green frame covers the global storm background instead of floating in it.
+     The Three.js city uses a "cover" orthographic camera, so the environment
+     and building sprites stay aligned at this (or any) frame size. */
+  height: calc(100svh - 64px);
+  width: min(100%, calc((100svh - 64px) * 1672 / 941));
+  flex-direction: column;
+  margin-inline: auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Reclaim the bottom (pb-6) gutter on the PlayManager route so the full-bleed
+   frame reaches the viewport bottom edge with no global background showing. */
+main:has(.pm-playmanager-root) {
+  padding-bottom: 0;
+}
+
+.pm-playmanager-game-shell {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.pm-manager-env-width {
+  width: min(100%, calc((100svh - 64px) * 1672 / 941));
+  max-width: min(100%, calc((100svh - 64px) * 1672 / 941));
+  margin-inline: auto;
+}
+
+.pm-neon-frame::before,
+.pm-neon-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(from var(--border-angle), #14532d, #22c55e, #86efac, #22c55e, #14532d);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: border-rotate 8s linear infinite;
+  z-index: 50;
+}
+
+.pm-neon-frame::before {
+  padding: 3px;
+  filter: blur(10px);
+  opacity: 0.52;
+}
+
+.pm-neon-frame::after {
+  padding: 1.5px;
+  filter: blur(1.5px);
+  opacity: 0.88;
+}
+
+.pm-neon-frame-red::before,
+.pm-neon-frame-red::after {
+  background: conic-gradient(from var(--border-angle), #7f1d1d, #b91c1c, #22c55e, #7f1d1d);
+}
+
+.pm-dashboard-stat {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025)),
+    rgba(0, 0, 0, 0.34);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+    0 18px 40px rgba(0, 0, 0, 0.35);
+  padding: 14px;
+  min-width: 0;
+}
+
+.pm-dashboard-stat-green {
+  box-shadow:
+    inset 0 0 0 1px rgba(134, 239, 172, 0.08),
+    0 0 26px rgba(34, 197, 94, 0.12),
+    0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.pm-dashboard-stat-red {
+  box-shadow:
+    inset 0 0 0 1px rgba(248, 113, 113, 0.08),
+    0 0 26px rgba(127, 29, 29, 0.18),
+    0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.pm-dashboard-stat-gold {
+  box-shadow:
+    inset 0 0 0 1px rgba(253, 224, 71, 0.08),
+    0 0 26px rgba(234, 179, 8, 0.1),
+    0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.pm-three-host {
+  --pm-three-bg-image: none;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  aspect-ratio: 1672 / 941;
+  overflow: hidden;
+  contain: layout paint;
+  container-type: size;
+  border-radius: 0px;
+  background: #020806;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.12);
+}
+
+.pm-three-host-fill {
+  height: 100%;
+  min-height: 0;
+  aspect-ratio: auto;
+}
+
+.pm-three-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.18)),
+    var(--pm-three-bg-image);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: auto, contain;
+}
+
+.pm-building-workspace {
+  isolation: isolate;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.54)),
+    #020806;
+  border-radius: 0 !important;
+}
+
+.pm-building-workspace-scroll {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 20px 28px;
+  scrollbar-gutter: stable;
+}
+
+.pm-building-workspace-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.pm-building-workspace-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 999px;
+}
+
+.pm-building-workspace-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(134, 239, 172, 0.72), rgba(34, 197, 94, 0.28)) padding-box;
+}
+
+.pm-building-workspace-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 14;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+}
+
+.pm-building-workspace-hero {
+  margin-top: clamp(28px, 5vh, 72px);
+  display: grid;
+  gap: 20px;
+}
+
+@media (min-width: 1024px) {
+  .pm-building-workspace-hero {
+    grid-template-columns: minmax(0, 1fr) 360px;
+    align-items: end;
+  }
+}
+
+.pm-building-workspace::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(34, 197, 94, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 197, 94, 0.025) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: radial-gradient(circle at 50% 52%, black 0%, transparent 75%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.pm-building-workspace-environment {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.pm-building-workspace-environment::before {
+  content: "";
+  position: absolute;
+  inset: -24px;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.84) 78%, rgba(0, 0, 0, 0.96)),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.56), transparent 22%, transparent 78%, rgba(0, 0, 0, 0.58)),
+    url("/playmanager/environments/stadium-interior.webp");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  filter: blur(10px);
+  transform: scale(1.04);
+}
+
+.pm-building-workspace-environment::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 110%, rgba(0, 0, 0, 0.86), transparent 38%),
+    radial-gradient(circle at 50% -18%, rgba(0, 0, 0, 0.38), transparent 34%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.08), transparent 34%, rgba(0, 0, 0, 0.7) 100%);
+}
+
+.pm-playmanager-page-env {
+  position: relative;
+  isolation: isolate;
+  min-height: calc(100svh - 64px);
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.82) 76%, rgba(0, 0, 0, 0.96)),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.58), transparent 24%, transparent 76%, rgba(0, 0, 0, 0.6)),
+    url("/playmanager/environments/stadium-interior.webp");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.pm-playmanager-page-env > * {
+  position: relative;
+  z-index: 1;
+}
+
+.pm-playmanager-page-env::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 100%, rgba(0, 0, 0, 0.86), transparent 38%),
+    linear-gradient(rgba(34, 197, 94, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 197, 94, 0.018) 1px, transparent 1px);
+  background-size: auto, 46px 46px, 46px 46px;
+  opacity: 0.9;
+}
+
+
+.pm-building-workspace-sprite {
+  position: absolute;
+  right: 4%;
+  top: 6%;
+  z-index: 1;
+  width: min(46%, 660px);
+  height: 58%;
+  pointer-events: none;
+  opacity: 0.38;
+  filter:
+    drop-shadow(0 0 34px rgba(34, 197, 94, 0.2))
+    drop-shadow(0 24px 44px rgba(0, 0, 0, 0.5));
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 18%,
+    black 82%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 18%,
+    black 82%,
+    transparent 100%
+  );
+}
+
+.pm-arena-lineup-page .pm-building-workspace-sprite {
+  right: 1.5%;
+  top: 8%;
+  width: min(24%, 380px);
+  height: 32%;
+  opacity: 0.2;
+  filter:
+    drop-shadow(0 0 22px rgba(34, 197, 94, 0.14))
+    drop-shadow(0 0 36px rgba(127, 29, 29, 0.12));
+}
+
+.pm-arena-lineup-page .pm-building-workspace-scroll {
+  padding-top: 14px;
+}
+
+.pm-three-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.pm-three-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.pm-three-stage-hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.pm-building-hover-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  pointer-events: none;
+  border: 1px solid rgba(134, 239, 172, 0.28);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.72);
+  box-shadow: 0 0 22px rgba(34, 197, 94, 0.2);
+  color: white;
+  font-size: 11px;
+  font-weight: 950;
+  opacity: 0;
+  padding: 7px 10px;
+  transition: opacity 160ms ease;
+  white-space: nowrap;
+}
+
+.pm-building-hover-label[data-visible="true"] {
+  opacity: 1;
+}
+
+.pm-three-hud {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.pm-city-command-hud {
+  position: relative;
+  display: flex;
+  min-height: 100%;
+  width: 100%;
+  max-width: min(100%, calc(100cqh * 1672 / 941));
+  margin-left: auto;
+  margin-right: auto;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: clamp(24px, 3.5vw, 56px);
+}
+
+.pm-city-manager-panel,
+.pm-city-team-panel {
+  pointer-events: auto;
+  border: 1px solid rgba(134, 239, 172, 0.16);
+  background:
+    linear-gradient(180deg, rgba(1, 10, 6, 0.72), rgba(0, 0, 0, 0.54)),
+    rgba(0, 0, 0, 0.34);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+    0 0 34px rgba(34, 197, 94, 0.12),
+    0 18px 46px rgba(0, 0, 0, 0.36);
+  backdrop-filter: blur(10px);
+}
+
+.pm-city-manager-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  width: min(360px, 42%);
+  min-width: 270px;
+  align-items: center;
+  gap: 12px;
+  border-radius: 22px;
+  padding: 12px;
+}
+
+.pm-city-team-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: min(300px, 34%);
+  border-radius: 18px;
+  padding: 9px;
+}
+
+.pm-city-team-crest {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(134, 239, 172, 0.32);
+  border-radius: 12px;
+  background:
+    linear-gradient(145deg, rgba(34, 197, 94, 0.32), rgba(127, 29, 29, 0.34)),
+    rgba(0, 0, 0, 0.58);
+  color: white;
+  font-size: 12px;
+  font-weight: 950;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 28px rgba(34, 197, 94, 0.22);
+}
+
+.pm-city-status-dock {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  display: flex;
+  max-width: min(720px, 68%);
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+.pm-city-next-match,
+.pm-city-alert-chip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid rgba(134, 239, 172, 0.14);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.58);
+  box-shadow: 0 0 24px rgba(34, 197, 94, 0.09);
+  padding: 9px 12px;
+}
+
+.pm-city-next-match p {
+  color: rgba(255, 255, 255, 0.44);
+  font-size: 9px;
+  font-weight: 950;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.pm-city-next-match strong {
+  color: white;
+  display: block;
+  font-size: 12px;
+  font-weight: 950;
+  margin-top: 1px;
+}
+
+.pm-city-cup-dock {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: min(320px, 34%);
+  pointer-events: auto;
+}
+
+.pm-city-cup-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid rgba(134, 239, 172, 0.16);
+  border-radius: 18px;
+  background:
+    linear-gradient(145deg, rgba(4, 20, 11, 0.9), rgba(0, 0, 0, 0.8)),
+    rgba(0, 0, 0, 0.58);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 0 24px rgba(34, 197, 94, 0.1);
+  padding: 12px 14px;
+  text-decoration: none;
+  transition: border-color 160ms ease, transform 160ms ease, background-color 160ms ease;
+}
+
+.pm-city-cup-link:hover {
+  border-color: rgba(134, 239, 172, 0.3);
+  transform: translateY(-2px);
+}
+
+.pm-city-match-link {
+  border-color: rgba(45, 212, 191, 0.28);
+  background:
+    linear-gradient(145deg, rgba(4, 31, 25, 0.94), rgba(0, 0, 0, 0.84)),
+    rgba(0, 0, 0, 0.62);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 0 34px rgba(45, 212, 191, 0.18);
+}
+
+.pm-city-match-link strong {
+  color: rgb(153, 246, 228);
+  font-size: 22px;
+  letter-spacing: 0;
+}
+
+.pm-city-cup-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(134, 239, 172, 0.22);
+  border-radius: 12px;
+  background: rgba(34, 197, 94, 0.12);
+  color: rgb(187, 247, 208);
+  box-shadow: 0 0 22px rgba(34, 197, 94, 0.12);
+}
+
+.pm-city-cup-link p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.44);
+  font-size: 9px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.pm-city-cup-link strong {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: white;
+  font-size: 13px;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pm-city-cup-link span {
+  display: block;
+  margin-top: 3px;
+  color: rgba(187, 247, 208, 0.72);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.pm-city-alerts {
+  display: flex;
+  gap: 7px;
+}
+
+.pm-city-alert-chip {
+  color: white;
+  font-size: 11px;
+  font-weight: 950;
+  max-width: 170px;
+}
+
+.pm-city-alert-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pm-facility-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid rgba(134, 239, 172, 0.18);
+  border-radius: 14px;
+  background: rgba(34, 197, 94, 0.09);
+  color: rgb(187, 247, 208);
+  margin-bottom: 14px;
+  box-shadow: 0 0 24px rgba(34, 197, 94, 0.12);
+}
+
+.pm-facility-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 10px;
+  font-weight: 950;
+  padding: 7px 10px;
+  text-transform: uppercase;
+}
+
+.pm-facility-status-active,
+.pm-facility-status-completed {
+  border-color: rgba(134, 239, 172, 0.24);
+  color: rgb(187, 247, 208);
+}
+
+.pm-facility-status-attention {
+  border-color: rgba(248, 113, 113, 0.24);
+  color: rgb(252, 165, 165);
+}
+
+.pm-facility-status-upgradeable {
+  border-color: rgba(253, 224, 71, 0.22);
+  color: rgb(254, 240, 138);
+}
+
+.pm-facility-progress {
+  margin-top: 16px;
+  max-width: 520px;
+  border: 1px solid rgba(134, 239, 172, 0.12);
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.34);
+  padding: 12px;
+}
+
+.pm-facility-progress span,
+.pm-facility-progress strong {
+  color: white;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.pm-facility-progress .h-2 span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #34d399, #86efac, #7f1d1d);
+  box-shadow: 0 0 20px rgba(52, 211, 153, 0.35);
+}
+
+.pm-facility-module {
+  position: relative;
+  z-index: 10;
+  margin-top: 20px;
+  border: 1px solid rgba(134, 239, 172, 0.12);
+  border-radius: 22px;
+  background: rgba(0, 0, 0, 0.46);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.025),
+    0 18px 54px rgba(0, 0, 0, 0.34);
+  padding: 14px;
+}
+
+.pm-game-row {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  aspect-ratio: 4 / 3;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 13px;
+}
+
+.pm-rating-pill {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(134, 239, 172, 0.22);
+  border-radius: 12px;
+  background: rgba(34, 197, 94, 0.11);
+  color: white;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.pm-table-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+  font-weight: 850;
+  padding: 12px;
+}
+
+.pm-table-row strong {
+  color: white;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pm-finance-card-green {
+  box-shadow: inset 0 0 0 1px rgba(134, 239, 172, 0.06), 0 0 24px rgba(34, 197, 94, 0.08);
+}
+
+.pm-finance-card-red {
+  box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.08), 0 0 24px rgba(127, 29, 29, 0.1);
+}
+
+.pm-finance-card-gold {
+  box-shadow: inset 0 0 0 1px rgba(253, 224, 71, 0.08), 0 0 24px rgba(234, 179, 8, 0.08);
+}
+
+@media (max-width: 900px) {
+  .pm-three-hud {
+    padding: 12px;
+  }
+
+  /* PlayManager is always shown in landscape — keep all four HUD panels pinned
+     to their fixed corners (no stacking) so positions stay consistent. */
+  .pm-city-status-dock {
+    max-width: min(58%, 420px);
+  }
+
+  .pm-city-cup-dock {
+    width: min(34%, 320px);
+  }
+
+  .pm-city-alerts {
+    max-width: 100%;
+    overflow: hidden;
+  }
+}
+
+.pm-three-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 22% 18%, rgba(16, 185, 129, 0.18), rgba(2, 8, 5, 0.92) 30%, #020806 62%),
+    radial-gradient(circle at 82% 42%, rgba(127, 29, 29, 0.16), rgba(2, 8, 5, 0.9) 32%, #020806 66%),
+    linear-gradient(180deg, #020806 0%, #000000 100%);
+  text-align: center;
+}
+
+.pm-three-loading::before {
+  content: "";
+  position: absolute;
+  inset: 9% 8% 14%;
+  border: 1px solid rgba(134, 239, 172, 0.08);
+  border-radius: 28px;
+  background:
+    linear-gradient(90deg, transparent 49.7%, rgba(134, 239, 172, 0.14) 49.9% 50.1%, transparent 50.3%),
+    repeating-linear-gradient(90deg, rgba(22, 101, 52, 0.13) 0 64px, rgba(2, 12, 7, 0.18) 64px 128px);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+    inset 0 0 80px rgba(0, 0, 0, 0.56),
+    0 0 60px rgba(34, 197, 94, 0.08);
+  opacity: 0.42;
+  transform: perspective(820px) rotateX(58deg) rotateZ(-8deg) translateY(-3%);
+}
+
+.pm-three-loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0 18%, rgba(0, 0, 0, 0.22) 32%, rgba(0, 0, 0, 0.78) 78%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.76), transparent 24%, transparent 72%, rgba(0, 0, 0, 0.8));
+  pointer-events: none;
+}
+
+.pm-loading-orbit {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  z-index: 1;
+  width: min(500px, 58vw);
+  aspect-ratio: 1;
+  pointer-events: none;
+}
+
+.pm-loading-orbit-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  border: 1px solid rgba(134, 239, 172, 0.12);
+  box-shadow: 0 0 48px rgba(34, 197, 94, 0.12);
+  transform: translate(-50%, -50%);
+  animation: pm-loading-orbit 8s linear infinite;
+}
+
+.pm-loading-orbit-ring-a {
+  inset: 0;
+}
+
+.pm-loading-orbit-ring-b {
+  inset: 12%;
+  border-color: rgba(248, 113, 113, 0.12);
+  animation-duration: 11s;
+  animation-direction: reverse;
+}
+
+.pm-loading-card {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  width: min(560px, 82vw);
+  gap: 24px;
+  justify-items: center;
+  border: 1px solid rgba(134, 239, 172, 0.2);
+  border-radius: 32px;
+  background:
+    radial-gradient(circle at 24% 18%, rgba(34, 197, 94, 0.18), rgba(2, 18, 10, 0.96) 32%, #020806 70%),
+    radial-gradient(circle at 82% 88%, rgba(127, 29, 29, 0.2), rgba(9, 6, 5, 0.96) 36%, #020806 72%),
+    linear-gradient(180deg, #03110a 0%, #000000 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 26px 90px rgba(0, 0, 0, 0.64);
+  padding: clamp(22px, 3vw, 36px);
+  animation: pm-loading-card-glow 2.4s ease-in-out infinite;
+}
+
+.pm-loading-card::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 31px;
+  background: linear-gradient(115deg, transparent, rgba(255, 255, 255, 0.07), transparent);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.pm-loading-stadium {
+  position: relative;
+  width: min(250px, 54vw);
+  aspect-ratio: 1.36;
+  transform: perspective(720px) rotateX(58deg) rotateZ(-12deg);
+  transform-style: preserve-3d;
+}
+
+.pm-loading-stand {
+  position: absolute;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(6, 78, 59, 0.92), rgba(2, 24, 14, 0.96));
+  box-shadow:
+    inset 0 0 0 1px rgba(134, 239, 172, 0.2),
+    0 0 24px rgba(34, 197, 94, 0.22);
+}
+
+.pm-loading-stand-top,
+.pm-loading-stand-bottom {
+  left: 10%;
+  right: 10%;
+  height: 22%;
+}
+
+.pm-loading-stand-top {
+  top: 0;
+}
+
+.pm-loading-stand-bottom {
+  bottom: 0;
+}
+
+.pm-loading-stand-left,
+.pm-loading-stand-right {
+  top: 12%;
+  bottom: 12%;
+  width: 18%;
+}
+
+.pm-loading-stand-left {
+  left: 0;
+}
+
+.pm-loading-stand-right {
+  right: 0;
+}
+
+.pm-loading-scan {
+  position: absolute;
+  inset: -20% auto -20% 0;
+  width: 42%;
+  background: linear-gradient(90deg, transparent, rgba(134, 239, 172, 0.5), transparent);
+  animation: pm-loading-flood 1.8s ease-in-out infinite;
+}
+
+.pm-loading-field {
+  position: absolute;
+  inset: 24% 24%;
+  overflow: hidden;
+  border: 1px solid rgba(236, 253, 245, 0.5);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0 14%, rgba(236, 253, 245, 0.48) 14.5%, transparent 15%),
+    linear-gradient(90deg, transparent 49%, rgba(236, 253, 245, 0.28) 49.5% 50.5%, transparent 51%),
+    linear-gradient(180deg, rgba(22, 163, 74, 0.7), rgba(6, 95, 70, 0.68));
+  box-shadow:
+    inset 0 0 28px rgba(0, 0, 0, 0.36),
+    0 0 30px rgba(34, 197, 94, 0.34);
+}
+
+.pm-loading-field::before,
+.pm-loading-field::after {
+  content: "";
+  position: absolute;
+  top: 28%;
+  bottom: 28%;
+  width: 18%;
+  border: 1px solid rgba(236, 253, 245, 0.34);
+}
+
+.pm-loading-field::before {
+  left: -1px;
+  border-left: 0;
+  border-radius: 0 10px 10px 0;
+}
+
+.pm-loading-field::after {
+  right: -1px;
+  border-right: 0;
+  border-radius: 10px 0 0 10px;
+}
+
+.pm-loading-ball {
+  position: absolute;
+  left: 22%;
+  top: 46%;
+  width: 10px;
+  height: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.96);
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.72);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.56);
+  animation: pm-loading-ball 1.35s ease-in-out infinite;
+}
+
+.pm-loading-dot {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgb(110, 231, 183);
+  box-shadow: 0 0 16px rgba(110, 231, 183, 0.78);
+  animation: pm-loading-dot 1.3s ease-in-out infinite;
+}
+
+.pm-loading-dot-a {
+  left: 25%;
+  top: 34%;
+}
+
+.pm-loading-dot-b {
+  left: 54%;
+  top: 62%;
+  animation-delay: 0.22s;
+}
+
+.pm-loading-dot-c {
+  right: 22%;
+  top: 39%;
+  background: rgb(248, 113, 113);
+  box-shadow: 0 0 16px rgba(248, 113, 113, 0.58);
+  animation-delay: 0.44s;
+}
+
+.pm-loading-title {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(20px, 2.3vw, 34px);
+  font-weight: 950;
+  line-height: 1.05;
+  letter-spacing: 0;
+  text-shadow:
+    0 0 22px rgba(34, 197, 94, 0.28),
+    0 10px 34px rgba(0, 0, 0, 0.55);
+}
+
+.pm-loading-copy {
+  position: relative;
+  z-index: 1;
+  width: min(400px, 100%);
+}
+
+.pm-loading-kicker {
+  display: block;
+  margin-bottom: 10px;
+  color: rgba(187, 247, 208, 0.78);
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.pm-loading-progress {
+  position: relative;
+  height: 8px;
+  margin-top: 20px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.pm-loading-progress span {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, #34d399 18%, #86efac 52%, #7f1d1d 100%);
+  box-shadow: 0 0 24px rgba(52, 211, 153, 0.46);
+  animation: pm-loading-progress 2.1s ease-in-out infinite;
+}
+
+.pm-loading-status {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 14px;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pm-loading-status span {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 5px 8px;
+}
+
+.pm-building-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.pm-building-icon-green {
+  color: rgb(187, 247, 208);
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.14);
+}
+
+.pm-building-icon-red {
+  color: rgb(252, 165, 165);
+  box-shadow: 0 0 18px rgba(127, 29, 29, 0.22);
+}
+
+.pm-building-icon-gold {
+  color: rgb(254, 240, 138);
+  box-shadow: 0 0 18px rgba(234, 179, 8, 0.14);
+}
+
+@media (max-width: 760px) {
+  .pm-three-host {
+    aspect-ratio: 1672 / 941;
+  }
+
+  .pm-building-workspace-scroll {
+    padding: 16px 16px 24px;
+  }
+}
+
+/* ============================================================
+   PlayManager mobile/tablet experience
+   The city map is a landscape-first game view. On non-desktop devices
+   held in portrait we show a "rotate your device" prompt; in landscape
+   we render the compact game view below.
+   ============================================================ */
+
+/* (A) Compact styling for landscape phones */
+@media (max-height: 560px) and (orientation: landscape) {
+  .gr-site-header-root.pm-hide-mobile {
+    display: none !important;
+  }
+
+  /* Reclaim the fixed-header offset on the PlayManager page */
+  main:has(.pm-playmanager-root) {
+    padding-top: 0 !important;
+  }
+
+  .pm-playmanager-pad {
+    padding: 6px 12px !important;
+  }
+
+  .pm-playmanager-frame {
+    min-height: 0;
+    width: 100%;
+    padding: 8px;
+    /* Header offset is reclaimed in landscape (padding-top:0 above), so the
+       frame fills the whole short viewport instead of leaving a 64px gap. */
+    height: 100svh;
+  }
+
+  /* Hide the "CITY MAP / საფეხბურთო ქალაქი" heading to free vertical space */
+  .pm-playmanager-frame > .relative.z-10 {
+    display: none;
+  }
+
+  /* The canvas fills the frame exactly; the "cover" framing is handled by the
+     orthographic camera (see playmanager-city-canvas.tsx) so the HUD, which is
+     pinned to the host edges, stays aligned with the visible frame. */
+  .pm-playmanager-game-shell {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pm-three-host-fill:not(.pm-building-workspace) {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+  }
+
+  /* Shrink the HUD cards so they don't dominate the small landscape view */
+  .pm-three-hud {
+    padding: 8px;
+  }
+
+  .pm-city-manager-panel {
+    width: min(240px, 34%);
+    min-width: 0;
+    gap: 8px;
+    padding: 7px 9px;
+    border-radius: 16px;
+  }
+
+  .pm-city-manager-panel .h-11 {
+    height: 1.9rem;
+    width: 1.9rem;
+  }
+
+  .pm-city-manager-panel p.text-sm {
+    font-size: 11px;
+  }
+
+  .pm-city-team-panel {
+    width: min(210px, 30%);
+    padding: 7px;
+    border-radius: 14px;
+  }
+
+  .pm-city-team-crest {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    font-size: 10px;
+  }
+
+  .pm-city-next-match,
+  .pm-city-alert-chip {
+    gap: 6px;
+    padding: 6px 9px;
+  }
+
+  .pm-city-next-match strong {
+    font-size: 10px;
+  }
+
+  .pm-city-cup-dock {
+    width: min(210px, 30%);
+  }
+
+  .pm-city-cup-link {
+    padding: 7px 9px;
+    gap: 8px;
+  }
+
+  .pm-city-cup-icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .pm-city-cup-link strong {
+    font-size: 10px;
+  }
+}
+
+/* (B) Real landscape phones — size the frame from the viewport height */
+@media (max-height: 560px) and (orientation: landscape) {
+  .pm-playmanager-frame {
+    height: calc(100dvh - 12px);
+  }
+}
+
+/* (C) Portrait non-desktop devices — ask the user to rotate to landscape.
+   Screen Orientation lock is unavailable on iOS, so instead of force-rotating
+   (which breaks the WebGL canvas sizing and touch coordinates) we overlay a
+   clean "rotate your device" prompt that covers the page until rotated. */
+.pm-rotate-prompt {
+  display: none;
+}
+
+@media (orientation: portrait) and (max-width: 1024px) {
+  .pm-rotate-prompt {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 32px;
+    text-align: center;
+    background:
+      radial-gradient(circle at 50% 38%, rgba(34, 197, 94, 0.16), transparent 60%),
+      linear-gradient(180deg, #02100a 0%, #010604 100%);
+  }
+
+  .pm-rotate-prompt__icon {
+    display: grid;
+    place-items: center;
+    width: 92px;
+    height: 92px;
+    border-radius: 24px;
+    border: 1px solid rgba(134, 239, 172, 0.28);
+    background: rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 40px rgba(34, 197, 94, 0.22);
+    color: #6ee7b7;
+    animation: pm-rotate-hint 2.4s ease-in-out infinite;
+  }
+
+  .pm-rotate-prompt__icon svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  .pm-rotate-prompt__title {
+    font-size: 20px;
+    font-weight: 950;
+    color: #ffffff;
+  }
+
+  .pm-rotate-prompt__text {
+    max-width: 320px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+    color: rgba(209, 250, 229, 0.72);
+  }
+}
+
+@keyframes pm-rotate-hint {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-90deg); }
+}
+
 /* Slide-inspired post surfaces */
 .gr-slide-surface {
   position: relative;
@@ -1606,4 +2938,21 @@
   .gr-site-header-inner {
     justify-content: center !important;
   }
+}
+
+/* PlayManager — ALK Sanet for large headings, buttons, panels, and heavy texts */
+.pm-playmanager-root {
+  --font-sans: var(--font-alk-sanet), var(--font-firago), sans-serif;
+}
+
+.pm-playmanager-root h1,
+.pm-playmanager-root h2,
+.pm-playmanager-root h3,
+.pm-building-workspace h3,
+.pm-building-workspace-hero h3,
+.pm-playmanager-root button,
+.pm-facility-module > div:first-child,
+.pm-playmanager-root .font-black {
+  font-family: var(--font-alk-sanet), var(--font-orbitron), sans-serif;
+  letter-spacing: -0.01em;
 }
