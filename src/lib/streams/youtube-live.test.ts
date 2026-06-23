@@ -6,7 +6,7 @@ async function getGlobalDirective(name: string) {
   assert.equal(typeof nextConfig.headers, "function");
 
   const routes = await nextConfig.headers();
-  const globalRoute = routes.find((route) => route.source === "/(.*)");
+  const globalRoute = routes.find((route) => route.source === "/:path*");
   const csp = globalRoute?.headers.find((header) => header.key === "Content-Security-Policy")?.value ?? "";
   return csp
     .split(";")

@@ -16,12 +16,14 @@ export async function GET(request: Request) {
   const redirectUri = `${origin}/api/auth/tiktok/callback`;
   
   // CSRF protection state
-  const state = Math.random().toString(36).substring(2, 15);
+  // Use crypto.randomUUID() instead of Math.random() for security
+  const state = crypto.randomUUID();
   const cookieStore = await cookies();
   cookieStore.set("tiktok_oauth_state", state, {
     maxAge: 300, // 5 minutes
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
     path: "/",
   });
 
