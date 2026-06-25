@@ -235,11 +235,14 @@ export function PlayManagerIsoCity() {
     return () => window.removeEventListener('resize', onResize);
   }, [fit]);
 
-  const baseH = baseW / RATIO;
-  const scaleX = baseW / IMG_W;
-  const scaleY = baseH / IMG_H;
-  const screenToImgX = 1 / (scaleX * transform.scale);
-  const screenToImgY = 1 / (scaleY * transform.scale);
+  // Zoom is baked into element size (not a GPU transform: scale) so images stay
+  // crisp while panning/zooming — scaling a promoted layer's texture blurs it.
+  const effW = baseW * transform.scale;
+  const effH = effW / RATIO;
+  const scaleX = effW / IMG_W;
+  const scaleY = effH / IMG_H;
+  const screenToImgX = 1 / scaleX;
+  const screenToImgY = 1 / scaleY;
 
   const onPointerDown = (e: React.PointerEvent) => {
     drag.current = {
@@ -332,11 +335,11 @@ export function PlayManagerIsoCity() {
       style={{ cursor: drag.current.active ? 'grabbing' : 'grab' }}
     >
       <div
-        className="absolute left-0 top-0 origin-top-left will-change-transform"
+        className="absolute left-0 top-0 origin-top-left"
         style={{
-          width: baseW,
-          height: baseH,
-          transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
+          width: effW,
+          height: effH,
+          transform: `translate(${Math.round(transform.x)}px, ${Math.round(transform.y)}px)`,
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
