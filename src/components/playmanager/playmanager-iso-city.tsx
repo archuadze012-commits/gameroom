@@ -385,11 +385,12 @@ export function PlayManagerIsoCity() {
           sprites.map((s) => {
             if (hovered !== s.key) return null;
             const cx = (s.imgX + s.w / 2) * scaleX;
-            const topY = s.imgY * scaleY;
+            // sit just above the building's top edge (a small gap), not far overhead
+            const topY = s.imgY * scaleY + s.h * scaleY * 0.14;
             return (
               <div
                 key={`lbl-${s.key}`}
-                className="pointer-events-none absolute -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-xl border px-3 py-1.5 text-[15px] font-black backdrop-blur-md"
+                className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-xl border px-3 py-1.5 text-[15px] font-black backdrop-blur-md"
                 style={{
                   left: cx,
                   top: topY,
