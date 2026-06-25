@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { SpriteImageEditor } from '@/components/playmanager/sprite-image-editor';
 
 const IMG = '/playmanager/iso/environment.webp';
 const IMG_W = 3168;
@@ -65,6 +66,7 @@ function AdminEditor({
   onSelect,
   onSprites,
   onSave,
+  onEdit,
   saving,
   savedAt,
 }: {
@@ -73,6 +75,7 @@ function AdminEditor({
   onSelect: (key: string | null) => void;
   onSprites: (ss: BuildingSprite[]) => void;
   onSave: () => void;
+  onEdit: (key: string) => void;
   saving: boolean;
   savedAt: number | null;
 }) {
@@ -117,13 +120,22 @@ function AdminEditor({
               key={s.key}
               className={`rounded-xl border p-2 ${active ? 'border-emerald-400/60 bg-emerald-400/10' : 'border-white/10 bg-white/5'}`}
             >
-              <button
-                onClick={() => onSelect(active ? null : s.key)}
-                className="mb-1 flex w-full items-center justify-between font-black text-emerald-200"
-              >
-                <span>{s.label}</span>
-                <span className="text-[9px] font-bold text-white/40">{active ? 'არჩეული' : 'მონიშვნა'}</span>
-              </button>
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <button
+                  onClick={() => onSelect(active ? null : s.key)}
+                  className="flex flex-1 items-center justify-between font-black text-emerald-200"
+                >
+                  <span>{s.label}</span>
+                  <span className="text-[9px] font-bold text-white/40">{active ? 'არჩეული' : 'მონიშვნა'}</span>
+                </button>
+                <button
+                  onClick={() => onEdit(s.key)}
+                  title="გამოსახულების რედაქტირება (erase/restore)"
+                  className="rounded border border-white/15 bg-white/5 px-1.5 py-0.5 text-[11px] hover:bg-white/15"
+                >
+                  ✎
+                </button>
+              </div>
 
               <div className="mb-2 flex items-center justify-center gap-1">
                 <button onClick={() => nudgeS(s.key, 0, -10)} className="rounded bg-white/10 px-2 py-0.5 hover:bg-white/20">↑</button>
@@ -187,6 +199,8 @@ export function PlayManagerIsoCity() {
   const [adminOpen, setAdminOpen] = useState(false);
   const [sprites, setSprites] = useState(SPRITES);
   const [selected, setSelected] = useState<string | null>(null);
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [imgVersion, setImgVersion] = useState(0); // bump to force-reload edited images
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
@@ -339,7 +353,7 @@ export function PlayManagerIsoCity() {
             // eslint-disable-next-line @next/next/no-img-element
             <img
               key={s.key}
-              src={s.src}
+              src={imgVersion ? `${s.src}?v=${imgVersion}` : s.src}
               alt={s.label}
               draggable={false}
               onPointerDown={(e) => startSpriteDrag(e, s)}
@@ -414,10 +428,24 @@ export function PlayManagerIsoCity() {
               onSelect={setSelected}
               onSprites={setSprites}
               onSave={save}
+              onEdit={setEditingKey}
               saving={saving}
               savedAt={savedAt}
             />
           )}
+
+          {editingKey && (() => {
+            const s = sprites.find((sp) => sp.key === editingKey);
+            if (!s) return null;
+            return (
+              <SpriteImageEditor
+                src={s.src}
+                label={s.label}
+                onClose={() => setEditingKey(null)}
+                onSaved={() => setImgVersion((v) => v + 1)}
+              />
+            );
+          })()}
         </>
       )}
     </div>
