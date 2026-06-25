@@ -29,11 +29,12 @@ type BuildingSprite = {
   imgY: number;
   w: number;
   h: number;
+  rot: number; // degrees, clockwise
 };
 
 const SPRITES: BuildingSprite[] = [
-  { key: 'training', src: '/playmanager/city/buildings/training.webp', imgX: 500,  imgY: 620, w: 780, h: 600 },
-  { key: 'medical',  src: '/playmanager/city/buildings/medical.webp',  imgX: 2060, imgY: 310, w: 780, h: 700 },
+  { key: 'training', src: '/playmanager/city/buildings/training.webp', imgX: 500,  imgY: 620, w: 780, h: 600, rot: 0 },
+  { key: 'medical',  src: '/playmanager/city/buildings/medical.webp',  imgX: 2060, imgY: 310, w: 780, h: 700, rot: 0 },
 ];
 
 const HOTSPOTS: Hotspot[] = [
@@ -61,7 +62,7 @@ const diamond = (h: Hotspot) =>
 function mergeSprites(saved: Partial<BuildingSprite>[]): BuildingSprite[] {
   return SPRITES.map((base) => {
     const ov = saved.find((s) => s.key === base.key);
-    return ov ? { ...base, ...ov, src: base.src } : base;
+    return ov ? { ...base, ...ov, src: base.src, rot: ov.rot ?? base.rot } : base;
   });
 }
 function mergeHotspots(saved: Partial<Hotspot>[]): Hotspot[] {
@@ -104,6 +105,9 @@ function AdminEditor({
   };
   const nudgeS = (key: string, dx: number, dy: number) => {
     onSprites(sprites.map((s) => (s.key === key ? { ...s, imgX: s.imgX + dx, imgY: s.imgY + dy } : s)));
+  };
+  const rotateS = (key: string, delta: number) => {
+    onSprites(sprites.map((s) => (s.key === key ? { ...s, rot: ((s.rot + delta) % 360 + 360) % 360 } : s)));
   };
 
   return (
@@ -167,6 +171,32 @@ function AdminEditor({
                     <button onClick={() => nudgeS(s.key, 10, 0)} className="rounded bg-white/10 px-2 py-0.5 hover:bg-white/20">→</button>
                     <button onClick={() => nudgeS(s.key, 0, 10)} className="rounded bg-white/10 px-2 py-0.5 hover:bg-white/20">↓</button>
                   </div>
+
+                  <div className="mb-2 flex items-center justify-center gap-1">
+                    <button onClick={() => rotateS(s.key, -15)} className="rounded bg-white/10 px-2 py-0.5 hover:bg-white/20" title="−15°">↺ 15°</button>
+                    <button onClick={() => rotateS(s.key, -1)} className="rounded bg-white/10 px-2 py-0.5 hover:bg-white/20" title="−1°">↺ 1°</button>
+                    <button onClick={() => updateS(s.key, 'rot', 0)} className="rounded bg-white/10 px-2 py-0.5 font-mono text-[10px] hover:bg-white/20" title="reset">{Math.round(s.rot)}°</button>
+                    <button onClick={() => rotateS(s.key, 1)} className="rounded bg-white/10 px-2 py-0.5 hover:bg-white/20" title="+1°">↻ 1°</button>
+                    <button onClick={() => rotateS(s.key, 15)} className="rounded bg-white/10 px-2 py-0.5 hover:bg-white/20" title="+15°">↻ 15°</button>
+                  </div>
+
+                  <label className="mb-1 flex items-center justify-between gap-2 py-0.5">
+                    <span className="w-8 font-mono text-white/60">rot</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={359}
+                      value={s.rot}
+                      onChange={(e) => updateS(s.key, 'rot', Number(e.target.value))}
+                      className="flex-1 accent-emerald-400"
+                    />
+                    <input
+                      type="number"
+                      value={s.rot}
+                      onChange={(e) => updateS(s.key, 'rot', Number(e.target.value))}
+                      className="w-16 rounded bg-white/10 px-1 py-0.5 text-right font-mono"
+                    />
+                  </label>
 
                   {(['imgX', 'imgY', 'w', 'h'] as const).map((f) => (
                     <label key={f} className="flex items-center justify-between gap-2 py-0.5">
@@ -404,6 +434,8 @@ export function PlayManagerIsoCity() {
                 height: s.h * scaleY,
                 objectFit: 'contain',
                 objectPosition: 'bottom center',
+                transform: s.rot ? `rotate(${s.rot}deg)` : undefined,
+                transformOrigin: 'center bottom',
                 pointerEvents: adminOpen ? 'auto' : 'none',
                 cursor: adminOpen ? 'move' : 'default',
                 outline: active ? '3px dashed rgba(52,211,153,0.9)' : 'none',
