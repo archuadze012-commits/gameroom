@@ -38,6 +38,7 @@ const SPRITES: BuildingSprite[] = [
   { key: 'medical',     src: '/playmanager/city/buildings/medical.webp',     label: 'მედცენტრი',       href: '/playmanager/medical',   tone: 'green', imgX: 2060, imgY: 310, w: 780, h: 700, rot: 0, sy: 1 },
   { key: 'trophy_hall', src: '/playmanager/city/buildings/trophy_hall.webp', label: 'თასების დარბაზი', href: '/playmanager/museum',    tone: 'gold',  imgX: 1300, imgY: 650, w: 720, h: 620, rot: 0, sy: 1 },
   { key: 'academy',     src: '/playmanager/city/buildings/academy.webp',     label: 'აკადემია',        href: '/playmanager/academy',   tone: 'green', imgX: 760,  imgY: 120, w: 820, h: 740, rot: 0, sy: 1 },
+  { key: 'headquarters', src: '/playmanager/city/buildings/headquarters.webp', label: 'ოფისი',          href: '/playmanager/finance',   tone: 'gold',  imgX: 1240, imgY: 60,  w: 700, h: 700, rot: 0, sy: 1 },
 ];
 
 const TONE: Record<Tone, string> = {
