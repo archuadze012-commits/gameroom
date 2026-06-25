@@ -99,9 +99,11 @@ function AdminEditor({
   const [tab, setTab] = useState<'sprites' | 'hotspots'>('sprites');
 
   const updateH = (key: string, field: keyof Hotspot, value: number) => {
+    if (!Number.isFinite(value)) return;
     onHotspots(hotspots.map((h) => (h.key === key ? { ...h, [field]: value } : h)));
   };
   const updateS = (key: string, field: keyof BuildingSprite, value: number) => {
+    if (!Number.isFinite(value)) return;
     onSprites(sprites.map((s) => (s.key === key ? { ...s, [field]: value } : s)));
   };
   const nudgeS = (key: string, dx: number, dy: number) => {
