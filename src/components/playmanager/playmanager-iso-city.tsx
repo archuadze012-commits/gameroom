@@ -30,11 +30,12 @@ type BuildingSprite = {
   w: number;
   h: number;
   rot: number; // degrees, clockwise
+  sy: number;  // vertical scale (1 = none, <1 squashes vertically)
 };
 
 const SPRITES: BuildingSprite[] = [
-  { key: 'training', src: '/playmanager/city/buildings/training.webp', imgX: 500,  imgY: 620, w: 780, h: 600, rot: 0 },
-  { key: 'medical',  src: '/playmanager/city/buildings/medical.webp',  imgX: 2060, imgY: 310, w: 780, h: 700, rot: 0 },
+  { key: 'training', src: '/playmanager/city/buildings/training.webp', imgX: 500,  imgY: 620, w: 780, h: 600, rot: 0, sy: 1 },
+  { key: 'medical',  src: '/playmanager/city/buildings/medical.webp',  imgX: 2060, imgY: 310, w: 780, h: 700, rot: 0, sy: 1 },
 ];
 
 const HOTSPOTS: Hotspot[] = [
@@ -62,7 +63,7 @@ const diamond = (h: Hotspot) =>
 function mergeSprites(saved: Partial<BuildingSprite>[]): BuildingSprite[] {
   return SPRITES.map((base) => {
     const ov = saved.find((s) => s.key === base.key);
-    return ov ? { ...base, ...ov, src: base.src, rot: ov.rot ?? base.rot } : base;
+    return ov ? { ...base, ...ov, src: base.src, rot: ov.rot ?? base.rot, sy: ov.sy ?? base.sy } : base;
   });
 }
 function mergeHotspots(saved: Partial<Hotspot>[]): Hotspot[] {
@@ -194,6 +195,26 @@ function AdminEditor({
                       type="number"
                       value={s.rot}
                       onChange={(e) => updateS(s.key, 'rot', Number(e.target.value))}
+                      className="w-16 rounded bg-white/10 px-1 py-0.5 text-right font-mono"
+                    />
+                  </label>
+
+                  <label className="mb-1 flex items-center justify-between gap-2 py-0.5" title="ვერტიკალური შევიწროება">
+                    <span className="w-8 font-mono text-white/60">↕ sy</span>
+                    <input
+                      type="range"
+                      min={0.2}
+                      max={1.5}
+                      step={0.01}
+                      value={s.sy}
+                      onChange={(e) => updateS(s.key, 'sy', Number(e.target.value))}
+                      className="flex-1 accent-emerald-400"
+                    />
+                    <input
+                      type="number"
+                      step={0.01}
+                      value={s.sy}
+                      onChange={(e) => updateS(s.key, 'sy', Number(e.target.value))}
                       className="w-16 rounded bg-white/10 px-1 py-0.5 text-right font-mono"
                     />
                   </label>
@@ -434,7 +455,7 @@ export function PlayManagerIsoCity() {
                 height: s.h * scaleY,
                 objectFit: 'contain',
                 objectPosition: 'bottom center',
-                transform: s.rot ? `rotate(${s.rot}deg)` : undefined,
+                transform: `rotate(${s.rot}deg) scaleY(${s.sy})`,
                 transformOrigin: 'center bottom',
                 pointerEvents: adminOpen ? 'auto' : 'none',
                 cursor: adminOpen ? 'move' : 'default',
