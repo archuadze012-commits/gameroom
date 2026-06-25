@@ -10,6 +10,11 @@ const IMG_H = 1344;
 const RATIO = IMG_W / IMG_H;
 const LAYOUT_URL = '/playmanager/city/layout.json';
 
+// Zoom limits: 1 = exactly cover (no empty space), MAX kept modest so close-up
+// detail loss isn't obvious.
+const MIN_SCALE = 1;
+const MAX_SCALE = 1.7;
+
 type Tone = 'green' | 'red' | 'gold';
 
 // A building sprite IS the clickable plot — clicking it routes to its page.
@@ -244,6 +249,19 @@ export function PlayManagerIsoCity() {
   const screenToImgX = 1 / scaleX;
   const screenToImgY = 1 / scaleY;
 
+  // Keep the map covering the viewport — never let edges reveal empty space.
+  const clampPan = (x: number, y: number, scale: number) => {
+    const vp = viewportRef.current;
+    if (!vp) return { x, y };
+    const vw = vp.clientWidth;
+    const vh = vp.clientHeight;
+    const w = baseW * scale;
+    const h = w / RATIO;
+    const cx = w <= vw ? (vw - w) / 2 : Math.max(vw - w, Math.min(0, x));
+    const cy = h <= vh ? (vh - h) / 2 : Math.max(vh - h, Math.min(0, y));
+    return { x: cx, y: cy };
+  };
+
   const onPointerDown = (e: React.PointerEvent) => {
     drag.current = {
       active: true,
@@ -269,7 +287,10 @@ export function PlayManagerIsoCity() {
     const dx = e.clientX - drag.current.startX;
     const dy = e.clientY - drag.current.startY;
     if (Math.abs(dx) + Math.abs(dy) > 3) drag.current.moved = true;
-    setTransform((t) => ({ ...t, x: drag.current.originX + dx, y: drag.current.originY + dy }));
+    setTransform((t) => {
+      const p = clampPan(drag.current.originX + dx, drag.current.originY + dy, t.scale);
+      return { ...t, x: p.x, y: p.y };
+    });
   };
 
   const onPointerUp = () => {
@@ -297,9 +318,10 @@ export function PlayManagerIsoCity() {
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
     setTransform((t) => {
-      const next = Math.min(3, Math.max(0.6, t.scale - e.deltaY * 0.0012));
+      const next = Math.min(MAX_SCALE, Math.max(MIN_SCALE, t.scale - e.deltaY * 0.0012));
       const k = next / t.scale;
-      return { scale: next, x: mx - (mx - t.x) * k, y: my - (my - t.y) * k };
+      const p = clampPan(mx - (mx - t.x) * k, my - (my - t.y) * k, next);
+      return { scale: next, x: p.x, y: p.y };
     });
   };
 
