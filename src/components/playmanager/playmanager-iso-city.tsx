@@ -34,8 +34,9 @@ type BuildingSprite = {
 };
 
 const SPRITES: BuildingSprite[] = [
-  { key: 'training', src: '/playmanager/city/buildings/training.webp', imgX: 500,  imgY: 620, w: 780, h: 600, rot: 0, sy: 1 },
-  { key: 'medical',  src: '/playmanager/city/buildings/medical.webp',  imgX: 2060, imgY: 310, w: 780, h: 700, rot: 0, sy: 1 },
+  { key: 'arena',    src: '/playmanager/city/buildings/arena.webp',    imgX: 1054, imgY: 150, w: 1060, h: 900, rot: 0, sy: 1 },
+  { key: 'training', src: '/playmanager/city/buildings/training.webp', imgX: 500,  imgY: 620, w: 780,  h: 600, rot: 0, sy: 1 },
+  { key: 'medical',  src: '/playmanager/city/buildings/medical.webp',  imgX: 2060, imgY: 310, w: 780,  h: 700, rot: 0, sy: 1 },
 ];
 
 const HOTSPOTS: Hotspot[] = [
