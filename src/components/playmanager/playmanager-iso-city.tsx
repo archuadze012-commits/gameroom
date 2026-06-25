@@ -32,7 +32,7 @@ type BuildingSprite = {
 
 const SPRITES: BuildingSprite[] = [
   { key: 'training', src: '/playmanager/city/buildings/training.webp', imgX: 500,  imgY: 620, w: 780, h: 600 },
-  { key: 'medical',  src: '/playmanager/city/buildings/medical.webp',  imgX: 2060, imgY: 310, w: 780, h: 700 },
+  { key: 'medical',  src: '/playmanager/city/buildings/medical.png',   imgX: 2060, imgY: 310, w: 780, h: 700 },
 ];
 
 const HOTSPOTS: Hotspot[] = [
@@ -298,6 +298,7 @@ export function PlayManagerIsoCity() {
               height: s.h * scaleY,
               objectFit: 'contain',
               objectPosition: 'bottom center',
+              mixBlendMode: s.key === 'medical' ? 'screen' : 'normal',
             }}
           />
         ))}
