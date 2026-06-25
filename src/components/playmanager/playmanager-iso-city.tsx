@@ -7,6 +7,7 @@ const IMG = '/playmanager/iso/environment.webp';
 const IMG_W = 3168;
 const IMG_H = 1344;
 const RATIO = IMG_W / IMG_H;
+const LAYOUT_URL = '/playmanager/city/layout.json';
 
 type Tone = 'green' | 'red' | 'gold';
 
@@ -56,52 +57,76 @@ const TONE: Record<Tone, string> = {
 const diamond = (h: Hotspot) =>
   `${h.x},${h.y - h.ry} ${h.x + h.rx},${h.y} ${h.x},${h.y + h.ry} ${h.x - h.rx},${h.y}`;
 
+// Merge saved layout (by key) onto the code defaults so new buildings still appear.
+function mergeSprites(saved: Partial<BuildingSprite>[]): BuildingSprite[] {
+  return SPRITES.map((base) => {
+    const ov = saved.find((s) => s.key === base.key);
+    return ov ? { ...base, ...ov, src: base.src } : base;
+  });
+}
+function mergeHotspots(saved: Partial<Hotspot>[]): Hotspot[] {
+  return HOTSPOTS.map((base) => {
+    const ov = saved.find((s) => s.key === base.key);
+    return ov ? { ...base, ...ov, href: base.href, label: base.label, tone: base.tone } : base;
+  });
+}
+
 // ── Admin Editor (dev-only) ───────────────────────────────────────────────────
 
 function AdminEditor({
   hotspots,
   sprites,
+  selected,
+  onSelect,
   onHotspots,
   onSprites,
+  onSave,
+  saving,
+  savedAt,
 }: {
   hotspots: Hotspot[];
   sprites: BuildingSprite[];
+  selected: string | null;
+  onSelect: (key: string | null) => void;
   onHotspots: (hs: Hotspot[]) => void;
   onSprites: (ss: BuildingSprite[]) => void;
+  onSave: () => void;
+  saving: boolean;
+  savedAt: number | null;
 }) {
-  const [tab, setTab] = useState<'hotspots' | 'sprites'>('sprites');
-  const [copied, setCopied] = useState(false);
-
-  const copy = () => {
-    const data = tab === 'hotspots' ? hotspots : sprites;
-    navigator.clipboard.writeText(JSON.stringify(data, null, 2)).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
-  };
+  const [tab, setTab] = useState<'sprites' | 'hotspots'>('sprites');
 
   const updateH = (key: string, field: keyof Hotspot, value: number) => {
     onHotspots(hotspots.map((h) => (h.key === key ? { ...h, [field]: value } : h)));
   };
-
   const updateS = (key: string, field: keyof BuildingSprite, value: number) => {
     onSprites(sprites.map((s) => (s.key === key ? { ...s, [field]: value } : s)));
+  };
+  const nudgeS = (key: string, dx: number, dy: number) => {
+    onSprites(sprites.map((s) => (s.key === key ? { ...s, imgX: s.imgX + dx, imgY: s.imgY + dy } : s)));
   };
 
   return (
     <div
       className="pointer-events-auto absolute right-3 top-3 z-50 flex w-80 flex-col gap-2 rounded-2xl border border-emerald-400/30 bg-black/90 p-3 text-xs text-white shadow-2xl backdrop-blur-xl"
       onPointerDown={(e) => e.stopPropagation()}
+      onWheel={(e) => e.stopPropagation()}
     >
       <div className="flex items-center justify-between">
         <span className="font-black text-emerald-300 uppercase tracking-widest">Admin Editor</span>
         <button
-          onClick={copy}
-          className="rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-[10px] font-bold text-emerald-300 hover:bg-emerald-400/20"
+          onClick={onSave}
+          disabled={saving}
+          className="rounded-lg border border-emerald-400/40 bg-emerald-400/20 px-2 py-1 text-[10px] font-black text-emerald-200 hover:bg-emerald-400/30 disabled:opacity-50"
         >
-          {copied ? '✓ copied' : 'copy JSON'}
+          {saving ? 'ვინახავ…' : savedAt ? '✓ შენახულია' : '💾 შენახვა'}
         </button>
       </div>
+
+      <p className="text-[10px] leading-tight text-white/45">
+        გადაათრიე შენობა პირდაპირ რუკაზე, ან გამოიყენე სლაიდერები. შენახვა წერს{' '}
+        <code className="text-emerald-300/80">layout.json</code>-ში.
+      </p>
 
       <div className="flex gap-1">
         {(['sprites', 'hotspots'] as const).map((t) => (
@@ -114,14 +139,58 @@ function AdminEditor({
                 : 'border-white/10 text-white/50 hover:text-white/80'
             }`}
           >
-            {t}
+            {t === 'sprites' ? 'შენობები' : 'ბაქნები'}
           </button>
         ))}
       </div>
 
-      <div className="flex max-h-[70vh] flex-col gap-3 overflow-y-auto pr-1 [scrollbar-width:thin]">
-        {tab === 'hotspots'
-          ? hotspots.map((h) => (
+      <div className="flex max-h-[64vh] flex-col gap-3 overflow-y-auto pr-1 [scrollbar-width:thin]">
+        {tab === 'sprites'
+          ? sprites.map((s) => {
+              const active = selected === s.key;
+              return (
+                <div
+                  key={s.key}
+                  className={`rounded-xl border p-2 ${active ? 'border-emerald-400/60 bg-emerald-400/10' : 'border-white/10 bg-white/5'}`}
+                >
+                  <button
+                    onClick={() => onSelect(active ? null : s.key)}
+                    className="mb-1 flex w-full items-center justify-between font-black text-emerald-200"
+                  >
+                    <span>{s.key}</span>
+                    <span className="text-[9px] font-bold text-white/40">{active ? 'არჩეული' : 'მონიშვნა'}</span>
+                  </button>
+
+                  <div className="mb-2 flex items-center justify-center gap-1">
+                    <button onClick={() => nudgeS(s.key, 0, -10)} className="rounded bg-white/10 px-2 py-0.5 hover:bg-white/20">↑</button>
+                    <button onClick={() => nudgeS(s.key, -10, 0)} className="rounded bg-white/10 px-2 py-0.5 hover:bg-white/20">←</button>
+                    <button onClick={() => nudgeS(s.key, 10, 0)} className="rounded bg-white/10 px-2 py-0.5 hover:bg-white/20">→</button>
+                    <button onClick={() => nudgeS(s.key, 0, 10)} className="rounded bg-white/10 px-2 py-0.5 hover:bg-white/20">↓</button>
+                  </div>
+
+                  {(['imgX', 'imgY', 'w', 'h'] as const).map((f) => (
+                    <label key={f} className="flex items-center justify-between gap-2 py-0.5">
+                      <span className="w-8 font-mono text-white/60">{f}</span>
+                      <input
+                        type="range"
+                        min={f === 'imgX' ? -500 : f === 'imgY' ? -500 : 50}
+                        max={f === 'imgX' || f === 'w' ? IMG_W : IMG_H}
+                        value={s[f]}
+                        onChange={(e) => updateS(s.key, f, Number(e.target.value))}
+                        className="flex-1 accent-emerald-400"
+                      />
+                      <input
+                        type="number"
+                        value={s[f]}
+                        onChange={(e) => updateS(s.key, f, Number(e.target.value))}
+                        className="w-16 rounded bg-white/10 px-1 py-0.5 text-right font-mono"
+                      />
+                    </label>
+                  ))}
+                </div>
+              );
+            })
+          : hotspots.map((h) => (
               <div key={h.key} className="rounded-xl border border-white/10 bg-white/5 p-2">
                 <div className="mb-1 font-black text-emerald-200">{h.key}</div>
                 {(['x', 'y', 'rx', 'ry'] as const).map((f) => (
@@ -133,36 +202,12 @@ function AdminEditor({
                       max={f === 'x' ? IMG_W : f === 'rx' ? 600 : f === 'y' ? IMG_H : 300}
                       value={h[f]}
                       onChange={(e) => updateH(h.key, f, Number(e.target.value))}
-                      className="flex-1"
+                      className="flex-1 accent-emerald-400"
                     />
                     <input
                       type="number"
                       value={h[f]}
                       onChange={(e) => updateH(h.key, f, Number(e.target.value))}
-                      className="w-16 rounded bg-white/10 px-1 py-0.5 text-right font-mono"
-                    />
-                  </label>
-                ))}
-              </div>
-            ))
-          : sprites.map((s) => (
-              <div key={s.key} className="rounded-xl border border-white/10 bg-white/5 p-2">
-                <div className="mb-1 font-black text-emerald-200">{s.key}</div>
-                {(['imgX', 'imgY', 'w', 'h'] as const).map((f) => (
-                  <label key={f} className="flex items-center justify-between gap-2 py-0.5">
-                    <span className="w-8 font-mono text-white/60">{f}</span>
-                    <input
-                      type="range"
-                      min={0}
-                      max={f === 'imgX' || f === 'w' ? IMG_W : IMG_H}
-                      value={s[f]}
-                      onChange={(e) => updateS(s.key, f, Number(e.target.value))}
-                      className="flex-1"
-                    />
-                    <input
-                      type="number"
-                      value={s[f]}
-                      onChange={(e) => updateS(s.key, f, Number(e.target.value))}
                       className="w-16 rounded bg-white/10 px-1 py-0.5 text-right font-mono"
                     />
                   </label>
@@ -187,8 +232,25 @@ export function PlayManagerIsoCity() {
   const [adminOpen, setAdminOpen] = useState(false);
   const [hotspots, setHotspots] = useState(HOTSPOTS);
   const [sprites, setSprites] = useState(SPRITES);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
 
   const drag = useRef({ active: false, moved: false, startX: 0, startY: 0, originX: 0, originY: 0 });
+  // active sprite drag: which sprite + pointer origin + sprite origin (image px)
+  const spriteDrag = useRef<{ key: string; startX: number; startY: number; ox: number; oy: number } | null>(null);
+
+  // Load any saved layout on mount (applies to the live map for everyone).
+  useEffect(() => {
+    fetch(LAYOUT_URL, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data) return;
+        if (Array.isArray(data.sprites)) setSprites(mergeSprites(data.sprites));
+        if (Array.isArray(data.hotspots)) setHotspots(mergeHotspots(data.hotspots));
+      })
+      .catch(() => {});
+  }, []);
 
   const fit = useCallback(() => {
     const vp = viewportRef.current;
@@ -208,6 +270,13 @@ export function PlayManagerIsoCity() {
     return () => window.removeEventListener('resize', onResize);
   }, [fit]);
 
+  const baseH = baseW / RATIO;
+  const scaleX = baseW / IMG_W;
+  const scaleY = baseH / IMG_H;
+  // px-on-screen → image-px factor (accounts for pan-zoom scale + fit scale)
+  const screenToImgX = 1 / (scaleX * transform.scale);
+  const screenToImgY = 1 / (scaleY * transform.scale);
+
   const onPointerDown = (e: React.PointerEvent) => {
     drag.current = {
       active: true,
@@ -221,6 +290,16 @@ export function PlayManagerIsoCity() {
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
+    // sprite dragging takes priority
+    if (spriteDrag.current) {
+      const sd = spriteDrag.current;
+      const dx = (e.clientX - sd.startX) * screenToImgX;
+      const dy = (e.clientY - sd.startY) * screenToImgY;
+      setSprites((arr) =>
+        arr.map((s) => (s.key === sd.key ? { ...s, imgX: Math.round(sd.ox + dx), imgY: Math.round(sd.oy + dy) } : s)),
+      );
+      return;
+    }
     if (!drag.current.active) return;
     const dx = e.clientX - drag.current.startX;
     const dy = e.clientY - drag.current.startY;
@@ -229,8 +308,17 @@ export function PlayManagerIsoCity() {
   };
 
   const onPointerUp = (e: React.PointerEvent) => {
+    spriteDrag.current = null;
     drag.current.active = false;
     try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch {}
+  };
+
+  const startSpriteDrag = (e: React.PointerEvent, s: BuildingSprite) => {
+    if (!adminOpen) return;
+    e.stopPropagation();
+    setSelected(s.key);
+    spriteDrag.current = { key: s.key, startX: e.clientX, startY: e.clientY, ox: s.imgX, oy: s.imgY };
+    (viewportRef.current as HTMLElement)?.setPointerCapture(e.pointerId);
   };
 
   const onWheel = (e: React.WheelEvent) => {
@@ -247,15 +335,30 @@ export function PlayManagerIsoCity() {
   };
 
   const go = (h: Hotspot) => {
-    if (drag.current.moved) return;
+    if (adminOpen || drag.current.moved) return;
     router.push(h.href);
   };
 
-  const baseH = baseW / RATIO;
-  const scaleX = baseW / IMG_W;
-  const scaleY = baseH / IMG_H;
-  const activeHotspots = adminOpen ? hotspots : HOTSPOTS;
-  const activeSprites = adminOpen ? sprites : SPRITES;
+  const save = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch('/api/playmanager/city-layout', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sprites, hotspots }),
+      });
+      if (res.ok) {
+        setSavedAt(Date.now());
+        setTimeout(() => setSavedAt(null), 2000);
+      } else {
+        alert('შენახვა ვერ მოხერხდა');
+      }
+    } catch {
+      alert('შენახვა ვერ მოხერხდა');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div
@@ -283,32 +386,40 @@ export function PlayManagerIsoCity() {
           className="pointer-events-none absolute inset-0 h-full w-full object-cover"
         />
 
-        {activeSprites.map((s) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            key={s.key}
-            src={s.src}
-            alt={s.key}
-            draggable={false}
-            className="pointer-events-none absolute"
-            style={{
-              left: s.imgX * scaleX,
-              top: s.imgY * scaleY,
-              width: s.w * scaleX,
-              height: s.h * scaleY,
-              objectFit: 'contain',
-              objectPosition: 'bottom center',
-              mixBlendMode: 'normal',
-            }}
-          />
-        ))}
+        {sprites.map((s) => {
+          const active = adminOpen && selected === s.key;
+          return (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={s.key}
+              src={s.src}
+              alt={s.key}
+              draggable={false}
+              onPointerDown={(e) => startSpriteDrag(e, s)}
+              className="absolute"
+              style={{
+                left: s.imgX * scaleX,
+                top: s.imgY * scaleY,
+                width: s.w * scaleX,
+                height: s.h * scaleY,
+                objectFit: 'contain',
+                objectPosition: 'bottom center',
+                pointerEvents: adminOpen ? 'auto' : 'none',
+                cursor: adminOpen ? 'move' : 'default',
+                outline: active ? '3px dashed rgba(52,211,153,0.9)' : 'none',
+                outlineOffset: '4px',
+              }}
+            />
+          );
+        })}
 
         <svg
           viewBox={`0 0 ${IMG_W} ${IMG_H}`}
           preserveAspectRatio="none"
           className="absolute inset-0 h-full w-full"
+          style={{ pointerEvents: adminOpen ? 'none' : 'auto' }}
         >
-          {activeHotspots.map((h) => {
+          {hotspots.map((h) => {
             const on = hovered === h.key;
             const rgb = TONE[h.tone];
             return (
@@ -350,24 +461,39 @@ export function PlayManagerIsoCity() {
                     </text>
                   </g>
                 ) : null}
-
-                {adminOpen ? (
-                  <circle cx={h.x} cy={h.y} r={14} fill={`rgba(${rgb},0.7)`} stroke="white" strokeWidth={3} />
-                ) : null}
               </g>
             );
           })}
+
+          {/* Admin overlay: hotspot centre dots (non-interactive) */}
+          {adminOpen
+            ? hotspots.map((h) => (
+                <circle
+                  key={`dot-${h.key}`}
+                  cx={h.x}
+                  cy={h.y}
+                  r={14}
+                  fill={`rgba(${TONE[h.tone]},0.7)`}
+                  stroke="white"
+                  strokeWidth={3}
+                />
+              ))
+            : null}
         </svg>
       </div>
 
       <div className="pointer-events-none absolute left-4 top-4 rounded-full border border-emerald-300/24 bg-black/46 px-3 py-2 text-[10px] font-black text-emerald-100 backdrop-blur-xl sm:left-6 sm:top-6 sm:text-[11px]">
-        გადაათრიე / zoom · დააწექი ბაქანს
+        {adminOpen ? 'რედაქტირება · გადაათრიე შენობა' : 'გადაათრიე / zoom · დააწექი ბაქანს'}
       </div>
 
       {IS_DEV && (
         <>
           <button
-            onClick={() => setAdminOpen((o) => !o)}
+            onClick={() => {
+              setAdminOpen((o) => !o);
+              setSelected(null);
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
             className="pointer-events-auto absolute bottom-4 right-4 z-50 rounded-xl border border-emerald-400/40 bg-black/80 px-3 py-2 text-[10px] font-black uppercase text-emerald-300 backdrop-blur-xl hover:bg-emerald-400/20"
           >
             {adminOpen ? '✕ დახურვა' : '⚙ Admin'}
@@ -377,8 +503,13 @@ export function PlayManagerIsoCity() {
             <AdminEditor
               hotspots={hotspots}
               sprites={sprites}
+              selected={selected}
+              onSelect={setSelected}
               onHotspots={setHotspots}
               onSprites={setSprites}
+              onSave={save}
+              saving={saving}
+              savedAt={savedAt}
             />
           )}
         </>
