@@ -28,8 +28,7 @@ export async function POST(request: NextRequest) {
   if (
     !body ||
     typeof body !== "object" ||
-    !Array.isArray((body as { sprites?: unknown }).sprites) ||
-    !Array.isArray((body as { hotspots?: unknown }).hotspots)
+    !Array.isArray((body as { sprites?: unknown }).sprites)
   ) {
     return NextResponse.json({ error: "bad_shape" }, { status: 400 });
   }
