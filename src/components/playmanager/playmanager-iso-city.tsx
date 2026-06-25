@@ -21,6 +21,20 @@ type Hotspot = {
   ry: number;
 };
 
+type BuildingSprite = {
+  key: string;
+  src: string;
+  imgX: number;
+  imgY: number;
+  w: number;
+  h: number;
+};
+
+const SPRITES: BuildingSprite[] = [
+  { key: 'training', src: '/playmanager/city/buildings/training.webp', imgX: 500,  imgY: 620, w: 780, h: 600 },
+  { key: 'medical',  src: '/playmanager/city/buildings/medical.png',   imgX: 2060, imgY: 310, w: 780, h: 700 },
+];
+
 const HOTSPOTS: Hotspot[] = [
   { key: 'arena',     label: 'არენა',      href: '/playmanager/arena?module=matchday', tone: 'gold',  x: 1584, y: 612,  rx: 430, ry: 212 },
   { key: 'league',    label: 'ლიგა',       href: '/playmanager/league',     tone: 'green', x: 1647, y: 178,  rx: 205, ry: 100 },
@@ -46,22 +60,32 @@ const diamond = (h: Hotspot) =>
 
 function AdminEditor({
   hotspots,
-  onChange,
+  sprites,
+  onHotspots,
+  onSprites,
 }: {
   hotspots: Hotspot[];
-  onChange: (hs: Hotspot[]) => void;
+  sprites: BuildingSprite[];
+  onHotspots: (hs: Hotspot[]) => void;
+  onSprites: (ss: BuildingSprite[]) => void;
 }) {
+  const [tab, setTab] = useState<'hotspots' | 'sprites'>('sprites');
   const [copied, setCopied] = useState(false);
 
   const copy = () => {
-    navigator.clipboard.writeText(JSON.stringify(hotspots, null, 2)).then(() => {
+    const data = tab === 'hotspots' ? hotspots : sprites;
+    navigator.clipboard.writeText(JSON.stringify(data, null, 2)).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     });
   };
 
-  const update = (key: string, field: keyof Hotspot, value: number) => {
-    onChange(hotspots.map((h) => (h.key === key ? { ...h, [field]: value } : h)));
+  const updateH = (key: string, field: keyof Hotspot, value: number) => {
+    onHotspots(hotspots.map((h) => (h.key === key ? { ...h, [field]: value } : h)));
+  };
+
+  const updateS = (key: string, field: keyof BuildingSprite, value: number) => {
+    onSprites(sprites.map((s) => (s.key === key ? { ...s, [field]: value } : s)));
   };
 
   return (
@@ -70,7 +94,7 @@ function AdminEditor({
       onPointerDown={(e) => e.stopPropagation()}
     >
       <div className="flex items-center justify-between">
-        <span className="font-black text-emerald-300 uppercase tracking-widest">Hotspot Editor</span>
+        <span className="font-black text-emerald-300 uppercase tracking-widest">Admin Editor</span>
         <button
           onClick={copy}
           className="rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-[10px] font-bold text-emerald-300 hover:bg-emerald-400/20"
@@ -79,31 +103,72 @@ function AdminEditor({
         </button>
       </div>
 
-      <div className="flex max-h-[75vh] flex-col gap-3 overflow-y-auto pr-1 [scrollbar-width:thin]">
-        {hotspots.map((h) => (
-          <div key={h.key} className="rounded-xl border border-white/10 bg-white/5 p-2">
-            <div className="mb-1 font-black text-emerald-200">{h.key}</div>
-            {(['x', 'y', 'rx', 'ry'] as const).map((f) => (
-              <label key={f} className="flex items-center justify-between gap-2 py-0.5">
-                <span className="w-6 font-mono text-white/60">{f}</span>
-                <input
-                  type="range"
-                  min={0}
-                  max={f === 'x' ? IMG_W : f === 'rx' ? 600 : f === 'y' ? IMG_H : 300}
-                  value={h[f]}
-                  onChange={(e) => update(h.key, f, Number(e.target.value))}
-                  className="flex-1"
-                />
-                <input
-                  type="number"
-                  value={h[f]}
-                  onChange={(e) => update(h.key, f, Number(e.target.value))}
-                  className="w-16 rounded bg-white/10 px-1 py-0.5 text-right font-mono"
-                />
-              </label>
-            ))}
-          </div>
+      <div className="flex gap-1">
+        {(['sprites', 'hotspots'] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`flex-1 rounded-lg border py-1 text-[10px] font-bold uppercase ${
+              tab === t
+                ? 'border-emerald-400/50 bg-emerald-400/20 text-emerald-300'
+                : 'border-white/10 text-white/50 hover:text-white/80'
+            }`}
+          >
+            {t}
+          </button>
         ))}
+      </div>
+
+      <div className="flex max-h-[70vh] flex-col gap-3 overflow-y-auto pr-1 [scrollbar-width:thin]">
+        {tab === 'hotspots'
+          ? hotspots.map((h) => (
+              <div key={h.key} className="rounded-xl border border-white/10 bg-white/5 p-2">
+                <div className="mb-1 font-black text-emerald-200">{h.key}</div>
+                {(['x', 'y', 'rx', 'ry'] as const).map((f) => (
+                  <label key={f} className="flex items-center justify-between gap-2 py-0.5">
+                    <span className="w-6 font-mono text-white/60">{f}</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={f === 'x' ? IMG_W : f === 'rx' ? 600 : f === 'y' ? IMG_H : 300}
+                      value={h[f]}
+                      onChange={(e) => updateH(h.key, f, Number(e.target.value))}
+                      className="flex-1"
+                    />
+                    <input
+                      type="number"
+                      value={h[f]}
+                      onChange={(e) => updateH(h.key, f, Number(e.target.value))}
+                      className="w-16 rounded bg-white/10 px-1 py-0.5 text-right font-mono"
+                    />
+                  </label>
+                ))}
+              </div>
+            ))
+          : sprites.map((s) => (
+              <div key={s.key} className="rounded-xl border border-white/10 bg-white/5 p-2">
+                <div className="mb-1 font-black text-emerald-200">{s.key}</div>
+                {(['imgX', 'imgY', 'w', 'h'] as const).map((f) => (
+                  <label key={f} className="flex items-center justify-between gap-2 py-0.5">
+                    <span className="w-8 font-mono text-white/60">{f}</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={f === 'imgX' || f === 'w' ? IMG_W : IMG_H}
+                      value={s[f]}
+                      onChange={(e) => updateS(s.key, f, Number(e.target.value))}
+                      className="flex-1"
+                    />
+                    <input
+                      type="number"
+                      value={s[f]}
+                      onChange={(e) => updateS(s.key, f, Number(e.target.value))}
+                      className="w-16 rounded bg-white/10 px-1 py-0.5 text-right font-mono"
+                    />
+                  </label>
+                ))}
+              </div>
+            ))}
       </div>
     </div>
   );
@@ -121,6 +186,7 @@ export function PlayManagerIsoCity() {
   const [hovered, setHovered] = useState<string | null>(null);
   const [adminOpen, setAdminOpen] = useState(false);
   const [hotspots, setHotspots] = useState(HOTSPOTS);
+  const [sprites, setSprites] = useState(SPRITES);
 
   const drag = useRef({ active: false, moved: false, startX: 0, startY: 0, originX: 0, originY: 0 });
 
@@ -186,7 +252,10 @@ export function PlayManagerIsoCity() {
   };
 
   const baseH = baseW / RATIO;
+  const scaleX = baseW / IMG_W;
+  const scaleY = baseH / IMG_H;
   const activeHotspots = adminOpen ? hotspots : HOTSPOTS;
+  const activeSprites = adminOpen ? sprites : SPRITES;
 
   return (
     <div
@@ -213,6 +282,25 @@ export function PlayManagerIsoCity() {
           draggable={false}
           className="pointer-events-none absolute inset-0 h-full w-full object-cover"
         />
+
+        {activeSprites.map((s) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={s.key}
+            src={s.src}
+            alt={s.key}
+            draggable={false}
+            className="pointer-events-none absolute"
+            style={{
+              left: s.imgX * scaleX,
+              top: s.imgY * scaleY,
+              width: s.w * scaleX,
+              height: s.h * scaleY,
+              objectFit: 'contain',
+              objectPosition: 'bottom center',
+            }}
+          />
+        ))}
 
         <svg
           viewBox={`0 0 ${IMG_W} ${IMG_H}`}
@@ -285,7 +373,12 @@ export function PlayManagerIsoCity() {
           </button>
 
           {adminOpen && (
-            <AdminEditor hotspots={hotspots} onChange={setHotspots} />
+            <AdminEditor
+              hotspots={hotspots}
+              sprites={sprites}
+              onHotspots={setHotspots}
+              onSprites={setSprites}
+            />
           )}
         </>
       )}
