@@ -225,6 +225,7 @@ export function PlayManagerIsoCity() {
   const [imgVersion, setImgVersion] = useState(0); // bump to force-reload edited images
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [fitReady, setFitReady] = useState(false); // hide map until sized → no CLS
 
   const drag = useRef({ active: false, moved: false, startX: 0, startY: 0, originX: 0, originY: 0 });
   const spriteDrag = useRef<{ key: string; startX: number; startY: number; ox: number; oy: number } | null>(null);
@@ -247,6 +248,7 @@ export function PlayManagerIsoCity() {
     const h = w / RATIO;
     setBaseW(w);
     setTransform({ x: (vw - w) / 2, y: (vh - h) / 2, scale: 1 });
+    setFitReady(true);
   }, []);
 
   useEffect(() => {
@@ -378,6 +380,7 @@ export function PlayManagerIsoCity() {
           width: effW,
           height: effH,
           transform: `translate(${Math.round(transform.x)}px, ${Math.round(transform.y)}px)`,
+          visibility: fitReady ? 'visible' : 'hidden',
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
