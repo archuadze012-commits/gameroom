@@ -104,8 +104,21 @@ export function CityClouds({ scaleX, scaleY }: { scaleX: number; scaleY: number 
   scaleRef.current = { scaleX, scaleY };
 
   useEffect(() => {
-    cloudsRef.current = makeClouds();
-    setReady(true);
+    // Defer cloud creation (and their image loads) until the browser is idle so
+    // the ~720KB of decorative textures never compete with LCP.
+    const start = () => {
+      cloudsRef.current = makeClouds();
+      setReady(true);
+    };
+    const ric = (window as unknown as {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    }).requestIdleCallback;
+    if (ric) {
+      const id = ric(start, { timeout: 2000 });
+      return () => (window as unknown as { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(id);
+    }
+    const t = setTimeout(start, 1200);
+    return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
@@ -189,6 +202,7 @@ export function CityClouds({ scaleX, scaleY }: { scaleX: number; scaleY: number 
           src={c.src}
           alt=""
           draggable={false}
+          decoding="async"
           className="absolute left-0 top-0"
           style={{
             width: c.w * scaleX,

@@ -2,8 +2,18 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { SpriteImageEditor } from '@/components/playmanager/sprite-image-editor';
-import { CityClouds } from '@/components/playmanager/city-clouds';
+import dynamic from 'next/dynamic';
+
+// Split out of the initial bundle: the canvas editor is dev-only and the cloud
+// layer is non-critical decoration — neither belongs on the critical path.
+const SpriteImageEditor = dynamic(
+  () => import('@/components/playmanager/sprite-image-editor').then((m) => m.SpriteImageEditor),
+  { ssr: false },
+);
+const CityClouds = dynamic(
+  () => import('@/components/playmanager/city-clouds').then((m) => m.CityClouds),
+  { ssr: false },
+);
 
 const IMG = '/playmanager/iso/environment.webp';
 const IMG_W = 3168;
@@ -375,6 +385,8 @@ export function PlayManagerIsoCity() {
           src={IMG}
           alt="football city"
           draggable={false}
+          fetchPriority="high"
+          decoding="async"
           className="pointer-events-none absolute inset-0 h-full w-full object-cover"
         />
 
@@ -388,6 +400,7 @@ export function PlayManagerIsoCity() {
               src={imgVersion ? `${s.src}?v=${imgVersion}` : s.src}
               alt={s.label}
               draggable={false}
+              decoding="async"
               onPointerDown={(e) => startSpriteDrag(e, s)}
               onPointerEnter={() => setHovered(s.key)}
               onPointerLeave={() => setHovered((cur) => (cur === s.key ? null : cur))}
