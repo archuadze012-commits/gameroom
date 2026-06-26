@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SpriteImageEditor } from '@/components/playmanager/sprite-image-editor';
+import { CityClouds } from '@/components/playmanager/city-clouds';
 
 const IMG = '/playmanager/iso/environment.webp';
 const IMG_W = 3168;
@@ -434,6 +435,9 @@ export function PlayManagerIsoCity() {
               </div>
             );
           })}
+
+        {/* drifting clouds — above the city for depth, never block clicks */}
+        {!adminOpen && <CityClouds scaleX={scaleX} scaleY={scaleY} />}
       </div>
 
       <div className="pointer-events-none absolute left-4 top-4 rounded-full border border-emerald-300/24 bg-black/46 px-3 py-2 text-[10px] font-black text-emerald-100 backdrop-blur-xl sm:left-6 sm:top-6 sm:text-[11px]">
