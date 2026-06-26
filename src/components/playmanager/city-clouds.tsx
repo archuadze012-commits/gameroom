@@ -58,11 +58,14 @@ export function CityClouds({ scaleX, scaleY }: { scaleX: number; scaleY: number 
   useEffect(() => {
     let raf = 0;
     let prev = performance.now();
+    let lastSx = -1;
 
     const tick = (now: number) => {
       const dt = Math.min(0.05, (now - prev) / 1000); // clamp big gaps
       prev = now;
       const { scaleX: sx, scaleY: sy } = scaleRef.current;
+      const scaleChanged = sx !== lastSx;
+      lastSx = sx;
 
       cloudsRef.current.forEach((c, i) => {
         c.x += c.vx * dt;
@@ -107,9 +110,9 @@ export function CityClouds({ scaleX, scaleY }: { scaleX: number; scaleY: number 
 
         const el = elRefs.current[i];
         if (el) {
-          el.style.left = `${(c.x - halfW) * sx}px`;
-          el.style.top = `${(c.y - halfH) * sy}px`;
-          el.style.width = `${c.w * sx}px`;
+          // position via GPU transform only — no layout/paint per frame
+          el.style.transform = `translate3d(${(c.x - halfW) * sx}px, ${(c.y - halfH) * sy}px, 0)`;
+          if (scaleChanged) el.style.width = `${c.w * sx}px`;
         }
       });
 
@@ -130,8 +133,15 @@ export function CityClouds({ scaleX, scaleY }: { scaleX: number; scaleY: number 
           src={c.src}
           alt=""
           draggable={false}
-          className="absolute"
-          style={{ opacity: c.opacity, mixBlendMode: 'screen', willChange: 'left, top' }}
+          className="absolute left-0 top-0"
+          style={{
+            width: c.w * scaleX,
+            opacity: c.opacity,
+            mixBlendMode: 'screen',
+            willChange: 'transform',
+            transform: 'translate3d(0,0,0)',
+            contain: 'layout paint',
+          }}
         />
       ))}
     </div>
