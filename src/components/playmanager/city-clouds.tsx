@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // Drifting cloud layer over the iso city. Positions are in IMAGE pixels (same
 // space as the building sprites) so clouds pan/zoom with the map. Movement runs
@@ -79,11 +79,20 @@ function makeClouds(): Cloud[] {
 
 export function CityClouds({ scaleX, scaleY }: { scaleX: number; scaleY: number }) {
   const elRefs = useRef<(HTMLImageElement | null)[]>([]);
-  const cloudsRef = useRef<Cloud[]>(makeClouds());
+  // Built on the client only — Math.random() in makeClouds would otherwise
+  // mismatch SSR vs client and break hydration.
+  const cloudsRef = useRef<Cloud[]>([]);
+  const [ready, setReady] = useState(false);
   const scaleRef = useRef({ scaleX, scaleY });
   scaleRef.current = { scaleX, scaleY };
 
   useEffect(() => {
+    cloudsRef.current = makeClouds();
+    setReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
     let raf = 0;
     let prev = performance.now();
     let lastSx = -1;
@@ -149,7 +158,9 @@ export function CityClouds({ scaleX, scaleY }: { scaleX: number; scaleY: number 
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [ready]);
+
+  if (!ready) return null;
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
