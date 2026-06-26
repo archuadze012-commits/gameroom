@@ -38,15 +38,43 @@ const randVel = () => {
 const inEdgeBand = (x: number, y: number) =>
   x < EDGE || x > IMG_W - EDGE || y < EDGE || y > IMG_H - EDGE;
 
+const roamPos = () => ({ x: rand(IMG_W * 0.2, IMG_W * 0.8), y: rand(IMG_H * 0.25, IMG_H * 0.75) });
+const edgePos = () => {
+  const side = Math.floor(rand(0, 4));
+  if (side === 0) return { x: rand(0, IMG_W), y: rand(0, EDGE) };
+  if (side === 1) return { x: rand(0, IMG_W), y: rand(IMG_H - EDGE, IMG_H) };
+  if (side === 2) return { x: rand(0, EDGE), y: rand(0, IMG_H) };
+  return { x: rand(IMG_W - EDGE, IMG_W), y: rand(0, IMG_H) };
+};
+
+const makeOne = (src: string, w: number, opacity: number, roam: boolean): Cloud => ({
+  src,
+  ...(roam ? roamPos() : edgePos()),
+  ...randVel(),
+  w,
+  opacity,
+  roam,
+  retargetIn: rand(8, 18),
+});
+
+// cloud3 files roam the whole map; every other file only wanders the edges.
+const DEFS = [
+  { src: '/playmanager/city/clouds/cloud3.webp', w: 1150, op: 0.5,  roam: true },
+  { src: '/playmanager/city/clouds/cloud1.webp', w: 980,  op: 0.46, roam: false },
+  { src: '/playmanager/city/clouds/cloud2.webp', w: 1040, op: 0.44, roam: false },
+  { src: '/playmanager/city/clouds/cloud4.webp', w: 1000, op: 0.4,  roam: false },
+];
+
 function makeClouds(): Cloud[] {
-  return [
-    // roamer — clouds3 goes anywhere
-    { src: '/playmanager/city/clouds/cloud3.webp', x: IMG_W * 0.5, y: IMG_H * 0.45, ...randVel(), w: 1150, opacity: 0.5, roam: true, retargetIn: rand(8, 16) },
-    // edge wanderers
-    { src: '/playmanager/city/clouds/cloud1.webp', x: IMG_W * 0.18, y: IMG_H * 0.12, ...randVel(), w: 980,  opacity: 0.46, roam: false, retargetIn: rand(8, 16) },
-    { src: '/playmanager/city/clouds/cloud2.webp', x: IMG_W * 0.82, y: IMG_H * 0.86, ...randVel(), w: 1040, opacity: 0.44, roam: false, retargetIn: rand(8, 16) },
-    { src: '/playmanager/city/clouds/cloud4.webp', x: IMG_W * 0.88, y: IMG_H * 0.2,  ...randVel(), w: 1000, opacity: 0.4,  roam: false, retargetIn: rand(8, 16) },
-  ];
+  const out: Cloud[] = [];
+  // first pass — originals
+  DEFS.forEach((d) => out.push(makeOne(d.src, d.w, d.op, d.roam)));
+  // second pass — duplicates; boost opacity except for the cloud3 roamer
+  DEFS.forEach((d) => {
+    const op = d.roam ? d.op : Math.min(0.72, d.op + 0.2);
+    out.push(makeOne(d.src, d.w * rand(0.85, 1.15), op, d.roam));
+  });
+  return out;
 }
 
 export function CityClouds({ scaleX, scaleY }: { scaleX: number; scaleY: number }) {
