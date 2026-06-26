@@ -34,6 +34,20 @@ const randVel = () => {
   return { vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp };
 };
 
+// Velocity for an edge cloud: slides ALONG its nearest edge (random sign) with a
+// gentle OUTWARD bias — never a component pointing toward the centre.
+const edgeVel = (x: number, y: number) => {
+  const dl = x, dr = IMG_W - x, dt = y, db = IMG_H - y;
+  const m = Math.min(dl, dr, dt, db);
+  const sp = rand(SPEED.min, SPEED.max);
+  const tang = Math.random() < 0.5 ? -1 : 1;
+  const out = rand(0, 0.25); // slight push toward the border, 0..25% of speed
+  if (m === dl) return { vx: -out * sp, vy: tang * sp }; // left  → drift vertically
+  if (m === dr) return { vx: out * sp, vy: tang * sp };  // right → drift vertically
+  if (m === dt) return { vx: tang * sp, vy: -out * sp };  // top   → drift horizontally
+  return { vx: tang * sp, vy: out * sp };                 // bottom→ drift horizontally
+};
+
 // Is (x,y) within the edge margin (i.e. NOT in the central inner rect)?
 const inEdgeBand = (x: number, y: number) =>
   x < EDGE || x > IMG_W - EDGE || y < EDGE || y > IMG_H - EDGE;
@@ -47,15 +61,18 @@ const edgePos = () => {
   return { x: rand(IMG_W - EDGE, IMG_W), y: rand(0, IMG_H) };
 };
 
-const makeOne = (src: string, w: number, opacity: number, roam: boolean): Cloud => ({
-  src,
-  ...(roam ? roamPos() : edgePos()),
-  ...randVel(),
-  w,
-  opacity,
-  roam,
-  retargetIn: rand(8, 18),
-});
+const makeOne = (src: string, w: number, opacity: number, roam: boolean): Cloud => {
+  const pos = roam ? roamPos() : edgePos();
+  return {
+    src,
+    ...pos,
+    ...(roam ? randVel() : edgeVel(pos.x, pos.y)),
+    w,
+    opacity,
+    roam,
+    retargetIn: rand(8, 18),
+  };
+};
 
 // cloud3 files roam the whole map; every other file only wanders the edges.
 const DEFS = [
@@ -108,10 +125,10 @@ export function CityClouds({ scaleX, scaleY }: { scaleX: number; scaleY: number 
         c.x += c.vx * dt;
         c.y += c.vy * dt;
 
-        // occasional gentle direction change
+        // occasional gentle direction change (edge clouds stay edge-bound)
         c.retargetIn -= dt;
         if (c.retargetIn <= 0) {
-          const v = randVel();
+          const v = c.roam ? randVel() : edgeVel(c.x, c.y);
           // ease toward new heading rather than snapping
           c.vx = c.vx * 0.4 + v.vx * 0.6;
           c.vy = c.vy * 0.4 + v.vy * 0.6;
