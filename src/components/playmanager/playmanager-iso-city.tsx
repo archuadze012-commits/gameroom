@@ -30,6 +30,7 @@ type BuildingSprite = {
   h: number;
   rot: number; // degrees, clockwise
   sy: number;  // vertical scale (1 = none, <1 squashes vertically)
+  decorative?: boolean; // no link, no hover — pure decoration
 };
 
 const SPRITES: BuildingSprite[] = [
@@ -39,6 +40,7 @@ const SPRITES: BuildingSprite[] = [
   { key: 'trophy_hall', src: '/playmanager/city/buildings/trophy_hall.webp', label: 'თასების დარბაზი', href: '/playmanager/museum',    tone: 'gold',  imgX: 1300, imgY: 650, w: 720, h: 620, rot: 0, sy: 1 },
   { key: 'academy',     src: '/playmanager/city/buildings/academy.webp',     label: 'აკადემია',        href: '/playmanager/academy',   tone: 'green', imgX: 760,  imgY: 120, w: 820, h: 740, rot: 0, sy: 1 },
   { key: 'headquarters', src: '/playmanager/city/buildings/headquarters.webp', label: 'ოფისი',          href: '/playmanager/finance',   tone: 'gold',  imgX: 1240, imgY: 60,  w: 700, h: 700, rot: 0, sy: 1 },
+  { key: 'fountain',    src: '/playmanager/city/buildings/fountain.webp',    label: 'შადრევანი',       href: '',                       tone: 'green', imgX: 1430, imgY: 560, w: 560, h: 470, rot: 0, sy: 1, decorative: true },
 ];
 
 const TONE: Record<Tone, string> = {
@@ -308,7 +310,7 @@ export function PlayManagerIsoCity() {
   };
 
   const onSpriteClick = (s: BuildingSprite) => {
-    if (adminOpen || drag.current.moved) return;
+    if (adminOpen || drag.current.moved || s.decorative || !s.href) return;
     router.push(s.href);
   };
 
@@ -397,11 +399,11 @@ export function PlayManagerIsoCity() {
                 objectPosition: 'bottom center',
                 transform: `rotate(${s.rot}deg) scaleY(${s.sy})`,
                 transformOrigin: 'center bottom',
-                pointerEvents: 'auto',
-                cursor: adminOpen ? 'move' : 'pointer',
+                pointerEvents: adminOpen ? 'auto' : s.decorative ? 'none' : 'auto',
+                cursor: adminOpen ? 'move' : s.decorative ? 'default' : 'pointer',
                 outline: active ? '3px dashed rgba(52,211,153,0.9)' : 'none',
                 outlineOffset: '4px',
-                filter: on && !adminOpen ? `drop-shadow(0 0 26px rgba(${TONE[s.tone]},0.85))` : 'none',
+                filter: on && !adminOpen && !s.decorative ? `drop-shadow(0 0 26px rgba(${TONE[s.tone]},0.85))` : 'none',
               }}
             />
           );
@@ -410,7 +412,7 @@ export function PlayManagerIsoCity() {
         {/* Hover labels (non-admin) */}
         {!adminOpen &&
           sprites.map((s) => {
-            if (hovered !== s.key) return null;
+            if (hovered !== s.key || s.decorative) return null;
             const cx = (s.imgX + s.w / 2) * scaleX;
             // sit just above the building's top edge (a small gap), not far overhead
             const topY = s.imgY * scaleY + s.h * scaleY * 0.14;
