@@ -2,7 +2,6 @@
 
 import {
   Activity,
-  ArrowLeft,
   CalendarDays,
   CheckCircle2,
   CircleQuestionMark,
@@ -10,11 +9,17 @@ import {
   Dumbbell,
   ExternalLink,
   Globe,
+  GraduationCap,
   Home,
   Landmark,
-  LockKeyhole,
+  Megaphone,
+  MessageCircle,
+  MessageSquareMore,
+  Menu,
+  Play,
   RadioTower,
   Search,
+  Send,
   ShieldCheck,
   Sparkles,
   Star,
@@ -28,34 +33,32 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   buyPlayManagerMarketPlayer,
   hirePlayManagerStaff,
   joinCupAction,
   negotiatePlayManagerSponsor,
-  savePlayManagerMatchSettings,
   savePlayManagerTicketPrice,
-  savePlayManagerLineup,
   sellPlayManagerPlayer,
   signPlayManagerAcademyProspect,
-  togglePlayManagerMarketShortlist,
   trainPlayManagerPlayer,
   upgradePlayManagerStaff,
   type MatchResult,
   type PlayManagerPlayerActionResult,
   type RunCityActionResult,
 } from '@/app/playmanager/actions';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card } from '@/components/ui/card';
 import SpotlightCard from '@/components/SpotlightCard';
+import { Dock } from '@/components/react-bits/dock';
+import { SpotlightCard as ReactBitsSpotlightCard } from '@/components/react-bits/spotlight-card';
+import { PlayManagerDirectMessages, PlayManagerGlobalChat } from '@/components/playmanager/playmanager-media-modules';
+import { PlayManagerSidebar } from '@/components/playmanager/playmanager-side-nav';
 import { getFacilityUpgradeCostGel, isFacilityKey, type CityActionKey } from '@/lib/playmanager/gameplay';
 import type { PlayManagerCitySnapshot } from '@/lib/playmanager/city-data';
 import { formatGel, getProjectedAttendance, getProjectedMatchdayIncome, getStadiumCapacity } from '@/lib/playmanager/economy';
 import type { ClubEffectsSummary, ManagerPerk } from '@/lib/playmanager/progression';
 import { getMaxStaffLevelForDivision, type StaffCategory } from '@/lib/playmanager/staff';
-import { PlayManagerCityCanvas, type PlayManagerCityBuilding } from './playmanager-city-canvas';
 import { DEFAULT_FUT_CARD_EDITOR_CONFIG, PlayerFutCard } from './player-fut-card';
 import { PLAYMANAGER_AI_CLUBS, PLAYMANAGER_FIXTURE_ROW_ORDER } from '@/lib/playmanager/league';
 
@@ -64,21 +67,25 @@ function fmtInt(n: number): string {
   return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
-export type EditableCityBuilding = PlayManagerCityBuilding & {
+export type EditableCityBuilding = {
+  label: string;
+  spriteKey: string;
+  spriteUrl?: string;
+  anchorX: number;
+  anchorY: number;
+  scale: number;
+  tone: 'green' | 'red' | 'gold';
   description: string;
   status: string;
 };
 
 type PlayManagerCityEditorProps = {
-  initialBuildings: EditableCityBuilding[];
   initialFacilities?: Array<{
     spriteKey: string;
     level: number;
     progress: number;
     status: FacilityStatus;
   }>;
-  citySnapshot: PlayManagerCitySnapshot;
-  backgroundUrl: string;
   manager: {
     name: string;
     username: string;
@@ -103,9 +110,9 @@ type PlayManagerCityEditorProps = {
 export type RunCityActionError = Extract<RunCityActionResult, { success: false }>['error'];
 export type PlayerActionError = Extract<PlayManagerPlayerActionResult, { success: false }>['error'];
 
-export type FacilityStatus = 'active' | 'attention' | 'upgradeable' | 'locked' | 'completed';
+type FacilityStatus = 'active' | 'attention' | 'upgradeable' | 'locked' | 'completed';
 
-export type FacilityState = {
+type FacilityState = {
   status: FacilityStatus;
   level: number;
   progress: number;
@@ -131,19 +138,20 @@ type BuildingModule = {
   status: 'ready' | 'planned';
 };
 
+type MarketFilterKey = 'ALL' | 'GK' | 'DEF' | 'MID' | 'ATT' | 'SHORTLIST';
+
 const BUILDING_MODULES: Record<string, BuildingModule[]> = {
   arena: [
     { key: 'matchday', title: 'მატჩის ცენტრი', eyebrow: 'Next match', description: 'შემდეგი თამაში, მზადყოფნა, home pressure და მატჩის გაშვება.', icon: Trophy, status: 'ready' },
-    { key: 'euro_cups', title: 'ევროტურნირები', eyebrow: 'Europe', description: 'ევროპის ჩემპიონთა თასი, კონფერენციის თასი და ევროპული დიდება.', icon: Globe, status: 'planned' },
-    { key: 'championships', title: 'ჩემპიონატები', eyebrow: 'League', description: 'რეგულარული ჩემპიონატები, დივიზიონები და სეზონური ცხრილი.', icon: Trophy, status: 'planned' },
-    { key: 'daily_cups', title: 'ყოველდღიური თასები', eyebrow: 'Cups', description: 'უფასო/ფასიანი თასები, მონაწილეები, prize pool და რეგისტრაცია.', icon: Trophy, status: 'ready' },
     { key: 'lineup', title: 'შემადგენლობა და ტაქტიკა', eyebrow: 'Squad builder', description: 'მოედანზე ფუტქარდებით XI, სათადარიგოები, ფორმაცია და ტაქტიკის კონტროლი.', icon: UsersRound, status: 'ready' },
     { key: 'calendar', title: 'კალენდარი და ისტორია', eyebrow: 'Schedule', description: 'მომავალი ტურები, ბოლო შედეგები და head-to-head ანალიზი.', icon: CalendarDays, status: 'ready' },
+    { key: 'daily_cups', title: 'ყოველდღიური თასები', eyebrow: 'Cups', description: 'უფასო/ფასიანი თასები, მონაწილეები, prize pool და რეგისტრაცია.', icon: Trophy, status: 'ready' },
+    { key: 'euro_cups', title: 'ევროტურნირები', eyebrow: 'Europe', description: 'ევროპის ჩემპიონთა თასი, კონფერენციის თასი და ევროპული დიდება.', icon: Globe, status: 'planned' },
+    { key: 'championships', title: 'ჩემპიონატები', eyebrow: 'League', description: 'რეგულარული ჩემპიონატები, დივიზიონები და სეზონური ცხრილი.', icon: Trophy, status: 'planned' },
   ],
   market: [
     { key: 'transfer_market', title: 'სატრანსფერო ბაზარი', eyebrow: 'Market', description: 'ფილტრები, ფასები, OVR, ასაკი, მოთხოვნა და სწრაფი ყიდვა.', icon: Store, status: 'ready' },
     { key: 'free_agents', title: 'თავისუფალი აგენტები', eyebrow: 'Agents', description: 'ყოველდღიურად განახლებადი ფეხბურთელები, დაბალი ფასი და სწრაფი კონტრაქტი.', icon: UsersRound, status: 'planned' },
-    { key: 'shortlist', title: 'შორტლისტი', eyebrow: 'Saved targets', description: 'დაკვირვებაში დატოვებული მოთამაშეები და მომავალი სატრანსფერო მიზნები.', icon: Star, status: 'ready' },
     { key: 'scouting', title: 'სკაუტინგის ანგარიში', eyebrow: 'Reports', description: 'პოზიციური დეფიციტი, ფასის რისკი და რეკომენდებული პროფილები.', icon: Search, status: 'planned' },
     { key: 'outgoing', title: 'გაყიდვები', eyebrow: 'Outgoing', description: 'საკუთარი მოთამაშეების შეფასება, ხელფასის შემცირება და გაყიდვის გადაწყვეტილება.', icon: TrendingUp, status: 'ready' },
   ],
@@ -176,25 +184,29 @@ const BUILDING_MODULES: Record<string, BuildingModule[]> = {
     { key: 'contracts', title: 'ახალგაზრდული კონტრაქტები', eyebrow: 'Contracts', description: 'ვის მივცეთ კონტრაქტი და როდის გადავიყვანოთ მთავარ გუნდში.', icon: ShieldCheck, status: 'planned' },
   ],
   media: [
+    { key: 'direct_messages', title: 'მესენჯერი', eyebrow: 'Direct messages', description: 'პირადი მესიჯები, პასუხები და მიმდინარე დიალოგები.', icon: Send, status: 'ready' },
+    { key: 'announcements', title: 'უწყებები', eyebrow: 'Announcements', description: 'სისტემური განცხადებები, კლუბის შეტყობინებები და read status.', icon: Megaphone, status: 'ready' },
+    { key: 'global_chat', title: 'გლობალური ჩატი', eyebrow: 'Global chat', description: 'საერთო საკომუნიკაციო არხი, სწრაფი საუბარი და აქტივობა.', icon: MessageCircle, status: 'ready' },
     { key: 'missions', title: 'ყოველდღიური მისიები', eyebrow: 'Missions', description: 'აქტივობის დავალებები, reward, progress და claim flow.', icon: CheckCircle2, status: 'planned' },
     { key: 'daily_reward', title: 'დღიური ჯილდო', eyebrow: 'Streak', description: 'day streak, cash reward და დაბრუნების მოტივაცია.', icon: Sparkles, status: 'planned' },
     { key: 'news', title: 'კლუბის სიახლეები', eyebrow: 'Feed', description: 'event feed, მატჩის შედეგები, ტრავმები და ფანების რეაქცია.', icon: RadioTower, status: 'ready' },
     { key: 'reputation', title: 'რეპუტაცია', eyebrow: 'Fans', description: 'ფანები, მედია კამპანია და public image.', icon: Star, status: 'ready' },
   ],
   residence: [
+    { key: 'academy', title: 'აკადემია', eyebrow: 'Academy', description: 'ახალგაზრდები, ტალანტები და მომავალი ხელმოწერები გუნდის შიგნით.', icon: GraduationCap, status: 'ready' },
     { key: 'capacity', title: 'გუნდის ლიმიტი', eyebrow: 'Capacity', description: 'რამდენი ფეხბურთელის ყოლა შეუძლია კლუბს მიმდინარე დონეზე.', icon: Home, status: 'planned' },
     { key: 'hotel', title: 'დროებითი განთავსება', eyebrow: 'Hotel', description: 'ზედმეტი მოთამაშეების დროებითი ადგილი და ავტომატური რისკები.', icon: UsersRound, status: 'planned' },
     { key: 'staff', title: 'პერსონალი', eyebrow: 'Staff', description: 'მწვრთნელები, ექიმი, სკაუტი და მათი monthly cost.', icon: ShieldCheck, status: 'ready' },
   ],
 };
 
-export const STATUS_LABELS: Record<FacilityStatus, string> = {
-  active: 'აქტიური',
-  attention: 'ყურადღება',
-  upgradeable: 'Upgrade',
-  locked: 'Locked',
-  completed: 'Ready',
-};
+const LIGHTWEIGHT_DOCK_NAV = [
+  { label: 'მთავარი', icon: Home, href: '/playmanager' },
+  { label: 'ძებნა', icon: Search, href: '/playmanager/search' },
+  { label: 'მესენჯერი', icon: MessageSquareMore, href: '/playmanager/messages' },
+  { label: 'უწყებები', icon: Megaphone, href: '/playmanager/announcements' },
+  { label: 'მეტი', icon: Menu, href: '/playmanager/office' },
+];
 
 export const DEFAULT_FACILITY_STATE: Record<string, FacilityState> = {
   arena: { status: 'active', level: 2, progress: 68, upgradeCost: '₾620K', nextUnlock: 'VIP ლოჟები' },
@@ -208,7 +220,7 @@ export const DEFAULT_FACILITY_STATE: Record<string, FacilityState> = {
   residence: { status: 'active', level: 1, progress: 0, upgradeCost: '₾400K', nextUnlock: 'გუნდის გაფართოება' },
 };
 
-export const PRIMARY_ACTION_BY_FACILITY: Record<string, CityActionKey> = {
+const PRIMARY_ACTION_BY_FACILITY: Record<string, CityActionKey> = {
   market: 'market_scout',
   academy: 'academy_sign',
   training: 'training_session',
@@ -217,7 +229,7 @@ export const PRIMARY_ACTION_BY_FACILITY: Record<string, CityActionKey> = {
   media: 'media_campaign',
 };
 
-export const ACTION_PREVIEW: Record<string, { what: string; gets: string }> = {
+const ACTION_PREVIEW: Record<string, { what: string; gets: string }> = {
   market_scout:   { what: 'Market progress +14%', gets: 'XP +16 · +1 დღე' },
   academy_sign:   { what: 'Academy progress +16%', gets: 'XP +18 · +1 დღე' },
   training_session: { what: 'Training progress +12%', gets: 'XP +22 (+ ვარჯიშის ბონუსი) · +1 დღე' },
@@ -309,6 +321,7 @@ const TRAINING_SLOTS = [
 ];
 
 function getTrainingGrowthCap(talent: number) {
+  if (talent >= 11) return 30;
   if (talent === 10) return 25;
   if (talent === 9) return 20;
   if (talent === 8) return 15;
@@ -316,7 +329,7 @@ function getTrainingGrowthCap(talent: number) {
 }
 
 function getPlayerPotentialForTraining(player: PlayManagerCitySnapshot['squad'][number]) {
-  return Math.min(99, player.ovrBase + getTrainingGrowthCap(player.talent));
+  return player.ovrBase + getTrainingGrowthCap(player.talent);
 }
 
 function getDevelopmentXpCost(player: PlayManagerCitySnapshot['squad'][number]) {
@@ -347,178 +360,6 @@ export function mergeFacilityState(
     },
     { ...DEFAULT_FACILITY_STATE },
   );
-}
-
-export function PlayManagerCityEditor({
-  initialBuildings,
-  citySnapshot,
-  backgroundUrl,
-  manager,
-  team,
-}: PlayManagerCityEditorProps) {
-
-  const router = useRouter();
-
-  return (
-    <div className="h-full min-h-0 w-full">
-      <PlayManagerCityCanvas
-        className="pm-three-host-fill"
-        buildings={initialBuildings}
-        backgroundUrl={backgroundUrl}
-        hud={<CityCommandHud manager={manager} team={team} snapshot={citySnapshot} />}
-        onBuildingSelect={(key) => router.push(`/playmanager/${key}`)}
-      />
-    </div>
-  );
-}
-
-function CityCommandHud({
-  manager,
-  team,
-  snapshot,
-}: {
-  manager: PlayManagerCityEditorProps['manager'];
-  team: PlayManagerCityEditorProps['team'];
-  snapshot: PlayManagerCitySnapshot;
-}) {
-  const safeForm = Math.max(0, Math.min(100, Math.round(team.formPercent)));
-  const formLabel = safeForm >= 100 ? 'Ready' : `${safeForm}%`;
-  const initials = getInitials(team.name);
-  const openDailyCup = snapshot.cups.find((cup) => cup.status === 'registration' && cup.templateId !== 'champions_cup');
-  const [nowMs, setNowMs] = useState(() => Date.now());
-  const upcomingCupMatch = snapshot.upcomingCupMatch;
-  const startsInMs = upcomingCupMatch ? new Date(upcomingCupMatch.startTime).getTime() - nowMs : null;
-  const showCupCountdown = Boolean(upcomingCupMatch && startsInMs !== null && startsInMs > 0 && startsInMs <= 10 * 60 * 1000);
-  const countdownLabel = startsInMs !== null ? formatCountdown(startsInMs) : '';
-
-  useEffect(() => {
-    fetch('/api/playmanager/ensure-session', { method: 'POST' }).catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    if (!upcomingCupMatch) return;
-    const intervalId = window.setInterval(() => setNowMs(Date.now()), 1000);
-    return () => window.clearInterval(intervalId);
-  }, [upcomingCupMatch]);
-
-  return (
-    <div className="pm-city-command-hud">
-      <div className="pm-city-manager-panel">
-        <Avatar className="h-11 w-11 border border-emerald-200/25 bg-emerald-300/10 shadow-[0_0_22px_rgba(34,197,94,0.22)]">
-          <AvatarImage src={manager.avatarUrl ?? undefined} alt={manager.name} />
-          <AvatarFallback className="bg-emerald-300/12 text-sm font-black text-emerald-50">
-            {manager.name.slice(0, 1).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-black text-white">{manager.name} · Lv {manager.level}</p>
-          <div className="mt-2 flex items-center gap-2">
-            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
-              <span
-                className="block h-full rounded-full bg-gradient-to-r from-emerald-300 to-red-900 shadow-[0_0_14px_rgba(52,211,153,0.45)]"
-                style={{ width: `${Math.max(8, Math.min(100, manager.progressPercent))}%` }}
-              />
-            </div>
-            <span className="shrink-0 text-[10px] font-black text-emerald-100">{manager.xp} XP</span>
-          </div>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {manager.perks.slice(0, 2).map((perk) => (
-              <span key={perk.key} className="rounded-full border border-emerald-300/18 bg-emerald-300/10 px-2 py-1 text-[9px] font-black text-emerald-50/92">
-                {perk.label}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="pm-city-team-panel">
-        <div className="flex min-w-0 items-center justify-end gap-2">
-          <div className="min-w-0 text-right">
-            <p className="truncate text-xs font-black text-white">{team.name}</p>
-            <p className="text-[8px] font-black uppercase tracking-[0.14em] text-emerald-100/55">
-              Football Club
-            </p>
-          </div>
-          <div className="pm-city-team-crest" aria-label={`${team.name} logo`}>
-            {initials}
-          </div>
-        </div>
-        <div className="mt-2 grid grid-cols-3 gap-1.5">
-          <HudMetric label="ბალანსი" value={team.balanceLabel} />
-          <HudMetric label="დივიზიონი" value={team.divisionLabel} />
-          <HudMetric label="ფორმა" value={formLabel} />
-        </div>
-      </div>
-
-      <div className="pm-city-status-dock">
-        <div className="pm-city-next-match">
-          <CalendarDays className="h-4 w-4 text-emerald-100" />
-          <div>
-            <p>შემდეგი მატჩი</p>
-            <strong>{snapshot.nextMatchLabel}</strong>
-          </div>
-        </div>
-      </div>
-
-      {showCupCountdown && upcomingCupMatch ? (
-        <div className="pm-city-cup-dock">
-          <Link href={`/playmanager/cups/${upcomingCupMatch.templateId}/matches/${upcomingCupMatch.id}`} className="pm-city-cup-link pm-city-match-link">
-            <div className="pm-city-cup-icon" aria-hidden="true">
-              <Trophy className="h-4 w-4" />
-            </div>
-            <div className="min-w-0">
-              <p>მატჩი იწყება</p>
-              <strong>{countdownLabel}</strong>
-              <span>{upcomingCupMatch.opponentName}</span>
-            </div>
-          </Link>
-        </div>
-      ) : openDailyCup ? (
-        <div className="pm-city-cup-dock">
-          <Link href={`/playmanager/cups/${openDailyCup.templateId}`} className="pm-city-cup-link">
-            <div className="pm-city-cup-icon" aria-hidden="true">
-              <Trophy className="h-4 w-4" />
-            </div>
-            <div className="min-w-0">
-              <p>დღის თასი გახსნილია</p>
-              <strong>{openDailyCup.name}</strong>
-              <span>
-                {openDailyCup.isRegistered
-                  ? 'შენ უკვე დარეგისტრირებული ხარ'
-                  : `შესვლა ${openDailyCup.entryFeeLabel}`}
-              </span>
-            </div>
-          </Link>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function HudMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-white/10 bg-black/38 px-2 py-1.5">
-      <p className="truncate text-[8px] font-black uppercase tracking-[0.1em] text-white/38">{label}</p>
-      <p className="mt-0.5 truncate text-[11px] font-black text-white">{value}</p>
-    </div>
-  );
-}
-
-function getInitials(value: string) {
-  return value
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase();
-}
-
-function formatCountdown(ms: number) {
-  const safeSeconds = Math.max(0, Math.ceil(ms / 1000));
-  const minutes = Math.floor(safeSeconds / 60);
-  const seconds = safeSeconds % 60;
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
 function getFacilityEffectText(
@@ -590,15 +431,20 @@ function BuildingModuleGrid({
   onOpen: (key: string) => void;
 }) {
   if (modules.length === 0) return null;
+  const gridClass =
+    buildingKey === 'arena'
+      ? 'grid gap-3 md:grid-cols-2 lg:grid-cols-3'
+      : 'grid gap-3 sm:grid-cols-2 lg:grid-cols-4';
 
   return (
     <div className="mt-7">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className={gridClass}>
         {modules.map((module) => (
           <ModuleCard
             key={module.key}
             module={module}
             buildingKey={buildingKey}
+            eagerPhoto={buildingKey === 'residence' && module.key === 'academy'}
             onOpen={onOpen}
           />
         ))}
@@ -610,65 +456,53 @@ function BuildingModuleGrid({
 function ModuleCard({
   module,
   buildingKey,
+  eagerPhoto,
   onOpen,
 }: {
   module: BuildingModule;
   buildingKey: string;
+  eagerPhoto: boolean;
   onOpen: (key: string) => void;
 }) {
   const signal = getModuleSignal(module.key);
-  const Icon = module.icon;
-  const ref = useRef<HTMLDivElement>(null);
-  const [spot, setSpot] = useState({ x: 0, y: 0, visible: false });
+  const ModuleIcon = module.icon;
 
   return (
-    <Card
-      ref={ref}
-      className={`group/module relative aspect-[4/3] cursor-pointer overflow-visible border p-0 ring-0 transform-gpu transition-all duration-300 hover:-translate-y-1 hover:z-10 focus-within:ring-2 focus-within:ring-emerald-300/40 ${signal.frame}`}
-      onMouseMove={(e) => {
-        if (!ref.current) return;
-        const r = ref.current.getBoundingClientRect();
-        setSpot({ x: e.clientX - r.left, y: e.clientY - r.top, visible: true });
-      }}
-      onMouseLeave={() => setSpot((s) => ({ ...s, visible: false }))}
+    <ReactBitsSpotlightCard
+      spotlightColor={signal.spotlight}
+      className={`group/module relative aspect-[4/3] cursor-pointer overflow-hidden rounded-xl border p-0 transition duration-300 hover:-translate-y-1 hover:z-10 ${signal.frame}`}
     >
-      <div className="absolute inset-0 overflow-hidden rounded-[inherit]">
-        <div
-          className="pointer-events-none absolute inset-0 z-10 transition-opacity duration-300"
-          style={{
-            opacity: spot.visible ? 1 : 0,
-            background: `radial-gradient(380px circle at ${spot.x}px ${spot.y}px, ${signal.spotlight}, transparent 60%)`,
-          }}
-        />
-
+      <div className="absolute inset-0">
         <button
           type="button"
           onClick={() => onOpen(module.key)}
-          className="absolute inset-0 z-20 focus:outline-none"
+          className="absolute inset-0 z-20 cursor-pointer focus:outline-none"
           aria-label={`${module.title} გახსნა`}
           title={`/playmanager/${buildingKey}?module=${module.key}`}
         />
 
-        <ModulePhoto moduleKey={module.key} />
+        <ModulePhoto moduleKey={module.key} eager={eagerPhoto} />
 
-        {/* icon chip */}
-        <div className="pointer-events-none absolute left-3 top-3 z-30">
-          <div className={`flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 backdrop-blur-sm ${signal.soft}`}>
-            <Icon className={`h-3.5 w-3.5 ${signal.accent}`} />
+        <div className="pointer-events-none absolute inset-0 z-10 bg-[linear-gradient(180deg,rgba(1,7,5,0.2),rgba(1,7,5,0.42)_45%,rgba(1,7,5,0.88))]" />
+
+        <div className="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center px-4 text-center">
+          <div className={`mb-4 grid h-14 w-14 place-items-center rounded-2xl border border-white/14 bg-black/36 shadow-[0_12px_40px_rgba(0,0,0,0.32)] ${signal.accent}`}>
+            <ModuleIcon className="h-7 w-7" />
           </div>
-        </div>
-
-        {/* bottom title */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/95 via-black/55 to-transparent px-3 pb-3 pt-10">
-          <div className={`mb-1.5 h-px w-6 border-t ${signal.line}`} />
-          <h5 className="text-sm font-black leading-tight tracking-wide text-white">
+          <h5 className="max-w-[18ch] text-[22px] font-black leading-tight text-white drop-shadow-[0_4px_18px_rgba(0,0,0,0.5)]">
             {module.title}
           </h5>
+          <p className="mt-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/58">
+            {module.eyebrow}
+          </p>
+        </div>
+
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 px-4 pb-4">
+          <div className={`mx-auto h-px w-10 border-t ${signal.line}`} />
         </div>
       </div>
 
-      <ModuleHelp module={module} />
-    </Card>
+    </ReactBitsSpotlightCard>
   );
 }
 
@@ -790,39 +624,18 @@ function getModuleSignal(key: string) {
   };
 }
 
-function ModuleHelp({ module }: { module: BuildingModule }) {
-  return (
-    <div className="absolute right-3 top-3 z-40">
-      <button
-        type="button"
-        className="peer grid h-8 w-8 place-items-center rounded-full border border-white/14 bg-black/58 text-white/58 backdrop-blur transition hover:border-emerald-200/36 hover:text-white focus:border-emerald-200/36 focus:text-white focus:outline-none"
-        aria-label={`${module.title} დახმარება`}
-      >
-        <CircleQuestionMark className="h-4 w-4" />
-      </button>
-      <div className="pointer-events-none absolute right-0 top-10 z-50 w-72 translate-y-1 rounded-none border border-emerald-300/18 bg-[#020806]/96 p-4 text-left opacity-0 shadow-[0_18px_50px_rgba(0,0,0,0.55)] backdrop-blur transition peer-hover:translate-y-0 peer-hover:opacity-100 peer-focus:translate-y-0 peer-focus:opacity-100">
-        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-100/48">
-          {module.eyebrow}
-        </p>
-        <p className="mt-1 text-sm font-black text-white">{module.title}</p>
-        <p className="mt-2 text-xs font-bold leading-5 text-white/58">{module.description}</p>
-      </div>
-    </div>
-  );
-}
-
-function ModulePhoto({ moduleKey, photoKey }: { moduleKey: string; photoKey?: string }) {
+function ModulePhoto({
+  moduleKey,
+  photoKey,
+  eager = false,
+}: {
+  moduleKey: string;
+  photoKey?: string;
+  eager?: boolean;
+}) {
   const resolvedPhotoKey = photoKey ?? moduleKey;
   const photo = getModulePhoto(resolvedPhotoKey);
   const zoomClass = resolvedPhotoKey === 'matchday' ? 'scale-[1.12] group-hover/module:scale-[1.16]' : 'scale-[1.02] group-hover/module:scale-[1.08]';
-  const darkOverlayClass =
-    resolvedPhotoKey === 'matchday'
-      ? 'from-black/58 via-black/10 to-black/12'
-      : 'from-black/90 via-black/24 to-black/18';
-  const vignetteOverlayClass =
-    resolvedPhotoKey === 'matchday'
-      ? 'bg-[radial-gradient(circle_at_50%_26%,transparent_8%,rgba(0,0,0,0.1)_62%,rgba(0,0,0,0.34)_100%)]'
-      : 'bg-[radial-gradient(circle_at_50%_20%,transparent_0%,rgba(0,0,0,0.18)_64%,rgba(0,0,0,0.6)_100%)]';
 
   return (
     <div className="absolute inset-0 overflow-hidden rounded-[inherit]">
@@ -831,11 +644,11 @@ function ModulePhoto({ moduleKey, photoKey }: { moduleKey: string; photoKey?: st
         alt=""
         fill
         sizes="(max-width: 768px) 92vw, (max-width: 1280px) 44vw, 30vw"
-        className={`object-cover opacity-88 saturate-[0.92] transition-all duration-700 ease-out ${zoomClass} group-hover/module:opacity-100`}
+        loading={eager ? 'eager' : undefined}
+        fetchPriority={eager ? 'high' : undefined}
+        className={`object-cover opacity-100 saturate-100 transition-all duration-700 ease-out ${zoomClass}`}
         style={{ objectPosition: photo.position }}
       />
-      <div className={`absolute inset-0 bg-gradient-to-t ${darkOverlayClass}`} />
-      <div className={`absolute inset-0 ${vignetteOverlayClass}`} />
     </div>
   );
 }
@@ -848,6 +661,7 @@ function getModulePhoto(moduleKey: string) {
     daily_cups: { src: '/playmanager/module-cards/arena/daily-cups.webp', position: '50% 50%' },
     lineup: { src: '/playmanager/module-cards/arena/lineup-tactics.webp', position: '50% 50%' },
     calendar: { src: '/playmanager/module-cards/arena/calendar-history.webp', position: '50% 50%' },
+    museum: { src: '/playmanager/module-cards/arena/championships.webp', position: '50% 50%' },
     stadium: { src: '/playmanager/module-cards/arena/stadium-economy.webp', position: '50% 50%' },
     transfer_market: { src: '/playmanager/module-cards/market/transfer-market.webp', position: '50% 50%' },
     free_agents: { src: '/playmanager/module-cards/market/free-agents.webp', position: '50% 50%' },
@@ -868,6 +682,7 @@ function getModulePhoto(moduleKey: string) {
     recovery: { src: '/playmanager/city/buildings/medical.webp', position: '36% 58%' },
     risk: { src: '/playmanager/city/buildings/medical.webp', position: '66% 44%' },
     doctor: { src: '/playmanager/city/buildings/medical.webp', position: '58% 60%' },
+    academy: { src: '/playmanager/city/buildings/academy.webp', position: '50% 52%' },
     prospects: { src: '/playmanager/city/buildings/academy.webp', position: '50% 52%' },
     youth_training: { src: '/playmanager/city/buildings/academy.webp', position: '38% 58%' },
     contracts: { src: '/playmanager/city/buildings/academy.webp', position: '66% 46%' },
@@ -895,6 +710,34 @@ function getModulePhoto(moduleKey: string) {
   };
 
   return map[moduleKey] ?? { src: '/playmanager/city/environment/football-city-background.webp', position: '50% 50%' };
+}
+
+function getVisibleMarketPages(currentPage: number, totalPages: number) {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const pages = new Set<number>([1, totalPages, currentPage]);
+  for (let offset = -2; offset <= 2; offset += 1) {
+    const page = currentPage + offset;
+    if (page >= 1 && page <= totalPages) pages.add(page);
+  }
+
+  return Array.from(pages).sort((left, right) => left - right);
+}
+
+function getMarketScoutingNote(player: {
+  ovr: number;
+  age: number;
+  talent: number;
+  shortlisted: boolean;
+}) {
+  if (player.shortlisted) return 'უკვე შენახულ სიაშია და სწრაფად შეგიძლია დაბრუნდე';
+  if (player.ovr >= 88) return '';
+  if (player.age <= 22 && player.talent >= 8) return 'მაღალი ceiling-ის განვითარებადი პროექტი';
+  if (player.age <= 25 && player.talent >= 7) return 'ახლავე გამოსადეგი და მომავალშიც მზარდი';
+  if (player.talent >= 8) return 'ნედლი რესურსი მაღალი პოტენციალით';
+  return 'როტაციისა და სიღრმისთვის გამოსადეგი ვარიანტი';
 }
 
 function BuildingModulePlaceholder({ module }: { module: BuildingModule }) {
@@ -944,7 +787,6 @@ export function BuildingWorkspace({
   onDismissMatchResult,
   onRunAction,
   onRunPlayerAction,
-  onBack,
 }: {
   building: EditableCityBuilding;
   initialArenaView?: 'overview' | 'lineup';
@@ -960,7 +802,6 @@ export function BuildingWorkspace({
   onDismissMatchResult?: () => void;
   onRunAction: (spriteKey: string, action: CityActionKey) => void;
   onRunPlayerAction: (actionId: string, action: () => Promise<PlayManagerPlayerActionResult>) => void;
-  onBack: () => void;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -978,7 +819,6 @@ export function BuildingWorkspace({
     actions: ['მოდულის გახსნა', 'განახლება', 'დეტალების ნახვა'],
   };
   const Icon = page.icon;
-  const ActiveModuleIcon = activeModule?.icon ?? ShieldCheck;
   const primaryAction = PRIMARY_ACTION_BY_FACILITY[building.spriteKey];
   const primaryPending = pendingAction === `${building.spriteKey}:${primaryAction}`;
   const upgradePending = pendingAction === `${building.spriteKey}:facility_upgrade`;
@@ -997,54 +837,13 @@ export function BuildingWorkspace({
     router.push(`${buildingHref}?module=${moduleKey}`, { scroll: false });
   }
 
-  function closeModule() {
-    router.push(buildingHref, { scroll: false });
-  }
-
   return (
-    <div className="pm-three-host pm-three-host-fill pm-building-workspace">
-      <div className="pm-building-workspace-environment" aria-hidden="true" />
-      <div className="pm-building-workspace-pitch" aria-hidden="true" />
-      <div className="pm-building-workspace-scroll">
-        <div className="pm-building-workspace-toolbar">
-          <button
-            type="button"
-            onClick={onBack}
-            className="inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-black/45 px-4 py-2 text-xs font-black text-white transition hover:bg-emerald-300/12"
-          >
-            <ArrowLeft className="h-4 w-4 text-emerald-200" />
-            ქალაქი
-          </button>
-          <span className={`pm-facility-status pm-facility-status-${facility.status}`}>
-            <StatusIcon status={facility.status} />
-            {STATUS_LABELS[facility.status]}
-          </span>
-        </div>
-
+    <main className="pm-hq-home pm-hq-shell min-h-screen overflow-x-hidden bg-[#020604] pb-24 text-white xl:pb-0">
+      <LightweightSideNav />
+      <div className="relative mx-auto flex min-h-screen w-full max-w-[1360px] flex-col px-4 py-4 sm:px-6 lg:px-8">
+        <div>
         {activeModule ? (
-        <div className="mt-4">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-none border border-emerald-300/14 bg-black/34 p-4">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="grid h-11 w-11 place-items-center rounded-none border border-emerald-300/20 bg-emerald-300/10 text-emerald-100">
-                <ActiveModuleIcon className="h-5 w-5" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100/55">
-                  {activeModule.eyebrow}
-                </p>
-                <h3 className="mt-0.5 truncate text-xl font-black text-white">{activeModule.title}</h3>
-              </div>
-            </div>
-            {initialArenaView !== 'lineup' ? (
-              <button
-                type="button"
-                onClick={closeModule}
-                className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black text-white/62 transition hover:border-emerald-300/24 hover:text-white"
-              >
-                ქვე-გვერდები
-              </button>
-            ) : null}
-          </div>
+        <div className="mx-auto w-full max-w-[1320px]">
           {activeModule.status === 'planned' ? (
             <BuildingModulePlaceholder module={activeModule} />
           ) : (
@@ -1064,21 +863,32 @@ export function BuildingWorkspace({
           )}
         </div>
         ) : (
-        <div className="pm-building-workspace-hero mt-8">
-          <div>
-            <div className="pm-facility-icon">
-              <Icon className="h-5 w-5" />
+        <div className="mx-auto w-full max-w-[1320px]">
+          {building.spriteKey === 'arena' ? (
+            <div className="pm-arena-overview-stack lg:col-span-2">
+              <div className="pm-arena-overview-sprite" aria-hidden="true">
+                <Image
+                  src="/playmanager/city/buildings/arena.webp"
+                  alt=""
+                  width={760}
+                  height={608}
+                  className="h-auto w-full object-contain"
+                />
+              </div>
+              <BuildingModuleGrid modules={modules} buildingKey={building.spriteKey} onOpen={openModule} />
             </div>
-            <h3 className="mt-3 max-w-3xl text-4xl font-black leading-none text-white sm:text-5xl">
-              {page.title}
-            </h3>
+          ) : null}
+
+          <div>
             {page.summary && (
               <p className="mt-4 max-w-2xl text-sm font-semibold leading-6 text-white/62">
                 {page.summary}
               </p>
             )}
 
-            <BuildingModuleGrid modules={modules} buildingKey={building.spriteKey} onOpen={openModule} />
+            {building.spriteKey !== 'arena' ? (
+              <BuildingModuleGrid modules={modules} buildingKey={building.spriteKey} onOpen={openModule} />
+            ) : null}
 
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
               {overviewMetrics.map(([label, value]) => (
@@ -1287,12 +1097,29 @@ export function BuildingWorkspace({
         </div>
         )}
       </div>
+      </div>
+
+      <Dock
+        items={LIGHTWEIGHT_DOCK_NAV.map((item, index) => {
+          const DockIcon = item.icon;
+          return {
+            label: item.label,
+            icon: <DockIcon className="h-5 w-5" />,
+            onClick: () => router.push(item.href),
+            className: index === 0 ? 'bg-emerald-300/16 text-emerald-100' : 'text-white/62',
+          };
+        })}
+      />
 
       {matchResult ? (
         <MatchResultModal result={matchResult} onClose={onDismissMatchResult ?? (() => {})} />
       ) : null}
-    </div>
+    </main>
   );
+}
+
+function LightweightSideNav() {
+  return <PlayManagerSidebar />;
 }
 
 function MatchResultModal({ result, onClose }: { result: MatchResult; onClose: () => void }) {
@@ -1383,169 +1210,14 @@ function MatchResultModal({ result, onClose }: { result: MatchResult; onClose: (
   );
 }
 
-const PRESET_FORMATIONS: Record<string, { label: string; top: number; left: number; index: number }[]> = {
-  '4-3-3': [
-    { label: 'GK', top: 99, left: 50, index: 0 },
-    { label: 'LB', top: 80, left: 12, index: 1 },
-    { label: 'LCB', top: 85, left: 33, index: 2 },
-    { label: 'RCB', top: 85, left: 67, index: 3 },
-    { label: 'RB', top: 80, left: 88, index: 4 },
-    { label: 'CDM', top: 67, left: 50, index: 5 },
-    { label: 'CM', top: 55, left: 33, index: 6 },
-    { label: 'CM', top: 55, left: 66, index: 7 },
-    { label: 'LW', top: 33, left: 14, index: 8 },
-    { label: 'ST', top: 25, left: 50, index: 9 },
-    { label: 'RW', top: 33, left: 86, index: 10 },
-  ],
-  '4-4-2': [
-    { label: 'GK', top: 99, left: 50, index: 0 },
-    { label: 'LB', top: 80, left: 12, index: 1 },
-    { label: 'LCB', top: 85, left: 33, index: 2 },
-    { label: 'RCB', top: 85, left: 67, index: 3 },
-    { label: 'RB', top: 80, left: 88, index: 4 },
-    { label: 'LM', top: 55, left: 15, index: 5 },
-    { label: 'CM', top: 55, left: 35, index: 6 },
-    { label: 'CM', top: 55, left: 65, index: 7 },
-    { label: 'RM', top: 55, left: 85, index: 8 },
-    { label: 'ST', top: 25, left: 35, index: 9 },
-    { label: 'ST', top: 25, left: 65, index: 10 },
-  ],
-  '3-5-2': [
-    { label: 'GK', top: 99, left: 50, index: 0 },
-    { label: 'LCB', top: 85, left: 25, index: 1 },
-    { label: 'CB', top: 85, left: 50, index: 2 },
-    { label: 'RCB', top: 85, left: 75, index: 3 },
-    { label: 'LM', top: 55, left: 15, index: 4 },
-    { label: 'CDM', top: 67, left: 35, index: 5 },
-    { label: 'CDM', top: 67, left: 65, index: 6 },
-    { label: 'RM', top: 55, left: 85, index: 7 },
-    { label: 'CAM', top: 40, left: 50, index: 8 },
-    { label: 'ST', top: 25, left: 35, index: 9 },
-    { label: 'ST', top: 25, left: 65, index: 10 },
-  ],
-  '4-2-3-1': [
-    { label: 'GK', top: 99, left: 50, index: 0 },
-    { label: 'LB', top: 80, left: 12, index: 1 },
-    { label: 'LCB', top: 85, left: 33, index: 2 },
-    { label: 'RCB', top: 85, left: 67, index: 3 },
-    { label: 'RB', top: 80, left: 88, index: 4 },
-    { label: 'CDM', top: 67, left: 35, index: 5 },
-    { label: 'CDM', top: 67, left: 65, index: 6 },
-    { label: 'CAM', top: 40, left: 25, index: 7 },
-    { label: 'CAM', top: 40, left: 50, index: 8 },
-    { label: 'CAM', top: 40, left: 75, index: 9 },
-    { label: 'ST', top: 25, left: 50, index: 10 },
-  ],
-  '3-4-3': [
-    { label: 'GK', top: 99, left: 50, index: 0 },
-    { label: 'LCB', top: 85, left: 25, index: 1 },
-    { label: 'CB', top: 85, left: 50, index: 2 },
-    { label: 'RCB', top: 85, left: 75, index: 3 },
-    { label: 'LM', top: 60, left: 15, index: 4 },
-    { label: 'CM', top: 60, left: 35, index: 5 },
-    { label: 'CM', top: 60, left: 65, index: 6 },
-    { label: 'RM', top: 60, left: 85, index: 7 },
-    { label: 'LW', top: 30, left: 20, index: 8 },
-    { label: 'ST', top: 25, left: 50, index: 9 },
-    { label: 'RW', top: 30, left: 80, index: 10 },
-  ],
-  '5-3-2': [
-    { label: 'GK', top: 99, left: 50, index: 0 },
-    { label: 'LWB', top: 75, left: 10, index: 1 },
-    { label: 'LCB', top: 85, left: 30, index: 2 },
-    { label: 'CB', top: 85, left: 50, index: 3 },
-    { label: 'RCB', top: 85, left: 70, index: 4 },
-    { label: 'RWB', top: 75, left: 90, index: 5 },
-    { label: 'CM', top: 55, left: 30, index: 6 },
-    { label: 'CM', top: 55, left: 50, index: 7 },
-    { label: 'CM', top: 55, left: 70, index: 8 },
-    { label: 'ST', top: 25, left: 35, index: 9 },
-    { label: 'ST', top: 25, left: 65, index: 10 },
-  ],
-  '5-4-1': [
-    { label: 'GK', top: 99, left: 50, index: 0 },
-    { label: 'LWB', top: 75, left: 10, index: 1 },
-    { label: 'LCB', top: 85, left: 30, index: 2 },
-    { label: 'CB', top: 85, left: 50, index: 3 },
-    { label: 'RCB', top: 85, left: 70, index: 4 },
-    { label: 'RWB', top: 75, left: 90, index: 5 },
-    { label: 'LM', top: 55, left: 20, index: 6 },
-    { label: 'CM', top: 55, left: 40, index: 7 },
-    { label: 'CM', top: 55, left: 60, index: 8 },
-    { label: 'RM', top: 55, left: 80, index: 9 },
-    { label: 'ST', top: 25, left: 50, index: 10 },
-  ],
-  '4-1-2-1-2': [
-    { label: 'GK', top: 99, left: 50, index: 0 },
-    { label: 'LB', top: 80, left: 12, index: 1 },
-    { label: 'LCB', top: 85, left: 33, index: 2 },
-    { label: 'RCB', top: 85, left: 67, index: 3 },
-    { label: 'RB', top: 80, left: 88, index: 4 },
-    { label: 'CDM', top: 67, left: 50, index: 5 },
-    { label: 'CM', top: 52, left: 25, index: 6 },
-    { label: 'CM', top: 52, left: 75, index: 7 },
-    { label: 'CAM', top: 38, left: 50, index: 8 },
-    { label: 'ST', top: 25, left: 35, index: 9 },
-    { label: 'ST', top: 25, left: 65, index: 10 },
-  ],
-  '4-3-2-1': [
-    { label: 'GK', top: 99, left: 50, index: 0 },
-    { label: 'LB', top: 80, left: 12, index: 1 },
-    { label: 'LCB', top: 85, left: 33, index: 2 },
-    { label: 'RCB', top: 85, left: 67, index: 3 },
-    { label: 'RB', top: 80, left: 88, index: 4 },
-    { label: 'CM', top: 55, left: 25, index: 5 },
-    { label: 'CM', top: 55, left: 50, index: 6 },
-    { label: 'CM', top: 55, left: 75, index: 7 },
-    { label: 'CAM', top: 38, left: 35, index: 8 },
-    { label: 'CAM', top: 38, left: 65, index: 9 },
-    { label: 'ST', top: 20, left: 50, index: 10 },
-  ],
-  '4-5-1': [
-    { label: 'GK', top: 99, left: 50, index: 0 },
-    { label: 'LB', top: 80, left: 12, index: 1 },
-    { label: 'LCB', top: 85, left: 33, index: 2 },
-    { label: 'RCB', top: 85, left: 67, index: 3 },
-    { label: 'RB', top: 80, left: 88, index: 4 },
-    { label: 'LM', top: 55, left: 15, index: 5 },
-    { label: 'CM', top: 55, left: 33, index: 6 },
-    { label: 'CM', top: 55, left: 50, index: 7 },
-    { label: 'CM', top: 55, left: 67, index: 8 },
-    { label: 'RM', top: 55, left: 85, index: 9 },
-    { label: 'ST', top: 25, left: 50, index: 10 },
-  ],
-  '4-1-4-1': [
-    { label: 'GK', top: 99, left: 50, index: 0 },
-    { label: 'LB', top: 80, left: 12, index: 1 },
-    { label: 'LCB', top: 85, left: 33, index: 2 },
-    { label: 'RCB', top: 85, left: 67, index: 3 },
-    { label: 'RB', top: 80, left: 88, index: 4 },
-    { label: 'CDM', top: 67, left: 50, index: 5 },
-    { label: 'LM', top: 45, left: 15, index: 6 },
-    { label: 'CM', top: 45, left: 35, index: 7 },
-    { label: 'CM', top: 45, left: 65, index: 8 },
-    { label: 'RM', top: 45, left: 85, index: 9 },
-    { label: 'ST', top: 25, left: 50, index: 10 },
-  ],
-  '4-4-1-1': [
-    { label: 'GK', top: 99, left: 50, index: 0 },
-    { label: 'LB', top: 80, left: 12, index: 1 },
-    { label: 'LCB', top: 85, left: 33, index: 2 },
-    { label: 'RCB', top: 85, left: 67, index: 3 },
-    { label: 'RB', top: 80, left: 88, index: 4 },
-    { label: 'LM', top: 55, left: 15, index: 5 },
-    { label: 'CM', top: 55, left: 35, index: 6 },
-    { label: 'CM', top: 55, left: 65, index: 7 },
-    { label: 'RM', top: 55, left: 85, index: 8 },
-    { label: 'CF', top: 38, left: 50, index: 9 },
-    { label: 'ST', top: 20, left: 50, index: 10 },
-  ]
-};
+
+
+
+
 
 function FacilityModule({
   spriteKey,
   moduleKey,
-  initialArenaView = 'overview',
   team,
   snapshot,
   facilities,
@@ -1567,146 +1239,407 @@ function FacilityModule({
   onRunPlayerAction: (actionId: string, action: () => Promise<PlayManagerPlayerActionResult>) => void;
   onRunAction: (spriteKey: string, action: CityActionKey) => void;
 }) {
-  const [lineupDraft, setLineupDraft] = useState(() => ({
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [lineupDraft] = useState(() => ({
     starters: snapshot.starters,
     bench: snapshot.bench,
     reserves: snapshot.reserves,
   }));
-  const [marketFilter, setMarketFilter] = useState<'ALL' | 'GK' | 'DEF' | 'MID' | 'ATT' | 'SHORTLIST'>('ALL');
-  const [matchSettingsDraft, setMatchSettingsDraft] = useState(snapshot.matchSettings);
+  const marketFilterOptions: MarketFilterKey[] = ['ALL', 'GK', 'DEF', 'MID', 'ATT', 'SHORTLIST'];
+  const marketFilterFromUrlRaw = searchParams.get('filter')?.trim().toUpperCase();
+  const marketFilterFromUrl = marketFilterOptions.includes((marketFilterFromUrlRaw ?? 'ALL') as MarketFilterKey)
+    ? (marketFilterFromUrlRaw as MarketFilterKey)
+    : 'ALL';
+  const marketSearchFromUrl = searchParams.get('q')?.trim() ?? '';
+  const marketFilter = marketFilterFromUrl;
+  const marketSearch = marketSearchFromUrl;
+  const bootsMarketFromLiveFetch = spriteKey === 'market';
+  const [marketItems, setMarketItems] = useState(() => (bootsMarketFromLiveFetch ? [] : snapshot.market));
+  const [marketTotalPages, setMarketTotalPages] = useState(1);
+  const [marketTotal, setMarketTotal] = useState(() => (bootsMarketFromLiveFetch ? 0 : snapshot.market.length));
+  const [marketMeta, setMarketMeta] = useState<{
+    freeAgents?: {
+      scoutHired: boolean;
+      scoutLevel: number;
+      maxScoutLevel: number;
+      tier: string;
+      refreshesEveryHours: number;
+      nextRefreshAt: string | null;
+      refreshLabel: string;
+    };
+  }>({});
+  const [marketLoading, setMarketLoading] = useState(bootsMarketFromLiveFetch);
+  const [matchSettingsDraft] = useState(snapshot.matchSettings);
   const [ticketPriceDraft, setTicketPriceDraft] = useState(snapshot.finance.ticketPrice);
-  const [activePitchSlot, setActivePitchSlot] = useState<string | null>(null);
-  const [arenaView] = useState<'overview' | 'lineup'>(initialArenaView);
-  const [selectedLineupPlayerId, setSelectedLineupPlayerId] = useState<string | null>(
-    snapshot.starters[0]?.id ?? null,
-  );
-  const [activeFormation, setActiveFormation] = useState('4-3-3');
-  const [pitchPositions, setPitchPositions] = useState(PRESET_FORMATIONS['4-3-3']);
+  const marketPageRaw = Number.parseInt(searchParams.get('page') ?? '1', 10);
+  const marketPage = Number.isFinite(marketPageRaw) && marketPageRaw > 0 ? marketPageRaw : 1;
+  const marketFilterLabels: Record<MarketFilterKey, string> = {
+    ALL: 'ყველა',
+    GK: 'მეკარე',
+    DEF: 'დაცვა',
+    MID: 'ნახევარდაცვა',
+    ATT: 'შეტევა',
+    SHORTLIST: 'შენახული',
+  };
+  const isFreeAgentsModule = moduleKey === 'free_agents';
+  const freeAgentsMeta = marketMeta.freeAgents;
+  const freeAgentsRefreshLabel = freeAgentsMeta?.refreshLabel ?? 'განახლდება სკაუტის დაქირავების შემდეგ';
 
-  const pitchPositionsFormatted = useMemo(
-    () => pitchPositions.map((pos) => ({ ...pos, top: `${pos.top}%`, left: `${pos.left}%` })),
-    [pitchPositions],
-  );
 
-  function applyFormation(formation: string) {
-    setActiveFormation(formation);
-    setPitchPositions(PRESET_FORMATIONS[formation] ?? PRESET_FORMATIONS['4-3-3']);
-  }
 
-  function movePlayer(targetRole: 'starter' | 'bench' | 'reserve', playerId: string) {
-    setLineupDraft((current) => {
-      const allPlayers = [...current.starters, ...current.bench, ...current.reserves];
-      const player = allPlayers.find((entry) => entry.id === playerId);
-      if (!player) return current;
 
-      let starters = current.starters.filter((entry) => entry.id !== playerId);
-      let bench = current.bench.filter((entry) => entry.id !== playerId);
-      let reserves = current.reserves.filter((entry) => entry.id !== playerId);
 
-      if (targetRole === 'starter') starters = [...starters, { ...player, role: 'starter' }];
-      if (targetRole === 'bench') bench = [...bench, { ...player, role: 'bench' }];
-      if (targetRole === 'reserve') reserves = [...reserves, { ...player, role: 'reserve' }];
 
-      while (starters.length > 11) {
-        const overflow = starters.pop();
-        if (overflow) bench = [overflow, ...bench];
+  const syncMarketQueryInUrl = useCallback((updates: {
+    page?: number;
+    filter?: MarketFilterKey;
+    q?: string;
+  }) => {
+    const params = new URLSearchParams(searchParams.toString());
+    const nextFilter = updates.filter ?? marketFilter;
+    const nextQuery = (updates.q ?? marketSearch).trim();
+    const nextPage = updates.page ?? marketPage;
+
+    if (nextFilter === 'ALL') {
+      params.delete('filter');
+    } else {
+      params.set('filter', nextFilter);
+    }
+
+    if (nextQuery) {
+      params.set('q', nextQuery);
+    } else {
+      params.delete('q');
+    }
+
+    if (nextPage <= 1) {
+      params.delete('page');
+    } else {
+      params.set('page', String(nextPage));
+    }
+    router.push(`?${params.toString()}`, { scroll: false });
+  }, [router, searchParams, marketFilter, marketSearch, marketPage]);
+
+  useEffect(() => {
+    if (spriteKey !== 'market') return;
+    let cancelled = false;
+
+    async function loadMarket() {
+      setMarketLoading(true);
+      try {
+        const params = new URLSearchParams({
+          module: moduleKey ?? 'transfer_market',
+          filter: marketFilter,
+          page: String(marketPage),
+          pageSize: isFreeAgentsModule ? '5' : '10',
+        });
+        if (!isFreeAgentsModule && marketSearch.trim()) params.set('q', marketSearch.trim());
+
+        const response = await fetch(`/api/playmanager/market?${params.toString()}`, { cache: 'no-store' });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (cancelled) return;
+        if (!isFreeAgentsModule && typeof data.pagination?.page === 'number' && data.pagination.page !== marketPage) {
+          syncMarketQueryInUrl({ page: data.pagination.page });
+          return;
+        }
+        setMarketItems(data.items ?? []);
+        setMarketTotalPages(data.pagination?.totalPages ?? 1);
+        setMarketTotal(data.pagination?.total ?? 0);
+        setMarketMeta({
+          freeAgents: data.meta?.freeAgents,
+        });
+      } finally {
+        if (!cancelled) setMarketLoading(false);
       }
-      while (bench.length > 4) {
-        const overflow = bench.pop();
-        if (overflow) reserves = [overflow, ...reserves];
-      }
+    }
 
-      return {
-        starters: starters.map((entry) => ({ ...entry, role: 'starter' as const })),
-        bench: bench.map((entry) => ({ ...entry, role: 'bench' as const })),
-        reserves: reserves.map((entry) => ({ ...entry, role: 'reserve' as const })),
-      };
-    });
-    setSelectedLineupPlayerId(playerId);
-  }
-
-  function updateMatchSetting<Key extends keyof typeof matchSettingsDraft>(
-    key: Key,
-    value: (typeof matchSettingsDraft)[Key],
-  ) {
-    setMatchSettingsDraft((current) => ({ ...current, [key]: value }));
-  }
+    loadMarket();
+    return () => {
+      cancelled = true;
+    };
+  }, [spriteKey, marketFilter, marketPage, marketSearch, syncMarketQueryInUrl, moduleKey, isFreeAgentsModule]);
 
   if (spriteKey === 'market') {
-    const filteredMarket = snapshot.market.filter((player) => {
-      if (marketFilter === 'ALL') return true;
-      if (marketFilter === 'SHORTLIST') return player.shortlisted;
-      if (marketFilter === 'GK') return player.position === 'GK';
-      if (marketFilter === 'DEF') return ['CB', 'LB', 'RB'].includes(player.position);
-      if (marketFilter === 'MID') return ['CDM', 'CM', 'CAM'].includes(player.position);
-      if (marketFilter === 'ATT') return ['LW', 'RW', 'ST'].includes(player.position);
-      return true;
-    });
     return (
-      <GamePanel title="სატრანსფერო ბაზარი" icon={<Search className="h-4 w-4" />}>
-        <div className="mb-3 flex flex-wrap gap-2">
-          {(['ALL', 'GK', 'DEF', 'MID', 'ATT', 'SHORTLIST'] as const).map((filterKey) => (
-            <button
-              key={filterKey}
-              type="button"
-              onClick={() => setMarketFilter(filterKey)}
-              className={`rounded-full border px-3 py-1.5 text-[10px] font-black tracking-[0.14em] transition ${
-                marketFilter === filterKey
-                  ? 'border-emerald-300/30 bg-emerald-300/12 text-white'
-                  : 'border-white/10 bg-white/[0.04] text-white/55 hover:border-emerald-300/20 hover:text-white'
-              }`}
-            >
-              {filterKey}
-            </button>
-          ))}
-        </div>
-        <div className="grid gap-2 lg:grid-cols-4">
-          {filteredMarket.map((player) => (
-            <div key={player.key} className="pm-game-row">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-black text-white">{player.name}</p>
-                  <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-white/42">
-                    {player.position} · {player.age} წლის
-                  </p>
-                </div>
-                <span className="pm-rating-pill">{player.ovr}</span>
-              </div>
-                <div className="mt-4 flex items-end justify-between gap-3">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-white/35">ფასი</p>
-                    <p className="text-sm font-black text-emerald-100">{player.valueLabel}</p>
-                  </div>
-                  <span className="text-[10px] font-black text-red-100/70">{player.demand}</span>
-                </div>
-                <div className="mt-3 flex gap-2">
-                  <button
-                    type="button"
-                    disabled={pendingAction === `buy:${player.key}`}
-                    onClick={() => onRunPlayerAction(`buy:${player.key}`, () => buyPlayManagerMarketPlayer(player.key))}
-                    className="flex-1 rounded-xl border border-emerald-300/18 bg-emerald-300/10 px-3 py-2 text-xs font-black text-white transition hover:bg-emerald-300/16 disabled:cursor-not-allowed disabled:opacity-55"
-                  >
-                    {pendingAction === `buy:${player.key}` ? 'მუშავდება...' : 'Buy now'}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={pendingAction === `shortlist:${player.key}`}
-                    onClick={() => onRunPlayerAction(`shortlist:${player.key}`, () => togglePlayManagerMarketShortlist(player.key))}
-                    className={`rounded-xl border px-3 py-2 text-xs font-black text-white transition disabled:cursor-not-allowed disabled:opacity-55 ${
-                      player.shortlisted
-                        ? 'border-yellow-300/25 bg-yellow-300/12 hover:bg-yellow-300/18'
-                        : 'border-white/10 bg-white/[0.04] hover:border-emerald-300/20 hover:bg-white/[0.07]'
-                    }`}
-                  >
-                    {pendingAction === `shortlist:${player.key}` ? '...' : player.shortlisted ? 'Saved' : 'Shortlist'}
-                  </button>
-                </div>
-              </div>
+      <GamePanel title={isFreeAgentsModule ? 'თავისუფალი აგენტები' : 'სატრანსფერო ბაზარი'} icon={<Search className="h-4 w-4" />}>
+        {moduleKey === 'transfer_market' || !moduleKey ? (
+          <>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-1 flex-wrap gap-2">
+            {marketFilterOptions.map((filterKey) => (
+              <button
+                key={filterKey}
+                type="button"
+                onClick={() => {
+                  syncMarketQueryInUrl({ filter: filterKey, page: 1 });
+                }}
+                className={`rounded-full border px-3 py-1.5 text-[10px] font-black tracking-[0.14em] transition ${
+                  marketFilter === filterKey
+                    ? 'border-emerald-300/30 bg-emerald-300/12 text-white'
+                    : 'border-white/10 bg-white/[0.04] text-white/55 hover:border-emerald-300/20 hover:text-white'
+                }`}
+              >
+                {marketFilterLabels[filterKey]}
+              </button>
             ))}
           </div>
+          <div className="min-w-[220px] flex-1 md:max-w-[320px]">
+            <input
+              value={marketSearch}
+              onChange={(event) => {
+                syncMarketQueryInUrl({ q: event.target.value, page: 1 });
+              }}
+              placeholder="მოთამაშე"
+              className="h-11 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm font-bold text-white outline-none transition placeholder:text-white/28 focus:border-emerald-300/30"
+            />
+          </div>
+        </div>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 text-xs font-black text-white/48 [backface-visibility:hidden] [transform:translateZ(0)] [will-change:opacity]">
+          <span className="min-w-[112px] [font-variant-numeric:tabular-nums]">{marketLoading ? 'იტვირთება...' : `${marketTotal.toLocaleString('en-US')} შედეგი`}</span>
+          <span className="min-w-[88px] text-right [font-variant-numeric:tabular-nums]">გვერდი {marketPage}/{marketTotalPages}</span>
+        </div>
+        <p className="mb-3 text-[11px] font-bold leading-5 text-white/48">
+          {marketFilter === 'SHORTLIST'
+            ? 'აქ ჩანს მხოლოდ შენახული ფეხბურთელები.'
+            : 'ფეხბურთელები შეგიძლია იყიდო ან შენახულ სიაში დაამატო.'}
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          {marketItems.map((player) => (
+            <div
+              key={player.key}
+              className="overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,18,17,0.96),rgba(5,11,10,0.98))] p-3 shadow-[0_20px_50px_rgba(0,0,0,0.32)]"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-1 items-start justify-between gap-3">
+                  <div>
+                    <p className="mt-1 text-base font-black text-white">{player.name}</p>
+                    <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-white/42">
+                      {player.position} · {player.age} წლის
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 flex justify-center">
+                <div className="h-[224px] w-[162px] overflow-hidden">
+                  <div style={{ transform: 'scale(0.64)', transformOrigin: 'top left' }} className="h-[347px] w-[251px]">
+                    <PlayerFutCard
+                      name={player.name}
+                      labelOverride={player.cardDisplayName}
+                      imageUrl={player.cardImageUrl}
+                      nationalityCode={player.nationalityCode}
+                      stats={player.stats}
+                      position={player.position}
+                      ovr={player.ovr}
+                      availability="ready"
+                      talent={player.talent}
+                      editorConfig={player.cardEditorConfig ?? DEFAULT_FUT_CARD_EDITOR_CONFIG}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 flex items-end justify-between gap-3">
+                <div>
+                  <p className="text-sm font-black text-emerald-100">{player.valueLabel}</p>
+                  <p className="mt-1 max-w-[220px] text-[11px] font-bold leading-5 text-white/46">
+                    {getMarketScoutingNote(player)}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  disabled={pendingAction === `buy:${player.key}`}
+                  onClick={() => onRunPlayerAction(`buy:${player.key}`, () => buyPlayManagerMarketPlayer(player.key))}
+                  className="flex-1 rounded-xl border border-emerald-300/18 bg-emerald-300/10 px-3 py-2 text-xs font-black text-white transition hover:bg-emerald-300/16 disabled:cursor-not-allowed disabled:opacity-55"
+                >
+                  {pendingAction === `buy:${player.key}` ? 'მუშავდება...' : 'ყიდვა'}
+                </button>
+                {player.id ? (
+                  <Link
+                    href={`/playmanager/players/${player.id}`}
+                    className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-black text-white/70 transition hover:border-emerald-300/20 hover:text-white"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    ნახვა
+                  </Link>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+        {!marketLoading && marketItems.length === 0 ? (
+          <div className="mt-4 rounded-[24px] border border-white/10 bg-white/[0.03] px-5 py-6 text-center">
+            <p className="text-sm font-black text-white">
+              {marketFilter === 'SHORTLIST'
+                ? 'შენახული სია ჯერ ცარიელია'
+                : 'ამ ფილტრზე შედეგი ვერ მოიძებნა'}
+            </p>
+            <p className="mt-2 text-sm font-bold text-white/52">
+              {marketFilter === 'SHORTLIST'
+                ? 'მოთამაშეებზე "სიაში დამატება" გამოიყენე და აქ დაგხვდება.'
+                : marketSearch.trim()
+                  ? 'სხვა საკვანძო სიტყვა ან სხვა filter სცადე.'
+                  : 'filter შეცვალე ან ძებნა გამოიყენე.'}
+            </p>
+          </div>
+        ) : null}
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 [backface-visibility:hidden] [transform:translateZ(0)] [will-change:opacity]">
+          <button
+            type="button"
+            disabled={marketPage <= 1 || marketLoading}
+            onClick={() => {
+              const nextPage = Math.max(1, marketPage - 1);
+              syncMarketQueryInUrl({ page: nextPage });
+            }}
+            className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-black text-white transition hover:border-emerald-300/20 hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-45"
+          >
+            წინა
+          </button>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {getVisibleMarketPages(marketPage, marketTotalPages).map((pageNumber, index, pages) => {
+              const previousPage = pages[index - 1];
+              const needsGap = previousPage !== undefined && pageNumber - previousPage > 1;
+
+              return (
+                <div key={pageNumber} className="flex items-center gap-2">
+                  {needsGap ? <span className="text-xs font-black text-white/30">...</span> : null}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      syncMarketQueryInUrl({ page: pageNumber });
+                    }}
+                    disabled={marketLoading}
+                    className={`h-9 min-w-9 rounded-lg border px-3 text-xs font-black transition disabled:cursor-not-allowed disabled:opacity-45 ${
+                      marketPage === pageNumber
+                        ? 'border-emerald-300/32 bg-emerald-300/14 text-white'
+                        : 'border-white/10 bg-white/[0.04] text-white/62 hover:border-emerald-300/20 hover:text-white'
+                    }`}
+                  >
+                    {pageNumber}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            disabled={marketPage >= marketTotalPages || marketLoading}
+            onClick={() => {
+              const nextPage = Math.min(marketTotalPages, marketPage + 1);
+              syncMarketQueryInUrl({ page: nextPage });
+            }}
+            className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-black text-white transition hover:border-emerald-300/20 hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-45"
+          >
+            შემდეგი
+          </button>
+        </div>
+          </>
+        ) : null}
+        {moduleKey === 'free_agents' ? (
+          <>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-white/10 bg-white/[0.04] px-4 py-4">
+              <div>
+                <p className="text-sm font-black text-white">
+                  {freeAgentsMeta?.scoutHired
+                    ? `სკაუტი LVL ${freeAgentsMeta.scoutLevel}/${freeAgentsMeta.maxScoutLevel}`
+                    : 'სკაუტი არ არის დაქირავებული'}
+                </p>
+                <p className="mt-2 text-[11px] font-bold leading-5 text-white/52">
+                  {freeAgentsMeta?.scoutHired
+                    ? `ყოველ 24 საათში ჩნდება 5 ახალი ფეხბურთელი · დივიზიონის tier ${freeAgentsMeta.tier} · შემდეგი განახლება ${freeAgentsRefreshLabel}`
+                    : `თავისუფალი აგენტების ახალი სია მხოლოდ დაქირავებულ სკაუტს მოაქვს. შენი დივიზიონი გაძლევს მაქსიმუმ LVL ${freeAgentsMeta?.maxScoutLevel ?? 1} სკაუტს.`}
+                </p>
+              </div>
+              {freeAgentsMeta?.scoutHired ? (
+                <div className="flex flex-wrap gap-2 [backface-visibility:hidden] [transform:translateZ(0)] [will-change:opacity]">
+                  <span className="rounded-full border border-emerald-300/18 bg-emerald-300/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-emerald-100">
+                    5 შეთავაზება
+                  </span>
+                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white/62">
+                    refresh {freeAgentsRefreshLabel}
+                  </span>
+                </div>
+              ) : null}
+            </div>
+
+            {freeAgentsMeta?.scoutHired ? (
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+                {marketItems.map((player) => (
+                  <div
+                    key={player.key}
+                    className="overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,18,17,0.96),rgba(5,11,10,0.98))] p-3 shadow-[0_20px_50px_rgba(0,0,0,0.32)]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="mt-1 text-base font-black text-white">{player.name}</p>
+                        <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-white/42">
+                          {player.position} · {player.age} წლის
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex justify-center">
+                      <div className="h-[260px] w-[188px] overflow-hidden">
+                        <div style={{ transform: 'scale(0.75)', transformOrigin: 'top left' }} className="h-[347px] w-[251px]">
+                          <PlayerFutCard
+                            name={player.name}
+                            labelOverride={player.cardDisplayName}
+                            imageUrl={player.cardImageUrl}
+                            nationalityCode={player.nationalityCode}
+                            stats={player.stats}
+                            position={player.position}
+                            ovr={player.ovr}
+                            availability="ready"
+                            talent={player.talent}
+                            editorConfig={player.cardEditorConfig ?? DEFAULT_FUT_CARD_EDITOR_CONFIG}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-end justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-black text-emerald-100">{player.valueLabel}</p>
+                        <p className="mt-1 max-w-[220px] text-[11px] font-bold leading-5 text-white/46">
+                          სკაუტის რეკომენდაცია · Talent {player.talent}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        type="button"
+                        disabled={pendingAction === `buy:${player.key}`}
+                        onClick={() => onRunPlayerAction(`buy:${player.key}`, () => buyPlayManagerMarketPlayer(player.key))}
+                        className="flex-1 rounded-xl border border-emerald-300/18 bg-emerald-300/10 px-3 py-2 text-xs font-black text-white transition hover:bg-emerald-300/16 disabled:cursor-not-allowed disabled:opacity-55"
+                      >
+                        {pendingAction === `buy:${player.key}` ? 'მუშავდება...' : 'გაფორმება'}
+                      </button>
+                      {player.id ? (
+                        <Link
+                          href={`/playmanager/players/${player.id}`}
+                          className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-black text-white/70 transition hover:border-emerald-300/20 hover:text-white"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          ნახვა
+                        </Link>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-[24px] border border-dashed border-white/10 bg-white/[0.03] px-5 py-8 text-center">
+                <p className="text-sm font-black text-white">ჯერ სკაუტი დაიქირავე</p>
+                <p className="mt-2 text-sm font-bold text-white/52">
+                  დაქირავებული სკაუტი ყოველ 24 საათში ერთხელ 5 ახალ თავისუფალ აგენტს შემოგთავაზებს.
+                </p>
+              </div>
+            )}
+          </>
+        ) : null}
         {moduleKey === 'outgoing' ? (
           <div className="mt-3 grid gap-2 lg:grid-cols-3">
-            {snapshot.squad.slice(0, 3).map((player) => (
+            {snapshot.squad.map((player) => (
               <div key={player.id} className="pm-game-row">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -1910,7 +1843,7 @@ function FacilityModule({
     );
   }
 
-  if (spriteKey === 'academy') {
+  if (spriteKey === 'academy' || (spriteKey === 'residence' && moduleKey === 'academy')) {
     return (
       <GamePanel title="აკადემიის ტალანტები" icon={<UsersRound className="h-4 w-4" />}>
         <div className="grid gap-2 lg:grid-cols-3">
@@ -2459,6 +2392,56 @@ function FacilityModule({
   }
 
   if (spriteKey === 'media') {
+    if (moduleKey === 'direct_messages') {
+      return (
+        <GamePanel title="მესენჯერი" icon={<Send className="h-4 w-4" />}>
+          <PlayManagerDirectMessages />
+        </GamePanel>
+      );
+    }
+
+    if (moduleKey === 'announcements') {
+      return (
+        <GamePanel title="უწყებები" icon={<Megaphone className="h-4 w-4" />}>
+          <div className="grid gap-3 lg:grid-cols-[280px_minmax(0,1fr)]">
+            <div className="pm-game-row">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/42">Board</p>
+              <p className="mt-2 text-3xl font-black text-white">კლუბის უწყებები</p>
+              <p className="mt-2 text-sm font-bold text-emerald-100/60">
+                განცხადებების სრული გვერდი ისევ ხელმისაწვდომია და აქედანაც იხსნება.
+              </p>
+              <Link
+                href="/announcements"
+                className="mt-4 inline-flex items-center justify-center rounded-xl border border-yellow-300/20 bg-yellow-300/10 px-4 py-3 text-xs font-black text-white transition hover:bg-yellow-300/16"
+              >
+                უწყებების გახსნა
+              </Link>
+            </div>
+            <div className="space-y-2">
+              {snapshot.eventFeed.slice(0, 5).map((event) => (
+                <div key={event.id} className="pm-table-row">
+                  <Megaphone className="h-4 w-4 text-yellow-200" />
+                  <div className="min-w-0 flex-1">
+                    <strong className="block truncate">{event.title}</strong>
+                    {event.detail ? <p className="mt-1 truncate text-[11px] font-bold text-white/48">{event.detail}</p> : null}
+                  </div>
+                  <span className="text-[10px] font-black text-white/38">W{event.weekNo}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </GamePanel>
+      );
+    }
+
+    if (moduleKey === 'global_chat') {
+      return (
+        <GamePanel title="საერთო ჩატი" icon={<MessageCircle className="h-4 w-4" />}>
+          <PlayManagerGlobalChat />
+        </GamePanel>
+      );
+    }
+
     return (
       <GamePanel title="მედია და ფანები" icon={<RadioTower className="h-4 w-4" />}>
         <div className="grid gap-2 lg:grid-cols-[280px_1fr]">
@@ -2509,8 +2492,6 @@ function FacilityModule({
       (cup) => cup.isRegistered && (cup.status === 'registration' || cup.status === 'in_progress'),
     );
 
-    const lineupIds = [...lineupDraft.starters, ...lineupDraft.bench, ...lineupDraft.reserves].map((player) => player.id);
-
     function getUpcomingMatch(played: number, offset: number) {
       const round = played + 1 + offset;
       const nextRowOrder = PLAYMANAGER_FIXTURE_ROW_ORDER[(played + offset) % PLAYMANAGER_FIXTURE_ROW_ORDER.length];
@@ -2519,300 +2500,112 @@ function FacilityModule({
     }
 
 
-    const selectedLineupPlayer =
-      [...lineupDraft.starters, ...lineupDraft.bench, ...lineupDraft.reserves].find(
-        (player) => player.id === selectedLineupPlayerId,
-      ) ?? lineupDraft.starters[0] ?? lineupDraft.bench[0] ?? lineupDraft.reserves[0] ?? null;
 
-    if (arenaView === 'lineup') {
-      return (
-          <div className="mx-auto w-full max-w-[1400px] rounded-none border border-emerald-300/16 bg-black/34 p-4 shadow-[inset_0_0_34px_rgba(16,185,129,0.08)]">
-            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <Link
-                  href="/playmanager/arena"
-                  className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-300/16 bg-emerald-300/8 px-3 py-1.5 text-[11px] font-black text-white transition hover:bg-emerald-300/14"
-                >
-                  <ArrowLeft className="h-3.5 w-3.5" />
-                  არენა
-                </Link>
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-100/55">Squad Builder</p>
-                <h3 className="mt-1 text-2xl font-black text-white">შემადგენლობა</h3>
-                <p className="mt-1 text-xs font-bold text-white/48">
-                  სასტარტო {lineupDraft.starters.length}/11 · სათადარიგო {lineupDraft.bench.length}/4 · რეზერვი {lineupDraft.reserves.length}
-                </p>
+
+    return (
+      <>
+        <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(145deg,rgba(6,18,13,0.96),rgba(3,9,7,0.98))] p-4 shadow-[0_24px_90px_rgba(0,0,0,0.34)] md:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-200/55">მატჩის დღე</p>
+              <h2 className="mt-1 text-2xl font-black text-white">შემდეგი მატჩი</h2>
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-white/60">
+                {activeTournamentCup ? activeTournamentCup.name : `ლიგა · ${nextMatch.round} ტური`}
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/20 bg-emerald-300/8 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-emerald-100/78">
+                საშინაო
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.65fr)]">
+            <div className="rounded-[24px] border border-white/8 bg-black/28 p-4 shadow-[inset_0_0_24px_rgba(16,185,129,0.05)]">
+              <div className="grid items-center gap-3 md:grid-cols-[1fr_auto_1fr]">
+                <div className="min-w-0 text-center md:text-right">
+                  <p className="text-[11px] font-black uppercase tracking-[0.14em] text-white/38">მასპინძელი</p>
+                  <p className="mt-1 truncate text-[22px] font-black text-white">{team.name}</p>
+                  <p className="mt-2 text-sm font-black text-emerald-200">{matchSettingsDraft.readiness}% მზადყოფნა</p>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
+                    <div className="h-full rounded-full bg-[linear-gradient(90deg,#22c55e,#d9f56a)]" style={{ width: `${matchSettingsDraft.readiness}%` }} />
+                  </div>
+                </div>
+
+                <div className="px-2 text-center">
+                  <p className="text-[44px] font-black leading-none text-white">VS</p>
+                  <p className="mt-2 text-xs font-black text-white/44">{snapshot.nextMatchLabel}</p>
+                </div>
+
+                <div className="min-w-0 text-center md:text-left">
+                  <p className="text-[11px] font-black uppercase tracking-[0.14em] text-white/38">მოწინააღმდეგე</p>
+                  <p className="mt-1 truncate text-[22px] font-black text-white">{nextMatch.opponent}</p>
+                  <p className="mt-2 text-sm font-black text-emerald-200">87% შეფასება</p>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
+                    <div className="h-full rounded-full bg-[linear-gradient(90deg,#22c55e,#d9f56a)]" style={{ width: '87%' }} />
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <select
-                  value={activeFormation}
-                  onChange={(e) => applyFormation(e.target.value)}
-                  className="rounded-xl border border-emerald-300/20 bg-emerald-300/12 px-4 py-3 text-xs font-black text-white outline-none focus:border-emerald-300/40"
+
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                <Link
+                  href="/playmanager/arena/lineup"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400/18 px-4 text-sm font-black text-emerald-50 transition hover:bg-emerald-400/26"
                 >
-                  {Object.keys(PRESET_FORMATIONS).map(f => (
-                    <option key={f} value={f} className="bg-[#030b07] text-white font-bold">{f}</option>
-                  ))}
-                </select>
+                  <UsersRound className="h-4 w-4" />
+                  შემადგენლობა და ტაქტიკა
+                </Link>
                 <button
                   type="button"
-                  disabled={pendingAction === 'lineup:save'}
-                  onClick={() => onRunPlayerAction('lineup:save', () => savePlayManagerLineup(lineupIds))}
-                  className="rounded-xl border border-emerald-300/20 bg-emerald-300/12 px-5 py-3 text-xs font-black text-white transition hover:bg-emerald-300/18 disabled:cursor-not-allowed disabled:opacity-55"
+                  disabled={pendingAction === 'league:league_sim' || lineupDraft.starters.length !== 11}
+                  onClick={() => onRunAction('league', 'league_sim')}
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-amber-300/22 px-4 text-sm font-black text-amber-50 transition hover:bg-amber-300/30 disabled:cursor-not-allowed disabled:opacity-45"
                 >
-                  {pendingAction === 'lineup:save' ? 'ინახება...' : 'შემადგენლობის შენახვა'}
+                  <Play className="h-4 w-4" />
+                  {pendingAction === 'league:league_sim'
+                    ? 'მიმდინარეობს...'
+                    : lineupDraft.starters.length !== 11
+                      ? `XI ${lineupDraft.starters.length}/11`
+                      : 'შესვლა'}
                 </button>
               </div>
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_310px]">
-              <div>
-                <div className="relative mx-auto h-[min(84vh,1000px)] min-h-[780px] w-full overflow-hidden rounded-none border border-emerald-300/22 bg-[linear-gradient(180deg,#051e11,#0c351c_50%,#051e11)] shadow-[0_22px_60px_rgba(0,0,0,0.42)]">
-                  {/* Pitch Lines (Vertical Half Pitch) */}
-                  <div className="absolute inset-4 rounded-t-2xl border-t border-x border-white/10" />
-                  <div className="absolute top-4 left-4 right-4 h-px bg-white/10" />
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 -translate-y-1/2 h-32 w-32 rounded-full border border-white/10" />
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 h-36 w-72 border-t border-x border-white/10" />
-                  <div className="absolute bottom-[148px] left-1/2 -translate-x-1/2 h-16 w-32 rounded-t-full border-t border-x border-white/10" />
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 h-12 w-28 border-t border-x border-white/10" />
-                  <div className="absolute inset-0 bg-[repeating-linear-gradient(180deg,rgba(255,255,255,0.015)_0,rgba(255,255,255,0.015)_1px,transparent_1px,transparent_40px)]" />
-
-                  {pitchPositionsFormatted.map((pos) => {
-                    const player = lineupDraft.starters[pos.index];
-                    return (
-                      <div
-                        key={`${pos.label}-${pos.index}`}
-                        style={{ top: pos.top, left: pos.left }}
-                        className="absolute z-10 -translate-x-1/2 -translate-y-1/2"
-                      >
-                        {player ? (
-                          <button
-                            type="button"
-                            onClick={() => setSelectedLineupPlayerId(player.id)}
-                            className={`group shrink-0 rounded-[1.6rem] transition-all duration-300 hover:-translate-y-1 focus:outline-none ${
-                              selectedLineupPlayerId === player.id
-                                ? 'ring-2 ring-emerald-300 ring-offset-2 ring-offset-transparent shadow-[0_0_24px_rgba(52,211,153,0.35)]'
-                                : ''
-                            }`}
-                          >
-                            <div className="w-[95px] h-[131px] flex items-center justify-center overflow-visible">
-                              <div style={{ transform: 'scale(0.38)', transformOrigin: 'center' }} className="shrink-0">
-                                <PlayerFutCard
-                                  name={player.name}
-                                  position={player.position}
-                                  ovr={player.ovrCurrent}
-                                  role={player.role}
-                                  availability={player.availability}
-                                  talent={player.talent}
-                                  editorConfig={DEFAULT_FUT_CARD_EDITOR_CONFIG}
-                                />
-                              </div>
-                            </div>
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => setActivePitchSlot(pos.label)}
-                            className="flex flex-col items-center justify-center h-[82px] w-[60px] rounded-xl border border-dashed border-white/18 bg-black/45 text-[9px] font-black text-white/34 hover:border-emerald-300/35 hover:text-emerald-100 transition-all"
-                          >
-                            <span className="text-[11px] opacity-60">➕</span>
-                            <span className="mt-0.5">{pos.label}</span>
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-
-                  {activePitchSlot ? (
-                    <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/82 p-4 backdrop-blur-md">
-                      <div className="w-full max-w-md rounded-none border border-emerald-300/18 bg-[#030b07] p-4">
-                        <div className="mb-3 flex items-center justify-between gap-3">
-                          <p className="text-xs font-black text-white">{activePitchSlot} პოზიცია</p>
-                          <button
-                            type="button"
-                            onClick={() => setActivePitchSlot(null)}
-                            className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-black text-white/58 hover:text-white"
-                          >
-                            დახურვა
-                          </button>
-                        </div>
-                        <div className="max-h-72 space-y-2 overflow-y-auto">
-                          {[...lineupDraft.bench, ...lineupDraft.reserves].map((player) => (
-                            <button
-                              key={player.id}
-                              type="button"
-                              onClick={() => {
-                                movePlayer('starter', player.id);
-                                setActivePitchSlot(null);
-                              }}
-                              className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/[0.04] px-3 py-2 text-left transition hover:border-emerald-300/24 hover:bg-emerald-300/8"
-                            >
-                              <span className="min-w-0">
-                                <strong className="block truncate text-sm text-white">{player.name}</strong>
-                                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/40">
-                                  {player.position} · {player.role === 'bench' ? 'სათადარიგო' : 'რეზერვი'}
-                                </span>
-                              </span>
-                              <span className="pm-rating-pill">{player.ovrCurrent}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-
-                <PlayerStrip
-                  title="სათადარიგო მოთამაშეები"
-                  players={lineupDraft.bench}
-                  selectedPlayerId={selectedLineupPlayerId}
-                  onSelect={setSelectedLineupPlayerId}
-                />
-                <PlayerStrip
-                  title="რეზერვისტები"
-                  players={lineupDraft.reserves}
-                  selectedPlayerId={selectedLineupPlayerId}
-                  onSelect={setSelectedLineupPlayerId}
-                />
+            <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+              <div className="rounded-[24px] border border-white/8 bg-white/[0.045] p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/40">შემადგენლობა</p>
+                <p className="mt-2 text-3xl font-black text-white">{lineupDraft.starters.length}/11</p>
+                <p className="mt-2 text-xs font-bold text-white/52">სათადარიგო {lineupDraft.bench.length}/4</p>
               </div>
-
-              <div className="space-y-4">
-                <LineupPlayerCard
-                  player={selectedLineupPlayer}
-                  onMove={movePlayer}
-                />
-                <PitchPositionsEditor
-                  positions={pitchPositions}
-                  onChange={setPitchPositions}
-                />
+              <div className="rounded-[24px] border border-white/8 bg-white/[0.045] p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/40">სახლის ეფექტი</p>
+                <p className="mt-2 text-3xl font-black text-white">+{clubEffects.bonuses.matchdayIncomePct}%</p>
+                <p className="mt-2 text-xs font-bold text-white/52">სტადიონი LVL {facilities.arena?.level ?? 1}</p>
+              </div>
+              <div className="rounded-[24px] border border-white/8 bg-white/[0.045] p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/40">ბოლო შედეგი</p>
+                <p className="mt-2 text-3xl font-black text-white">
+                  {snapshot.matchHistory[0] ? `${snapshot.matchHistory[0].result}` : '—'}
+                </p>
+                <p className="mt-2 text-xs font-bold text-white/52">
+                  {snapshot.matchHistory[0] ? snapshot.matchHistory[0].score : 'ისტორია ჯერ არ არის'}
+                </p>
               </div>
             </div>
-
-            {/* TACTICS SETTINGS */}
-            <div className="mt-3 rounded-none border border-white/10 bg-black/28 p-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/42 mb-3">ტაქტიკის დაყენება</p>
-              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                <MatchdaySelect
-                  label="სტილი (Style)"
-                  value={matchSettingsDraft.tacticalStyle}
-                  options={[
-                    ['balanced', 'Balanced (ბალანსირებული)'],
-                    ['pressing', 'Pressing (პრესინგი)'],
-                    ['possession', 'Possession (ფლობა)'],
-                    ['counter', 'Counter (კონტრშეტევა)'],
-                  ]}
-                  onChange={(value) => updateMatchSetting('tacticalStyle', value)}
-                />
-                <MatchdaySelect
-                  label="დაცვის ხაზი (Line)"
-                  value={matchSettingsDraft.defensiveLine}
-                  options={[
-                    ['low', 'Low (დაბალი)'],
-                    ['mid', 'Mid (საშუალო)'],
-                    ['high', 'High (მაღალი)'],
-                  ]}
-                  onChange={(value) => updateMatchSetting('defensiveLine', value)}
-                />
-                <MatchdaySelect
-                  label="ტემპი (Tempo)"
-                  value={matchSettingsDraft.tempo}
-                  options={[
-                    ['controlled', 'Controlled (კონტროლი)'],
-                    ['balanced', 'Balanced (საშუალო)'],
-                    ['direct', 'Direct (სწრაფი)'],
-                  ]}
-                  onChange={(value) => updateMatchSetting('tempo', value)}
-                />
-                <MatchdaySelect
-                  label="ფოკუსი (Focus)"
-                  value={matchSettingsDraft.focusSide}
-                  options={[
-                    ['left', 'Left (მარცხნიდან)'],
-                    ['center', 'Center (ცენტრიდან)'],
-                    ['right', 'Right (მარჯვნიდან)'],
-                  ]}
-                  onChange={(value) => updateMatchSetting('focusSide', value)}
-                />
-              </div>
-              <button
-                type="button"
-                disabled={pendingAction === 'match-settings:save'}
-                onClick={() =>
-                  onRunPlayerAction('match-settings:save', () =>
-                    savePlayManagerMatchSettings({
-                      tacticalStyle: matchSettingsDraft.tacticalStyle,
-                      defensiveLine: matchSettingsDraft.defensiveLine,
-                      tempo: matchSettingsDraft.tempo,
-                      focusSide: matchSettingsDraft.focusSide,
-                    }),
-                  )
-                }
-                className="mt-3 rounded-xl border border-emerald-300/18 bg-emerald-300/10 px-5 py-2.5 text-xs font-black text-white transition hover:bg-emerald-300/16 disabled:cursor-not-allowed disabled:opacity-55"
-              >
-                {pendingAction === 'match-settings:save' ? 'ინახება...' : 'ტაქტიკის შენახვა'}
-              </button>
-            </div>
           </div>
-      );
-    }
-
-    return (
-      <>
-        <div className="overflow-hidden rounded-none border border-emerald-500/24 bg-gradient-to-br from-emerald-950/70 via-black/85 to-black/90 p-5 shadow-[inset_0_0_30px_rgba(16,185,129,0.12)]">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-400">
-              შემდეგი მატჩი · {activeTournamentCup ? activeTournamentCup.name : `ლიგა · ${nextMatch.round} ტური`}
-            </p>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/24 bg-emerald-300/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-emerald-100">
-              🏟️ საშინაო
-            </span>
-          </div>
-
-          <div className="mt-4 grid items-center gap-4 sm:grid-cols-[1fr_auto_1fr]">
-            <div className="text-center sm:text-right">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/40">მასპინძელი</p>
-              <p className="mt-1 truncate text-xl font-black text-white">{team.name}</p>
-            </div>
-            <div className="grid h-12 w-12 place-items-center justify-self-center rounded-full border border-white/12 bg-black/50 text-xs font-black text-emerald-200">
-              VS
-            </div>
-            <div className="text-center sm:text-left">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/40">მოწინააღმდეგე</p>
-              <p className="mt-1 truncate text-xl font-black text-white">{nextMatch.opponent}</p>
-            </div>
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/35 px-3 py-1.5 text-[11px] font-black text-white/72">
-              მზადყოფნა {matchSettingsDraft.readiness}% · XI {lineupDraft.starters.length}/11
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/20 bg-emerald-300/8 px-3 py-1.5 text-[11px] font-black text-emerald-100/80">
-              ⚡ სახლის უპირატესობა +{clubEffects.bonuses.matchdayIncomePct}% · სტადიონი LVL {facilities.arena?.level ?? 1}
-            </span>
-          </div>
-
-          <button
-            type="button"
-            disabled={pendingAction === 'league:league_sim' || lineupDraft.starters.length !== 11}
-            onClick={() => onRunAction('league', 'league_sim')}
-            className="mt-4 w-full rounded-none bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-4 text-base font-black text-black shadow-lg shadow-emerald-500/25 transition hover:from-emerald-400 hover:to-teal-400 hover:scale-[1.01] active:scale-[0.99] disabled:cursor-not-allowed disabled:from-white/10 disabled:to-white/10 disabled:text-white/40 disabled:shadow-none"
-          >
-            {pendingAction === 'league:league_sim'
-              ? 'მატჩი მიმდინარეობს...'
-              : lineupDraft.starters.length !== 11
-                ? `შეავსე შემადგენლობა (${lineupDraft.starters.length}/11)`
-                : 'მატჩის დაწყება ⚽'}
-          </button>
         </div>
 
-        <div className="mt-3 space-y-3">
-          <ArenaLineupCard
-            startersCount={lineupDraft.starters.length}
-            benchCount={lineupDraft.bench.length}
-            formPercent={snapshot.formPercent}
-          />
+        <div className="mt-4 grid gap-4 2xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
           <ArenaTournaments cups={snapshot.cups} />
-          <ArenaQuickLinks recentForm={snapshot.matchHistory.slice(0, 5).map((match) => match.result)} />
+          <div className="space-y-4">
+            <ArenaLineupCard
+              startersCount={lineupDraft.starters.length}
+              benchCount={lineupDraft.bench.length}
+              formPercent={snapshot.formPercent}
+            />
+            <ArenaQuickLinks recentForm={snapshot.matchHistory.slice(0, 5).map((match) => match.result)} />
+          </div>
         </div>
-
       </>
     );
   }
@@ -2871,30 +2664,32 @@ function ArenaLineupCard({
   return (
     <Link
       href="/playmanager/arena/lineup"
-      className="group block overflow-hidden rounded-none border border-emerald-300/16 bg-black/30 p-5 transition hover:border-emerald-300/32 hover:bg-emerald-300/[0.06]"
+      className="group/module relative block overflow-hidden rounded-[24px] border border-emerald-300/16 bg-black/36 p-5 transition hover:border-emerald-300/32"
     >
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-none border border-emerald-300/22 bg-emerald-300/10 text-emerald-100">
-            <UsersRound className="h-5 w-5" />
+      <ModulePhoto moduleKey="lineup" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/96 via-black/70 to-black/18" />
+      <div className="relative flex min-h-[220px] flex-col">
+        <div className="flex items-start justify-between gap-3">
+          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/22 bg-emerald-300/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-emerald-100">
+            Squad
           </span>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/42">Squad</p>
-            <h3 className="mt-0.5 text-lg font-black text-white">შემადგენლობა და ტაქტიკა</h3>
-            <p className="mt-1 text-xs font-bold text-emerald-100/56">
-              სასტარტო {startersCount}/11 · სათადარიგო {benchCount}/4 · ფორმა {formPercent}%
-            </p>
-          </div>
+          <span
+            className={`shrink-0 rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] ${
+              complete
+                ? 'border-emerald-300/30 bg-emerald-300/12 text-emerald-100'
+                : 'border-yellow-300/26 bg-yellow-300/10 text-yellow-100'
+            }`}
+          >
+            {complete ? 'მზადაა' : `${startersCount}/11`}
+          </span>
         </div>
-        <span
-          className={`shrink-0 rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] ${
-            complete
-              ? 'border-emerald-300/30 bg-emerald-300/12 text-emerald-100'
-              : 'border-yellow-300/26 bg-yellow-300/10 text-yellow-100'
-          }`}
-        >
-          {complete ? 'მზადაა →' : `${startersCount}/11 →`}
-        </span>
+
+        <div className="mt-auto">
+          <h3 className="text-xl font-black text-white">შემადგენლობა და ტაქტიკა</h3>
+          <p className="mt-2 text-sm font-bold text-emerald-100/70">
+            სასტარტო {startersCount}/11 · სათადარიგო {benchCount}/4 · ფორმა {formPercent}%
+          </p>
+        </div>
       </div>
     </Link>
   );
@@ -2924,22 +2719,14 @@ function CupCard({
         <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/10 via-white/[0.03] to-transparent" />
 
         <div className="relative flex h-full flex-col p-4">
-          <div className="flex items-start justify-between gap-2">
-            <span className="inline-flex rounded-full border border-white/16 bg-black/36 px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-white/70 backdrop-blur">
-              {slot.eyebrow}
-            </span>
-            <span className="shrink-0 rounded-full border border-white/12 bg-black/42 px-2 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-white/48 backdrop-blur">
-              Empty
+          <div className="flex items-start justify-end">
+            <span className="shrink-0 rounded-full border border-white/12 bg-white/[0.05] px-2 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-white/55 backdrop-blur">
+              ცარიელი
             </span>
           </div>
 
           <div className="mt-auto">
-            <div className="mb-3 h-px w-16 border-t border-white/24" />
-            <h4 className="line-clamp-2 text-lg font-black uppercase tracking-[0.04em] text-white">{slot.title}</h4>
-            <p className="mt-1 text-[11px] font-bold text-white/52">{slot.emptyLabel}</p>
-            <div className="mt-4 h-1 overflow-hidden rounded-full bg-white/10">
-              <span className="block h-full w-1/4 rounded-full bg-gradient-to-r from-white/30 to-white/5" />
-            </div>
+            <h4 className="line-clamp-2 text-[15px] font-black uppercase tracking-[0.04em] text-white">{slot.title}</h4>
           </div>
         </div>
       </div>
@@ -2947,11 +2734,10 @@ function CupCard({
   }
 
   const statusMeta = {
-    registration: { label: 'რეგისტრაცია', cls: 'border-emerald-300/26 bg-emerald-300/10 text-emerald-100' },
-    in_progress: { label: 'მიმდინარეობს', cls: 'border-red-300/26 bg-red-400/10 text-red-100' },
+    registration: { label: 'ღია', cls: 'border-emerald-300/26 bg-emerald-300/10 text-emerald-100' },
+    in_progress: { label: 'დაწყებული', cls: 'border-red-300/26 bg-red-400/10 text-red-100' },
     completed: { label: 'დასრულდა', cls: 'border-white/12 bg-white/[0.05] text-white/55' },
   }[cup.status];
-  const fillPct = Math.min(100, Math.round((cup.participantCount / Math.max(1, cup.maxTeams)) * 100));
   const cupTheme = getCupTheme(cup.templateId);
   return (
     <Link
@@ -2964,40 +2750,15 @@ function CupCard({
       <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black via-black/72 to-transparent" />
 
       <div className="relative flex h-full flex-col p-4">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <span className={`inline-flex rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] backdrop-blur ${cupTheme.kicker}`}>
-              {slot.eyebrow}
-            </span>
-            <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-white/46">{slot.title}</p>
-          </div>
+        <div className="flex items-start justify-end">
           <span className={`shrink-0 rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.1em] backdrop-blur ${statusMeta.cls}`}>
             {statusMeta.label}
           </span>
         </div>
 
-        <div className="flex flex-1 items-center justify-center px-4">
-          <div className={`relative grid h-20 w-20 place-items-center rounded-full border backdrop-blur-sm ${cupTheme.trophyRing}`}>
-            <div className={`absolute inset-1 rounded-full ${cupTheme.trophyGlow}`} />
-            <Trophy className={`relative h-9 w-9 ${cupTheme.trophyIcon}`} />
-          </div>
-        </div>
-
         <div className="mt-auto">
-          <div className={`mb-3 h-px w-16 border-t ${cupTheme.rule}`} />
           <div className="min-w-0">
-            <h4 className="line-clamp-2 text-lg font-black uppercase tracking-[0.04em] text-white">{cup.name}</h4>
-            <p className="mt-1 text-[11px] font-bold text-white/70">საპრიზო {cup.prizePoolLabel}</p>
-          </div>
-
-          <div className="mt-4 flex items-center justify-between gap-3 text-[10px] font-black text-white/58">
-            <span>{cup.participantCount}/{cup.maxTeams} გუნდი</span>
-            <span className={cup.isRegistered ? 'text-emerald-300' : 'text-white/56'}>
-              {cup.isRegistered ? '✓ ჩართული' : `შესვლა ${cup.entryFeeLabel}`}
-            </span>
-          </div>
-          <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10">
-            <span style={{ width: `${fillPct}%` }} className={`block h-full rounded-full bg-gradient-to-r ${cupTheme.progress}`} />
+            <h4 className="line-clamp-2 text-[15px] font-black uppercase tracking-[0.04em] text-white">{cup.name}</h4>
           </div>
         </div>
       </div>
@@ -3043,10 +2804,10 @@ function ArenaTournaments({ cups }: { cups: PlayManagerCitySnapshot['cups'] }) {
   ];
 
   return (
-    <div className="overflow-hidden rounded-none border border-yellow-300/16 bg-black/30 p-5">
+    <div className="overflow-hidden rounded-2xl border border-yellow-300/16 bg-black/30 p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-none border border-yellow-300/24 bg-yellow-300/10 text-yellow-100">
+          <span className="grid h-11 w-11 place-items-center rounded-xl border border-yellow-300/24 bg-yellow-300/10 text-yellow-100">
             <Trophy className="h-5 w-5" />
           </span>
           <div>
@@ -3135,46 +2896,51 @@ function ArenaQuickLinks({ recentForm }: { recentForm: Array<'W' | 'D' | 'L'> })
     <div className="grid gap-3 sm:grid-cols-2">
       <Link
         href="/playmanager/history"
-        className="group flex items-center justify-between gap-3 overflow-hidden rounded-none border border-white/10 bg-black/30 p-5 transition hover:border-emerald-300/28 hover:bg-emerald-300/[0.05]"
+        className="group/module relative overflow-hidden rounded-[24px] border border-white/10 bg-black/32 p-5 transition hover:border-emerald-300/28"
       >
-        <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-none border border-emerald-300/20 bg-emerald-300/10 text-emerald-100">
-            <CalendarDays className="h-5 w-5" />
-          </span>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/42">History</p>
-            <h3 className="mt-0.5 text-base font-black text-white">მატჩების ისტორია</h3>
+        <ModulePhoto moduleKey="history" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/96 via-black/72 to-black/18" />
+        <div className="relative flex min-h-[210px] flex-col">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-emerald-100">
+            History
+          </div>
+
+          <div className="mt-auto">
+            <h3 className="text-lg font-black text-white">მატჩების ისტორია</h3>
+            {recentForm.length > 0 ? (
+              <div className="mt-3 flex gap-1">
+                {recentForm.map((r, i) => (
+                  <span
+                    key={i}
+                    className={`grid h-7 w-7 place-items-center rounded-md text-[10px] font-black ${
+                      r === 'W' ? 'bg-emerald-400/20 text-emerald-300' : r === 'L' ? 'bg-red-400/20 text-red-300' : 'bg-yellow-400/20 text-yellow-300'
+                    }`}
+                  >
+                    {r}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-sm font-bold text-white/56">ბოლო შედეგები აქ გამოჩნდება</p>
+            )}
           </div>
         </div>
-        {recentForm.length > 0 ? (
-          <div className="flex gap-1">
-            {recentForm.map((r, i) => (
-              <span
-                key={i}
-                className={`grid h-6 w-6 place-items-center rounded-md text-[10px] font-black ${
-                  r === 'W' ? 'bg-emerald-400/20 text-emerald-300' : r === 'L' ? 'bg-red-400/20 text-red-300' : 'bg-yellow-400/20 text-yellow-300'
-                }`}
-              >
-                {r}
-              </span>
-            ))}
-          </div>
-        ) : null}
       </Link>
       <Link
         href="/playmanager/museum"
-        className="group flex items-center justify-between gap-3 overflow-hidden rounded-none border border-white/10 bg-black/30 p-5 transition hover:border-yellow-300/28 hover:bg-yellow-300/[0.05]"
+        className="group/module relative overflow-hidden rounded-[24px] border border-white/10 bg-black/32 p-5 transition hover:border-yellow-300/28"
       >
-        <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-none border border-yellow-300/22 bg-yellow-300/10 text-yellow-100">
-            <Star className="h-5 w-5" />
-          </span>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/42">Museum</p>
-            <h3 className="mt-0.5 text-base font-black text-white">ტროფეების მუზეუმი</h3>
+        <ModulePhoto moduleKey="museum" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/96 via-black/72 to-black/18" />
+        <div className="relative flex min-h-[210px] flex-col">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-yellow-300/22 bg-yellow-300/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-yellow-100">
+            Museum
+          </div>
+          <div className="mt-auto">
+            <h3 className="text-lg font-black text-white">ტროფეების მუზეუმი</h3>
+            <p className="mt-2 text-sm font-bold text-white/60">ყველა მოგებული ტიტული და კლუბის ისტორია</p>
           </div>
         </div>
-        <span className="text-2xl">🏆</span>
       </Link>
     </div>
   );
@@ -3194,353 +2960,10 @@ function GamePanel({ title, icon, children }: { title: string; icon: ReactNode; 
   );
 }
 
-function PlayerStrip({
-  title,
-  players,
-  selectedPlayerId,
-  onSelect,
-}: {
-  title: string;
-  players: PlayManagerCitySnapshot['squad'];
-  selectedPlayerId: string | null;
-  onSelect: (playerId: string) => void;
-}) {
-  return (
-    <div className="mt-3 rounded-none border border-white/10 bg-black/24 p-3">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/42">{title}</p>
-        <span className="rounded-full border border-white/10 bg-black/28 px-2 py-1 text-[10px] font-black text-white/55">
-          {players.length}
-        </span>
-      </div>
-      {players.length > 0 ? (
-        <div className="flex gap-3 overflow-x-auto pb-2 pt-1">
-          {players.map((player) => (
-            <div key={player.id} className="relative shrink-0" style={{ zoom: 0.68 }}>
-              <button
-                type="button"
-                onClick={() => onSelect(player.id)}
-                className={`shrink-0 rounded-none transition-transform hover:-translate-y-1 focus:outline-none ${
-                  selectedPlayerId === player.id ? 'ring-2 ring-emerald-300/60 ring-offset-2 ring-offset-transparent' : ''
-                }`}
-              >
-                <PlayerFutCard
-                  name={player.name}
-                  position={player.position}
-                  ovr={player.ovrCurrent}
-                  role={player.role}
-                  availability={player.availability}
-                  talent={player.talent}
-                  editorConfig={DEFAULT_FUT_CARD_EDITOR_CONFIG}
-                />
-              </button>
-              <Link
-                href={`/playmanager/players/${player.id}`}
-                onClick={(event) => event.stopPropagation()}
-                className="absolute right-2 top-2 z-20 grid h-8 w-8 place-items-center rounded-full border border-emerald-200/36 bg-black/76 text-emerald-100 shadow-[0_0_18px_rgba(16,185,129,0.28)] transition hover:border-emerald-100/70 hover:bg-emerald-300/18"
-                aria-label={`${player.name} პროფილის გახსნა`}
-                title="პროფილი"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </Link>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-xl border border-dashed border-white/10 px-3 py-4 text-xs font-bold text-white/38">
-          სია ცარიელია
-        </div>
-      )}
-    </div>
-  );
-}
-
-function LineupPlayerCard({
-  player,
-  onMove,
-}: {
-  player: PlayManagerCitySnapshot['squad'][number] | null;
-  onMove: (targetRole: 'starter' | 'bench' | 'reserve', playerId: string) => void;
-}) {
-  const [silWidth, setSilWidth] = useState(254);
-  const [silHeight, setSilHeight] = useState(179);
-  const [silX, setSilX] = useState(1);
-  const [silY, setSilY] = useState(9);
-  const [silOpacity, setSilOpacity] = useState(1);
-  const [contentY, setContentY] = useState(-91);
-  const [nameSize, setNameSize] = useState(21);
-  const [statsScale, setStatsScale] = useState(1);
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
-
-  if (!player) {
-    return (
-      <div className="rounded-none border border-dashed border-white/12 bg-black/24 p-5 text-sm font-bold text-white/42">
-        მოთამაშე აირჩიე მოედანზე ან სიიდან.
-      </div>
-    );
-  }
-
-  const fitness = Math.max(0, 100 - player.fatigue);
-
-  return (
-    <aside className="rounded-none border border-emerald-300/16 bg-black/40 p-4 shadow-[inset_0_0_26px_rgba(16,185,129,0.08)]">
-      {/* FUT card */}
-      <div className="mb-4 flex justify-center">
-        <PlayerFutCard
-          name={player.name}
-          position={player.position}
-          ovr={player.ovrCurrent}
-          role={player.role}
-          availability={player.availability}
-          talent={player.talent}
-          editorConfig={{
-            ...DEFAULT_FUT_CARD_EDITOR_CONFIG,
-            silWidth,
-            silHeight,
-            silX,
-            silY,
-            silOpacity,
-            contentY,
-            nameSize,
-            statsScale,
-          }}
-        />
-      </div>
-      <Link
-        href={`/playmanager/players/${player.id}`}
-        className="mb-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-none border border-emerald-300/18 bg-emerald-300/10 text-xs font-black text-emerald-100 transition hover:border-emerald-200/42 hover:bg-emerald-300/16"
-      >
-        <ExternalLink className="h-4 w-4" />
-        პროფილის გვერდი
-      </Link>
-
-      {/* FUT Card Layout Editor */}
-      <div className="mt-4 mb-4 rounded-none border border-white/10 bg-black/20 p-3">
-        <button
-          type="button"
-          onClick={() => setIsEditorOpen(!isEditorOpen)}
-          className="flex w-full items-center justify-between text-xs font-black uppercase tracking-[0.1em] text-emerald-400 focus:outline-none"
-        >
-          <span>🎨 FUT Card Layout Editor</span>
-          <span>{isEditorOpen ? '▲ Close' : '▼ Open'}</span>
-        </button>
-
-        {isEditorOpen && (
-          <div className="mt-4 space-y-3 border-t border-white/5 pt-3">
-            <div>
-              <div className="flex justify-between text-[10px] text-white/60 mb-1">
-                <span>WIDTH: {silWidth}px</span>
-              </div>
-              <input
-                type="range"
-                min="100"
-                max="300"
-                value={silWidth}
-                onChange={(e) => setSilWidth(Number(e.target.value))}
-                className="w-full accent-emerald-400"
-              />
-            </div>
-            
-            <div>
-              <div className="flex justify-between text-[10px] text-white/60 mb-1">
-                <span>HEIGHT: {silHeight}px</span>
-              </div>
-              <input
-                type="range"
-                min="100"
-                max="300"
-                value={silHeight}
-                onChange={(e) => setSilHeight(Number(e.target.value))}
-                className="w-full accent-emerald-400"
-              />
-            </div>
-
-            <div>
-              <div className="flex justify-between text-[10px] text-white/60 mb-1">
-                <span>POSITION X: {silX}px</span>
-              </div>
-              <input
-                type="range"
-                min="-100"
-                max="100"
-                value={silX}
-                onChange={(e) => setSilX(Number(e.target.value))}
-                className="w-full accent-emerald-400"
-              />
-            </div>
-
-            <div>
-              <div className="flex justify-between text-[10px] text-white/60 mb-1">
-                <span>POSITION Y: {silY}px</span>
-              </div>
-              <input
-                type="range"
-                min="-100"
-                max="100"
-                value={silY}
-                onChange={(e) => setSilY(Number(e.target.value))}
-                className="w-full accent-emerald-400"
-              />
-            </div>
-
-            <div>
-              <div className="flex justify-between text-[10px] text-white/60 mb-1">
-                <span>OPACITY: {silOpacity}</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={silOpacity}
-                onChange={(e) => setSilOpacity(Number(e.target.value))}
-                className="w-full accent-emerald-400"
-              />
-            </div>
-
-            <div>
-              <div className="flex justify-between text-[10px] text-white/60 mb-1">
-                <span>CONTENT Y (Margin Top): {contentY}px</span>
-              </div>
-              <input
-                type="range"
-                min="-150"
-                max="50"
-                value={contentY}
-                onChange={(e) => setContentY(Number(e.target.value))}
-                className="w-full accent-emerald-400"
-              />
-            </div>
-
-            <div>
-              <div className="flex justify-between text-[10px] text-white/60 mb-1">
-                <span>NAME SIZE: {nameSize}px</span>
-              </div>
-              <input
-                type="range"
-                min="10"
-                max="36"
-                value={nameSize}
-                onChange={(e) => setNameSize(Number(e.target.value))}
-                className="w-full accent-emerald-400"
-              />
-            </div>
-
-            <div>
-              <div className="flex justify-between text-[10px] text-white/60 mb-1">
-                <span>STATS SCALE: {statsScale}</span>
-              </div>
-              <input
-                type="range"
-                min="0.5"
-                max="1.5"
-                step="0.05"
-                value={statsScale}
-                onChange={(e) => setStatsScale(Number(e.target.value))}
-                className="w-full accent-emerald-400"
-              />
-            </div>
-
-            <div className="grid gap-2 rounded-xl border border-white/5 bg-black/40 p-3 text-[9px] font-black uppercase tracking-[0.12em] text-white/56 sm:grid-cols-2">
-              <span className="truncate">Silhouette {silWidth}x{silHeight}</span>
-              <span className="truncate">Shift {silX}px / {silY}px</span>
-              <span className="truncate">Opacity {silOpacity}</span>
-              <span className="truncate">Content Y {contentY}px</span>
-              <span className="truncate">Name {nameSize}px</span>
-              <span className="truncate">Stats x{statsScale}</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Quick stats row */}
-      <div className="grid grid-cols-3 gap-2 mb-3">
-        <MiniStat label="BASE" value={String(player.ovrBase)} />
-        <MiniStat label="FITNESS" value={`${fitness}%`} />
-        <MiniStat label="MORALE" value={`${player.morale}%`} />
-      </div>
-
-      {player.availability === 'injured' ? (
-        <p className="mt-1 mb-3 rounded-none border border-red-400/18 bg-red-950/28 px-3 py-2 text-xs font-black text-red-100">
-          ტრავმა · გამოტოვებს {player.injuryMatches} მატჩს
-        </p>
-      ) : null}
-
-      <div className="mt-5 space-y-2">
-        {player.role === 'starter' ? (
-          <button
-            type="button"
-            onClick={() => onMove('bench', player.id)}
-            className="w-full rounded-none border border-yellow-300/18 bg-yellow-300/10 px-4 py-3 text-xs font-black text-white transition hover:bg-yellow-300/16"
-          >
-            მოხსნა
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => onMove('starter', player.id)}
-            className="w-full rounded-none border border-emerald-300/20 bg-emerald-300/12 px-4 py-3 text-xs font-black text-white transition hover:bg-emerald-300/18"
-          >
-            სასტარტოში
-          </button>
-        )}
-
-        {player.role !== 'bench' ? (
-          <button
-            type="button"
-            onClick={() => onMove('bench', player.id)}
-            className="w-full rounded-none border border-white/10 bg-white/[0.04] px-4 py-3 text-xs font-black text-white transition hover:bg-white/[0.07]"
-          >
-            სათადარიგო
-          </button>
-        ) : null}
-
-        {player.role !== 'reserve' ? (
-          <button
-            type="button"
-            onClick={() => onMove('reserve', player.id)}
-            className="w-full rounded-none border border-red-900/28 bg-red-950/24 px-4 py-3 text-xs font-black text-white transition hover:bg-red-950/34"
-          >
-            რეზერვი
-          </button>
-        ) : null}
-      </div>
-    </aside>
-  );
-}
-
-function MatchdaySelect<T extends string>({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: T;
-  options: ReadonlyArray<readonly [T, string]>;
-  onChange: (value: T) => void;
-}) {
-  return (
-    <label className="rounded-none border border-white/10 bg-black/30 px-3 py-3">
-      <span className="text-[10px] font-black uppercase tracking-[0.16em] text-white/38">{label}</span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.currentTarget.value as T)}
-        className="mt-2 w-full rounded-xl border border-emerald-300/14 bg-emerald-300/8 px-3 py-2 text-sm font-black text-white outline-none"
-      >
-        {options.map(([optionValue, optionLabel]) => (
-          <option key={optionValue} value={optionValue} className="bg-[#04110c] text-white">
-            {optionLabel}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
 
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-black/34 px-2 py-2">
+    <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5">
       <p className="text-[9px] font-black text-white/35">{label}</p>
       <p className="text-sm font-black text-white">{value}</p>
     </div>
@@ -3556,107 +2979,3 @@ function FinanceCard({ label, value, tone }: { label: string; value: string; ton
   );
 }
 
-function StatusIcon({ status }: { status: FacilityStatus }) {
-  if (status === 'locked') return <LockKeyhole className="h-3.5 w-3.5" />;
-  if (status === 'completed') return <CheckCircle2 className="h-3.5 w-3.5" />;
-  if (status === 'upgradeable') return <TrendingUp className="h-3.5 w-3.5" />;
-  if (status === 'attention') return <Star className="h-3.5 w-3.5" />;
-  return <ShieldCheck className="h-3.5 w-3.5" />;
-}
-
-interface PitchPositionsEditorProps {
-  positions: Array<{ label: string; top: number; left: number; index: number }>;
-  onChange: (positions: Array<{ label: string; top: number; left: number; index: number }>) => void;
-}
-
-function PitchPositionsEditor({ positions, onChange }: PitchPositionsEditorProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedIdx, setSelectedIdx] = useState<number>(0);
-
-  const current = positions[selectedIdx];
-
-  const handleUpdate = (field: 'top' | 'left', val: number) => {
-    const next = positions.map((p, idx) => {
-      if (idx === selectedIdx) {
-        return { ...p, [field]: val };
-      }
-      return p;
-    });
-    onChange(next);
-  };
-
-  if (!current) return null;
-
-  return (
-    <div className="rounded-none border border-emerald-300/16 bg-black/40 p-4 shadow-[inset_0_0_26px_rgba(16,185,129,0.08)]">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between text-xs font-black uppercase tracking-[0.1em] text-emerald-400 focus:outline-none"
-      >
-        <span>📐 Pitch Positions Editor</span>
-        <span>{isOpen ? '▲ Close' : '▼ Open'}</span>
-      </button>
-
-      {isOpen && (
-        <div className="mt-4 space-y-4 border-t border-white/5 pt-4">
-          <div>
-            <label className="block text-[10px] font-black uppercase tracking-[0.16em] text-white/38 mb-2">Select Slot</label>
-            <select
-              value={selectedIdx}
-              onChange={(e) => setSelectedIdx(Number(e.target.value))}
-              className="w-full rounded-xl border border-emerald-300/14 bg-emerald-300/8 px-3 py-2 text-sm font-black text-white outline-none"
-            >
-              {positions.map((p, idx) => (
-                <option key={`${p.label}-${idx}`} value={idx} className="bg-[#04110c] text-white">
-                  {p.label} (Index {p.index})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <div className="flex justify-between text-[10px] text-white/60 mb-1 font-bold">
-              <span>TOP: {current.top}%</span>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={current.top}
-              onChange={(e) => handleUpdate('top', Number(e.target.value))}
-              className="w-full accent-emerald-400"
-            />
-          </div>
-
-          <div>
-            <div className="flex justify-between text-[10px] text-white/60 mb-1 font-bold">
-              <span>LEFT: {current.left}%</span>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={current.left}
-              onChange={(e) => handleUpdate('left', Number(e.target.value))}
-              className="w-full accent-emerald-400"
-            />
-          </div>
-
-          <div className="bg-black/40 p-2.5 rounded-xl border border-white/5 mt-2">
-            <span className="text-[10px] font-mono text-emerald-300 block select-all whitespace-pre max-h-40 overflow-y-auto">
-              {`const PITCH_POSITIONS = [\n` +
-                positions
-                  .map(
-                    (p) =>
-                      `  { label: '${p.label}', top: '${p.top}%', left: '${p.left}%', index: ${p.index} },`
-                  )
-                  .join('\n') +
-                `\n];`}
-            </span>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
