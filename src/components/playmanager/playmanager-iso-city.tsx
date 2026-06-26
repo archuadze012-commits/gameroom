@@ -42,6 +42,7 @@ const SPRITES: BuildingSprite[] = [
   { key: 'headquarters', src: '/playmanager/city/buildings/headquarters.webp', label: 'ოფისი',          href: '/playmanager/finance',   tone: 'gold',  imgX: 1240, imgY: 60,  w: 700, h: 700, rot: 0, sy: 1 },
   { key: 'fountain',    src: '/playmanager/city/buildings/fountain.webp',    label: 'შადრევანი',       href: '',                       tone: 'green', imgX: 1430, imgY: 560, w: 560, h: 470, rot: 0, sy: 1, decorative: true },
   { key: 'gamestore',   src: '/playmanager/city/buildings/gamestore.webp',   label: 'PlayGame',        href: '/',                      tone: 'green', imgX: 250,  imgY: 700, w: 680, h: 620, rot: 0, sy: 1 },
+  { key: 'tower',       src: '/playmanager/city/buildings/tower.webp',       label: 'გუნდი',           href: '/playmanager/residence', tone: 'green', imgX: 1240, imgY: -120, w: 720, h: 980, rot: 0, sy: 1 },
 ];
 
 const TONE: Record<Tone, string> = {
