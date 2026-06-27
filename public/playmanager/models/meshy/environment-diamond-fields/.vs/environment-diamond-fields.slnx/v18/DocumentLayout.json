@@ -1,0 +1,94 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\playmanager\\models\\meshy\\environment-diamond-fields\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\playmanager\\models\\meshy\\trophy-hall.glb||{25834150-CD7E-11D0-92DF-00A0C9138C45}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\playmanager\\models\\meshy\\training-center.glb||{25834150-CD7E-11D0-92DF-00A0C9138C45}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\playmanager\\models\\meshy\\training-annex.glb||{25834150-CD7E-11D0-92DF-00A0C9138C45}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\playmanager\\models\\meshy\\stadium.glb||{25834150-CD7E-11D0-92DF-00A0C9138C45}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\playmanager\\models\\meshy\\environment-diamond-fields.glb||{25834150-CD7E-11D0-92DF-00A0C9138C45}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "trophy-hall.glb",
+              "DocumentMoniker": "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\playmanager\\models\\meshy\\trophy-hall.glb",
+              "RelativeDocumentMoniker": "..\\trophy-hall.glb",
+              "ToolTip": "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\playmanager\\models\\meshy\\trophy-hall.glb",
+              "RelativeToolTip": "..\\trophy-hall.glb",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-06-23T18:19:17.564Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "training-center.glb",
+              "DocumentMoniker": "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\playmanager\\models\\meshy\\training-center.glb",
+              "RelativeDocumentMoniker": "..\\training-center.glb",
+              "ToolTip": "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\playmanager\\models\\meshy\\training-center.glb",
+              "RelativeToolTip": "..\\training-center.glb",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-06-23T18:19:16.966Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "training-annex.glb",
+              "DocumentMoniker": "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\playmanager\\models\\meshy\\training-annex.glb",
+              "RelativeDocumentMoniker": "..\\training-annex.glb",
+              "ToolTip": "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\playmanager\\models\\meshy\\training-annex.glb",
+              "RelativeToolTip": "..\\training-annex.glb",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-06-23T18:19:16.07Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "stadium.glb",
+              "DocumentMoniker": "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\playmanager\\models\\meshy\\stadium.glb",
+              "RelativeDocumentMoniker": "..\\stadium.glb",
+              "ToolTip": "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\playmanager\\models\\meshy\\stadium.glb",
+              "RelativeToolTip": "..\\stadium.glb",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-06-23T18:19:12.814Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "environment-diamond-fields.glb",
+              "DocumentMoniker": "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\playmanager\\models\\meshy\\environment-diamond-fields.glb",
+              "RelativeDocumentMoniker": "..\\environment-diamond-fields.glb",
+              "ToolTip": "C:\\Users\\LEONSIO\\Desktop\\gamingweb - Copy\\public\\playmanager\\models\\meshy\\environment-diamond-fields.glb",
+              "RelativeToolTip": "..\\environment-diamond-fields.glb",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-06-23T18:19:11.274Z"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

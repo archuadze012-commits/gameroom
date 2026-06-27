@@ -3,6 +3,7 @@
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { CheckCircle2, Crown, Gem, Gift, Loader2, Package, Sparkles, X, Zap } from "lucide-react";
 import type { BoxItem, ItemTier, OpenBoxBundleResult, OpenBoxResult, OpenedBoxItem } from "@/types/events";
+import styles from "./lobby-box-open-modal.module.css";
 
 const TIER_CARD: Record<ItemTier, string> = {
   common:    "border-slate-500/35 from-slate-700/70 via-slate-900/85 to-[var(--gr-bg-0)]",
@@ -135,7 +136,7 @@ function RewardNameplate({ name, animated = false }: { name: string; animated?: 
   const isIcefire = normalized.includes("caucasus") || normalized.includes("icefire");
 
   return (
-    <div className={`relative mx-auto mt-4 max-w-[620px] px-3 py-2 ${animated ? "crate-kinetic-title-glow" : ""}`}>
+    <div className={`relative mx-auto mt-4 max-w-[620px] px-3 py-2 ${animated ? styles.crateKineticTitleGlow : ""}`}>
       <div aria-hidden className="absolute inset-x-12 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(125,217,255,0.92),rgba(246,201,95,0.92),transparent)]" />
       <div aria-hidden className="absolute inset-x-12 bottom-0 h-px bg-[linear-gradient(90deg,transparent,rgba(246,201,95,0.86),rgba(125,217,255,0.78),transparent)]" />
       <div aria-hidden className="absolute left-1/2 top-0 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[rgba(246,201,95,0.75)] bg-[rgba(8,13,18,0.96)] shadow-[0_0_16px_rgba(125,217,255,0.5)]" />
@@ -462,9 +463,9 @@ export function LobbyBoxOpenModal({
   const reelMotionActive = phase === "idle" || phase === "loading";
   const coverDropInActive = phase === "loading" || phase === "spinning";
   const coverVideoClassName = [
-    "crate-cover-video pointer-events-none h-full w-full origin-center object-cover",
+    `${styles.crateCoverVideo} pointer-events-none h-full w-full origin-center object-cover`,
     isCaucasusCrate ? "scale-[1.14] sm:scale-[1.18]" : "",
-    coverDropInActive ? "crate-cover-drop-in" : "",
+    coverDropInActive ? styles.crateCoverDropIn : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -509,7 +510,7 @@ export function LobbyBoxOpenModal({
           </div>
 
           <div className="mr-10 inline-flex items-center gap-2.5 rounded-full border border-[#e33b3b]/50 bg-[#e33b3b]/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.15em] text-[#eef9ff]/90 shadow-[0_0_20px_rgba(227,59,59,0.2)]">
-            <span className="crate-chip-flicker h-2.5 w-2.5 rounded-full bg-[#e33b3b] shadow-[0_0_18px_rgba(227,59,59,0.9)]" />
+            <span className={`${styles.crateChipFlicker} h-2.5 w-2.5 rounded-full bg-[#e33b3b] shadow-[0_0_18px_rgba(227,59,59,0.9)]`} />
             {spinLabel}
           </div>
         </header>
@@ -519,7 +520,7 @@ export function LobbyBoxOpenModal({
             <section className={`relative grid min-h-[240px] place-items-center overflow-hidden ${showSpinStage ? "rounded-[24px] border border-[rgba(255,49,49,0.28)] bg-[linear-gradient(180deg,rgba(8,10,18,0.96),rgba(3,6,12,0.98))] shadow-[0_0_30px_rgba(0,0,0,0.5)] p-4" : "mx-auto w-full border-0 bg-transparent p-0"}`}>
               <div
                 className={`relative mx-auto w-full overflow-hidden rounded-[20px] border border-[rgba(255,49,49,0.42)] bg-[linear-gradient(180deg,rgba(7,10,18,0.98),rgba(2,4,9,0.98))] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06),0_18px_28px_rgba(0,0,0,0.36)] ${
-                  phase === "loading" ? "box-shake" : phase === "idle" ? "" : "crate-kinetic-cover"
+                  phase === "loading" ? "box-shake" : phase === "idle" ? "" : styles.crateKineticCover
                 } ${coverIsVideo ? "aspect-[1600/1080] max-w-none" : "aspect-[4/3] max-w-[430px]"}`}
               >
                 <div aria-hidden className="pointer-events-none absolute inset-0 z-10 gr-dot-grid opacity-[0.08]" />
@@ -551,7 +552,7 @@ export function LobbyBoxOpenModal({
                     <img
                       src={coverMediaUrl}
                       alt={boxName}
-                      className={`h-full w-full object-cover ${coverDropInActive ? "crate-cover-drop-in" : ""}`}
+                      className={`h-full w-full object-cover ${coverDropInActive ? styles.crateCoverDropIn : ""}`}
                     />
                   )
                 ) : (
@@ -560,7 +561,7 @@ export function LobbyBoxOpenModal({
                   </div>
                 )}
                 <div aria-hidden className="absolute inset-0 border-y border-x-0 border-[rgba(255,255,255,0.08)] shadow-[inset_0_0_42px_rgba(0,0,0,0.5)]" />
-                <div aria-hidden className="crate-kinetic-scan pointer-events-none absolute inset-0 z-20" />
+                <div aria-hidden className={`${styles.crateKineticScan} pointer-events-none absolute inset-0 z-20`} />
                 {phase === "loading" && (
                   <div className="absolute inset-0 grid place-items-center bg-black/55 backdrop-blur-sm">
                     <Loader2 className="h-16 w-16 animate-spin text-[#f6c95f]" />
@@ -574,8 +575,8 @@ export function LobbyBoxOpenModal({
             </section>
 
             {showSpinStage && (
-              <section className={`relative min-h-[240px] overflow-hidden rounded-[24px] border border-[#71d0ff]/26 bg-[linear-gradient(160deg,rgba(2,6,11,0.98),rgba(8,22,32,0.84))] shadow-[0_0_30px_rgba(0,0,0,0.5)] p-4 sm:p-5 ${revealMotionActive ? "crate-kinetic-result" : ""}`}>
-                <div aria-hidden className={`crate-kinetic-aura pointer-events-none absolute left-1/2 top-1/2 h-72 w-72 rounded-full blur-2xl ${TIER_HALO[previewTier]}`} />
+              <section className={`relative min-h-[240px] overflow-hidden rounded-[24px] border border-[#71d0ff]/26 bg-[linear-gradient(160deg,rgba(2,6,11,0.98),rgba(8,22,32,0.84))] shadow-[0_0_30px_rgba(0,0,0,0.5)] p-4 sm:p-5 ${revealMotionActive ? styles.crateKineticResult : ""}`}>
+                <div aria-hidden className={`${styles.crateKineticAura} pointer-events-none absolute left-1/2 top-1/2 h-72 w-72 rounded-full blur-2xl ${TIER_HALO[previewTier]}`} />
                 <p className={`relative z-10 text-center text-[10px] font-black uppercase tracking-[0.26em] ${TIER_TEXT[previewTier]}`}>
                   {TIER_LABEL[previewTier]} · ქართული DROP
                 </p>
@@ -595,7 +596,7 @@ export function LobbyBoxOpenModal({
                       alt={previewName}
                       className={`max-h-[190px] w-full object-contain drop-shadow-[0_18px_22px_rgba(0,0,0,0.72)] ${
                         revealMotionActive
-                          ? `crate-kinetic-weapon-float ${TIER_SHADOW[previewTier]}`
+                          ? `${styles.crateKineticWeaponFloat} ${TIER_SHADOW[previewTier]}`
                           : phase === "loading"
                             ? "opacity-70"
                             : TIER_SHADOW[previewTier]
@@ -637,7 +638,7 @@ export function LobbyBoxOpenModal({
             >
               <div
                 ref={stripRef}
-                className={`absolute left-0 top-0 flex will-change-transform ${reelMotionActive ? "crate-kinetic-reel-idle" : ""}`}
+                className={`absolute left-0 top-0 flex will-change-transform ${reelMotionActive ? styles.crateKineticReelIdle : ""}`}
                 style={reelStyle}
               >
                 {displayReel.map((item, i) => (

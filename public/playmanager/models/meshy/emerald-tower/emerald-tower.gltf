@@ -1,0 +1,262 @@
+{
+  "accessors": [
+    {
+      "bufferView": 1,
+      "byteOffset": 0,
+      "componentType": 5126,
+      "normalized": false,
+      "count": 618688,
+      "type": "VEC3",
+      "max": [
+        0.7432510256767273,
+        0.9488949775695801,
+        0.743353009223938
+      ],
+      "min": [
+        -0.7452449798583984,
+        -0.9507750272750854,
+        -0.7451639771461487
+      ]
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 0,
+      "componentType": 5126,
+      "normalized": false,
+      "count": 618688,
+      "type": "VEC2",
+      "max": [
+        0.9999619722366333,
+        0.9999619722366333
+      ],
+      "min": [
+        0.000037999998312443495,
+        0.0044029951095581055
+      ]
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 0,
+      "componentType": 5126,
+      "normalized": false,
+      "count": 618688,
+      "type": "VEC3",
+      "max": [
+        1,
+        1,
+        1
+      ],
+      "min": [
+        -1,
+        -1,
+        -1
+      ]
+    },
+    {
+      "bufferView": 0,
+      "byteOffset": 0,
+      "componentType": 5125,
+      "normalized": false,
+      "count": 3253938,
+      "type": "SCALAR"
+    }
+  ],
+  "asset": {
+    "generator": "pygltflib@v1.16.5",
+    "version": "2.0"
+  },
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 13015752,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 13015752,
+      "byteLength": 7424256,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 20440008,
+      "byteLength": 4949504,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 25389512,
+      "byteLength": 7424256,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 32813768,
+      "byteLength": 13731510
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 46545280,
+      "byteLength": 2499933
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 49045216,
+      "byteLength": 14294254
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 63339472,
+      "byteLength": 175105
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 63514580,
+      "uri": "emerald-tower.bin"
+    }
+  ],
+  "images": [
+    {
+      "uri": "image_0.jpg"
+    },
+    {
+      "uri": "image_1.jpg"
+    },
+    {
+      "uri": "image_2.jpg"
+    },
+    {
+      "uri": "image_3.jpg"
+    }
+  ],
+  "materials": [
+    {
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "metallicFactor": 1,
+        "roughnessFactor": 1,
+        "baseColorTexture": {
+          "index": 0,
+          "texCoord": 0
+        },
+        "metallicRoughnessTexture": {
+          "index": 1,
+          "texCoord": 0
+        }
+      },
+      "normalTexture": {
+        "index": 2,
+        "texCoord": 0
+      },
+      "emissiveFactor": [
+        1,
+        1,
+        1
+      ],
+      "emissiveTexture": {
+        "index": 3,
+        "texCoord": 0
+      },
+      "alphaMode": "OPAQUE",
+      "doubleSided": true
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 2,
+            "TEXCOORD_0": 1
+          },
+          "indices": 3,
+          "mode": 4,
+          "material": 0
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "matrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    },
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    },
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    },
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "scene": 0,
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0
+    },
+    {
+      "sampler": 1,
+      "source": 1
+    },
+    {
+      "sampler": 2,
+      "source": 2
+    },
+    {
+      "sampler": 3,
+      "source": 3
+    }
+  ]
+}

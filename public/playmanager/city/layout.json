@@ -1,0 +1,122 @@
+{
+  "sprites": [
+    {
+      "key": "arena",
+      "src": "/playmanager/city/buildings/arena.webp",
+      "label": "არენა",
+      "href": "/playmanager/arena?module=matchday",
+      "tone": "gold",
+      "imgX": 1050,
+      "imgY": 120,
+      "w": 1052,
+      "h": 813,
+      "rot": 0,
+      "sy": 0.78
+    },
+    {
+      "key": "training",
+      "src": "/playmanager/city/buildings/training.webp",
+      "label": "საწვრთნელი",
+      "href": "/playmanager/training",
+      "tone": "green",
+      "imgX": 608,
+      "imgY": 77,
+      "w": 929,
+      "h": 427,
+      "rot": 1,
+      "sy": 0.87
+    },
+    {
+      "key": "medical",
+      "src": "/playmanager/city/buildings/medical.webp",
+      "label": "მედცენტრი",
+      "href": "/playmanager/medical",
+      "tone": "green",
+      "imgX": 58,
+      "imgY": 484,
+      "w": 867,
+      "h": 304,
+      "rot": 0,
+      "sy": 1.18
+    },
+    {
+      "key": "trophy_hall",
+      "src": "/playmanager/city/buildings/trophy_hall.webp",
+      "label": "თასების დარბაზი",
+      "href": "/playmanager/museum",
+      "tone": "gold",
+      "imgX": 2126,
+      "imgY": 785,
+      "w": 720,
+      "h": 289,
+      "rot": 0,
+      "sy": 0.96
+    },
+    {
+      "key": "academy",
+      "src": "/playmanager/city/buildings/academy.webp",
+      "label": "აკადემია",
+      "href": "/playmanager/academy",
+      "tone": "green",
+      "imgX": 1196,
+      "imgY": 5,
+      "w": 820,
+      "h": 366,
+      "rot": 0,
+      "sy": 0.96
+    },
+    {
+      "key": "headquarters",
+      "src": "/playmanager/city/buildings/headquarters.webp",
+      "label": "ოფისი",
+      "href": "/playmanager/finance",
+      "tone": "gold",
+      "imgX": 1908,
+      "imgY": -26,
+      "w": 403,
+      "h": 466,
+      "rot": 359,
+      "sy": 1.12
+    },
+    {
+      "key": "fountain",
+      "src": "/playmanager/city/buildings/fountain.webp",
+      "label": "შადრევანი",
+      "href": "",
+      "tone": "green",
+      "imgX": 1297,
+      "imgY": 853,
+      "w": 560,
+      "h": 296,
+      "rot": 0,
+      "sy": 0.8,
+      "decorative": true
+    },
+    {
+      "key": "gamestore",
+      "src": "/playmanager/city/buildings/gamestore.webp",
+      "label": "PlayGame",
+      "href": "/",
+      "tone": "green",
+      "imgX": 1903,
+      "imgY": 592,
+      "w": 421,
+      "h": 389,
+      "rot": 1,
+      "sy": 0.89
+    },
+    {
+      "key": "tower",
+      "src": "/playmanager/city/buildings/tower.webp",
+      "label": "გუნდი",
+      "href": "/playmanager/residence",
+      "tone": "green",
+      "imgX": 2383,
+      "imgY": 314,
+      "w": 588,
+      "h": 451,
+      "rot": 0,
+      "sy": 0.99
+    }
+  ]
+}

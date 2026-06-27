@@ -1,0 +1,5 @@
+{
+  "sprites": [
+    { "key": "training", "src": "/playmanager/iso/sprites/training.webp", "href": "/playmanager/training", "x": 888, "y": 760, "w": 720 }
+  ]
+}

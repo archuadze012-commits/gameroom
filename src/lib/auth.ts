@@ -1,12 +1,28 @@
 import { cache } from "react";
 import { createSupabaseServerClient } from "./supabase/server";
 
+function isMissingRefreshTokenError(error: unknown) {
+  return (
+    !!error &&
+    typeof error === "object" &&
+    "code" in error &&
+    error.code === "refresh_token_not_found"
+  );
+}
+
 export const getSession = cache(async () => {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user;
+  try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return user;
+  } catch (error) {
+    if (isMissingRefreshTokenError(error)) {
+      return null;
+    }
+    throw error;
+  }
 });
 
 export type SessionUser = Awaited<ReturnType<typeof getSession>>;

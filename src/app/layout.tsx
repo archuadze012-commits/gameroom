@@ -2,21 +2,24 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Orbitron } from "next/font/google";
 import "./globals.css";
-import { SiteHeader } from "@/components/layout/site-header";
-import { SiteFooter } from "@/components/layout/site-footer";
-import { Toaster } from "@/components/ui/sonner";
 import { after } from "next/server";
 import { updateLastSeen } from "@/lib/update-last-seen";
-import { ClientChrome } from "@/components/layout/client-chrome";
 import { getSession } from "@/lib/auth";
-import { hasPermission } from "@/lib/admin";
 import { EditModeProvider } from "@/components/admin/edit-mode-context";
-import { GlobalBackground } from "@/components/layout/global-background";
+import { AppRouteChrome } from "@/components/layout/app-route-chrome";
+
+const ROOT_ADMIN_EMAILS = [
+  "archuadze012@gmail.com",
+  ...(process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((email) => email.trim())
+    .filter(Boolean),
+];
 
 const firaGO = localFont({
   src: [
-    { path: "./fonts/firago/FiraGO-Regular.ttf", weight: "400", style: "normal" },
-    { path: "./fonts/firago/FiraGO-Bold.ttf", weight: "700", style: "normal" },
+    { path: "./fonts/firago/FiraGO-Regular.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/firago/FiraGO-Bold.woff2", weight: "700", style: "normal" },
   ],
   variable: "--font-firago",
   display: "swap",
@@ -24,7 +27,7 @@ const firaGO = localFont({
 });
 
 const alkSanet = localFont({
-  src: "./fonts/alk-sanet.ttf",
+  src: "./fonts/alk-sanet.woff2",
   variable: "--font-alk-sanet",
   display: "swap",
   preload: true,
@@ -56,8 +59,6 @@ export const metadata: Metadata = {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 export default async function RootLayout({
@@ -65,9 +66,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  after(() => updateLastSeen());
   const user = await getSession().catch(() => null);
-  const canEdit = user ? await hasPermission("manage_content").catch(() => false) : false;
+  if (user) {
+    after(() => updateLastSeen(user.id));
+  }
+  const canEdit = !!user?.email && ROOT_ADMIN_EMAILS.includes(user.email);
 
   return (
     <html
@@ -77,14 +80,9 @@ export default async function RootLayout({
     >
       <body suppressHydrationWarning className="bg-transparent text-foreground">
         <EditModeProvider canEdit={canEdit}>
-          <GlobalBackground />
-          <div className="relative flex flex-col w-full max-w-[100vw] overflow-x-clip min-h-[100dvh]">
-            <SiteHeader />
-            <main className="flex-1 pt-16 pb-6 sm:pt-16 landscape:pb-0">{children}</main>
-            <SiteFooter />
-            <ClientChrome isAuthenticated={!!user} canEdit={canEdit} />
-            <Toaster richColors position="top-right" />
-          </div>
+          <AppRouteChrome isAuthenticated={!!user} canEdit={canEdit}>
+            {children}
+          </AppRouteChrome>
         </EditModeProvider>
       </body>
     </html>

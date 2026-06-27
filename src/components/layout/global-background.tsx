@@ -62,6 +62,7 @@ export function GlobalBackground() {
   // on lobby routes; a static dark backdrop is all that could ever show.
   const pathname = usePathname();
   const isLobby = pathname?.endsWith("/lobby") ?? false;
+  const isPlayManager = pathname?.startsWith("/playmanager") ?? false;
 
   useEffect(() => {
     // Weather logic removed per user request, hardcoded to storm
@@ -568,6 +569,10 @@ export function GlobalBackground() {
   // Lobby: static dark backdrop only — no canvas, no WebGL, no animation.
   if (isLobby) {
     return <div className="fixed inset-0 z-[-100] bg-[var(--gr-bg-0)] pointer-events-none" />;
+  }
+
+  if (isPlayManager) {
+    return null;
   }
 
   return (

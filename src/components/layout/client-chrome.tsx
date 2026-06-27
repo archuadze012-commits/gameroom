@@ -17,6 +17,7 @@ const AdminEditBar = dynamic(() =>
 
 export function ClientChrome({ isAuthenticated = false, canEdit = false }: { isAuthenticated?: boolean; canEdit?: boolean }) {
   const pathname = usePathname();
+  const isPlayManager = pathname?.startsWith("/playmanager");
   const isLobby = pathname?.endsWith("/lobby");
   const isConversation = /^\/messages\/[^/]+$/.test(pathname ?? "");
   const showAdminEditBar = canEdit && pathname !== "/";
@@ -38,7 +39,7 @@ export function ClientChrome({ isAuthenticated = false, canEdit = false }: { isA
     };
   }, [isConversation]);
 
-  if (isLobby || isConversation) return null;
+  if (isPlayManager || isLobby || isConversation) return null;
 
   return (
     <>

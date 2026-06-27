@@ -289,7 +289,7 @@ export default function SearchPage() {
   ];
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent overflow-x-hidden">
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
       {/* faint light leaks like the home hero */}
       <span aria-hidden className="pointer-events-none absolute -top-24 -right-20 h-72 w-72 rounded-full bg-[var(--gr-violet)]/12 blur-[120px]" />
@@ -355,7 +355,7 @@ export default function SearchPage() {
               ონლაინი — <span style={{ color: "var(--gr-lime)", textShadow: "0 0 8px var(--gr-lime)" }}>{onlineCount}</span>
             </span>
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
             {ROLE_FILTERS.map((f) => {
               const isActive = roleFilter === f.role;
               const count = roleCounts[f.role] ?? 0;
