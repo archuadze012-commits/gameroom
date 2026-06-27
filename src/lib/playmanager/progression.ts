@@ -7,7 +7,7 @@ export type ManagerPerk = {
   description: string;
 };
 
-export type ManagerProgression = {
+type ManagerProgression = {
   xp: number;
   level: number;
   title: string;
@@ -20,7 +20,7 @@ export type ManagerProgression = {
   bonuses: ClubBonusMap;
 };
 
-export type ClubBonusMap = {
+type ClubBonusMap = {
   transferDiscountPct: number;
   trainingXpPct: number;
   matchdayIncomePct: number;
@@ -30,7 +30,7 @@ export type ClubBonusMap = {
   fanMoodPct: number;
 };
 
-export type ClubEffectCard = {
+type ClubEffectCard = {
   key: FacilityKey | 'manager';
   label: string;
   value: string;
@@ -140,7 +140,7 @@ export function getManagerProgression(xp: number): ManagerProgression {
   };
 }
 
-export function getFacilityEffectsSummary(facilities: TeamFacilityState[]): ClubEffectsSummary {
+function getFacilityEffectsSummary(facilities: TeamFacilityState[]): ClubEffectsSummary {
   const facilityMap = new Map(facilities.map((facility) => [facility.spriteKey, facility]));
   const bonuses: ClubBonusMap = {
     transferDiscountPct: Math.max(0, ((facilityMap.get('market')?.level ?? 1) - 1) * 2),
@@ -182,7 +182,7 @@ export function getFacilityEffectsSummary(facilities: TeamFacilityState[]): Club
   return { bonuses, spotlight };
 }
 
-export function mergeClubBonuses(...sources: ClubBonusMap[]): ClubBonusMap {
+function mergeClubBonuses(...sources: ClubBonusMap[]): ClubBonusMap {
   return sources.reduce<ClubBonusMap>(
     (acc, source) => ({
       transferDiscountPct: acc.transferDiscountPct + source.transferDiscountPct,
@@ -258,7 +258,7 @@ export function getCityActionXpReward(action: CityActionKey) {
     case 'league_sim':
       return 30;
     case 'media_campaign':
-      return 14;
+      return 0;
     case 'facility_upgrade':
       return 12;
   }
@@ -269,8 +269,9 @@ export function getActionRewardBonusPct(action: CityActionKey, bonuses: ClubBonu
     case 'arena_matchday':
       return bonuses.matchdayIncomePct;
     case 'finance_sponsor':
-    case 'media_campaign':
       return bonuses.sponsorBonusPct;
+    case 'media_campaign':
+      return 0;
     case 'league_sim':
       return bonuses.seasonRewardPct;
     default:

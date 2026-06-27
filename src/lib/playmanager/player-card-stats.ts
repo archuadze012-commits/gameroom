@@ -1,29 +1,127 @@
-const WEIGHTS: Record<string, number[]> = {
-  GK: [0.84, 0.35, 0.7, 0.55, 0.65, 0.82],
-  CB: [0.81, 0.52, 0.72, 0.62, 1.28, 1.06],
-  RB: [0.98, 0.52, 0.82, 0.88, 1.06, 0.72],
-  LB: [0.98, 0.52, 0.82, 0.88, 1.06, 0.72],
-  CDM: [0.82, 0.62, 1.08, 0.82, 1.16, 0.88],
-  CM: [0.9, 0.82, 1.16, 0.98, 0.82, 0.82],
-  CAM: [0.92, 1.02, 1.16, 1.16, 0.52, 0.72],
-  LW: [1.16, 1, 0.8, 1.26, 0.5, 0.7],
-  RW: [1.16, 1, 0.8, 1.26, 0.5, 0.7],
-  ST: [1.08, 1.26, 0.7, 1.08, 0.42, 0.9],
-  CF: [0.9, 1.15, 0.85, 1.1, 0.5, 1.05],
-  LM: [1.05, 0.85, 1.05, 1.05, 0.6, 0.7],
-  RM: [1.05, 0.85, 1.05, 1.05, 0.6, 0.7],
-  AM: [0.92, 1.02, 1.16, 1.16, 0.52, 0.72],
+export const GK_LABELS = ['DIV', 'HAN', 'KIC', 'REF', 'SPD', 'POS'] as const;
+export const OUT_LABELS = ['PAC', 'SHO', 'PAS', 'DRI', 'DEF', 'PHY'] as const;
+
+type GoalkeeperStatKey = (typeof GK_LABELS)[number];
+type OutfieldStatKey = (typeof OUT_LABELS)[number];
+export type PlayerStatKey = GoalkeeperStatKey | OutfieldStatKey;
+export type PlayerCardStatsInput = Partial<Record<PlayerStatKey, number>> | null | undefined;
+const ALL_STAT_LABELS = [...GK_LABELS, ...OUT_LABELS] as const;
+
+const DEFAULT_OUTFIELD_OFFSETS: Record<string, readonly number[]> = {
+  CB: [-12, -10, -2, -6, 16, 14],
+  RB: [8, -8, 4, 8, 4, -16],
+  LB: [8, -8, 4, 8, 4, -16],
+  CDM: [0, -6, 8, 0, 10, -12],
+  CM: [4, 2, 8, 4, -4, -14],
+  CAM: [6, 10, 10, 12, -16, -22],
+  LW: [14, 6, 0, 16, -18, -18],
+  RW: [14, 6, 0, 16, -18, -18],
+  ST: [10, 16, -8, 8, -20, -6],
+  CF: [8, 12, 4, 10, -16, -18],
+  LM: [10, 0, 6, 10, -10, -16],
+  RM: [10, 0, 6, 10, -10, -16],
+  AM: [6, 10, 10, 12, -16, -22],
 };
 
-const GK_LABELS = ['DIV', 'HAN', 'KIC', 'REF', 'SPD', 'POS'] as const;
-const OUT_LABELS = ['PAC', 'SHO', 'PAS', 'DRI', 'DEF', 'PHY'] as const;
+const DEFAULT_GK_OFFSETS: readonly number[] = [4, 8, 2, 10, -14, -10];
 
-export function derivePlayerStats(position: string, ovr: number) {
-  const labels = position === 'GK' ? GK_LABELS : OUT_LABELS;
-  const weights = WEIGHTS[position] ?? [1, 1, 1, 1, 1, 1];
+function clampStat(value: number) {
+  return Math.max(35, Math.min(99, Math.round(value)));
+}
 
-  return labels.map((label, index) => ({
+function getLabels(position: string) {
+  return position === 'GK' ? GK_LABELS : OUT_LABELS;
+}
+
+function getOffsets(position: string) {
+  if (position === 'GK') return DEFAULT_GK_OFFSETS;
+  return DEFAULT_OUTFIELD_OFFSETS[position] ?? [0, 0, 0, 0, 0, 0];
+}
+
+export function parsePlayerCardStats(value: unknown): PlayerCardStatsInput {
+  if (!value) return null;
+
+  if (typeof value === 'string') {
+    try {
+      return parsePlayerCardStats(JSON.parse(value));
+    } catch {
+      return null;
+    }
+  }
+
+  if (typeof value !== 'object' || Array.isArray(value)) return null;
+
+  const source = value as Record<string, unknown>;
+  const parsedEntries = ALL_STAT_LABELS.flatMap((label) => {
+    const rawValue = source[label];
+    const numericValue = typeof rawValue === 'number'
+      ? rawValue
+      : typeof rawValue === 'string' && rawValue.trim().length > 0
+        ? Number(rawValue)
+        : NaN;
+
+    if (!Number.isFinite(numericValue)) return [];
+    return [[label, clampStat(numericValue)] as const];
+  });
+
+  if (parsedEntries.length === 0) return null;
+  return Object.fromEntries(parsedEntries) as Partial<Record<PlayerStatKey, number>>;
+}
+
+function rebalanceToTarget(values: number[], targetOverall: number) {
+  const targetSum = targetOverall * values.length;
+  let currentSum = values.reduce((sum, value) => sum + value, 0);
+
+  while (currentSum !== targetSum) {
+    const direction = currentSum < targetSum ? 1 : -1;
+    let moved = false;
+
+    for (let index = 0; index < values.length; index += 1) {
+      const next = values[index]! + direction;
+      if (next < 35 || next > 99) continue;
+      values[index] = next;
+      currentSum += direction;
+      moved = true;
+      if (currentSum === targetSum) break;
+    }
+
+    if (!moved) break;
+  }
+
+  return values;
+}
+
+export function createInitialPlayerStats(position: string, ovr: number) {
+  const normalizedPosition = position.toUpperCase();
+  const labels = getLabels(normalizedPosition);
+  const offsets = getOffsets(normalizedPosition);
+  const targetOverall = clampStat(ovr);
+  const values = labels.map((_, index) => clampStat(targetOverall + offsets[index]!));
+  const balancedValues = rebalanceToTarget(values, targetOverall);
+
+  return Object.fromEntries(
+    labels.map((label, index) => [label, balancedValues[index]!]),
+  ) as Record<PlayerStatKey, number>;
+}
+
+export function normalizePlayerStats(position: string, stats: PlayerCardStatsInput, fallbackOverall: number) {
+  const normalizedPosition = position.toUpperCase();
+  const labels = getLabels(normalizedPosition);
+  const seeded = createInitialPlayerStats(normalizedPosition, fallbackOverall);
+  const parsedStats = parsePlayerCardStats(stats);
+
+  return Object.fromEntries(
+    labels.map((label) => [label, clampStat(Number(parsedStats?.[label] ?? seeded[label]))]),
+  ) as Record<PlayerStatKey, number>;
+}
+
+export function derivePlayerStats(position: string, ovr: number, stats?: PlayerCardStatsInput) {
+  const normalizedPosition = position.toUpperCase();
+  const normalized = normalizePlayerStats(normalizedPosition, stats, ovr);
+  const labels = getLabels(normalizedPosition);
+
+  return labels.map((label) => ({
     label,
-    value: Math.min(99, Math.max(35, Math.round(ovr * weights[index]!))),
+    value: normalized[label],
   }));
 }

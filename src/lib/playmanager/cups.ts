@@ -1,9 +1,9 @@
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
-import { asPlayManagerDb } from '@/lib/playmanager/db';
 import { generateSingleElimBracket } from '@/lib/tournament/generate-bracket';
 import { formatGel } from '@/lib/playmanager/economy';
+import { buildMatchProfile, simulateMatch } from '@/lib/playmanager/match-engine';
 
-export async function joinPlayManagerCup(userId: string, teamId: string, cupInstanceId: string) {
+export async function joinPlayManagerCup(teamId: string, cupInstanceId: string) {
   const db = createSupabaseAdminClient() as any;
   const { data, error } = await db.rpc('pm_join_cup', {
     p_team_id: teamId,
@@ -159,16 +159,25 @@ export async function processDueCupMatches() {
   if (!dueMatches || dueMatches.length === 0) return;
 
   for (const match of dueMatches) {
-    // Basic fast sim: 50/50 for now, or based on OVR if we fetch it
-    // To keep it simple and robust, random winner
     const team1Id = match.team1_id!;
     const team2Id = match.team2_id!;
-    const team1Score = Math.floor(Math.random() * 3) + 1; // 1 to 3
-    const team2Score = Math.floor(Math.random() * 3); // 0 to 2
-    
-    // In case of tie, team 1 wins for simplicity
-    const isTeam1Winner = team1Score >= team2Score;
-    const winnerId = isTeam1Winner ? team1Id : team2Id;
+    const [team1Rows, team2Rows, team1Settings, team2Settings] = await Promise.all([
+      loadCupTeamRows(team1Id),
+      loadCupTeamRows(team2Id),
+      loadCupSettings(team1Id),
+      loadCupSettings(team2Id),
+    ]);
+
+    const simulated = simulateMatch(
+      team1Id,
+      buildMatchProfile(team1Rows, team1Settings),
+      team2Id,
+      buildMatchProfile(team2Rows, team2Settings),
+    );
+    const team1Score = simulated.score1;
+    const team2Score = simulated.score2;
+    const isTeam1Winner = simulated.winnerId === team1Id;
+    const winnerId = simulated.winnerId;
 
     // Update this match
     await db.from('pm_cup_matches').update({
@@ -211,6 +220,33 @@ export async function processDueCupMatches() {
       await distributeCupPrizes(match.cup_instance_id!, winnerId, isTeam1Winner ? team2Id : team1Id);
     }
   }
+}
+
+async function loadCupTeamRows(teamId: string) {
+  const db = createSupabaseAdminClient() as any;
+  const { data } = await db
+    .from('pm_squads')
+    .select('shirt_number, position, player:pm_players(primary_position, ovr_current, fatigue, morale, injury_matches, status, card_stats)')
+    .eq('team_id', teamId)
+    .order('shirt_number', { ascending: true });
+
+  return data || [];
+}
+
+async function loadCupSettings(teamId: string) {
+  const db = createSupabaseAdminClient() as any;
+  const { data } = await db
+    .from('pm_match_settings')
+    .select('tactical_style, defensive_line, tempo, focus_side')
+    .eq('team_id', teamId)
+    .maybeSingle();
+
+  return {
+    tacticalStyle: data?.tactical_style ?? 'balanced',
+    defensiveLine: data?.defensive_line ?? 'mid',
+    tempo: data?.tempo ?? 'balanced',
+    focusSide: data?.focus_side ?? 'center',
+  };
 }
 
 async function distributeCupPrizes(cupInstanceId: string, winnerId: string, runnerUpId: string) {

@@ -1,4 +1,6 @@
-export const PLAYMANAGER_CURRENCY = '₾';
+import { getTalentClass } from './talent';
+
+const PLAYMANAGER_CURRENCY = '₾';
 export const STARTING_TEAM_BALANCE_GEL = 1_000_000;
 
 export const EA_FC_TOP_OVR = 91;
@@ -24,8 +26,34 @@ const READINESS_WEIGHT_PCT = 0.00044;
 
 const CASH_ROUNDING_GEL = 500;
 
+// Stadium: 5 tiers, 22k → 100k. MUST mirror DB pm_stadium_capacity /
+// pm_stadium_upgrade_cost (migration 20260703_playmanager_stadium.sql).
+export const STADIUM_MAX_LEVEL = 5;
+
+const STADIUM_CAPACITY: Record<number, number> = {
+  1: 22_000,
+  2: 38_000,
+  3: 55_000,
+  4: 75_000,
+  5: 100_000,
+};
+
+const STADIUM_UPGRADE_COST: Record<number, number> = {
+  1: 1_500_000,
+  2: 4_000_000,
+  3: 9_000_000,
+  4: 18_000_000,
+};
+
 export function getStadiumCapacity(level: number): number {
-  return Math.max(1, Math.trunc(level)) * 1000;
+  const lvl = clamp(Math.trunc(level), 1, STADIUM_MAX_LEVEL);
+  return STADIUM_CAPACITY[lvl] ?? STADIUM_CAPACITY[1];
+}
+
+// Cost to upgrade FROM `level` to `level + 1`; null at max level.
+export function getStadiumUpgradeCost(level: number): number | null {
+  const lvl = clamp(Math.trunc(level), 1, STADIUM_MAX_LEVEL);
+  return STADIUM_UPGRADE_COST[lvl] ?? null;
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -36,6 +64,14 @@ function roundToNearest(value: number, nearest: number) {
   return Math.round(value / nearest) * nearest;
 }
 
+function normalizeCurrencyValue(value: number) {
+  return clamp(
+    roundToNearest(Math.max(0, Math.trunc(value)), VALUE_ROUNDING_GEL),
+    MIN_BASE_TRANSFER_VALUE_GEL,
+    MAX_TRANSFER_VALUE_GEL,
+  );
+}
+
 export function getBaseTransferValueGel(ovr: number): number {
   const safeOvr = clamp(Math.trunc(ovr), MIN_OVR, EA_FC_TOP_OVR);
   const progress = (safeOvr - MIN_OVR) / (EA_FC_TOP_OVR - MIN_OVR);
@@ -44,11 +80,7 @@ export function getBaseTransferValueGel(ovr: number): number {
     (TOP_OVR_BASE_TRANSFER_VALUE_GEL - MIN_BASE_TRANSFER_VALUE_GEL) *
       Math.pow(progress, 5);
 
-  return clamp(
-    roundToNearest(value, VALUE_ROUNDING_GEL),
-    MIN_BASE_TRANSFER_VALUE_GEL,
-    TOP_OVR_BASE_TRANSFER_VALUE_GEL,
-  );
+  return clamp(normalizeCurrencyValue(value), MIN_BASE_TRANSFER_VALUE_GEL, TOP_OVR_BASE_TRANSFER_VALUE_GEL);
 }
 
 export function getCurrentTransferValueGel(
@@ -63,6 +95,18 @@ export function getCurrentTransferValueGel(
   );
 }
 
+// Transfer value carries a class-ceiling premium: the higher the talent class, the
+// more a buyer pays for the player's potential. pro/star sit at base (×1.0) and the
+// premium ramps up to legend (×1.35). rising_star keeps the historical ×1.202.
+export function getTalentClassAdjustedTransferValueGel(value: number, talent: number): number {
+  return normalizeCurrencyValue(value * getTalentClass(talent).valueMultiplier);
+}
+
+/** @deprecated Back-compat alias — now applies the full 6-tier class scaling. */
+export function getTalent11AdjustedTransferValueGel(value: number, talent: number): number {
+  return getTalentClassAdjustedTransferValueGel(value, talent);
+}
+
 export function formatGel(amount: number): string {
   const formatted = Math.trunc(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   return `${formatted} ${PLAYMANAGER_CURRENCY}`;
@@ -72,7 +116,7 @@ export function clampTicketPriceGel(ticketPrice: number): number {
   return clamp(Math.trunc(ticketPrice), MIN_TICKET_PRICE_GEL, MAX_TICKET_PRICE_GEL);
 }
 
-export function getTicketPriceAttendanceEffectPct(ticketPrice: number): number {
+function getTicketPriceAttendanceEffectPct(ticketPrice: number): number {
   return clamp(
     (REFERENCE_TICKET_PRICE_GEL - clampTicketPriceGel(ticketPrice)) * TICKET_PRICE_STEP_PCT,
     HIGH_PRICE_PENALTY_PCT,

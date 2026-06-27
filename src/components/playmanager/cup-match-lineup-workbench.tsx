@@ -58,7 +58,7 @@ type DragPayload =
   | { playerId: string; source: 'bench' | 'reserve' };
 
 const PITCH_SLOTS = [
-  { label: 'GK', top: 82, left: 50 },
+  { label: 'GK', top: 85, left: 50 },
   { label: 'LB', top: 62, left: 16 },
   { label: 'CB', top: 64, left: 38 },
   { label: 'CB', top: 64, left: 62 },

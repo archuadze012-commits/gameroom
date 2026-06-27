@@ -34,7 +34,7 @@ export function normalizeName(name: string): string {
   return name.trim().toLowerCase();
 }
 
-export interface NameResult {
+interface NameResult {
   display: string;
   normalized: string;
 }

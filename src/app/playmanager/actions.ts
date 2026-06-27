@@ -63,6 +63,29 @@ export type MatchResult = {
     outcome: 'promoted' | 'relegated' | 'stayed';
     division: number;
   } | null;
+  matchEngine?: {
+    homeXg: number;
+    awayXg: number;
+    tactics: {
+      homeStyle: string;
+      opponentStyle: string;
+      styleMatchup: number;
+      styleFit: number;
+      teamTac: number;
+      tacFactor: number;
+      attackMod: number;
+      concedeMod: number;
+      positionFit?: number;
+    };
+    profile?: {
+      autoSubs?: { out: string; in: string; slot: string }[];
+      traits?: { key: string; count: number }[];
+    } | null;
+    playerEvents?: {
+      goalscorers?: { playerId: string; name: string; goals: number }[];
+      ratings?: { playerId: string; name: string; position: string; rating: number }[];
+    } | null;
+  } | null;
 };
 
 type RpcCityActionResult = {
@@ -85,7 +108,7 @@ type RpcCityActionFull = {
 };
 
 export type PlayManagerPlayerActionResult =
-  | { success: true; message: string; amount?: number }
+  | { success: true; message: string; amount?: number; players?: unknown[] }
   | {
       success: false;
       error:
@@ -195,6 +218,10 @@ async function advancePlayManagerTime(teamId: string, days = 1) {
     p_team_id: teamId,
     p_days: days,
   });
+  // Academy prospects mature as time passes (scaled by academy facility level).
+  await db.rpc('pm_develop_academy_prospects', { p_team_id: teamId, p_days: days });
+  // Career-end: notify on final season, auto-resolve players who age out undecided.
+  await db.rpc('pm_process_career_ends', { p_team_id: teamId, p_days: days });
   return data ?? null;
 }
 
@@ -510,6 +537,105 @@ export async function sellPlayManagerPlayer(playerId: string): Promise<PlayManag
   return { success: true, message: `ფეხბურთელი გაყიდულია · XP +${xpReward}`, amount: data?.amount ?? 0 };
 }
 
+// ── Transfer market: manager-to-manager listings ─────────────────────────────
+
+export async function listPlayManagerPlayer(
+  playerId: string,
+  askingPrice: number,
+): Promise<PlayManagerPlayerActionResult> {
+  const { user, team } = await getAuthenticatedTeam();
+  if (!user) return { success: false, error: 'unauthenticated' };
+  if (!team) return { success: false, error: 'team_missing' };
+
+  const price = Math.floor(Number(askingPrice));
+  if (!Number.isFinite(price) || price <= 0) {
+    return { success: false, error: 'invalid_player', message: 'ფასი არასწორია' };
+  }
+
+  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const { error } = await db.rpc('pm_list_player', {
+    p_team_id: team.id,
+    p_player_id: playerId,
+    p_price: price,
+  });
+
+  if (error) {
+    if (error.message.includes('already_listed')) {
+      return { success: false, error: 'player_owned', message: 'ფეხბურთელი უკვე გაყიდვაშია' };
+    }
+    if (error.message.includes('not_owner')) {
+      return { success: false, error: 'invalid_player', message: 'ფეხბურთელი შენი არ არის' };
+    }
+    return mapPlayerActionError(error.message);
+  }
+
+  await logPlayManagerEvent({
+    teamId: team.id,
+    category: 'finance',
+    accent: 'gold',
+    title: 'ფეხბურთელი გაყიდვაში გამოვიდა',
+    detail: `მოთხოვნილი ფასი ${price.toLocaleString('ka-GE')} ₾`,
+  });
+  revalidatePath('/playmanager');
+  return { success: true, message: `გამოტანილია სატრანსფერო ბაზარზე · ${price.toLocaleString('ka-GE')} ₾` };
+}
+
+export async function unlistPlayManagerPlayer(
+  listingId: string,
+): Promise<PlayManagerPlayerActionResult> {
+  const { user, team } = await getAuthenticatedTeam();
+  if (!user) return { success: false, error: 'unauthenticated' };
+  if (!team) return { success: false, error: 'team_missing' };
+
+  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const { error } = await db.rpc('pm_unlist_player', {
+    p_team_id: team.id,
+    p_listing_id: listingId,
+  });
+
+  if (error) return mapPlayerActionError(error.message);
+  revalidatePath('/playmanager');
+  return { success: true, message: 'გაყიდვა გაუქმდა' };
+}
+
+export async function buyPlayManagerListedPlayer(
+  listingId: string,
+): Promise<PlayManagerPlayerActionResult> {
+  const { user, team } = await getAuthenticatedTeam();
+  if (!user) return { success: false, error: 'unauthenticated' };
+  if (!team) return { success: false, error: 'team_missing' };
+
+  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const { data, error } = await db.rpc<{ price: number }>('pm_buy_listed_player', {
+    p_buyer_team_id: team.id,
+    p_listing_id: listingId,
+  });
+
+  if (error) {
+    if (error.message.includes('own_listing')) {
+      return { success: false, error: 'invalid_player', message: 'საკუთარ ფეხბურთელს ვერ იყიდი' };
+    }
+    if (error.message.includes('listing_unavailable')) {
+      return { success: false, error: 'player_unavailable', message: 'ეს ფეხბურთელი აღარ იყიდება' };
+    }
+    return mapPlayerActionError(error.message);
+  }
+
+  const price = data?.price ?? 0;
+  const xpReward = 18;
+  await applyPostActionRewards({ userId: user.id, teamId: team.id, xpReward });
+  const calendar = await advancePlayManagerTime(team.id, 1);
+  await logPlayManagerEvent({
+    teamId: team.id,
+    category: 'finance',
+    accent: 'gold',
+    title: 'ფეხბურთელი შეძენილია სატრანსფერო ბაზრიდან',
+    detail: `${price.toLocaleString('ka-GE')} ₾ deal${calendar ? ` · კვირა ${calendar.weekNo} · დღე ${calendar.dayNo}` : ''}`,
+  });
+  revalidatePath('/playmanager');
+  return { success: true, message: `ფეხბურთელი დაემატა გუნდს · XP +${xpReward}`, amount: -price };
+}
+
 type StaffMutationRow = {
   role_key: StaffRoleKey;
   level: number;
@@ -617,28 +743,109 @@ export async function savePlayManagerLineup(playerIds: string[]): Promise<PlayMa
   return { success: true, message: 'სასტარტო შემადგენლობა შენახულია' };
 }
 
-export async function togglePlayManagerMarketShortlist(playerKey: string): Promise<PlayManagerPlayerActionResult> {
+export async function claimPlayManagerDailyReward(): Promise<PlayManagerPlayerActionResult> {
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
-  if (!playerKey) return { success: false, error: 'invalid_player' };
 
   const db = asPlayManagerDb(createSupabaseAdminClient());
-  const { data, error } = await db.rpc<{ shortlisted: boolean }>('pm_toggle_market_shortlist', {
+  const { data, error } = await db.rpc<{ streak: number; reward: number }>('pm_claim_daily_reward', {
     p_team_id: team.id,
-    p_player_key: playerKey,
+  });
+
+  if (error) {
+    if (error.message.includes('already_claimed')) return { success: false, error: 'unavailable' };
+    return mapPlayerActionError(error.message);
+  }
+  await logPlayManagerEvent({
+    teamId: team.id,
+    category: 'finance',
+    accent: 'gold',
+    title: `დღიური ჯილდო · სერია ${data?.streak ?? 1}`,
+    detail: `+${(data?.reward ?? 0).toLocaleString('ka-GE')} ₾`,
+  });
+  revalidatePath('/playmanager');
+  return { success: true, message: `+${(data?.reward ?? 0).toLocaleString('ka-GE')} ₾ · სერია ${data?.streak ?? 1}` };
+}
+
+export async function renewPlayManagerCareer(playerId: string): Promise<PlayManagerPlayerActionResult> {
+  const { user, team } = await getAuthenticatedTeam();
+  if (!user) return { success: false, error: 'unauthenticated' };
+  if (!team) return { success: false, error: 'team_missing' };
+
+  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const { data, error } = await db.rpc<{ careerEndAge: number; cost: number }>('pm_career_renew', {
+    p_team_id: team.id,
+    p_player_id: playerId,
+  });
+
+  if (error) {
+    if (error.message.includes('not_in_career_window')) return { success: false, error: 'unavailable' };
+    return mapPlayerActionError(error.message);
+  }
+  await logPlayManagerEvent({
+    teamId: team.id,
+    category: 'finance',
+    accent: 'gold',
+    title: 'კარიერა გაგრძელდა',
+    detail: `კარიერის ბოლო ${data?.careerEndAge ?? ''} წელი · -${(data?.cost ?? 0).toLocaleString('ka-GE')} ₾`,
+  });
+  revalidatePath(`/playmanager/players/${playerId}`);
+  return { success: true, message: `კარიერა გაგრძელდა · -${(data?.cost ?? 0).toLocaleString('ka-GE')} ₾` };
+}
+
+export async function releasePlayManagerCareer(playerId: string): Promise<PlayManagerPlayerActionResult> {
+  const { user, team } = await getAuthenticatedTeam();
+  if (!user) return { success: false, error: 'unauthenticated' };
+  if (!team) return { success: false, error: 'team_missing' };
+
+  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const { data, error } = await db.rpc<{ comp: number; destination: string }>('pm_career_release', {
+    p_team_id: team.id,
+    p_player_id: playerId,
+  });
+
+  if (error) {
+    if (error.message.includes('not_in_career_window')) return { success: false, error: 'unavailable' };
+    return mapPlayerActionError(error.message);
+  }
+  await logPlayManagerEvent({
+    teamId: team.id,
+    category: 'board',
+    accent: 'green',
+    title: 'მოთამაშეს დაემშვიდობეთ',
+    detail: `+${(data?.comp ?? 0).toLocaleString('ka-GE')} ₾ კომპენსაცია`,
+  });
+  revalidatePath(`/playmanager/players/${playerId}`);
+  return { success: true, message: `დამშვიდობება · +${(data?.comp ?? 0).toLocaleString('ka-GE')} ₾` };
+}
+
+export async function savePlayManagerLineupFormation(
+  formation: string,
+  slots: { playerId: string; slot: string | null }[],
+): Promise<PlayManagerPlayerActionResult> {
+  const { user, team } = await getAuthenticatedTeam();
+  if (!user) return { success: false, error: 'unauthenticated' };
+  if (!team) return { success: false, error: 'team_missing' };
+  if (slots.length === 0) return { success: false, error: 'invalid_player' };
+
+  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const { error } = await db.rpc('pm_save_lineup_formation', {
+    p_team_id: team.id,
+    p_formation: formation,
+    p_slots: slots,
   });
 
   if (error) return mapPlayerActionError(error.message);
   await logPlayManagerEvent({
     teamId: team.id,
     category: 'board',
-    accent: data?.shortlisted ? 'gold' : 'red',
-    title: data?.shortlisted ? 'ფეხბურთელი shortlist-ში დაემატა' : 'ფეხბურთელი shortlist-დან ამოიშალა',
-    detail: playerKey,
+    accent: 'green',
+    title: 'სასტარტო შემადგენლობა და ფორმაცია შეიცვალა',
+    detail: `${formation} · ${slots.length} მოთამაშე`,
   });
   revalidatePath('/playmanager');
-  return { success: true, message: data?.shortlisted ? 'ფეხბურთელი shortlist-ში დაემატა' : 'ფეხბურთელი shortlist-დან წაიშალა' };
+  return { success: true, message: 'შემადგენლობა და ფორმაცია შენახულია' };
 }
 
 export async function savePlayManagerMatchSettings(input: {
@@ -744,9 +951,8 @@ export async function joinCupAction(cupInstanceId: string): Promise<{ success: b
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
 
-  // Need to import joinPlayManagerCup at top level or here
   const { joinPlayManagerCup } = await import('@/lib/playmanager/cups');
-  const result = await joinPlayManagerCup(user.id, team.id, cupInstanceId);
+  const result = await joinPlayManagerCup(team.id, cupInstanceId);
   
   if (!result.success) {
     if (result.error === 'cup_full') return { success: false, error: 'თასზე ადგილები აღარ არის' };
@@ -758,3 +964,4 @@ export async function joinCupAction(cupInstanceId: string): Promise<{ success: b
   revalidatePath('/playmanager/league');
   return { success: true, message: 'წარმატებით დარეგისტრირდით თასზე' };
 }
+

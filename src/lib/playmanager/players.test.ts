@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import { generateVirtualPlayer, generateStarterSquad, ovrGrowthCap } from './players.js';
 
 test('ovrGrowthCap returns correct caps', () => {
+  assert.equal(ovrGrowthCap(11), 30);
   assert.equal(ovrGrowthCap(10), 25);
   assert.equal(ovrGrowthCap(9),  20);
   assert.equal(ovrGrowthCap(8),  15);
@@ -12,7 +13,7 @@ test('ovrGrowthCap returns correct caps', () => {
 
 test('generateVirtualPlayer produces valid player', async () => {
   const player = await generateVirtualPlayer(new Set(), 'CM');
-  assert.ok(player.talent >= 1 && player.talent <= 10, 'talent in range');
+  assert.ok(player.talent >= 1 && player.talent <= 11, 'talent in range');
   assert.ok(player.ovr_base >= 40 && player.ovr_base <= 75, 'ovr_base in range');
   assert.ok(player.age >= 18 && player.age <= 28, 'age in range');
   assert.equal(player.position, 'CM');

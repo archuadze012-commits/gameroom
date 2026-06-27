@@ -3,6 +3,7 @@ import { getBaseTransferValueGel, getCurrentTransferValueGel } from './economy';
 import type { GeneratedPlayer, Position } from './types';
 
 export function ovrGrowthCap(talent: number): number {
+  if (talent >= 11) return 30;
   if (talent === 10) return 25;
   if (talent === 9)  return 20;
   if (talent === 8)  return 15;

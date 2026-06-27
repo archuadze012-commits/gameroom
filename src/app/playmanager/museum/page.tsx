@@ -4,6 +4,7 @@ import { ChevronLeft, Trophy, Star, Sparkles } from 'lucide-react';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getTeam } from '@/lib/playmanager/team';
 import { getPlayManagerTrophyRoom, type Trophy as TrophyItem } from '@/lib/playmanager/archive';
+import { PlayManagerLightShell } from '@/components/playmanager/playmanager-light-shell';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,9 +21,8 @@ export default async function MuseumPage() {
   const leagueCount = trophies.filter((t) => t.kind === 'league').length;
 
   return (
-    <main className="pm-playmanager-page-env px-3 py-4 text-white sm:px-5 lg:px-8">
-      <div className="pm-manager-env-width">
-      <section className="pm-neon-frame relative overflow-hidden rounded-[28px] border border-yellow-300/18 bg-[#0a0702] p-4 shadow-[0_28px_100px_rgba(0,0,0,0.62)] sm:p-6">
+    <PlayManagerLightShell>
+      <section className="relative overflow-hidden rounded-xl bg-[#0a0702]/90 p-4 shadow-[0_28px_100px_rgba(0,0,0,0.45)] sm:p-6">
         <div className="pointer-events-none absolute inset-0 opacity-80">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_12%,rgba(234,179,8,0.2),transparent_30%),radial-gradient(circle_at_84%_28%,rgba(217,119,6,0.18),transparent_36%),linear-gradient(135deg,rgba(18,12,2,0.98),rgba(0,0,0,0.98)_60%)]" />
         </div>
@@ -83,8 +83,7 @@ export default async function MuseumPage() {
           )}
         </div>
       </section>
-      </div>
-    </main>
+    </PlayManagerLightShell>
   );
 }
 

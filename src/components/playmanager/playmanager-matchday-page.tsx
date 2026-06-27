@@ -24,6 +24,7 @@ import { PlayManagerSidebar } from '@/components/playmanager/playmanager-side-na
 import { Dock } from '@/components/react-bits/dock';
 import { SpotlightCard } from '@/components/react-bits/spotlight-card';
 import CountUp from '@/components/CountUp';
+import { getTrait } from '@/lib/playmanager/traits';
 
 type Tactics = {
   tacticalStyle: 'balanced' | 'pressing' | 'possession' | 'counter';
@@ -642,6 +643,7 @@ function MatchResultModal({ result, onClose }: { result: MatchResult; onClose: (
           <ModalStat label="შემოსავალი" value={result.income} caption="მატჩის დღე" />
           <ModalStat label="ფორმა" value={result.formPercent} suffix="%" caption="განახლდა" />
         </div>
+        {result.matchEngine && <MatchEngineBadge me={result.matchEngine} />}
         <button
           type="button"
           onClick={onClose}
@@ -663,6 +665,162 @@ function ModalStat({ label, value, suffix = '', caption }: { label: string; valu
         {suffix}
       </p>
       <p className="mt-1 text-[11px] font-bold text-white/52">{caption}</p>
+    </div>
+  );
+}
+
+const styleLabels: Record<string, string> = {
+  pressing: 'პრესინგი',
+  possession: 'ფლობა',
+  counter: 'კონტრი',
+  balanced: 'ბალანსი',
+};
+
+function MatchEngineBadge({ me }: { me: NonNullable<MatchResult['matchEngine']> }) {
+  const { homeXg, awayXg, tactics } = me;
+  const autoSubs = me.profile?.autoSubs ?? [];
+  const teamTraits = me.profile?.traits ?? [];
+  const goalscorers = me.playerEvents?.goalscorers ?? [];
+  const ratings = me.playerEvents?.ratings ?? [];
+  const topRatings = ratings.slice(0, 3);
+  const totalXg = homeXg + awayXg;
+  const homeW = totalXg > 0 ? (homeXg / totalXg) * 100 : 50;
+  const matchupPos = tactics.styleMatchup > 0;
+  const matchupNeg = tactics.styleMatchup < 0;
+  const matchupColor = matchupPos ? 'text-emerald-400' : matchupNeg ? 'text-red-400' : 'text-white/40';
+  const matchupSign = matchupPos ? '+' : '';
+
+  return (
+    <div className="mt-3 rounded-[18px] border border-white/8 bg-white/[0.03] p-4 space-y-3">
+      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/35">ტაქტიკური ანალიზი</p>
+
+      {/* xG bar */}
+      <div>
+        <div className="mb-1.5 flex items-center justify-between text-[11px] font-black tabular-nums">
+          <span className="text-white">{homeXg.toFixed(2)} xG</span>
+          <span className="text-white/40">vs</span>
+          <span className="text-white/60">{awayXg.toFixed(2)} xG</span>
+        </div>
+        <div className="flex h-2 overflow-hidden rounded-full bg-white/10">
+          <div
+            className="h-full rounded-full bg-emerald-500 transition-all duration-700"
+            style={{ width: `${homeW}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Style matchup */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="text-[11px] font-black text-white">{styleLabels[tactics.homeStyle] ?? tactics.homeStyle}</span>
+          <span className="text-white/30 text-[10px]">→</span>
+          <span className="text-[11px] font-bold text-white/55">{styleLabels[tactics.opponentStyle] ?? tactics.opponentStyle}</span>
+        </div>
+        <div className="flex items-center gap-2 flex-none">
+          <span className={`text-[11px] font-black ${matchupColor}`}>
+            {tactics.styleMatchup !== 0 && `${matchupSign}${tactics.styleMatchup.toFixed(2)}`}
+            {tactics.styleMatchup === 0 && '–'}
+          </span>
+          <span className="text-[10px] font-bold text-white/35">ფიტი {tactics.styleFit.toFixed(2)}</span>
+        </div>
+      </div>
+
+      {/* Chips row */}
+      <div className="flex gap-2 flex-wrap">
+        <Chip label="შეტ" value={`${tactics.attackMod > 0 ? '+' : ''}${tactics.attackMod.toFixed(2)}`} positive={tactics.attackMod > 0} />
+        <Chip label="მცვ" value={`${tactics.concedeMod > 0 ? '+' : ''}${tactics.concedeMod.toFixed(2)}`} positive={tactics.concedeMod < 0} />
+        <Chip label="TAC" value={tactics.teamTac.toFixed(1)} neutral />
+        {typeof tactics.positionFit === 'number' && (
+          <Chip
+            label="პოზიცია"
+            value={`${Math.round(tactics.positionFit * 100)}%`}
+            positive={tactics.positionFit >= 0.97}
+            neutral={tactics.positionFit < 0.97 && tactics.positionFit >= 0.9}
+          />
+        )}
+      </div>
+      {typeof tactics.positionFit === 'number' && tactics.positionFit < 0.9 && (
+        <p className="text-[10px] font-bold leading-4 text-red-300/70">
+          მოთამაშეები არასწორ პოზიციებზე თამაშობენ — შემადგენლობის თავსებადობა დაბალია.
+        </p>
+      )}
+
+      {goalscorers.length > 0 && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-white/8 pt-3">
+          <span className="text-[10px] font-black uppercase tracking-[0.16em] text-white/35">⚽ გოლები</span>
+          {goalscorers.map((g) => (
+            <span key={g.playerId} className="text-[11px] font-bold text-white">
+              {g.name}
+              {g.goals > 1 && <span className="text-emerald-300"> ×{g.goals}</span>}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {topRatings.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 border-t border-white/8 pt-3">
+          <span className="text-[10px] font-black uppercase tracking-[0.16em] text-white/35">⭐ საუკ. შეფასება</span>
+          {topRatings.map((r) => {
+            const tone = r.rating >= 8 ? 'text-emerald-300' : r.rating >= 7 ? 'text-white' : 'text-white/55';
+            return (
+              <span key={r.playerId} className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-bold">
+                <span className="text-white/55">{r.position}</span>
+                <span className="text-white/80">{r.name}</span>
+                <span className={`font-black tabular-nums ${tone}`}>{r.rating.toFixed(1)}</span>
+              </span>
+            );
+          })}
+        </div>
+      )}
+
+      {teamTraits.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 border-t border-white/8 pt-3">
+          <span className="text-[10px] font-black uppercase tracking-[0.16em] text-white/35">თვისებები</span>
+          {teamTraits.map((t) => {
+            const trait = getTrait(t.key);
+            if (!trait) return null;
+            return (
+              <span
+                key={t.key}
+                title={trait.blurb}
+                className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-black ${trait.bg} ${trait.border} ${trait.color}`}
+              >
+                <span aria-hidden>{trait.icon}</span>
+                {trait.label}
+                {t.count > 1 && <span className="text-white/50">×{t.count}</span>}
+              </span>
+            );
+          })}
+        </div>
+      )}
+
+      {autoSubs.length > 0 && (
+        <div className="space-y-1.5 border-t border-white/8 pt-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-200/55">
+            ავტომატური ცვლები
+          </p>
+          {autoSubs.map((sub, i) => (
+            <div key={`${sub.out}-${sub.in}-${i}`} className="flex items-center gap-2 text-[11px] font-bold">
+              <span className="flex h-4 w-7 shrink-0 items-center justify-center rounded bg-white/8 text-[9px] font-black text-white/45">
+                {sub.slot}
+              </span>
+              <span className="truncate text-red-300/80">{sub.out}</span>
+              <span className="text-white/30">→</span>
+              <span className="truncate text-emerald-300/85">{sub.in}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Chip({ label, value, positive, neutral }: { label: string; value: string; positive?: boolean; neutral?: boolean }) {
+  const color = neutral ? 'text-white/55' : positive ? 'text-emerald-400' : 'text-red-400';
+  return (
+    <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1">
+      <span className="text-[9px] font-black uppercase tracking-[0.12em] text-white/35">{label}</span>
+      <span className={`text-[11px] font-black tabular-nums ${color}`}>{value}</span>
     </div>
   );
 }

@@ -30,11 +30,19 @@ export async function getTeam(
   return { ...team, balance: wallet?.balance ?? 0 };
 }
 
-export async function getSquadCount(teamId: string): Promise<number> {
+export async function getDevelopmentFallbackTeam(): Promise<(PmTeam & { balance: number }) | null> {
   const db = asPlayManagerDb(createSupabaseAdminClient());
-  const { count } = await db
-    .from<{ id: number }>('pm_squads')
-    .select('id', { count: 'exact', head: true })
-    .eq('team_id', teamId);
-  return count ?? 0;
+  const { data: team } = await db
+    .from<PmTeam>('pm_teams')
+    .select('*')
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .single();
+  if (!team) return null;
+  const { data: wallet } = await db
+    .from<{ balance: number }>('pm_wallets')
+    .select('balance')
+    .eq('team_id', team.id)
+    .single();
+  return { ...team, balance: wallet?.balance ?? 0 };
 }

@@ -1,11 +1,14 @@
 import 'server-only';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
-import { formatGel, getCurrentTransferValueGel, getProjectedAttendance, getProjectedMatchdayIncome, getProjectedWeeklyWages } from './economy';
+import { formatGel, getCurrentTransferValueGel, getProjectedAttendance, getProjectedMatchdayIncome, getProjectedWeeklyWages, getStadiumCapacity, getTalent11AdjustedTransferValueGel } from './economy';
 import { asPlayManagerDb } from './db';
+import { getEafc26PlayerFaceUrl, resolveRealPlayerStats } from './eafc26-dataset';
 import { MARKET_TARGETS } from './gameplay';
 import { getPlayManagerNextOpponent } from './league';
+import { buildPlayManagerPlayerCardLayout, type PlayManagerPlayerCardLayout } from './player-card';
+import { getEffectiveRealPlayerTalent, getPlayManagerDisplayAge } from './player-age';
+import type { PlayerCardStatsInput } from './player-card-stats';
 import {
-  STAFF_ROLE_MAP,
   STAFF_ROLES,
   getMaxStaffLevelForDivision,
   getStaffBenefitLabel,
@@ -16,10 +19,15 @@ import {
   type StaffRoleKey,
 } from './staff';
 
-export type CitySquadPlayer = {
+type CitySquadPlayer = {
   squadId: number;
   id: string;
   name: string;
+  cardDisplayName?: string | null;
+  cardImageUrl?: string | null;
+  nationalityCode?: string | null;
+  cardEditorConfig?: PlayManagerPlayerCardLayout;
+  stats?: PlayerCardStatsInput;
   position: string;
   age: number;
   ovrBase: number;
@@ -33,15 +41,22 @@ export type CitySquadPlayer = {
   role: 'starter' | 'bench' | 'reserve';
   lineupSlot: number | null;
   talent: number;
+  squadNumber: number | null;
 };
 
-export type CityMarketPlayer = {
+type CityMarketPlayer = {
   key: string;
   id: string | null;
   name: string;
+  cardDisplayName?: string | null;
+  cardImageUrl?: string | null;
+  nationalityCode?: string | null;
+  cardEditorConfig?: PlayManagerPlayerCardLayout;
+  stats?: PlayerCardStatsInput;
   position: string;
   age: number;
   ovr: number;
+  talent: number;
   value: number;
   valueLabel: string;
   demand: string;
@@ -49,14 +64,20 @@ export type CityMarketPlayer = {
   shortlisted: boolean;
 };
 
-export type CityTransaction = {
+function normalizeMarketPosition(position: string | null | undefined) {
+  const normalized = position?.trim().toUpperCase();
+  if (normalized === 'CF') return 'ST';
+  return normalized || 'CM';
+}
+
+type CityTransaction = {
   amount: number;
   amountLabel: string;
   reason: string;
   createdAt: string;
 };
 
-export type CityMatchHistory = {
+type CityMatchHistory = {
   round: number;
   opponent: string;
   venue: 'Home' | 'Away';
@@ -70,7 +91,7 @@ export type CityMatchHistory = {
   createdAt: string;
 };
 
-export type CityAcademyProspect = {
+type CityAcademyProspect = {
   id: string;
   name: string;
   position: string;
@@ -81,7 +102,7 @@ export type CityAcademyProspect = {
   signingCostLabel: string;
 };
 
-export type CityEventFeedItem = {
+type CityEventFeedItem = {
   id: number;
   category: 'match' | 'medical' | 'finance' | 'academy' | 'media' | 'board' | 'system';
   accent: 'green' | 'red' | 'gold';
@@ -92,7 +113,7 @@ export type CityEventFeedItem = {
   createdAt: string;
 };
 
-export type CityFinanceSnapshot = {
+type CityFinanceSnapshot = {
   ticketPrice: number;
   sponsorTier: 'local' | 'regional' | 'global';
   sponsorWeeklyAmount: number;
@@ -103,9 +124,12 @@ export type CityFinanceSnapshot = {
   projectedAttendanceLabel: string;
   projectedMatchdayIncome: number;
   projectedMatchdayIncomeLabel: string;
+  stadiumLevel: number;
+  stadiumCapacity: number;
+  stadiumCapacityLabel: string;
 };
 
-export type CityStaffMember = {
+type CityStaffMember = {
   roleKey: StaffRoleKey;
   name: string;
   shortName: string;
@@ -155,6 +179,13 @@ export type PlayManagerCitySnapshot = {
   };
   eventFeed: CityEventFeedItem[];
   finance: CityFinanceSnapshot;
+  dailyReward: {
+    canClaim: boolean;
+    streak: number;
+    nextStreak: number;
+    nextReward: number;
+    nextRewardLabel: string;
+  };
   staff: {
     members: CityStaffMember[];
     maxLevelByDivision: number;
@@ -200,6 +231,15 @@ export type PlayManagerCitySnapshot = {
   }[];
 };
 
+export type PlayManagerDashboardSnapshot = {
+  nextMatchLabel: string;
+  upcomingCupMatch: {
+    opponentName: string;
+  } | null;
+};
+
+type PlayManagerCitySnapshotMode = 'full' | 'lineup' | 'light';
+
 type BaseSquadPlayer = Omit<CitySquadPlayer, 'role'> & {
   normalizedName: string;
 };
@@ -207,12 +247,29 @@ type BaseSquadPlayer = Omit<CitySquadPlayer, 'role'> & {
 type SquadRow = {
   id: number;
   shirt_number: number | null;
+  squad_number: number | null;
   position: string;
   player: {
     id: string;
     normalized_name: string;
     display_name: string;
+    card_display_name: string | null;
+    primary_position: string | null;
+    card_image_url: string | null;
+    nationality_code: string | null;
+    card_sil_width: number | null;
+    card_sil_height: number | null;
+    card_sil_x: number | null;
+    card_sil_y: number | null;
+    card_sil_opacity: number | null;
+    card_content_y: number | null;
+    card_name_size: number | null;
+    card_stats_scale: number | null;
+    card_stats: PlayerCardStatsInput;
+    is_real: boolean;
+    real_age: number | null;
     age: number;
+    age_started_total_days: number | null;
     ovr_base: number;
     ovr_current: number;
     current_transfer_value_gel: number;
@@ -222,10 +279,6 @@ type SquadRow = {
     status: 'active' | 'injured' | 'retired';
     talent: number;
   } | null;
-};
-
-type FacilityRow = {
-  level: number;
 };
 
 type TeamMetaRow = {
@@ -240,7 +293,12 @@ type StaffRow = {
 const FORMATION_433_TARGETS = ['GK', 'LB', 'CB', 'CB', 'RB', 'CDM', 'CM', 'CM', 'LW', 'ST', 'RW'] as const;
 
 function normalizePosition(position: string) {
-  return position.toUpperCase();
+  const p = position.toUpperCase();
+  if (p === 'LCB' || p === 'RCB') return 'CB';
+  if (p === 'LCM' || p === 'RCM') return 'CM';
+  if (p === 'LWB') return 'LB';
+  if (p === 'RWB') return 'RB';
+  return p;
 }
 
 function canFillRole(playerPosition: string, targetPosition: string) {
@@ -331,7 +389,25 @@ type MarketRow = {
   id: string;
   normalized_name: string;
   display_name: string;
+  card_display_name: string | null;
+  primary_position: string | null;
+  card_image_url: string | null;
+  nationality_code: string | null;
+  card_sil_width: number | null;
+  card_sil_height: number | null;
+  card_sil_x: number | null;
+  card_sil_y: number | null;
+  card_sil_opacity: number | null;
+  card_content_y: number | null;
+  card_name_size: number | null;
+  card_stats_scale: number | null;
+  card_stats: PlayerCardStatsInput;
+  is_real: boolean;
+  talent: number;
+  ea_fc_ovr: number | null;
+  real_age: number | null;
   age: number;
+  age_started_total_days: number | null;
   ovr_current: number;
   current_transfer_value_gel: number;
   owner_id: string | null;
@@ -417,6 +493,76 @@ type FinanceStateRow = {
   sponsor_weekly_amount: number;
 };
 
+type ArenaFacilityRow = {
+  level: number;
+};
+
+type EngagementRow = {
+  streak: number;
+  last_claim_day: number;
+};
+
+type CupTemplateRow = {
+  id: string;
+  name: string;
+  prize_pool: number;
+  entry_fee: number;
+  max_teams: number;
+};
+
+type CupParticipantRow = {
+  team_id: string;
+};
+
+type CupInstanceRow = {
+  id: string;
+  status: 'registration' | 'in_progress' | 'completed';
+  pm_cup_templates: CupTemplateRow | CupTemplateRow[] | null;
+  pm_cup_participants: CupParticipantRow[] | null;
+};
+
+type CupMatchTeamRow = {
+  id?: string;
+  name: string;
+};
+
+type CupMatchInstanceTemplateRow = {
+  id: string;
+  name: string;
+};
+
+type CupMatchInstanceRow = {
+  id?: string;
+  template_id?: string;
+  status: 'registration' | 'in_progress' | 'completed';
+  pm_cup_templates: CupMatchInstanceTemplateRow | CupMatchInstanceTemplateRow[] | null;
+};
+
+type CupMatchRow = {
+  id: string;
+  cup_instance_id: string;
+  round: number;
+  position: number;
+  status: 'pending' | 'ready' | 'completed';
+  start_time: string;
+  team1_id: string;
+  team2_id: string;
+  team1: CupMatchTeamRow | CupMatchTeamRow[] | null;
+  team2: CupMatchTeamRow | CupMatchTeamRow[] | null;
+  pm_cup_instances: CupMatchInstanceRow | CupMatchInstanceRow[] | null;
+};
+
+type UntypedSupabaseQuery = PromiseLike<{ data: unknown; error: unknown }> & {
+  select: (columns: string) => UntypedSupabaseQuery;
+  or: (filters: string) => UntypedSupabaseQuery;
+  in: (column: string, values: readonly string[]) => UntypedSupabaseQuery;
+  order: (column: string, options?: { ascending?: boolean }) => UntypedSupabaseQuery;
+};
+
+type UntypedSupabaseClient = {
+  from: (table: string) => UntypedSupabaseQuery;
+};
+
 function formatAttendance(value: number) {
   if (value >= 1000) {
     return `${(value / 1000).toFixed(1)}K`;
@@ -428,8 +574,71 @@ function firstRelation<T>(value: T | T[] | null | undefined): T | null {
   return Array.isArray(value) ? value[0] ?? null : value ?? null;
 }
 
-export async function getPlayManagerCitySnapshot(teamId: string): Promise<PlayManagerCitySnapshot> {
+export async function getPlayManagerDashboardSnapshot(
+  teamId: string,
+): Promise<PlayManagerDashboardSnapshot> {
   const db = asPlayManagerDb(createSupabaseAdminClient());
+  const admin = createSupabaseAdminClient();
+  const untypedAdmin = admin as unknown as UntypedSupabaseClient;
+  const [{ data: standingRows }, { data: cupMatchRows }] = await Promise.all([
+    db
+      .from<StandingRow>('pm_season_rows')
+      .select('club_name, played, points, form_percent, row_order')
+      .eq('team_id', teamId)
+      .order('row_order', { ascending: true })
+      .limit(8),
+    untypedAdmin
+      .from('pm_cup_matches')
+      .select(`
+        status,
+        team1_id,
+        team2_id,
+        team1:pm_teams!team1_id(name),
+        team2:pm_teams!team2_id(name),
+        pm_cup_instances ( status )
+      `)
+      .or(`team1_id.eq.${teamId},team2_id.eq.${teamId}`)
+      .in('status', ['ready', 'pending'])
+      .order('start_time', { ascending: true }),
+  ]);
+
+  const typedStandingRows = (standingRows ?? []) as StandingRow[];
+  const ownStandingRow = typedStandingRows.find((row) => row.row_order === 1);
+  const nextOpponent = getPlayManagerNextOpponent(typedStandingRows, ownStandingRow?.played ?? 0);
+  const typedCupMatchRows = (cupMatchRows ?? []) as CupMatchRow[];
+  const upcomingCupMatchRow = typedCupMatchRows.find((row) => {
+    const instance = firstRelation(row.pm_cup_instances);
+    return row.status === 'ready' && row.team1_id && row.team2_id && instance?.status === 'in_progress';
+  });
+  const team1 = firstRelation(upcomingCupMatchRow?.team1);
+  const team2 = firstRelation(upcomingCupMatchRow?.team2);
+
+  return {
+    nextMatchLabel: `Round ${(ownStandingRow?.played ?? 0) + 1} · ${nextOpponent}`,
+    upcomingCupMatch: upcomingCupMatchRow
+      ? {
+          opponentName: upcomingCupMatchRow.team1_id === teamId
+            ? team2?.name ?? 'მეტოქე'
+            : team1?.name ?? 'მეტოქე',
+        }
+      : null,
+  };
+}
+
+export async function getPlayManagerCitySnapshot(
+  teamId: string,
+  options?: { mode?: PlayManagerCitySnapshotMode },
+): Promise<PlayManagerCitySnapshot> {
+  const mode = options?.mode ?? 'full';
+  const isLineupOnly = mode === 'lineup';
+  // 'light' keeps the cheap, always-needed slices (squad, standings, season,
+  // finance, calendar, match settings, eventFeed) but drops the heavy ones that
+  // a non-squad building (e.g. media/chat) never reads — market, transactions,
+  // match history, academy, shortlist and cups.
+  const isReduced = isLineupOnly || mode === 'light';
+  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const admin = createSupabaseAdminClient();
+  const untypedAdmin = admin as unknown as UntypedSupabaseClient;
   const [{ data: teamMetaRow }, { data: staffRows }] = await Promise.all([
     db
       .from<TeamMetaRow>('pm_teams')
@@ -453,54 +662,64 @@ export async function getPlayManagerCitySnapshot(teamId: string): Promise<PlayMa
   const marketLimit = Math.min(14, 8 + staffBonuses.marketExtraPlayers);
   const academyLimit = Math.min(10, 6 + staffBonuses.academyExtraProspects);
 
-  const [{ data: squadRows }, { data: marketRows }, { data: transactionRows }, { data: standingRows }, { data: matchHistoryRows }, { data: seasonStateRow }, { data: academyRows }, { data: shortlistRows }, { data: matchSettingsRow }, { data: calendarRow }, { data: eventFeedRows }, { data: financeStateRow }, { data: cupRows }, { data: cupMatchRows }, { data: arenaFacilityRow }] = await Promise.all([
+  const [{ data: squadRows }, { data: marketRows }, { data: transactionRows }, { data: standingRows }, { data: matchHistoryRows }, { data: seasonStateRow }, { data: academyRows }, { data: shortlistRows }, { data: matchSettingsRow }, { data: calendarRow }, { data: eventFeedRows }, { data: financeStateRow }, { data: cupRows }, { data: cupMatchRows }, { data: arenaFacilityRow }, { data: engagementRow }] = await Promise.all([
     db
       .from<SquadRow>('pm_squads')
-      .select('id, shirt_number, position, player:pm_players(id, normalized_name, display_name, age, ovr_base, ovr_current, current_transfer_value_gel, fatigue, morale, injury_matches, status, talent)')
+      .select('id, shirt_number, squad_number, position, player:pm_players(id, normalized_name, display_name, card_display_name, primary_position, card_image_url, nationality_code, card_sil_width, card_sil_height, card_sil_x, card_sil_y, card_sil_opacity, card_content_y, card_name_size, card_stats_scale, card_stats, is_real, real_age, age, age_started_total_days, ovr_base, ovr_current, current_transfer_value_gel, fatigue, morale, injury_matches, status, talent)')
       .eq('team_id', teamId)
       .order('id', { ascending: true })
       .limit(18),
-    db
-      .from<MarketRow>('pm_players')
-      .select('id, normalized_name, display_name, age, ovr_current, current_transfer_value_gel, owner_id')
-      .is('owner_id', null)
-      .eq('status', 'active')
-      .order('ovr_current', { ascending: false })
-      .limit(marketLimit),
-    db
-      .from<TransactionRow>('pm_transactions')
-      .select('amount, reason, created_at')
-      .eq('team_id', teamId)
-      .order('created_at', { ascending: false })
-      .limit(8),
+    isReduced
+      ? Promise.resolve({ data: [] as MarketRow[] })
+      : db
+          .from<MarketRow>('pm_players')
+          .select('id, normalized_name, display_name, card_display_name, primary_position, card_image_url, nationality_code, card_sil_width, card_sil_height, card_sil_x, card_sil_y, card_sil_opacity, card_content_y, card_name_size, card_stats_scale, card_stats, is_real, talent, ea_fc_ovr, real_age, age, age_started_total_days, ovr_current, current_transfer_value_gel, owner_id')
+          .is('owner_id', null)
+          .eq('status', 'active')
+          .order('ovr_current', { ascending: false })
+          .limit(marketLimit),
+    isReduced
+      ? Promise.resolve({ data: [] as TransactionRow[] })
+      : db
+          .from<TransactionRow>('pm_transactions')
+          .select('amount, reason, created_at')
+          .eq('team_id', teamId)
+          .order('created_at', { ascending: false })
+          .limit(8),
     db
       .from<StandingRow>('pm_season_rows')
       .select('club_name, played, points, form_percent, row_order')
       .eq('team_id', teamId)
       .order('row_order', { ascending: true })
       .limit(8),
-    db
-      .from<MatchHistoryRow>('pm_match_history')
-      .select('round_no, opponent_name, venue, scored, conceded, result, attendance, income, fan_mood, created_at')
-      .eq('team_id', teamId)
-      .order('round_no', { ascending: false })
-      .limit(6),
+    isReduced
+      ? Promise.resolve({ data: [] as MatchHistoryRow[] })
+      : db
+          .from<MatchHistoryRow>('pm_match_history')
+          .select('round_no, opponent_name, venue, scored, conceded, result, attendance, income, fan_mood, created_at')
+          .eq('team_id', teamId)
+          .order('round_no', { ascending: false })
+          .limit(6),
       db
         .from<SeasonStateRow>('pm_season_state')
         .select('season_no, is_completed, last_finish, last_reward, last_outcome')
         .eq('team_id', teamId)
         .single(),
-      db
-        .from<AcademyProspectRow>('pm_academy_prospects')
-        .select('id, normalized_name, display_name, position, age, ovr_base, potential_ovr, signing_cost')
-        .eq('team_id', teamId)
-        .eq('status', 'active')
-        .order('potential_ovr', { ascending: false })
-        .limit(academyLimit),
-      db
-        .from<MarketShortlistRow>('pm_market_shortlist')
-        .select('player_key')
-        .eq('team_id', teamId),
+      isReduced
+        ? Promise.resolve({ data: [] as AcademyProspectRow[] })
+        : db
+            .from<AcademyProspectRow>('pm_academy_prospects')
+            .select('id, normalized_name, display_name, position, age, ovr_base, potential_ovr, signing_cost')
+            .eq('team_id', teamId)
+            .eq('status', 'active')
+            .order('potential_ovr', { ascending: false })
+            .limit(academyLimit),
+      isReduced
+        ? Promise.resolve({ data: [] as MarketShortlistRow[] })
+        : db
+            .from<MarketShortlistRow>('pm_market_shortlist')
+            .select('player_key')
+            .eq('team_id', teamId),
       db
         .from<MatchSettingsRow>('pm_match_settings')
         .select('tactical_style, defensive_line, tempo, focus_side')
@@ -511,78 +730,145 @@ export async function getPlayManagerCitySnapshot(teamId: string): Promise<PlayMa
         .select('week_no, day_no, total_days')
         .eq('team_id', teamId)
         .single(),
-      db
-        .from<EventFeedRow>('pm_event_feed')
-        .select('id, category, accent, title, detail, week_no, day_no, created_at')
-        .eq('team_id', teamId)
-        .order('created_at', { ascending: false })
-        .limit(8),
+      isLineupOnly
+        ? Promise.resolve({ data: [] as EventFeedRow[] })
+        : db
+            .from<EventFeedRow>('pm_event_feed')
+            .select('id, category, accent, title, detail, week_no, day_no, created_at')
+            .eq('team_id', teamId)
+            .order('created_at', { ascending: false })
+            .limit(8),
       db
         .from<FinanceStateRow>('pm_finance_state')
         .select('ticket_price, sponsor_tier, sponsor_weekly_amount')
         .eq('team_id', teamId)
         .single(),
-      (createSupabaseAdminClient() as any)
-        .from('pm_cup_instances')
-        .select(`
-          id,
-          status,
-          pm_cup_templates ( id, name, prize_pool, entry_fee, max_teams ),
-          pm_cup_participants ( team_id )
-        `)
-        .in('status', ['registration', 'in_progress', 'completed'])
-        .order('created_at', { ascending: false }) as any,
-      (createSupabaseAdminClient() as any)
-        .from('pm_cup_matches')
-        .select(`
-          id,
-          cup_instance_id,
-          round,
-          position,
-          status,
-          start_time,
-          team1_id,
-          team2_id,
-          team1:pm_teams!team1_id(id, name),
-          team2:pm_teams!team2_id(id, name),
-          pm_cup_instances (
-            id,
-            template_id,
-            status,
-            pm_cup_templates ( id, name )
-          )
-        `)
-        .or(`team1_id.eq.${teamId},team2_id.eq.${teamId}`)
-        .in('status', ['ready', 'pending'])
-        .order('start_time', { ascending: true }) as any,
+      isReduced
+        ? Promise.resolve({ data: [] as CupInstanceRow[] })
+        : (untypedAdmin
+            .from('pm_cup_instances')
+            .select(`
+              id,
+              status,
+              pm_cup_templates ( id, name, prize_pool, entry_fee, max_teams ),
+              pm_cup_participants ( team_id )
+            `)
+            .in('status', ['registration', 'in_progress', 'completed'])
+            .order('created_at', { ascending: false })),
+      isReduced
+        ? Promise.resolve({ data: [] as CupMatchRow[] })
+        : (untypedAdmin
+            .from('pm_cup_matches')
+            .select(`
+              id,
+              cup_instance_id,
+              round,
+              position,
+              status,
+              start_time,
+              team1_id,
+              team2_id,
+              team1:pm_teams!team1_id(id, name),
+              team2:pm_teams!team2_id(id, name),
+              pm_cup_instances (
+                id,
+                template_id,
+                status,
+                pm_cup_templates ( id, name )
+              )
+            `)
+            .or(`team1_id.eq.${teamId},team2_id.eq.${teamId}`)
+            .in('status', ['ready', 'pending'])
+            .order('start_time', { ascending: true })),
       db
-        .from<FacilityRow>('pm_facilities')
+        .from<ArenaFacilityRow>('pm_facilities')
         .select('level')
         .eq('team_id', teamId)
         .eq('sprite_key', 'arena')
-        .single(),
+        .maybeSingle(),
+      db
+        .from<EngagementRow>('pm_engagement')
+        .select('streak, last_claim_day')
+        .eq('team_id', teamId)
+        .maybeSingle(),
     ]);
 
-  const baseSquad: BaseSquadPlayer[] = (squadRows ?? [])
+  const typedSquadRows = (squadRows ?? []) as SquadRow[];
+  const typedMarketRows = (marketRows ?? []) as MarketRow[];
+  const typedStandingRows = (standingRows ?? []) as StandingRow[];
+  const typedMatchHistoryRows = (matchHistoryRows ?? []) as MatchHistoryRow[];
+  const typedAcademyRows = (academyRows ?? []) as AcademyProspectRow[];
+  const typedShortlistRows = (shortlistRows ?? []) as MarketShortlistRow[];
+  const typedEventFeedRows = (eventFeedRows ?? []) as EventFeedRow[];
+  const currentTotalDays = calendarRow?.total_days ?? null;
+  const missingImageKeys = new Set<string>();
+  typedSquadRows.forEach((row) => {
+    if (row.player?.normalized_name && !row.player.card_image_url) missingImageKeys.add(row.player.normalized_name);
+  });
+  if (!isLineupOnly) {
+    typedMarketRows.forEach((row) => {
+      if (row.normalized_name && !row.card_image_url) missingImageKeys.add(row.normalized_name);
+    });
+  }
+  const fallbackFaceByName = new Map(
+    await Promise.all(
+      [...missingImageKeys].map(async (normalizedName) => [normalizedName, await getEafc26PlayerFaceUrl(normalizedName)] as const),
+    ),
+  );
+  const resolvedStatsByName = new Map(
+    await Promise.all(
+      [...new Set([
+        ...typedSquadRows.map((row) => row.player?.normalized_name).filter(Boolean),
+        ...typedMarketRows.map((row) => row.normalized_name).filter(Boolean),
+      ])].map(async (normalizedName) => {
+        const squadPlayer = typedSquadRows.find((row) => row.player?.normalized_name === normalizedName)?.player;
+        const marketPlayer = typedMarketRows.find((row) => row.normalized_name === normalizedName);
+        const dbStats = squadPlayer?.card_stats ?? marketPlayer?.card_stats ?? null;
+        return [normalizedName, await resolveRealPlayerStats(normalizedName, dbStats)] as const;
+      }),
+    ),
+  );
+  const baseSquad: BaseSquadPlayer[] = typedSquadRows
     .filter((row): row is SquadRow & { player: NonNullable<SquadRow['player']> } => Boolean(row.player))
-    .map((row) => ({
-      squadId: row.id,
-      id: row.player.id,
-      normalizedName: row.player.normalized_name,
-      name: row.player.display_name,
-      position: row.position,
-      age: row.player.age,
-      ovrBase: row.player.ovr_base,
-      ovrCurrent: row.player.ovr_current,
-      value: row.player.current_transfer_value_gel,
-      valueLabel: formatGel(row.player.current_transfer_value_gel),
-      fatigue: row.player.fatigue,
-      morale: row.player.morale,
-      injuryMatches: row.player.injury_matches,
-      availability: row.player.status === 'injured' || row.player.injury_matches > 0 ? 'injured' : 'ready',
-      lineupSlot: row.shirt_number,
-      talent: row.player.talent,
-    }));
+    .map((row) => {
+      const effectiveTalent = getEffectiveRealPlayerTalent({
+        isReal: row.player.is_real,
+        storedAge: row.player.age,
+        realAge: row.player.real_age,
+        baseOvr: row.player.ovr_base,
+        talent: row.player.talent,
+      });
+      const effectiveValue = getTalent11AdjustedTransferValueGel(row.player.current_transfer_value_gel, effectiveTalent);
+      return {
+        squadId: row.id,
+        id: row.player.id,
+        normalizedName: row.player.normalized_name,
+        name: row.player.display_name,
+        cardDisplayName: row.player.card_display_name,
+        cardImageUrl: row.player.card_image_url || fallbackFaceByName.get(row.player.normalized_name) || null,
+        nationalityCode: row.player.nationality_code,
+        cardEditorConfig: buildPlayManagerPlayerCardLayout(row.player),
+        stats: (row.player.is_real ? resolvedStatsByName.get(row.player.normalized_name) : null) ?? row.player.card_stats,
+        position: row.player.primary_position?.trim() || row.position,
+        age: getPlayManagerDisplayAge({
+          storedAge: row.player.age,
+          isReal: row.player.is_real,
+          ageStartedTotalDays: row.player.age_started_total_days,
+          currentTotalDays,
+        }),
+        ovrBase: row.player.ovr_base,
+        ovrCurrent: row.player.ovr_current,
+        value: effectiveValue,
+        valueLabel: formatGel(effectiveValue),
+        fatigue: row.player.fatigue,
+        morale: row.player.morale,
+        injuryMatches: row.player.injury_matches,
+        availability: row.player.status === 'injured' || row.player.injury_matches > 0 ? 'injured' : 'ready',
+        lineupSlot: row.shirt_number,
+        talent: effectiveTalent,
+        squadNumber: row.squad_number,
+      };
+    });
   const hasPersistedLineup =
     baseSquad.length > 0 &&
     baseSquad.every((player) => player.lineupSlot !== null) &&
@@ -592,32 +878,53 @@ export async function getPlayManagerCitySnapshot(teamId: string): Promise<PlayMa
     : pickBestLineup(baseSquad);
 
   const ownedPlayerKeys = new Set(baseSquad.map((player) => player.normalizedName));
-  const shortlistKeys = new Set((shortlistRows ?? []).map((row) => row.player_key));
-  const liveMarket = (marketRows ?? [])
+  const shortlistKeys = new Set(typedShortlistRows.map((row) => row.player_key));
+  const liveMarket = isReduced ? [] : typedMarketRows
     .filter((row) => !ownedPlayerKeys.has(row.normalized_name))
-    .map((row) => ({
-      key: row.normalized_name,
-      id: row.id,
-      name: row.display_name,
-      position: row.normalized_name.includes('mamardashvili')
-        ? 'GK'
-        : row.normalized_name.includes('mbappe')
-          ? 'ST'
-          : row.normalized_name.includes('kvaratskhelia')
-            ? 'LW'
-            : row.normalized_name.includes('bellingham')
-              ? 'CM'
-              : 'CM',
-      age: row.age,
-      ovr: row.ovr_current,
-      value: row.current_transfer_value_gel,
-      valueLabel: formatGel(row.current_transfer_value_gel),
-      demand: 'ბაზარზეა',
-      available: row.owner_id === null,
-      shortlisted: shortlistKeys.has(row.normalized_name),
-    }));
+    .map((row) => {
+      const effectiveTalent = getEffectiveRealPlayerTalent({
+        isReal: row.is_real,
+        storedAge: row.age,
+        realAge: row.real_age,
+        baseOvr: row.ea_fc_ovr ?? row.ovr_current,
+        talent: row.talent,
+      });
+      const effectiveValue = getTalent11AdjustedTransferValueGel(row.current_transfer_value_gel, effectiveTalent);
+      return {
+        key: row.normalized_name,
+        id: row.id,
+        name: row.display_name,
+        cardDisplayName: row.card_display_name,
+        cardImageUrl: row.card_image_url || fallbackFaceByName.get(row.normalized_name) || null,
+        nationalityCode: row.nationality_code,
+        cardEditorConfig: buildPlayManagerPlayerCardLayout(row),
+        stats: (row.is_real ? resolvedStatsByName.get(row.normalized_name) : null) ?? row.card_stats,
+        position: normalizeMarketPosition(row.primary_position?.trim() || (row.normalized_name.includes('mamardashvili')
+          ? 'GK'
+          : row.normalized_name.includes('mbappe')
+            ? 'ST'
+            : row.normalized_name.includes('kvaratskhelia')
+              ? 'LW'
+              : row.normalized_name.includes('bellingham')
+                ? 'CM'
+                : 'CM')),
+        age: getPlayManagerDisplayAge({
+          storedAge: row.age,
+          isReal: row.is_real,
+          ageStartedTotalDays: row.age_started_total_days,
+          currentTotalDays: null,
+        }),
+        ovr: row.ovr_current,
+        talent: effectiveTalent,
+        value: effectiveValue,
+        valueLabel: formatGel(effectiveValue),
+        demand: 'ბაზარზეა',
+        available: row.owner_id === null,
+        shortlisted: shortlistKeys.has(row.normalized_name),
+      };
+    });
 
-  const seededMarket = MARKET_TARGETS
+  const seededMarket = isReduced ? [] : MARKET_TARGETS
     .filter((target) => !ownedPlayerKeys.has(target.normalizedName))
     .map((target) => {
       const value = getCurrentTransferValueGel(target.ovr, target.ovr);
@@ -625,9 +932,10 @@ export async function getPlayManagerCitySnapshot(teamId: string): Promise<PlayMa
         key: target.key,
         id: null,
         name: target.displayName,
-        position: target.position,
+        position: normalizeMarketPosition(target.position),
         age: target.age,
         ovr: target.ovr,
+        talent: 10,
         value,
         valueLabel: formatGel(value),
         demand: target.demand,
@@ -636,7 +944,7 @@ export async function getPlayManagerCitySnapshot(teamId: string): Promise<PlayMa
       };
     });
 
-  const sortedStandingRows = [...(standingRows ?? [])].sort((left, right) => {
+  const sortedStandingRows = [...typedStandingRows].sort((left, right) => {
     if (right.points !== left.points) return right.points - left.points;
     if (left.row_order !== right.row_order) return left.row_order - right.row_order;
     return left.club_name.localeCompare(right.club_name);
@@ -647,9 +955,9 @@ export async function getPlayManagerCitySnapshot(teamId: string): Promise<PlayMa
     played: row.played,
     formPercent: row.form_percent,
   }));
-  const ownStandingRow = (standingRows ?? []).find((row) => row.row_order === 1);
-  const nextOpponent = getPlayManagerNextOpponent(standingRows ?? [], ownStandingRow?.played ?? 0);
-  const matchHistory = (matchHistoryRows ?? []).map((row) => ({
+  const ownStandingRow = typedStandingRows.find((row) => row.row_order === 1);
+  const nextOpponent = getPlayManagerNextOpponent(typedStandingRows, ownStandingRow?.played ?? 0);
+  const matchHistory = isLineupOnly ? [] : typedMatchHistoryRows.map((row) => ({
     round: row.round_no,
     opponent: row.opponent_name,
     venue: row.venue,
@@ -662,7 +970,7 @@ export async function getPlayManagerCitySnapshot(teamId: string): Promise<PlayMa
     fanMood: row.fan_mood,
     createdAt: row.created_at,
   }));
-  const academy = (academyRows ?? []).map((row) => ({
+  const academy = isLineupOnly ? [] : typedAcademyRows.map((row) => ({
     id: row.id,
     name: row.display_name,
     position: row.position,
@@ -691,7 +999,16 @@ export async function getPlayManagerCitySnapshot(teamId: string): Promise<PlayMa
   );
   const readiness = Math.max(35, Math.min(100, baseReadiness + staffBonuses.readinessFlat));
   const ticketPrice = financeStateRow?.ticket_price ?? 28;
-  const stadiumLevel = arenaFacilityRow?.level ?? 1;
+  const stadiumLevel = (arenaFacilityRow as ArenaFacilityRow | null)?.level ?? 1;
+
+  const totalDays = (calendarRow as CalendarRow | null)?.total_days ?? 0;
+  const engagement = engagementRow as EngagementRow | null;
+  const engStreak = engagement?.streak ?? 0;
+  const engLastDay = engagement?.last_claim_day ?? -1;
+  const dailyCanClaim = engLastDay !== totalDays;
+  const dailyNextStreak = engLastDay === totalDays - 1 ? Math.min(7, engStreak + 1) : 1;
+  const dailyNextReward = 15_000 + dailyNextStreak * 7_000;
+
   const projectedAttendance = getProjectedAttendance({
     formPercent:
       ownStandingRow?.form_percent ??
@@ -737,7 +1054,9 @@ export async function getPlayManagerCitySnapshot(teamId: string): Promise<PlayMa
       benefitLabel: getStaffBenefitLabel(role.key, currentLevel),
     };
   });
-  const upcomingCupMatchRow = (cupMatchRows || []).find((row: any) => {
+  const typedCupRows = (cupRows ?? []) as CupInstanceRow[];
+  const typedCupMatchRows = (cupMatchRows ?? []) as CupMatchRow[];
+  const upcomingCupMatchRow = typedCupMatchRows.find((row) => {
     const instance = firstRelation(row.pm_cup_instances);
     return (
       row.status === 'ready' &&
@@ -781,7 +1100,7 @@ export async function getPlayManagerCitySnapshot(teamId: string): Promise<PlayMa
       formationLabel: '4-3-3',
       academy,
       market: liveMarket.length > 0 ? liveMarket : seededMarket,
-    transactions: (transactionRows ?? []).map((row) => ({
+    transactions: isLineupOnly ? [] : (transactionRows ?? []).map((row) => ({
       amount: row.amount,
       amountLabel: `${row.amount > 0 ? '+' : ''}${formatGel(row.amount)}`,
       reason: row.reason,
@@ -803,7 +1122,7 @@ export async function getPlayManagerCitySnapshot(teamId: string): Promise<PlayMa
       totalDays: calendarRow?.total_days ?? 1,
       label: `კვირა ${calendarRow?.week_no ?? 1} · დღე ${calendarRow?.day_no ?? 1}`,
     },
-    eventFeed: (eventFeedRows ?? []).map((row) => ({
+    eventFeed: isLineupOnly ? [] : typedEventFeedRows.map((row) => ({
       id: row.id,
       category: row.category,
       accent: row.accent,
@@ -824,6 +1143,16 @@ export async function getPlayManagerCitySnapshot(teamId: string): Promise<PlayMa
       projectedAttendanceLabel: formatAttendance(projectedAttendance),
       projectedMatchdayIncome: boostedProjectedMatchdayIncome,
       projectedMatchdayIncomeLabel: formatGel(boostedProjectedMatchdayIncome),
+      stadiumLevel,
+      stadiumCapacity: getStadiumCapacity(stadiumLevel),
+      stadiumCapacityLabel: formatAttendance(getStadiumCapacity(stadiumLevel)),
+    },
+    dailyReward: {
+      canClaim: dailyCanClaim,
+      streak: engStreak,
+      nextStreak: dailyNextStreak,
+      nextReward: dailyNextReward,
+      nextRewardLabel: formatGel(dailyNextReward),
     },
     staff: {
       members: staffMembers,
@@ -849,11 +1178,11 @@ export async function getPlayManagerCitySnapshot(teamId: string): Promise<PlayMa
         45,
         100 - Math.round(averageSquadFatigue),
       ),
-    upcomingCupMatch,
-    cups: (() => {
-      const mapped = (cupRows || []).map((row: any) => {
+    upcomingCupMatch: isLineupOnly ? null : upcomingCupMatch,
+    cups: isLineupOnly ? [] : (() => {
+      const mapped = typedCupRows.map((row) => {
         const template = firstRelation(row.pm_cup_templates);
-        const participants = row.pm_cup_participants || [];
+        const participants = row.pm_cup_participants ?? [];
         if (!template) return null;
 
         return {
@@ -864,15 +1193,15 @@ export async function getPlayManagerCitySnapshot(teamId: string): Promise<PlayMa
           entryFeeLabel: template.entry_fee > 0 ? formatGel(template.entry_fee) : 'უფასო',
           maxTeams: template.max_teams,
           participantCount: participants.length,
-          isRegistered: participants.some((p: any) => p.team_id === teamId),
+          isRegistered: participants.some((participant) => participant.team_id === teamId),
           status: row.status,
         };
-      }).filter(Boolean);
+      }).filter((value): value is NonNullable<typeof value> => value !== null);
 
-      const championsCup = mapped.find((c: any) => c.templateId === 'champions_cup');
-      const openCup = mapped.find((c: any) => c.status === 'registration' && c.templateId !== 'champions_cup');
-      const inProgressCup = mapped.find((c: any) => c.status === 'in_progress' && c.templateId !== 'champions_cup');
-      const completedCup = mapped.find((c: any) => c.status === 'completed' && c.templateId !== 'champions_cup');
+      const championsCup = mapped.find((cup) => cup.templateId === 'champions_cup');
+      const openCup = mapped.find((cup) => cup.status === 'registration' && cup.templateId !== 'champions_cup');
+      const inProgressCup = mapped.find((cup) => cup.status === 'in_progress' && cup.templateId !== 'champions_cup');
+      const completedCup = mapped.find((cup) => cup.status === 'completed' && cup.templateId !== 'champions_cup');
 
       const result = [];
       if (championsCup) result.push(championsCup);

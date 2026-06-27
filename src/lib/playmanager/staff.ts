@@ -12,7 +12,7 @@ export type StaffRoleKey =
 
 export type StaffCategory = 'coaching' | 'scouting' | 'medical' | 'operations';
 
-export type StaffRoleDefinition = {
+type StaffRoleDefinition = {
   key: StaffRoleKey;
   name: string;
   shortName: string;
@@ -123,7 +123,7 @@ export const STAFF_ROLE_MAP: Record<StaffRoleKey, StaffRoleDefinition> = STAFF_R
   {} as Record<StaffRoleKey, StaffRoleDefinition>,
 );
 
-export type StaffBonuses = {
+type StaffBonuses = {
   readinessFlat: number;
   marketExtraPlayers: number;
   academyExtraProspects: number;

@@ -20,9 +20,12 @@ interface PlayManagerQuery<T> extends PromiseLike<QueryResult<T>> {
   select(columns: string, options?: { count?: 'exact'; head?: boolean }): PlayManagerQuery<T>;
   eq(column: string, value: unknown): PlayManagerQuery<T>;
   is(column: string, value: unknown): PlayManagerQuery<T>;
+  insert(values: Record<string, unknown> | Array<Record<string, unknown>>): PlayManagerQuery<T>;
+  update(values: Record<string, unknown>): PlayManagerQuery<T>;
   order(column: string, options?: { ascending?: boolean }): PlayManagerQuery<T>;
   limit(count: number): PlayManagerQuery<T>;
   single(): Promise<SingleQueryResult<T>>;
+  maybeSingle(): Promise<SingleQueryResult<T>>;
 }
 
 interface RpcResult<T = unknown> {
