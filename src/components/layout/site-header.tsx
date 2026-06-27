@@ -54,6 +54,7 @@ export function SiteHeader() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [lastY]);
 
+  if (pathname?.startsWith("/playmanager")) return null;
   if (pathname?.endsWith("/lobby")) return null;
   if (/^\/messages\/[^/]+$/.test(pathname ?? "")) return null;
 

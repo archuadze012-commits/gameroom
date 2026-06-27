@@ -8,18 +8,32 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // wait we don
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function run() {
-  // Let's just create a new user to test authenticated fetch!
-  const email = `test${Date.now()}@example.com`;
-  const { data: authData, error: authError } = await supabase.auth.signUp({
+  const email = "archuadze012@gmail.com";
+  
+  console.log("Checking profile for email:", email);
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id, username, display_name, email")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (profileError) {
+    console.error("Profile Query Error:", profileError);
+  } else {
+    console.log("Profile found:", profile);
+  }
+
+  console.log("Attempting sign in for:", email);
+  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
     email,
-    password: 'password123'
+    password: 'password123' // default password placeholder to test auth endpoint reachability
   });
   
   if (authError) {
-    console.error("SignUp Error:", authError);
+    console.error("SignIn Error:", authError);
     return;
   }
-  console.log("Logged in as:", authData.user?.id);
+  console.log("Logged in as user ID:", authData.user?.id);
   
   const { data: posts, error: postsError } = await supabase
     .from("lfg_posts")

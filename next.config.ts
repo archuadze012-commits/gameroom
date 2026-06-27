@@ -6,7 +6,8 @@ const csp = [
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' challenges.cloudflare.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
-  "connect-src 'self' *.supabase.co wss://*.supabase.co *.livekit.cloud wss://*.livekit.cloud api.groq.com api.open-meteo.com",
+  "connect-src 'self' blob: *.supabase.co wss://*.supabase.co *.livekit.cloud wss://*.livekit.cloud api.groq.com api.open-meteo.com",
+  "worker-src 'self' blob:",
   "media-src 'self' blob: *.supabase.co",
   "font-src 'self' data:",
   "frame-src 'self' https://challenges.cloudflare.com https://www.youtube.com https://www.youtube-nocookie.com https://www.tiktok.com https://player.twitch.tv",
@@ -65,6 +66,14 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "i.ytimg.com",
+      },
+      {
+        protocol: "https",
+        hostname: "img.uefa.com",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.sofifa.net",
       },
     ],
   },

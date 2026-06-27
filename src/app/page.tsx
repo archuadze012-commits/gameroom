@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { MessageCircle, Search, MessageSquare, Bell, Gamepad2, ShoppingBag, Users, Trophy, Flame, Zap } from "lucide-react";
+import { MessageCircle, Search, MessageSquare, Bell, Gamepad2, ShoppingBag, Users, Trophy, Flame, Zap, Building2, ArrowRight } from "lucide-react";
 import { mockGames, crackedGames } from "@/lib/mock-data";
 import { HomeNotificationsWidget } from "@/components/home-notifications-widget";
 import { HomeSearchWidget } from "@/components/home-search-widget";
 import { getIsAdmin, getSession } from "@/lib/auth";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import { HomeHeroCarousel } from "@/components/home/home-hero-carousel";
+import { HomeGuestHero } from "@/components/home/home-guest-hero";
 import { getLiveStreams, type LiveStream } from "@/lib/streams/youtube-live";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { listPublishedArticles } from "@/lib/articles-db";
@@ -147,9 +148,31 @@ export default async function HomePage() {
         rating: game.rating,
       }));
 
+  // Non-admin guests get the interactive Goderdzi → Leo vanguard guide (full-screen).
+  // Admins fall through to the editable hero below so site content stays editable.
+  if (!user && !isAdmin) {
+    return (
+      <div className="relative mx-auto w-full min-h-[calc(100dvh-4rem)] -mt-16 pt-16 sm:mt-0 sm:pt-0 bg-transparent overflow-x-clip">
+        {/* ── CINEMATIC BACKGROUND ────────────────────────────── */}
+        <div className="absolute top-0 left-0 right-0 h-[1000px] w-full select-none pointer-events-none" style={{ maskImage: "linear-gradient(to bottom, black 0%, black 400px, transparent 800px)", WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 400px, transparent 800px)" }}>
+          <div aria-hidden className="absolute inset-0 gr-dot-grid opacity-50" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.15),transparent_50%)] mix-blend-screen" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(236,72,153,0.1),transparent_50%)] mix-blend-screen" />
+        </div>
+
+        <div className="fixed inset-x-0 top-16 bottom-0 z-0 flex flex-col items-center justify-center overflow-hidden">
+          <HomeGuestHero
+            headline={String(guestHero.headline ?? "ყველაფერი, რის გამოც თამაშები გიყვარს")}
+            logoUrl={String(guestHero.logoUrl ?? "/playgame-logo.png")}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-transparent overflow-x-clip">
-      
+
       {/* ── CINEMATIC BACKGROUND ────────────────────────────── */}
       {!user ? (
         <div className="absolute top-0 left-0 right-0 h-[1000px] w-full select-none pointer-events-none" style={{ maskImage: "linear-gradient(to bottom, black 0%, black 400px, transparent 800px)", WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 400px, transparent 800px)" }}>
@@ -246,6 +269,32 @@ export default async function HomePage() {
                 </Link>
               ))}
             </div>
+
+            <Link href="/playmanager" className="hidden md:block w-full max-w-4xl group">
+              <article className="relative overflow-hidden rounded-[28px] border border-[#2b6b55] bg-[linear-gradient(135deg,rgba(3,18,13,0.96),rgba(6,33,24,0.94)_55%,rgba(9,52,38,0.92))] px-6 py-5 shadow-[0_0_0_1px_rgba(41,117,84,0.25),0_24px_60px_rgba(0,0,0,0.38)] transition-all duration-500 hover:-translate-y-1 hover:border-[#4fb488] hover:shadow-[0_0_0_1px_rgba(79,180,136,0.35),0_28px_70px_rgba(4,18,12,0.52)]">
+                <span aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_left,rgba(48,145,102,0.26),transparent_38%),radial-gradient(circle_at_right,rgba(95,201,152,0.18),transparent_34%)] opacity-90" />
+                <span aria-hidden className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(126,255,195,0.55),transparent)]" />
+                <span className="relative z-[1] flex items-center justify-between gap-4">
+                  <span className="flex items-center gap-4">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#4fb488]/35 bg-[#143a2b]/80 text-[#d9ffec] transition-all duration-500 group-hover:scale-110 group-hover:border-[#7effc3]/55 group-hover:text-white group-hover:shadow-[0_0_18px_rgba(126,255,195,0.22)]">
+                      <Building2 className="h-6 w-6" />
+                    </span>
+                    <span className="flex flex-col items-start text-left">
+                      <span className="font-display text-[11px] font-black uppercase tracking-[0.22em] text-[#9edbbd]">
+                        Manager Mode
+                      </span>
+                      <span className="font-display text-[26px] font-black uppercase tracking-[0.08em] text-white transition-all duration-300 group-hover:text-[#d9ffec]">
+                        PlayManager
+                      </span>
+                    </span>
+                  </span>
+                  <span className="flex items-center gap-2 font-display text-[12px] font-black uppercase tracking-[0.16em] text-[#c7f6df] transition-all duration-300 group-hover:text-white">
+                    შესვლა
+                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </span>
+                </span>
+              </article>
+            </Link>
           </section>
         )}
 

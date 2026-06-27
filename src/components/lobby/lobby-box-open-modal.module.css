@@ -1,0 +1,219 @@
+@keyframes crateGridDrift {
+  0% { background-position: 0 0, 0 0; }
+  100% { background-position: 120px 60px, -80px 90px; }
+}
+
+@keyframes crateScanline {
+  0%, 100% { opacity: 0.18; transform: translateY(-18%); }
+  50% { opacity: 0.6; transform: translateY(18%); }
+}
+
+@keyframes crateSpeedLines {
+  0% { transform: translateX(0); opacity: 0.32; }
+  100% { transform: translateX(-46px); opacity: 0.65; }
+}
+
+@keyframes crateSelectorPulse {
+  0%, 100% { opacity: 0.72; filter: drop-shadow(0 0 8px rgba(248, 113, 113, 0.42)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 18px rgba(34, 211, 238, 0.62)); }
+}
+
+@keyframes crateRevealRise {
+  0% { opacity: 0; transform: translateY(22px) scale(0.88); filter: blur(6px); }
+  62% { opacity: 1; transform: translateY(-4px) scale(1.04); filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+@keyframes crateRarityBurst {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.25) rotate(0deg); }
+  35% { opacity: 0.9; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5) rotate(18deg); }
+}
+
+@keyframes crateChipFlicker {
+  0%, 100% { opacity: 0.72; }
+  50% { opacity: 1; }
+}
+
+@keyframes crateButtonShine {
+  0% { transform: translateX(-130%) skewX(-18deg); opacity: 0; }
+  18% { opacity: 0.75; }
+  52% { opacity: 0.75; }
+  100% { transform: translateX(260%) skewX(-18deg); opacity: 0; }
+}
+
+@keyframes crateKineticCoverFloat {
+  0%, 100% { transform: perspective(900px) translateY(0) rotateX(0deg) rotateZ(0deg); }
+  50% { transform: perspective(900px) translateY(-7px) rotateX(3deg) rotateZ(-0.5deg); }
+}
+
+@keyframes crateKineticScan {
+  0% { opacity: 0.25; top: 0; }
+  10% { opacity: 1; }
+  25% { opacity: 1; top: calc(100% - 3px); }
+  50% { opacity: 0.95; top: 0; }
+  75% { opacity: 1; top: calc(100% - 3px); }
+  100% { opacity: 0.45; top: 0; }
+}
+
+@keyframes crateCoverDropIn {
+  0% { opacity: 0; transform: translate3d(0, -34px, 0) scale(1.045); filter: blur(5px) saturate(1.16); }
+  62% { opacity: 1; transform: translate3d(0, 5px, 0) scale(0.995); filter: blur(0) saturate(1.08); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0) saturate(1); }
+}
+
+@keyframes crateKineticAura {
+  0% { opacity: 0.32; transform: translate(-50%, -50%) scale(0.92) rotate(0deg); }
+  50% { opacity: 0.68; transform: translate(-50%, -50%) scale(1.06) rotate(10deg); }
+  100% { opacity: 0.32; transform: translate(-50%, -50%) scale(0.92) rotate(0deg); }
+}
+
+@keyframes crateKineticResultSweep {
+  0% { transform: translateX(-42%) skewX(-12deg); opacity: 0.18; }
+  50% { opacity: 0.42; }
+  100% { transform: translateX(42%) skewX(-12deg); opacity: 0.18; }
+}
+
+@keyframes crateKineticWeaponFloat {
+  0%, 100% { opacity: 0.92; transform: translate3d(0, 0, 0) scale(0.98); }
+  50% { opacity: 1; transform: translate3d(0, -7px, 0) scale(1.025); }
+}
+
+@keyframes crateKineticTitleGlow {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(143,227,255,0.16)); transform: translateY(0); }
+  50% { filter: drop-shadow(0 0 18px rgba(246,201,95,0.24)); transform: translateY(-2px); }
+}
+
+@keyframes crateKineticReelFlow {
+  0% { transform: translate3d(0, 0, 0); filter: blur(0); }
+  48% { filter: blur(0.35px); }
+  100% { transform: translate3d(calc(var(--reel-cycle, 1520px) * -1), 0, 0); filter: blur(0); }
+}
+
+.crateGrid {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.032) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.032) 1px, transparent 1px),
+    radial-gradient(circle at 50% 50%, rgba(248,113,113,0.08) 0 2px, transparent 3px);
+  background-size: 28px 28px, 28px 28px;
+  animation: crateGridDrift 18s linear infinite;
+}
+
+.crateScanline { animation: crateScanline 2.4s ease-in-out infinite; }
+
+.crateSpeedLines {
+  animation: crateSpeedLines 0.36s linear infinite;
+  background-image: repeating-linear-gradient(90deg, transparent 0 18px, rgba(255,255,255,0.18) 18px 20px, transparent 20px 46px);
+}
+
+.crateSelectorPulse { animation: crateSelectorPulse 1.25s ease-in-out infinite; }
+.crateRevealCard { animation: crateRevealRise 0.62s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.crateRarityBurst { animation: crateRarityBurst 1.15s ease-out both; }
+.crateChipFlicker { animation: crateChipFlicker 1.1s steps(2, end) infinite; }
+
+.crateKineticCover {
+  transform-style: preserve-3d;
+  animation: crateKineticCoverFloat 3.8s ease-in-out infinite;
+}
+
+.crateKineticScan {
+  overflow: hidden;
+  mix-blend-mode: screen;
+}
+
+.crateKineticScan::before {
+  content: "";
+  position: absolute;
+  left: -8%;
+  right: -8%;
+  top: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(255,49,49,0.18), #ff3131, rgba(255,49,49,0.18), transparent);
+  box-shadow: 0 0 18px rgba(255,49,49,0.82), 0 0 42px rgba(255,49,49,0.36);
+  animation: crateKineticScan 2.6s ease-in-out 1 forwards;
+}
+
+.crateCoverDropIn {
+  animation: crateCoverDropIn 0.52s cubic-bezier(0.2, 0.9, 0.18, 1) both;
+}
+
+.crateCoverVideo::-webkit-media-controls,
+.crateCoverVideo::-webkit-media-controls-enclosure,
+.crateCoverVideo::-webkit-media-controls-play-button-container,
+.crateCoverVideo::-webkit-media-controls-panel,
+.crateCoverVideo::-webkit-media-controls-overlay-play-button,
+.crateCoverVideo::-webkit-media-controls-overlay-play-button-container,
+.crateCoverVideo::-webkit-media-controls-overlay-enclosure,
+.crateCoverVideo::-webkit-media-controls-play-button,
+.crateCoverVideo::-webkit-media-controls-start-playback-button,
+.crateCoverVideo::-webkit-media-controls-fullscreen-button,
+.crateCoverVideo::-webkit-media-controls-picture-in-picture-button {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.crateKineticAura {
+  animation: crateKineticAura 4.8s ease-in-out infinite;
+}
+
+.crateKineticResult::before {
+  content: "";
+  position: absolute;
+  inset: -20% -35%;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent 34%, rgba(143,227,255,0.16), rgba(246,201,95,0.18), transparent 66%),
+    radial-gradient(circle at 50% 50%, rgba(143,227,255,0.1), transparent 38%);
+  mix-blend-mode: screen;
+  animation: crateKineticResultSweep 5.4s ease-in-out infinite;
+}
+
+.crateKineticWeaponFloat {
+  animation: crateKineticWeaponFloat 3.9s ease-in-out infinite;
+}
+
+.crateKineticTitleGlow {
+  animation: crateKineticTitleGlow 3.6s ease-in-out infinite;
+}
+
+.crateKineticReelIdle {
+  padding-left: calc(50% - 76px);
+  animation: crateKineticReelFlow 7.8s linear infinite;
+}
+
+.crateButtonShine {
+  position: relative;
+  overflow: hidden;
+}
+
+.crateButtonShine::after {
+  content: "";
+  position: absolute;
+  inset: -40% auto -40% 0;
+  width: 42%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+  animation: crateButtonShine 2.7s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crateGrid,
+  .crateScanline,
+  .crateSpeedLines,
+  .crateSelectorPulse,
+  .crateRevealCard,
+  .crateRarityBurst,
+  .crateChipFlicker,
+  .crateKineticCover,
+  .crateKineticScan::before,
+  .crateKineticAura,
+  .crateKineticResult::before,
+  .crateKineticWeaponFloat,
+  .crateKineticTitleGlow,
+  .crateKineticReelIdle,
+  .crateCoverDropIn,
+  .crateButtonShine::after {
+    animation: none !important;
+  }
+}

@@ -59,6 +59,29 @@ next-env.d.ts
 
 certificates
 
+# logs
+*.log
+
+# one-off / scratch scripts at repo root
+/find_actions*.js
+/fix_page.js
+/find_missing_exports.js
+
+# tooling temp output
+.codex_tmp*
+.tmp/
+/meshy_output/
+
+# local editor / agent config (not shared)
+.vscode/
+.claude/settings.local.json
+.claude/agent-memory/
+.claude/agents/
+.claude/skills/
+
+# Unity authoring project (only exported assets are used at runtime)
+public/playmanager/models/**/My project*/
+
 # Unity build artifacts (meshy 3D model projects under public/)
 public/playmanager/models/**/Library/
 public/playmanager/models/**/Temp/
