@@ -75,9 +75,9 @@ certificates
 # local editor / agent config (not shared)
 .vscode/
 .claude/settings.local.json
-.claude/agent-memory/
 .claude/agents/
 .claude/skills/
+# NOTE: .claude/agent-memory/ is intentionally TRACKED (agent memory must travel)
 
 # Unity authoring project (only exported assets are used at runtime)
 public/playmanager/models/**/My project*/
