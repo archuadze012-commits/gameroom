@@ -49,9 +49,24 @@ next-env.d.ts
 .codex/
 .env
 /artifacts/
+/ComfyUI/
 
 # scratch / one-off scripts
 /scratch/
 
 # MCP config (contains API tokens)
 .mcp.json
+
+certificates
+
+# Unity build artifacts (meshy 3D model projects under public/)
+public/playmanager/models/**/Library/
+public/playmanager/models/**/Temp/
+public/playmanager/models/**/Obj/
+public/playmanager/models/**/Build/
+public/playmanager/models/**/Builds/
+public/playmanager/models/**/Logs/
+public/playmanager/models/**/UserSettings/
+public/playmanager/models/**/[Mm]emoryCaptures/
+public/playmanager/models/**/*.csproj
+public/playmanager/models/**/*.sln
