@@ -20,6 +20,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { formatGel } from '@/lib/playmanager/economy';
+import { PlayManagerLightShell } from '@/components/playmanager/playmanager-light-shell';
 
 export const dynamic = 'force-dynamic';
 
@@ -215,9 +216,8 @@ export default async function CupPage(props: { params: Promise<{ id: string }> }
   };
 
   return (
-    <main className="pm-playmanager-page-env px-3 py-4 text-white sm:px-5 lg:px-8">
-      <div className="pm-manager-env-width">
-      <section className="pm-neon-frame relative overflow-hidden rounded-[28px] border border-emerald-300/18 bg-[#020806] p-4 shadow-[0_28px_100px_rgba(0,0,0,0.62)] sm:p-6">
+    <PlayManagerLightShell>
+      <section className="relative overflow-hidden rounded-xl bg-[#020806]/90 p-4 shadow-[0_28px_100px_rgba(0,0,0,0.45)] sm:p-6">
         <div className="pointer-events-none absolute inset-0 opacity-80">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_14%,rgba(34,197,94,0.22),transparent_28%),radial-gradient(circle_at_88%_38%,rgba(127,29,29,0.28),transparent_34%),linear-gradient(135deg,rgba(2,18,10,0.98),rgba(0,0,0,0.98)_58%,rgba(23,7,7,0.9))]" />
           <div className="absolute inset-x-[8%] top-[19%] h-[58%] rounded-[28px] border border-emerald-200/10 bg-[repeating-linear-gradient(90deg,rgba(22,101,52,0.16)_0_58px,rgba(4,16,9,0.18)_58px_116px)] opacity-45 shadow-[inset_0_0_90px_rgba(0,0,0,0.55)] [transform:perspective(900px)_rotateX(64deg)]" />
@@ -389,8 +389,7 @@ export default async function CupPage(props: { params: Promise<{ id: string }> }
           </div>
         </div>
       </section>
-      </div>
-    </main>
+    </PlayManagerLightShell>
   );
 }
 

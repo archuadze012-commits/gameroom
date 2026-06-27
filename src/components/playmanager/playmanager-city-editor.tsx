@@ -43,6 +43,7 @@ import {
   savePlayManagerTicketPrice,
   sellPlayManagerPlayer,
   signPlayManagerAcademyProspect,
+  claimPlayManagerDailyReward,
   trainPlayManagerPlayer,
   upgradePlayManagerStaff,
   type MatchResult,
@@ -53,6 +54,8 @@ import SpotlightCard from '@/components/SpotlightCard';
 import { Dock } from '@/components/react-bits/dock';
 import { SpotlightCard as ReactBitsSpotlightCard } from '@/components/react-bits/spotlight-card';
 import { PlayManagerDirectMessages, PlayManagerGlobalChat } from '@/components/playmanager/playmanager-media-modules';
+import { ScoutingReport } from '@/components/playmanager/scouting-report';
+import { FitnessReport } from '@/components/playmanager/fitness-report';
 import { PlayManagerSidebar } from '@/components/playmanager/playmanager-side-nav';
 import { getFacilityUpgradeCostGel, isFacilityKey, type CityActionKey } from '@/lib/playmanager/gameplay';
 import type { PlayManagerCitySnapshot } from '@/lib/playmanager/city-data';
@@ -151,8 +154,8 @@ const BUILDING_MODULES: Record<string, BuildingModule[]> = {
   ],
   market: [
     { key: 'transfer_market', title: 'სატრანსფერო ბაზარი', eyebrow: 'Market', description: 'ფილტრები, ფასები, OVR, ასაკი, მოთხოვნა და სწრაფი ყიდვა.', icon: Store, status: 'ready' },
-    { key: 'free_agents', title: 'თავისუფალი აგენტები', eyebrow: 'Agents', description: 'ყოველდღიურად განახლებადი ფეხბურთელები, დაბალი ფასი და სწრაფი კონტრაქტი.', icon: UsersRound, status: 'planned' },
-    { key: 'scouting', title: 'სკაუტინგის ანგარიში', eyebrow: 'Reports', description: 'პოზიციური დეფიციტი, ფასის რისკი და რეკომენდებული პროფილები.', icon: Search, status: 'planned' },
+    { key: 'free_agents', title: 'თავისუფალი აგენტები', eyebrow: 'Agents', description: 'ყოველდღიურად განახლებადი ფეხბურთელები, დაბალი ფასი და სწრაფი კონტრაქტი.', icon: UsersRound, status: 'ready' },
+    { key: 'scouting', title: 'სკაუტინგის ანგარიში', eyebrow: 'Reports', description: 'პოზიციური დეფიციტი, ფასის რისკი და რეკომენდებული პროფილები.', icon: Search, status: 'ready' },
     { key: 'outgoing', title: 'გაყიდვები', eyebrow: 'Outgoing', description: 'საკუთარი მოთამაშეების შეფასება, ხელფასის შემცირება და გაყიდვის გადაწყვეტილება.', icon: TrendingUp, status: 'ready' },
   ],
   training: [
@@ -175,7 +178,7 @@ const BUILDING_MODULES: Record<string, BuildingModule[]> = {
   medical: [
     { key: 'injuries', title: 'ტრავმები', eyebrow: 'Injuries', description: 'ტრავმირებული მოთამაშეები, დაბრუნების დრო და მატჩის რისკი.', icon: Stethoscope, status: 'planned' },
     { key: 'recovery', title: 'გამოჯანმრთელება', eyebrow: 'Recovery', description: 'დასვენება, ექიმის ეფექტი და fatigue-ის შემცირება.', icon: ShieldCheck, status: 'planned' },
-    { key: 'risk', title: 'რისკის ანალიზი', eyebrow: 'Risk', description: 'რომელი ფეხბურთელი არ უნდა ათამაშო ზედიზედ მძიმე მატჩებში.', icon: Activity, status: 'planned' },
+    { key: 'risk', title: 'რისკის ანალიზი', eyebrow: 'Risk', description: 'რომელი ფეხბურთელი არ უნდა ათამაშო ზედიზედ მძიმე მატჩებში.', icon: Activity, status: 'ready' },
     { key: 'doctor', title: 'ექიმი და პერსონალი', eyebrow: 'Staff', description: 'ექიმის დაქირავება, ყოველდღიური მკურნალობა და upgrade benefit.', icon: UsersRound, status: 'planned' },
   ],
   academy: [
@@ -188,7 +191,7 @@ const BUILDING_MODULES: Record<string, BuildingModule[]> = {
     { key: 'announcements', title: 'უწყებები', eyebrow: 'Announcements', description: 'სისტემური განცხადებები, კლუბის შეტყობინებები და read status.', icon: Megaphone, status: 'ready' },
     { key: 'global_chat', title: 'გლობალური ჩატი', eyebrow: 'Global chat', description: 'საერთო საკომუნიკაციო არხი, სწრაფი საუბარი და აქტივობა.', icon: MessageCircle, status: 'ready' },
     { key: 'missions', title: 'ყოველდღიური მისიები', eyebrow: 'Missions', description: 'აქტივობის დავალებები, reward, progress და claim flow.', icon: CheckCircle2, status: 'planned' },
-    { key: 'daily_reward', title: 'დღიური ჯილდო', eyebrow: 'Streak', description: 'day streak, cash reward და დაბრუნების მოტივაცია.', icon: Sparkles, status: 'planned' },
+    { key: 'daily_reward', title: 'დღიური ჯილდო', eyebrow: 'Streak', description: 'day streak, cash reward და დაბრუნების მოტივაცია.', icon: Sparkles, status: 'ready' },
     { key: 'news', title: 'კლუბის სიახლეები', eyebrow: 'Feed', description: 'event feed, მატჩის შედეგები, ტრავმები და ფანების რეაქცია.', icon: RadioTower, status: 'ready' },
     { key: 'reputation', title: 'რეპუტაცია', eyebrow: 'Fans', description: 'ფანები, მედია კამპანია და public image.', icon: Star, status: 'ready' },
   ],
@@ -1361,6 +1364,22 @@ function FacilityModule({
     };
   }, [spriteKey, marketFilter, marketPage, marketSearch, syncMarketQueryInUrl, moduleKey, isFreeAgentsModule]);
 
+  if (spriteKey === 'market' && moduleKey === 'scouting') {
+    return (
+      <GamePanel title="სკაუტინგის ანგარიში" icon={<Search className="h-4 w-4" />}>
+        <ScoutingReport squad={snapshot.squad} />
+      </GamePanel>
+    );
+  }
+
+  if (spriteKey === 'medical' && moduleKey === 'risk') {
+    return (
+      <GamePanel title="რისკის ანალიზი" icon={<Stethoscope className="h-4 w-4" />}>
+        <FitnessReport players={snapshot.squad} />
+      </GamePanel>
+    );
+  }
+
   if (spriteKey === 'market') {
     return (
       <GamePanel title={isFreeAgentsModule ? 'თავისუფალი აგენტები' : 'სატრანსფერო ბაზარი'} icon={<Search className="h-4 w-4" />}>
@@ -1847,15 +1866,37 @@ function FacilityModule({
     return (
       <GamePanel title="აკადემიის ტალანტები" icon={<UsersRound className="h-4 w-4" />}>
         <div className="grid gap-2 lg:grid-cols-3">
-          {snapshot.academy.map((prospect) => (
+          {snapshot.academy.map((prospect) => {
+            const matured = prospect.ovr >= prospect.potential;
+            const devPct = prospect.potential > prospect.ovr
+              ? Math.round(((prospect.ovr - 40) / Math.max(1, prospect.potential - 40)) * 100)
+              : 100;
+            return (
             <div key={prospect.id} className="pm-game-row">
-              <p className="text-sm font-black text-white">{prospect.name}</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-black text-white">{prospect.name}</p>
+                {matured ? (
+                  <span className="rounded-full border border-emerald-300/30 bg-emerald-300/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-emerald-200">მზად</span>
+                ) : null}
+              </div>
               <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                 <MiniStat label="POS" value={prospect.position} />
                 <MiniStat label="OVR" value={String(prospect.ovr)} />
                 <MiniStat label="POT" value={String(prospect.potential)} />
               </div>
-              <p className="mt-3 text-[11px] font-bold text-white/48">{prospect.age} წლის · ახალგაზრდული კონტრაქტი</p>
+              <div className="mt-3">
+                <div className="mb-1 flex items-center justify-between text-[9px] font-black uppercase tracking-[0.12em] text-white/35">
+                  <span>განვითარება</span>
+                  <span>{prospect.ovr} → {prospect.potential}</span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className={`h-full rounded-full ${matured ? 'bg-emerald-400' : 'bg-[linear-gradient(90deg,#22c55e,#f59e0b)]'}`}
+                    style={{ width: `${Math.max(0, Math.min(100, devPct))}%` }}
+                  />
+                </div>
+              </div>
+              <p className="mt-3 text-[11px] font-bold text-white/48">{prospect.age} წლის · {matured ? 'მზადაა მთავარ გუნდში' : 'ვითარდება აკადემიაში'}</p>
               <button
                 type="button"
                 disabled={pendingAction === `academy:${prospect.id}`}
@@ -1865,7 +1906,8 @@ function FacilityModule({
                 {pendingAction === `academy:${prospect.id}` ? 'მუშავდება...' : `ხელმოწერა ${prospect.signingCostLabel}`}
               </button>
             </div>
-          ))}
+          );
+          })}
         </div>
       </GamePanel>
     );
@@ -2438,6 +2480,36 @@ function FacilityModule({
       return (
         <GamePanel title="საერთო ჩატი" icon={<MessageCircle className="h-4 w-4" />}>
           <PlayManagerGlobalChat />
+        </GamePanel>
+      );
+    }
+
+    if (moduleKey === 'daily_reward') {
+      const dr = snapshot.dailyReward;
+      return (
+        <GamePanel title="დღიური ჯილდო" icon={<Sparkles className="h-4 w-4" />}>
+          <div className="rounded-[22px] border border-amber-300/16 bg-[linear-gradient(135deg,rgba(245,158,11,0.12),rgba(255,255,255,0.02))] p-5 text-center">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-200/70">streak</p>
+            <p className="mt-2 text-5xl font-black text-white">{dr.streak}<span className="text-lg text-white/40"> დღე</span></p>
+            <div className="mt-4 flex justify-center gap-1.5">
+              {Array.from({ length: 7 }, (_, i) => (
+                <span key={i} className={`h-2.5 w-2.5 rounded-full ${i < dr.streak ? 'bg-amber-400' : 'bg-white/12'}`} />
+              ))}
+            </div>
+            <p className="mt-4 text-sm font-bold text-white/55">
+              {dr.canClaim
+                ? `დღევანდელი ჯილდო: ${dr.nextRewardLabel} (სერია ${dr.nextStreak})`
+                : 'დღეს უკვე აიღე — დაუბრუნდი მომავალ დღეს.'}
+            </p>
+            <button
+              type="button"
+              disabled={!dr.canClaim || pendingAction === 'daily_reward'}
+              onClick={() => onRunPlayerAction('daily_reward', () => claimPlayManagerDailyReward())}
+              className="mt-4 w-full rounded-xl border border-amber-300/24 bg-amber-300/14 px-4 py-3 text-sm font-black text-amber-100 transition hover:bg-amber-300/20 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {pendingAction === 'daily_reward' ? 'მუშავდება...' : dr.canClaim ? 'ჯილდოს აღება' : 'აღებულია'}
+            </button>
+          </div>
         </GamePanel>
       );
     }

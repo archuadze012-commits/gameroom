@@ -12,17 +12,17 @@ export type CityActionKey =
   | 'media_campaign'
   | 'facility_upgrade';
 
-export type MarketTarget = {
+type MarketTarget = {
   key: string;
   normalizedName: string;
   displayName: string;
-  position: 'GK' | 'CB' | 'LB' | 'RB' | 'CDM' | 'CM' | 'CAM' | 'LW' | 'RW' | 'ST' | 'CF' | 'LM' | 'RM' | 'AM';
+  position: 'GK' | 'CB' | 'LB' | 'RB' | 'CDM' | 'CM' | 'CAM' | 'LW' | 'RW' | 'ST' | 'LM' | 'RM' | 'AM';
   age: number;
   ovr: number;
   demand: string;
 };
 
-export type FacilityRule = {
+type FacilityRule = {
   key: FacilityKey;
   baseUpgradeCostGel: number;
   matchdayRewardGel: number;
@@ -30,7 +30,7 @@ export type FacilityRule = {
   unlockLevel: number;
 };
 
-export const FACILITY_RULES: Record<FacilityKey, FacilityRule> = {
+const FACILITY_RULES: Record<FacilityKey, FacilityRule> = {
   arena: {
     key: 'arena',
     baseUpgradeCostGel: 620_000,
@@ -135,11 +135,6 @@ export const MARKET_TARGETS: MarketTarget[] = [
   },
 ];
 
-const RESIDENCE_SQUAD_LIMITS: Record<number, number> = { 1: 16, 2: 18, 3: 21, 4: 24, 5: 28 };
-export function getSquadLimit(residenceLevel: number): number {
-  return RESIDENCE_SQUAD_LIMITS[Math.min(Math.max(residenceLevel, 1), 5)] ?? 16;
-}
-
 export function getFacilityUpgradeCostGel(key: FacilityKey, level: number): number {
   const rule = FACILITY_RULES[key];
   const safeLevel = Math.max(1, Math.trunc(level));
@@ -169,7 +164,7 @@ export function getActionProgressGain(action: CityActionKey): number {
     case 'league_sim':
       return 15;
     case 'media_campaign':
-      return 22;
+      return 10;
     case 'facility_upgrade':
       return 0;
   }
@@ -185,7 +180,7 @@ export function getActionRewardGel(action: CityActionKey, level: number): number
     case 'league_sim':
       return 0;
     case 'media_campaign':
-      return 35_000 + safeLevel * 15_000;
+      return 0;
     default:
       return 0;
   }

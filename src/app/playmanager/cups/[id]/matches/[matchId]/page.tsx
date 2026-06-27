@@ -18,6 +18,7 @@ import { formatGel } from '@/lib/playmanager/economy';
 import { processDueCupMatches } from '@/lib/playmanager/cups';
 import { getTeam } from '@/lib/playmanager/team';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { PlayManagerLightShell } from '@/components/playmanager/playmanager-light-shell';
 
 export const dynamic = 'force-dynamic';
 
@@ -283,9 +284,8 @@ export default async function CupMatchPage(
   const startLabel = formatStartTime(match.start_time);
 
   return (
-    <main className="pm-playmanager-page-env px-3 py-4 text-white sm:px-5 lg:px-8">
-      <div className="pm-manager-env-width">
-      <section className="pm-neon-frame relative overflow-hidden rounded-[30px] border border-emerald-300/18 bg-[#020806] p-4 shadow-[0_28px_100px_rgba(0,0,0,0.62)] sm:p-6">
+    <PlayManagerLightShell>
+      <section className="relative overflow-hidden rounded-xl bg-[#020806]/90 p-4 shadow-[0_28px_100px_rgba(0,0,0,0.45)] sm:p-6">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(34,197,94,0.22),transparent_30%),radial-gradient(circle_at_85%_26%,rgba(127,29,29,0.26),transparent_34%),linear-gradient(135deg,rgba(2,18,10,0.98),rgba(0,0,0,0.98)_58%,rgba(23,7,7,0.94))]" />
         <div className="relative z-10">
           <div className="mb-5 flex items-center justify-between gap-4">
@@ -322,8 +322,7 @@ export default async function CupMatchPage(
           />
         </div>
       </section>
-      </div>
-    </main>
+    </PlayManagerLightShell>
   );
 }
 

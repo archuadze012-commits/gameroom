@@ -139,7 +139,7 @@ export function BuildingPageClient({
   }
 
   return (
-    <div className={`pm-neon-frame pm-playmanager-frame relative overflow-hidden bg-[#020806] ${initialArenaView === 'lineup' ? 'pm-arena-lineup-page' : ''}`}>
+    <div className={`relative min-h-screen w-full bg-[#020806] ${initialArenaView === 'lineup' ? 'pm-arena-lineup-page' : ''}`}>
       <BuildingWorkspace
         building={building}
         initialArenaView={initialArenaView}
@@ -155,7 +155,6 @@ export function BuildingPageClient({
         onDismissMatchResult={() => setMatchResult(null)}
         onRunAction={runCityAction}
         onRunPlayerAction={runPlayerAction}
-        onBack={() => router.push('/playmanager')}
       />
     </div>
   );

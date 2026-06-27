@@ -1,14 +1,45 @@
 'use client';
 
 import { memo, useId, useMemo } from 'react';
-import { derivePlayerStats } from '@/lib/playmanager/player-card-stats';
+import { getSecondaryPositionsPair, normalizePlayManagerPosition } from '@/lib/playmanager/secondary-positions';
+import { derivePlayerStats, type PlayerCardStatsInput } from '@/lib/playmanager/player-card-stats';
 import { cn } from '@/lib/utils';
 
 const CARD_PATH =
   'M120 398 C94 380 46 387 22 357 C10 341 10 76 10 76 C44 72 82 38 103 34 C107 49 116 55 126 55 C136 55 145 49 149 34 C156 49 166 55 176 55 C185 55 194 49 199 34 C220 38 257 72 292 76 C292 76 292 341 280 357 C256 387 207 380 180 398 C156 414 143 417 120 398 Z';
 
+const PROXIED_CARD_IMAGE_HOSTS = new Set([
+  'cdn.sofifa.net',
+  'img.uefa.com',
+  'sportrenders.com',
+  'i.namu.wiki',
+  'cdn.t3pedia.org',
+  'www.mancity.com',
+  'img.a.transfermarkt.technology',
+  'rpmzlkjqyncusbptzics.supabase.co',
+]);
+
+function getOptimizedCardImageSrc(src: string | null | undefined) {
+  const raw = src?.trim();
+  if (!raw) return '/playmanager/fut_soccer_silhouette_cutout.webp';
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      const host = new URL(raw).hostname;
+      if (PROXIED_CARD_IMAGE_HOSTS.has(host)) {
+        return `/api/playmanager/card-image?src=${encodeURIComponent(raw)}`;
+      }
+    } catch {
+      return raw;
+    }
+  }
+  return raw;
+}
+
 // ── Tier palette ──────────────────────────────────────────────────────────────
-type Tier = 'gold' | 'silver' | 'bronze';
+// Two premium tiers sit above gold: `black` (legend, talent 12 — black + gold-bright)
+// and `red` (rising_star, talent 11 — bold red). They map to the top talent classes
+// (see talent.ts); everything below keeps the classic gold/silver/bronze metals.
+type Tier = 'black' | 'red' | 'gold' | 'silver' | 'bronze';
 
 function tierFromOvr(ovr: number): Tier {
   if (ovr >= 82) return 'gold';
@@ -17,6 +48,8 @@ function tierFromOvr(ovr: number): Tier {
 }
 
 function tierFromTalent(talent: number): Tier {
+  if (talent >= 12) return 'black';
+  if (talent === 11) return 'red';
   if (talent >= 8) return 'gold';
   if (talent >= 4) return 'silver';
   return 'bronze';
@@ -36,33 +69,73 @@ const PALETTE: Record<Tier, {
   svgBorderOuter: string;
   nameGlow: string;
 }> = {
+  // Legend — obsidian black base with gold-bright filigree (TOTY-style).
+  black: {
+    outer:    '#FDE047',
+    inner:    '#161616',
+    ovrColor: '#FDE047',
+    bg: 'linear-gradient(150deg,#000 0%,#0b0b0b 50%,#000 100%)',
+    splash: 'linear-gradient(140deg,transparent 34%,rgba(253,224,71,.08) 46%,rgba(253,224,71,.2) 58%,rgba(253,224,71,.08) 68%,transparent 82%)',
+    hexFill:  '#111111',
+    glow: 'drop-shadow(0 10px 22px rgba(0,0,0,.55)) drop-shadow(0 0 11px rgba(253,224,71,.32))',
+    svgBodyStops: ['#0c0c0c', '#241f10', '#141414', '#000000'],
+    svgStrokeStops: ['#FDE047', '#FFF8D0', '#C9A227', '#6F5210'],
+    svgGlowStops: ['#FDE047', '#7E631A', '#000000'],
+    svgAccent1: '#0a0a0a',
+    svgAccent2: '#2a2410',
+    svgLine1: '#FDE047',
+    svgLine2: '#C9A227',
+    svgBorderInner: '#9A7B1C',
+    svgBorderOuter: '#FDE047',
+    nameGlow: 'radial-gradient(ellipse at center, rgba(253,224,71,.24), rgba(253,224,71,.06) 48%, transparent 76%)',
+  },
+  // Rising star — bold crimson base with bright rose accents.
+  red: {
+    outer:    '#FF5A5A',
+    inner:    '#7A1414',
+    ovrColor: '#FFD2D2',
+    bg: 'linear-gradient(150deg,#180505 0%,#2e0c0c 50%,#120404 100%)',
+    splash: 'linear-gradient(140deg,transparent 34%,rgba(255,90,90,.08) 46%,rgba(255,90,90,.2) 58%,rgba(255,90,90,.08) 68%,transparent 82%)',
+    hexFill:  '#3A0D0D',
+    glow: 'drop-shadow(0 9px 20px rgba(0,0,0,.42)) drop-shadow(0 0 10px rgba(255,70,70,.32))',
+    svgBodyStops: ['#2e0c0c', '#9E2626', '#4A1212', '#160505'],
+    svgStrokeStops: ['#FF8A8A', '#FFE0E0', '#D43A3A', '#7A1414'],
+    svgGlowStops: ['#FFB0B0', '#E24B4A', '#2e0c0c'],
+    svgAccent1: '#200808',
+    svgAccent2: '#A32D2D',
+    svgLine1: '#FFD2D2',
+    svgLine2: '#FF5A5A',
+    svgBorderInner: '#A32D2D',
+    svgBorderOuter: '#FFD2D2',
+    nameGlow: 'radial-gradient(ellipse at center, rgba(228,75,74,.3), rgba(228,75,74,.1) 48%, transparent 76%)',
+  },
   gold: {
-    outer:    '#FF3EA5',
-    inner:    '#00D4C8',
+    outer:    '#D4AF37',
+    inner:    '#F6E7A1',
     ovrColor: '#FFE066',
-    bg: 'linear-gradient(148deg,#3B0A22 0%,#60102E 28%,#540C26 50%,#093232 72%,#0A4242 100%)',
-    splash: 'linear-gradient(140deg,transparent 28%,rgba(0,196,184,.10) 42%,rgba(0,220,208,.30) 56%,rgba(0,196,184,.12) 66%,transparent 78%)',
-    hexFill:  '#c90057',
-    glow: 'drop-shadow(0 0 22px rgba(255,40,120,.9)) drop-shadow(0 0 7px rgba(0,218,205,.55))',
-    svgBodyStops: ['#c90057', '#18d8bd', '#c90057', '#9a003f'],
-    svgStrokeStops: ['#ff5aa9', '#ffffff', '#26ffe0', '#ff197a'],
-    svgGlowStops: ['#42ffdc', '#15d7bd', '#b9004e'],
-    svgAccent1: '#a8004e',
-    svgAccent2: '#2ff3d4',
-    svgLine1: '#21ffe1',
-    svgLine2: '#20ffe0',
-    svgBorderInner: '#ff2f91',
-    svgBorderOuter: '#19ffd9',
-    nameGlow: 'radial-gradient(ellipse at center, rgba(198,0,84,.92), rgba(198,0,84,.45) 48%, transparent 76%)',
+    bg: 'linear-gradient(150deg,#16110a 0%,#2a1d0c 28%,#3b2910 54%,#20150a 78%,#0f0b06 100%)',
+    splash: 'linear-gradient(140deg,transparent 34%,rgba(246,231,161,.07) 46%,rgba(212,175,55,.16) 58%,rgba(246,231,161,.08) 68%,transparent 82%)',
+    hexFill:  '#8B6B1F',
+    glow: 'drop-shadow(0 8px 18px rgba(0,0,0,.35)) drop-shadow(0 0 8px rgba(212,175,55,.24))',
+    svgBodyStops: ['#3A280D', '#A67C24', '#5A3D12', '#1A1208'],
+    svgStrokeStops: ['#F6E7A1', '#FFF8D6', '#D4AF37', '#8B6B1F'],
+    svgGlowStops: ['#FFF1B8', '#D4AF37', '#3A280D'],
+    svgAccent1: '#2A1B0B',
+    svgAccent2: '#B88A2A',
+    svgLine1: '#F6E7A1',
+    svgLine2: '#D4AF37',
+    svgBorderInner: '#C89B2C',
+    svgBorderOuter: '#F6E7A1',
+    nameGlow: 'radial-gradient(ellipse at center, rgba(212,175,55,.28), rgba(212,175,55,.08) 48%, transparent 76%)',
   },
   silver: {
     outer:    '#8BBFC8',
     inner:    '#4A8FA0',
     ovrColor: '#C8E0E8',
-    bg: 'linear-gradient(148deg,#0D1E25 0%,#162D38 40%,#0D2530 60%,#081820 100%)',
-    splash: 'linear-gradient(140deg,transparent 28%,rgba(80,160,200,.10) 42%,rgba(100,180,220,.25) 56%,rgba(80,160,200,.10) 66%,transparent 78%)',
+    bg: 'linear-gradient(150deg,#101a22 0%,#172731 42%,#10222b 68%,#09141a 100%)',
+    splash: 'linear-gradient(140deg,transparent 30%,rgba(80,160,200,.07) 44%,rgba(100,180,220,.16) 58%,rgba(80,160,200,.07) 68%,transparent 80%)',
     hexFill:  '#162D38',
-    glow: 'drop-shadow(0 0 18px rgba(100,190,220,.75)) drop-shadow(0 0 6px rgba(70,150,180,.4))',
+    glow: 'drop-shadow(0 8px 18px rgba(0,0,0,.35)) drop-shadow(0 0 7px rgba(100,190,220,.22))',
     svgBodyStops: ['#162D38', '#4A8FA0', '#162D38', '#081820'],
     svgStrokeStops: ['#8BBFC8', '#ffffff', '#5b8a96', '#3b6a76'],
     svgGlowStops: ['#C8E0E8', '#8BBFC8', '#162D38'],
@@ -72,16 +145,16 @@ const PALETTE: Record<Tier, {
     svgLine2: '#8BBFC8',
     svgBorderInner: '#4A8FA0',
     svgBorderOuter: '#C8E0E8',
-    nameGlow: 'radial-gradient(ellipse at center, rgba(22,45,56,.92), rgba(22,45,56,.45) 48%, transparent 76%)',
+    nameGlow: 'radial-gradient(ellipse at center, rgba(22,45,56,.38), rgba(22,45,56,.12) 48%, transparent 76%)',
   },
   bronze: {
     outer:    '#C88840',
     inner:    '#8A5520',
     ovrColor: '#E8C070',
-    bg: 'linear-gradient(148deg,#1E1005 0%,#2E1A08 40%,#261508 60%,#120A02 100%)',
-    splash: 'linear-gradient(140deg,transparent 28%,rgba(200,140,40,.10) 42%,rgba(220,160,60,.22) 56%,rgba(200,140,40,.10) 66%,transparent 78%)',
+    bg: 'linear-gradient(150deg,#1d130b 0%,#2b1b10 42%,#24160d 68%,#130a05 100%)',
+    splash: 'linear-gradient(140deg,transparent 30%,rgba(200,140,40,.07) 44%,rgba(220,160,60,.16) 58%,rgba(200,140,40,.07) 68%,transparent 80%)',
     hexFill:  '#2E1A08',
-    glow: 'drop-shadow(0 0 16px rgba(200,135,50,.75)) drop-shadow(0 0 5px rgba(140,85,25,.4))',
+    glow: 'drop-shadow(0 8px 18px rgba(0,0,0,.35)) drop-shadow(0 0 7px rgba(200,135,50,.2))',
     svgBodyStops: ['#2E1A08', '#8A5520', '#2E1A08', '#120A02'],
     svgStrokeStops: ['#C88840', '#ffffff', '#a16624', '#8A5520'],
     svgGlowStops: ['#E8C070', '#C88840', '#2E1A08'],
@@ -91,37 +164,9 @@ const PALETTE: Record<Tier, {
     svgLine2: '#C88840',
     svgBorderInner: '#8A5520',
     svgBorderOuter: '#E8C070',
-    nameGlow: 'radial-gradient(ellipse at center, rgba(46,26,8,.92), rgba(46,26,8,.45) 48%, transparent 76%)',
+    nameGlow: 'radial-gradient(ellipse at center, rgba(46,26,8,.34), rgba(46,26,8,.1) 48%, transparent 76%)',
   },
 };
-
-function getSecondaryPositions(mainPosition: string): [string, string] {
-  const pos = (mainPosition || '').toUpperCase();
-  switch (pos) {
-    // PUBG Mobile positions
-    case 'IGL': return ['SUP', 'FRG'];
-    case 'SUP': return ['IGL', 'FRG'];
-    case 'ATT': return ['FRG', 'SNI'];
-    case 'FRG': return ['ATT', 'SUP'];
-    case 'SNI': return ['ATT', 'SUP'];
-    // Football positions
-    case 'ST': return ['CF', 'LW'];
-    case 'CF': return ['ST', 'CAM'];
-    case 'LW': return ['RW', 'LM'];
-    case 'RW': return ['LW', 'RM'];
-    case 'LM': return ['LW', 'CM'];
-    case 'RM': return ['RW', 'CM'];
-    case 'CAM': return ['CM', 'AM'];
-    case 'AM': return ['CAM', 'CM'];
-    case 'CM': return ['CDM', 'CAM'];
-    case 'CDM': return ['CM', 'CB'];
-    case 'CB': return ['RB', 'LB'];
-    case 'LB': return ['LWB', 'CB'];
-    case 'RB': return ['RWB', 'CB'];
-    case 'GK': return ['--', '--'];
-    default: return ['--', '--'];
-  }
-}
 
 function isGeorgianName(name: string): boolean {
   const lower = (name || '').toLowerCase().trim();
@@ -132,7 +177,24 @@ function isGeorgianName(name: string): boolean {
   return suffixes.some(suffix => lower.endsWith(suffix));
 }
 
-function getPlayerNationality(name: string, id: string): { code: string; name: string } {
+function getPlayerNationality(name: string, id: string, overrideCode?: string | null): { code: string; name: string; flagSrc?: string } {
+  const codeOverride = overrideCode?.trim().toLowerCase();
+  if (codeOverride && /^[a-z]{2}$/.test(codeOverride)) {
+    if (codeOverride === 'en') {
+      return {
+        code: 'en',
+        name: 'England',
+        flagSrc: '/playmanager/flags/england.svg',
+      };
+    }
+    if (codeOverride === 'ho') {
+      return {
+        code: 'nl',
+        name: 'Netherlands',
+      };
+    }
+    return { code: codeOverride, name: codeOverride.toUpperCase() };
+  }
   if (isGeorgianName(name)) {
     return { code: 'ge', name: 'Georgia' };
   }
@@ -268,7 +330,7 @@ function getDisplaySurname(name: string) {
   return endsWithConsonant && !alreadyEndsInVowel ? `${transliterated}ი` : transliterated;
 }
 
-export interface FutCardEditorConfig {
+interface FutCardEditorConfig {
   silWidth?: number;
   silHeight?: number;
   silX?: number;
@@ -290,6 +352,43 @@ export const DEFAULT_FUT_CARD_EDITOR_CONFIG: Required<FutCardEditorConfig> = {
   statsScale: 1,
 };
 
+type PositionStatus = 'natural' | 'secondary' | 'tertiary' | 'out-of-position';
+
+function getPositionStatusStyles(positionStatus: PositionStatus) {
+  if (positionStatus === 'natural') {
+    return {
+      color: '#FFFFFF',
+      textShadow: '0 0 8px rgba(255,255,255,0.24), 0 2px 8px rgba(0,0,0,.7)',
+    };
+  }
+
+  if (positionStatus === 'secondary') {
+    return {
+      color: '#FFE066',
+      textShadow: '0 0 8px rgba(255,224,102,0.4), 0 2px 8px rgba(0,0,0,.7)',
+    };
+  }
+
+  if (positionStatus === 'tertiary') {
+    return {
+      color: '#FF9F43',
+      textShadow: '0 0 8px rgba(255,159,67,0.4), 0 2px 8px rgba(0,0,0,.7)',
+    };
+  }
+
+  return {
+    color: '#FF3E3E',
+    textShadow: '0 0 8px rgba(255,62,62,0.4), 0 2px 8px rgba(0,0,0,.7)',
+  };
+}
+
+function getPositionStatusOvrPenalty(positionStatus: PositionStatus) {
+  if (positionStatus === 'secondary') return 1;
+  if (positionStatus === 'tertiary') return 2;
+  if (positionStatus === 'out-of-position') return 9;
+  return 0;
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 function PlayerFutCardImpl({
   name,
@@ -297,8 +396,16 @@ function PlayerFutCardImpl({
   ovr,
   availability,
   talent,
+  imageUrl,
+  labelOverride,
+  nationalityCode,
+  stats,
   className,
   editorConfig,
+  isOutOfPosition = false,
+  positionStatus,
+  showSecondaryPositions = false,
+  secondaryPositions,
 }: {
   name: string;
   position: string;
@@ -306,22 +413,53 @@ function PlayerFutCardImpl({
   role?: 'starter' | 'bench' | 'reserve';
   availability?: 'ready' | 'injured';
   talent?: number;
+  imageUrl?: string | null;
+  labelOverride?: string | null;
+  nationalityCode?: string | null;
+  stats?: PlayerCardStatsInput;
   className?: string;
   editorConfig?: FutCardEditorConfig;
+  isOutOfPosition?: boolean;
+  positionStatus?: PositionStatus;
+  showSecondaryPositions?: boolean;
+  secondaryPositions?: string[];
 }) {
   const rawId = useId().replace(/:/g, '');
   const clipId = `pm-fut-clip-${rawId}`;
-  const stats = useMemo(() => derivePlayerStats(position, ovr), [position, ovr]);
-  const t = talent !== undefined ? tierFromTalent(talent) : tierFromOvr(ovr);
+  const displayPosition = useMemo(() => normalizePlayManagerPosition(position), [position]);
+  const resolvedPositionStatus = positionStatus ?? (isOutOfPosition ? 'out-of-position' : 'natural');
+  const effectiveOvr = Math.max(1, ovr - getPositionStatusOvrPenalty(resolvedPositionStatus));
+
+  const resolvedStats = useMemo(() => derivePlayerStats(displayPosition, effectiveOvr, stats), [displayPosition, effectiveOvr, stats]);
+  const t = talent !== undefined ? tierFromTalent(talent) : tierFromOvr(effectiveOvr);
   const p = PALETTE[t];
 
-  const displayName = useMemo(() => getDisplaySurname(name), [name]);
-  const nat = useMemo(() => getPlayerNationality(name, rawId), [name, rawId]);
-  const [secPos1, secPos2] = useMemo(() => getSecondaryPositions(position), [position]);
+  const displayName = useMemo(() => {
+    const override = labelOverride?.trim();
+    return override || getDisplaySurname(name);
+  }, [labelOverride, name]);
+  const nat = useMemo(() => getPlayerNationality(name, rawId, nationalityCode), [name, rawId, nationalityCode]);
+  const resolvedSecondaryPositions = useMemo(() => {
+    if (secondaryPositions && secondaryPositions.length > 0) {
+      return secondaryPositions
+        .map((item) => normalizePlayManagerPosition(item))
+        .filter((item, index, source) => item !== displayPosition && source.indexOf(item) === index)
+        .slice(0, 2);
+    }
+    return [];
+  }, [displayPosition, secondaryPositions]);
+  const [secPos1, secPos2] = useMemo(
+    () => (resolvedSecondaryPositions.length > 0
+      ? [resolvedSecondaryPositions[0] ?? '--', resolvedSecondaryPositions[1] ?? '--']
+      : getSecondaryPositionsPair(displayPosition)),
+    [displayPosition, resolvedSecondaryPositions],
+  );
+  const shouldShowSecondaryPositions = showSecondaryPositions || resolvedSecondaryPositions.length > 0;
   const layout = { ...DEFAULT_FUT_CARD_EDITOR_CONFIG, ...editorConfig };
+  const positionStyles = getPositionStatusStyles(resolvedPositionStatus);
 
   const filter = availability === 'injured'
-    ? 'drop-shadow(0 0 16px rgba(220,40,40,.85)) grayscale(.35)'
+    ? 'drop-shadow(0 8px 16px rgba(0,0,0,.4)) drop-shadow(0 0 8px rgba(220,40,40,.32)) grayscale(.35)'
     : p.glow;
 
   return (
@@ -362,8 +500,8 @@ function PlayerFutCardImpl({
           <path d="M-5 70 C82 55 104 14 126 54 C139 77 165 74 176 54 C197 15 220 56 307 70 L307 423 L-5 423 Z" fill={`url(#${clipId}-body)`} />
           <path d="M35 81 L142 196 L42 267 L-15 144 Z" fill={p.svgAccent1} opacity="0.68" />
           <path d="M132 67 L303 111 L303 196 L174 166 Z" fill={p.svgAccent2} opacity="0.72" />
-          <path d="M0 0 H302 V417 H0 Z" fill={`url(#${clipId}-glow)`} />
-          <path d="M0 0 H302 V417 H0 Z" fill={`url(#${clipId}-marks)`} opacity="0.22" />
+          <path d="M0 0 H302 V417 H0 Z" fill={`url(#${clipId}-glow)`} opacity="0.62" />
+          <path d="M0 0 H302 V417 H0 Z" fill={`url(#${clipId}-marks)`} opacity="0.1" />
           <path d="M38 139 L80 118 M42 153 L91 127 M46 167 L102 136" stroke="rgba(0,0,0,.22)" strokeWidth="4" />
           <path d="M214 56 L194 118 M229 64 L208 129 M244 73 L223 139" stroke="rgba(255,255,255,.12)" strokeWidth="5" />
           <path d="M18 78 C52 73 84 43 103 38 C111 61 141 64 149 38 C157 60 188 61 199 38 C219 43 250 72 284 78" fill="none" stroke={p.svgLine1} strokeWidth="2.4" />
@@ -371,9 +509,9 @@ function PlayerFutCardImpl({
           <path d="M120 398 C94 380 46 387 22 357" fill="none" stroke={p.svgLine2} strokeWidth="2.2" />
           <path d="M180 398 C207 380 256 387 280 357" fill="none" stroke={p.svgLine2} strokeWidth="2.2" />
         </g>
-        <path d={CARD_PATH} fill="none" stroke="#ffffff" strokeWidth="2.2" opacity="0.9" />
-        <path d={CARD_PATH} fill="none" stroke={p.svgBorderInner} strokeWidth="7" opacity="0.9" />
-        <path d={CARD_PATH} fill="none" stroke={p.svgBorderOuter} strokeWidth="2.6" opacity="0.9" />
+        <path d={CARD_PATH} fill="none" stroke="#ffffff" strokeWidth="1.4" opacity="0.7" />
+        <path d={CARD_PATH} fill="none" stroke={p.svgBorderInner} strokeWidth="4.5" opacity="0.72" />
+        <path d={CARD_PATH} fill="none" stroke={p.svgBorderOuter} strokeWidth="1.8" opacity="0.78" />
       </svg>
 
       <div
@@ -390,53 +528,55 @@ function PlayerFutCardImpl({
                   fontSize: 30,
                   fontFamily: 'var(--font-orbitron), monospace',
                   fontWeight: 900,
-                  color: 'white',
-                  textShadow: '0 2px 14px rgba(0,0,0,.8)',
+                  color: positionStyles.color,
+                  textShadow: positionStyles.textShadow,
                   lineHeight: 1,
                   marginTop: 26,
                 }}
               >
-                {ovr}
+                {effectiveOvr}
               </p>
               <p
                 style={{
                   fontSize: 24,
                   fontFamily: 'var(--font-orbitron), monospace',
                   fontWeight: 900,
-                  color: 'white',
-                  textShadow: '0 2px 14px rgba(0,0,0,.8)',
+                  color: positionStyles.color,
+                  textShadow: positionStyles.textShadow,
                   lineHeight: 1,
                   marginTop: 6,
                 }}
               >
-                {position}
+                {displayPosition}
               </p>
-              {ovr >= 78 && (
+              {effectiveOvr >= 78 && (
                 <p style={{ fontSize: 18, fontFamily: 'var(--font-orbitron)', color: 'white', marginTop: -1, lineHeight: 1 }}>
-                  {ovr >= 85 ? '++' : '+'}
+                  {effectiveOvr >= 85 ? '++' : '+'}
                 </p>
               )}
             </div>
 
-            <div className="relative translate-x-6 translate-y-9" style={{ width: 54, height: 64 }}>
-              <svg width="54" height="64" viewBox="0 0 54 64" className="absolute inset-0">
-                <polygon
-                  points="27,2 51,15 51,49 27,62 3,49 3,15"
-                  fill={p.hexFill}
-                  stroke="white"
-                  strokeWidth="2.2"
-                />
-                <path d="M5 32H49" stroke="white" strokeWidth="2" opacity="0.9" />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
-                <span style={{ fontSize: 14, fontFamily: 'var(--font-orbitron)', fontWeight: 900, color: 'white', letterSpacing: '.04em' }}>
-                  {secPos1}
-                </span>
-                <span style={{ fontSize: 14, fontFamily: 'var(--font-orbitron)', fontWeight: 900, color: 'white', letterSpacing: '.04em' }}>
-                  {secPos2}
-                </span>
+            {shouldShowSecondaryPositions ? (
+              <div className="relative translate-x-6 translate-y-9" style={{ width: 54, height: 64 }}>
+                <svg width="54" height="64" viewBox="0 0 54 64" className="absolute inset-0">
+                  <polygon
+                    points="27,2 51,15 51,49 27,62 3,49 3,15"
+                    fill={p.hexFill}
+                    stroke="white"
+                    strokeWidth="2.2"
+                  />
+                  <path d="M5 32H49" stroke="white" strokeWidth="2" opacity="0.9" />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
+                  <span style={{ fontSize: 14, fontFamily: 'var(--font-orbitron)', fontWeight: 900, color: 'white', letterSpacing: '.04em' }}>
+                    {secPos1}
+                  </span>
+                  <span style={{ fontSize: 14, fontFamily: 'var(--font-orbitron)', fontWeight: 900, color: 'white', letterSpacing: '.04em' }}>
+                    {secPos2}
+                  </span>
+                </div>
               </div>
-            </div>
+            ) : null}
           </div>
 
           <div 
@@ -444,25 +584,29 @@ function PlayerFutCardImpl({
             style={{ marginTop: layout.contentY }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src="/playmanager/fut_soccer_silhouette_cutout.webp"
-              alt="Player Silhouette"
+            <img
+              src={getOptimizedCardImageSrc(imageUrl)}
+              alt={displayName}
               className="object-contain" 
               style={{ 
                 width: layout.silWidth, 
                 height: layout.silHeight, 
                 opacity: layout.silOpacity,
                 transform: `translate(${layout.silX}px, ${layout.silY}px)`,
-                WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%), linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
-                WebkitMaskComposite: 'source-in',
-                maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%), linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
-                maskComposite: 'intersect',
+                WebkitMaskImage: imageUrl?.trim()
+                  ? 'linear-gradient(to bottom, black 78%, transparent 100%)'
+                  : 'linear-gradient(to bottom, black 70%, transparent 100%), linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
+                WebkitMaskComposite: imageUrl?.trim() ? undefined : 'source-in',
+                maskImage: imageUrl?.trim()
+                  ? 'linear-gradient(to bottom, black 78%, transparent 100%)'
+                  : 'linear-gradient(to bottom, black 70%, transparent 100%), linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
+                maskComposite: imageUrl?.trim() ? undefined : 'intersect',
               }}
             />
           </div>
 
           <div className="relative text-center" style={{ marginBottom: 8 }}>
-            <div className="absolute -inset-x-5 -top-5 h-16 blur-sm" style={{ background: p.nameGlow }} />
+            <div className="absolute inset-x-2 -top-1 h-10 blur-md" style={{ background: p.nameGlow }} />
             {availability === 'injured' && (
               <p style={{ fontSize: 8, fontFamily: 'var(--font-orbitron)', color: '#FF6060', letterSpacing: '.15em', marginBottom: 3 }}>
                 ◆ INJURED
@@ -472,11 +616,11 @@ function PlayerFutCardImpl({
               className="relative"
               style={{
                 fontSize: layout.nameSize,
-                fontFamily: 'var(--font-orbitron), monospace',
+                fontFamily: 'var(--font-alk-sanet), var(--font-orbitron), sans-serif',
                 fontWeight: 900,
                 color: 'white',
                 letterSpacing: '0.04em',
-                textShadow: '0 2px 10px rgba(0,0,0,.9), 0 0 18px rgba(255,30,110,.22)',
+                textShadow: '0 2px 8px rgba(0,0,0,.78)',
                 lineHeight: 1.1,
               }}
             >
@@ -491,12 +635,12 @@ function PlayerFutCardImpl({
             transform: `scale(${layout.statsScale})`,
             transformOrigin: 'top center'
           }}>
-            {stats.map(({ label, value }) => (
+            {resolvedStats.map(({ label, value }) => (
               <div key={label} className="text-center">
                 <p style={{ fontSize: 11, fontFamily: 'var(--font-orbitron)', fontWeight: 700, color: 'white', lineHeight: 1, letterSpacing: '.02em' }}>
                   {label}
                 </p>
-                <p style={{ fontSize: 18, fontFamily: 'var(--font-orbitron)', fontWeight: 900, color: 'white', lineHeight: 1.1, textShadow: '0 1px 6px rgba(0,0,0,.7)' }}>
+                <p style={{ fontSize: 18, fontFamily: 'var(--font-orbitron)', fontWeight: 900, color: 'white', lineHeight: 1.1, textShadow: '0 1px 4px rgba(0,0,0,.6)' }}>
                   {value}
                 </p>
               </div>
@@ -506,7 +650,7 @@ function PlayerFutCardImpl({
           <div className="mt-3.5 flex justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={`https://flagcdn.com/w40/${nat.code}.png`}
+              src={nat.flagSrc ?? `https://flagcdn.com/w40/${nat.code}.png`}
               alt={nat.name}
               loading="lazy"
               decoding="async"
