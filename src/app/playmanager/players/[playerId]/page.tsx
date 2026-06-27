@@ -19,6 +19,7 @@ import { PlayManagerPlayerAdminEditor } from './player-admin-editor';
 import { CareerDecisionButtons } from './contract-renew-button';
 import type { PlayManagerPlayerAdminDraft } from './actions';
 import {
+  DEFAULT_FUT_CARD_EDITOR_CONFIG,
   PlayerFutCard,
 } from '@/components/playmanager/player-fut-card';
 import {
@@ -27,7 +28,7 @@ import {
   normalizePlayerStats,
   type PlayerCardStatsInput,
 } from '@/lib/playmanager/player-card-stats';
-import { formatGel } from '@/lib/playmanager/economy';
+import { formatGel, getTalentClassAdjustedTransferValueGel } from '@/lib/playmanager/economy';
 import { buildPlayManagerPlayerCardLayout } from '@/lib/playmanager/player-card';
 import { ovrGrowthCap } from '@/lib/playmanager/players';
 import { TalentClassBadge } from '@/components/playmanager/talent-class-badge';
@@ -61,6 +62,7 @@ type PlayerRow = {
   base_transfer_value_gel: number;
   current_transfer_value_gel: number;
   age: number;
+  real_age: number | null;
   fatigue: number;
   morale: number;
   injury_matches: number;
@@ -218,14 +220,14 @@ function buildAdminDraft(player: PlayerRow): PlayManagerPlayerAdminDraft {
     currentTransferValueGel: player.current_transfer_value_gel,
     baseTransferValueGel: player.base_transfer_value_gel,
     cardImageUrl: player.card_image_url || '',
-    cardSilWidth: player.card_sil_width ?? 218,
-    cardSilHeight: player.card_sil_height ?? 218,
-    cardSilX: player.card_sil_x ?? 0,
-    cardSilY: player.card_sil_y ?? 0,
-    cardSilOpacity: player.card_sil_opacity ?? 1,
-    cardContentY: player.card_content_y ?? -48,
-    cardNameSize: player.card_name_size ?? 17,
-    cardStatsScale: player.card_stats_scale ?? 1,
+    cardSilWidth: player.card_sil_width ?? DEFAULT_FUT_CARD_EDITOR_CONFIG.silWidth,
+    cardSilHeight: player.card_sil_height ?? DEFAULT_FUT_CARD_EDITOR_CONFIG.silHeight,
+    cardSilX: player.card_sil_x ?? DEFAULT_FUT_CARD_EDITOR_CONFIG.silX,
+    cardSilY: player.card_sil_y ?? DEFAULT_FUT_CARD_EDITOR_CONFIG.silY,
+    cardSilOpacity: player.card_sil_opacity ?? DEFAULT_FUT_CARD_EDITOR_CONFIG.silOpacity,
+    cardContentY: player.card_content_y ?? DEFAULT_FUT_CARD_EDITOR_CONFIG.contentY,
+    cardNameSize: player.card_name_size ?? DEFAULT_FUT_CARD_EDITOR_CONFIG.nameSize,
+    cardStatsScale: player.card_stats_scale ?? DEFAULT_FUT_CARD_EDITOR_CONFIG.statsScale,
   };
 }
 
@@ -267,6 +269,7 @@ export default async function PlayManagerPlayerPage(
         'base_transfer_value_gel',
         'current_transfer_value_gel',
         'age',
+        'real_age',
         'fatigue',
         'morale',
         'injury_matches',
@@ -350,13 +353,19 @@ export default async function PlayManagerPlayerPage(
   const growthPct = peakOvr <= player.ovr_base
     ? 100
     : percent(Math.max(0, player.ovr_current - player.ovr_base), peakOvr - player.ovr_base);
-  const valueGrowth = player.current_transfer_value_gel - player.base_transfer_value_gel;
+  // Talent premium is applied at display time (mirrors market/city), so a talent
+  // change is reflected in the shown price without re-storing the value.
+  const marketValue = getTalentClassAdjustedTransferValueGel(player.current_transfer_value_gel, player.talent);
+  const baseMarketValue = getTalentClassAdjustedTransferValueGel(player.base_transfer_value_gel, player.talent);
+  const valueGrowth = marketValue - baseMarketValue;
   const status = statusText(player);
   const roleLabel = playerRole(squad);
   const clubLabel = team?.name ?? 'თავისუფალი აგენტი';
   const managerName = manager?.display_name ?? manager?.username ?? (team?.is_bot ? 'AI Manager' : 'უცნობი მენეჯერი');
   const canManageContent = await hasPermission('manage_content');
   const adminDraft = canManageContent ? buildAdminDraft(player) : null;
+  // Admins see the real-world age; managers see the in-game (reset) virtual age.
+  const displayAge = canManageContent ? (player.real_age ?? player.age) : player.age;
   const cardEditorConfig = buildPlayManagerPlayerCardLayout(player);
   const behavioral = getBehavioral(player.behavioral);
 
@@ -411,7 +420,7 @@ export default async function PlayManagerPlayerPage(
 
                 <div className="mt-4 grid grid-cols-3 gap-2">
                   <CompactBadge label="როლი" value={roleLabel} />
-                  <CompactBadge label="ასაკი" value={`${player.age}`} />
+                  <CompactBadge label="ასაკი" value={`${displayAge}`} />
                   <CompactBadge label="პოზიცია" value={position} />
                 </div>
               </SpotlightCard>
@@ -454,7 +463,7 @@ export default async function PlayManagerPlayerPage(
                     <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-200/62">player profile</p>
                     <h1 className="mt-2 text-3xl font-black leading-none text-white sm:text-5xl">{player.display_name}</h1>
                     <p className="mt-3 text-sm font-black uppercase tracking-[0.16em] text-white/42">
-                      {clubLabel} · {position} · {player.age} წლის
+                      {clubLabel} · {position} · {displayAge} წლის
                     </p>
                   </div>
 
@@ -573,7 +582,7 @@ export default async function PlayManagerPlayerPage(
                     <InfoTile
                       icon={<BadgeDollarSign className="h-5 w-5" />}
                       label="საბაზრო ფასი"
-                      value={formatGel(player.current_transfer_value_gel)}
+                      value={formatGel(marketValue)}
                       sub={`${signed(valueGrowth)} GEL საწყისთან შედარებით`}
                     />
                     <InfoTile

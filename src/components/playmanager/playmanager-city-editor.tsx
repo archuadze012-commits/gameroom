@@ -59,7 +59,7 @@ import { FitnessReport } from '@/components/playmanager/fitness-report';
 import { PlayManagerSidebar } from '@/components/playmanager/playmanager-side-nav';
 import { getFacilityUpgradeCostGel, isFacilityKey, type CityActionKey } from '@/lib/playmanager/gameplay';
 import type { PlayManagerCitySnapshot } from '@/lib/playmanager/city-data';
-import { formatGel, getProjectedAttendance, getProjectedMatchdayIncome, getStadiumCapacity } from '@/lib/playmanager/economy';
+import { formatGel, getPlayerWeeklyWageGel, getProjectedAttendance, getProjectedMatchdayIncome, getStadiumCapacity } from '@/lib/playmanager/economy';
 import type { ClubEffectsSummary, ManagerPerk } from '@/lib/playmanager/progression';
 import { getMaxStaffLevelForDivision, type StaffCategory } from '@/lib/playmanager/staff';
 import { DEFAULT_FUT_CARD_EDITOR_CONFIG, PlayerFutCard } from './player-fut-card';
@@ -139,6 +139,9 @@ type BuildingModule = {
   description: string;
   icon: typeof Trophy;
   status: 'ready' | 'planned';
+  // When set, the card navigates to this route instead of opening an in-workspace
+  // module — used to surface other buildings' experiences from the office hub.
+  href?: string;
 };
 
 type MarketFilterKey = 'ALL' | 'GK' | 'DEF' | 'MID' | 'ATT' | 'SHORTLIST';
@@ -170,6 +173,9 @@ const BUILDING_MODULES: Record<string, BuildingModule[]> = {
     { key: 'head_to_head', title: 'პირისპირ სტატისტიკა', eyebrow: 'H2H', description: 'მეტოქესთან წინა შეხვედრები და ტაქტიკური მინიშნებები.', icon: Search, status: 'planned' },
   ],
   finance: [
+    { key: 'transfer_market', title: 'სატრანსფერო ბაზარი', eyebrow: 'Transfers', description: 'ფილტრები, ფასები, OVR, ასაკი, მოთხოვნა და სწრაფი ყიდვა.', icon: Store, status: 'ready', href: '/playmanager/market?module=transfer_market' },
+    { key: 'free_agents', title: 'თავისუფალი აგენტები', eyebrow: 'Agents', description: 'ყოველდღიურად განახლებადი ფეხბურთელები, დაბალი ფასი და სწრაფი კონტრაქტი.', icon: UsersRound, status: 'ready', href: '/playmanager/market?module=free_agents' },
+    { key: 'academy_intake', title: 'აკადემიის გაფორმება', eyebrow: 'Academy', description: 'ახალგაზრდა ტალანტების ხელმოწერა და მთავარ გუნდში აყვანა.', icon: GraduationCap, status: 'ready', href: '/playmanager/academy' },
     { key: 'budget', title: 'ბიუჯეტი', eyebrow: 'Cashflow', description: 'ბალანსი, შემოსავალი, ხარჯი და მიმდინარე ტრანზაქციები.', icon: Coins, status: 'ready' },
     { key: 'sponsors', title: 'სპონსორები', eyebrow: 'Partners', description: 'სპონსორის დონე, weekly payout და მოლაპარაკება.', icon: Landmark, status: 'ready' },
     { key: 'wages', title: 'ხელფასები', eyebrow: 'Payroll', description: 'კვირეული ხელფასები, net cashflow და squad cost.', icon: UsersRound, status: 'ready' },
@@ -276,12 +282,12 @@ const BUILDING_PAGES: Record<string, BuildingPage> = {
     actions: ['სავარჯიშო სესია', 'ტაქტიკა', 'ფიზმომზადება'],
   },
   finance: {
-    eyebrow: 'Club Finance',
-    title: 'ფინანსური ოფისი',
-    summary: 'ბალანსი, ხელფასები, სპონსორები და კლუბის ფინანსური მდგრადობა.',
+    eyebrow: 'Club Office',
+    title: 'მენეჯერის ოფისი',
+    summary: 'ტრანსფერები, თავისუფალი აგენტები, აკადემია, ბალანსი, ხელფასები და სპონსორები — კლუბის სამართავი ცენტრი.',
     icon: Coins,
     metrics: [['ბალანსი', '₾1.0M'], ['ხელფასები', '₾0'], ['სპონსორი', 'Open']],
-    actions: ['სპონსორთან შეხვედრა', 'ბიუჯეტის განაწილება', 'ხელფასები'],
+    actions: ['ტრანსფერები', 'თავისუფალი აგენტები', 'სპონსორთან შეხვედრა'],
   },
   league: {
     eyebrow: 'Competition Center',
@@ -686,6 +692,7 @@ function getModulePhoto(moduleKey: string) {
     risk: { src: '/playmanager/city/buildings/medical.webp', position: '66% 44%' },
     doctor: { src: '/playmanager/city/buildings/medical.webp', position: '58% 60%' },
     academy: { src: '/playmanager/city/buildings/academy.webp', position: '50% 52%' },
+    academy_intake: { src: '/playmanager/city/buildings/academy.webp', position: '50% 52%' },
     prospects: { src: '/playmanager/city/buildings/academy.webp', position: '50% 52%' },
     youth_training: { src: '/playmanager/city/buildings/academy.webp', position: '38% 58%' },
     contracts: { src: '/playmanager/city/buildings/academy.webp', position: '66% 46%' },
@@ -710,6 +717,7 @@ function getModulePhoto(moduleKey: string) {
     'staff:physiotherapist': { src: '/playmanager/module-cards/staff/physiotherapist.webp', position: '50% 42%' },
     'staff:psychologist': { src: '/playmanager/module-cards/staff/psychologist.webp', position: '50% 42%' },
     'staff:finance_manager': { src: '/playmanager/module-cards/staff/finance-manager.webp', position: '42% 42%' },
+    'staff:set_piece_coach': { src: '/playmanager/module-cards/staff/attack-coach.webp', position: '50% 42%' },
   };
 
   return map[moduleKey] ?? { src: '/playmanager/city/environment/football-city-background.webp', position: '50% 50%' };
@@ -837,6 +845,11 @@ export function BuildingWorkspace({
       : page.metrics;
 
   function openModule(moduleKey: string) {
+    const target = modules.find((module) => module.key === moduleKey);
+    if (target?.href) {
+      router.push(target.href, { scroll: false });
+      return;
+    }
     router.push(`${buildingHref}?module=${moduleKey}`, { scroll: false });
   }
 
@@ -2317,6 +2330,66 @@ function FacilityModule({
                   დიდი თანხაა, რადგან ინფრასტრუქტურაა. ეს არ უნდა ერეოდეს ყოველდღიურ ბილეთის კონტროლში.
                 </p>
               </div>
+            </div>
+          </div>
+        </GamePanel>
+      );
+    }
+
+    if (moduleKey === 'wages') {
+      const payroll = [...snapshot.squad]
+        .map((p) => ({
+          p,
+          wage: getPlayerWeeklyWageGel({ ovrCurrent: p.ovrCurrent, age: p.age, lineupSlot: p.lineupSlot }),
+        }))
+        .sort((a, b) => b.wage - a.wage);
+      const playersSubtotal = payroll.reduce((sum, x) => sum + x.wage, 0);
+      const weeklyOut = snapshot.finance.weeklyWages; // players + staff
+      const weeklyIn = snapshot.finance.sponsorWeeklyAmount;
+      const net = weeklyIn - weeklyOut;
+      const roleLabel: Record<'starter' | 'bench' | 'reserve', string> = {
+        starter: 'საბაზო XI',
+        bench: 'სათადარიგო',
+        reserve: 'რეზერვი',
+      };
+      return (
+        <GamePanel title="ხელფასების უწყისი" icon={<UsersRound className="h-4 w-4" />}>
+          <div className="grid gap-2 lg:grid-cols-3">
+            <FinanceCard label="მოთამაშეთა ხელფასი" value={formatGel(playersSubtotal)} tone="red" />
+            <FinanceCard label="სრული ხელფასი (+ პერსონალი)" value={formatGel(weeklyOut)} tone="red" />
+            <FinanceCard label="NET / კვირა" value={formatGel(net)} tone={net >= 0 ? 'green' : 'red'} />
+          </div>
+          <div className="mt-4 overflow-hidden rounded-none border border-emerald-300/14 bg-black/40">
+            <div className="grid grid-cols-[2rem_1fr_auto_auto] gap-3 border-b border-white/8 px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.16em] text-white/38">
+              <span>#</span>
+              <span>მოთამაშე</span>
+              <span className="text-right">OVR · ასაკი</span>
+              <span className="text-right">კვირეული</span>
+            </div>
+            <div className="max-h-[440px] overflow-y-auto">
+              {payroll.length === 0 ? (
+                <p className="px-4 py-6 text-center text-sm font-bold text-white/40">გუნდში მოთამაშეები არ არის.</p>
+              ) : (
+                payroll.map(({ p, wage }) => (
+                  <div
+                    key={p.id}
+                    className="grid grid-cols-[2rem_1fr_auto_auto] items-center gap-3 border-b border-white/[0.05] px-4 py-2.5 last:border-b-0"
+                  >
+                    <span className="text-center text-xs font-black text-white/45 tabular-nums">{p.squadNumber ?? '–'}</span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black text-white">{p.cardDisplayName?.trim() || p.name}</p>
+                      <p className="text-[11px] font-bold text-white/40">
+                        {p.position} ·{' '}
+                        <span className={p.role === 'starter' ? 'text-emerald-300' : p.role === 'bench' ? 'text-yellow-300' : 'text-white/45'}>
+                          {roleLabel[p.role]}
+                        </span>
+                      </p>
+                    </div>
+                    <span className="text-right text-xs font-bold text-white/60 tabular-nums">{p.ovrCurrent} · {p.age}</span>
+                    <span className="text-right text-sm font-black text-white tabular-nums">{formatGel(wage)}</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </GamePanel>

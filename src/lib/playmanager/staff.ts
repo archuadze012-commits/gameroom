@@ -8,7 +8,8 @@ export type StaffRoleKey =
   | 'doctor'
   | 'physiotherapist'
   | 'psychologist'
-  | 'finance_manager';
+  | 'finance_manager'
+  | 'set_piece_coach';
 
 export type StaffCategory = 'coaching' | 'scouting' | 'medical' | 'operations';
 
@@ -113,6 +114,15 @@ export const STAFF_ROLES: StaffRoleDefinition[] = [
     baseHireCost: 110_000,
     baseWeeklyWage: 13_500,
   },
+  {
+    key: 'set_piece_coach',
+    name: 'სტანდარტების მწვრთნელი',
+    shortName: 'Set-piece',
+    category: 'coaching',
+    description: 'ზრდის გუნდის საჰაერო და სტანდარტული მდგომარეობების საფრთხეს — კუთხურები, საჯარიმოები და პენალტები.',
+    baseHireCost: 96_000,
+    baseWeeklyWage: 12_200,
+  },
 ];
 
 export const STAFF_ROLE_MAP: Record<StaffRoleKey, StaffRoleDefinition> = STAFF_ROLES.reduce(
@@ -134,6 +144,7 @@ type StaffBonuses = {
   doctorRecoveryPct: number;
   physioRecoveryPct: number;
   psychologistMoralePct: number;
+  setPiecePct: number;
   totalWeeklyWages: number;
 };
 
@@ -179,6 +190,8 @@ export function getStaffBenefitLabel(roleKey: StaffRoleKey, level: number) {
       return `Morale support +${safeLevel * 6}%`;
     case 'finance_manager':
       return `Projected income +${safeLevel * 3}%`;
+    case 'set_piece_coach':
+      return `Set-piece threat +${safeLevel * 4}%`;
   }
 }
 
@@ -224,6 +237,9 @@ export function getStaffBonuses(
         case 'finance_manager':
           acc.projectedIncomePct += level * 3;
           break;
+        case 'set_piece_coach':
+          acc.setPiecePct += level * 4;
+          break;
       }
       return acc;
     },
@@ -238,6 +254,7 @@ export function getStaffBonuses(
       doctorRecoveryPct: 0,
       physioRecoveryPct: 0,
       psychologistMoralePct: 0,
+      setPiecePct: 0,
       totalWeeklyWages: 0,
     },
   );
