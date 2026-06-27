@@ -28,6 +28,11 @@ type Profile = {
   keeper: number;
   readiness: number;
   tacticalFit: number;
+  // Set-piece threat (corners/free-kicks/penalties) and defence — a separate
+  // scoring channel from open play. Driven by PHY (aerial), SHO (dead-ball
+  // finishing) and PAS (delivery); the set-piece coach amplifies the attack side.
+  setPieceAttack: number;
+  setPieceDefense: number;
 };
 
 type SimulatedMatchResult = {
@@ -98,6 +103,10 @@ function playerLane(row: PlayerRow) {
       ? def * 0.42 + phy * 0.24 + pac * 0.18 + pas * 0.08 + dri * 0.08
       : def * 0.34 + phy * 0.24 + pac * 0.18 + pas * 0.12 + dri * 0.12,
     keeper: pos === 'GK' ? gk : 0,
+    // Aerial + dead-ball threat (PHY drives heading, SHO the taker, PAS the delivery).
+    setPieceAttack: phy * 0.45 + sho * 0.35 + pas * 0.2,
+    // Aerial clearing + marking strength when defending set-pieces.
+    setPieceDefense: def * 0.45 + phy * 0.4 + pas * 0.15,
   };
 }
 
@@ -146,7 +155,11 @@ function tacticalProfile(profile: Profile, settings: MatchSettings) {
   return next;
 }
 
-export function buildMatchProfile(rows: PlayerRow[], settings: Partial<MatchSettings> = {}): Profile {
+export function buildMatchProfile(
+  rows: PlayerRow[],
+  settings: Partial<MatchSettings> = {},
+  setPiecePct = 0,
+): Profile {
   const starters = rows
     .filter((row) => (row.shirt_number ?? 99) <= 11)
     .map(playerLane)
@@ -166,6 +179,16 @@ export function buildMatchProfile(rows: PlayerRow[], settings: Partial<MatchSett
     keeper: keeper?.keeper ?? avg(starters.map((player) => player.ovr), 60),
     readiness: clamp(avg(starters.map((player) => player.ovr), 60), 35, 100),
     tacticalFit: 0,
+    // Squad-wide aerial threat, lifted by the best dead-ball specialist, then
+    // amplified by the set-piece coach. Defence blends the back line with the GK.
+    setPieceAttack: (() => {
+      const base = avg(outfield.map((player) => player.setPieceAttack), 60);
+      const best = outfield.length > 0 ? Math.max(...outfield.map((player) => player.setPieceAttack)) : base;
+      return (base + (best - base) * 0.2) * (1 + clamp(setPiecePct, 0, 60) / 100);
+    })(),
+    setPieceDefense:
+      avg(defenders.map((player) => player.setPieceDefense), avg(outfield.map((player) => player.setPieceDefense), 60)) * 0.72
+      + (keeper?.keeper ?? avg(starters.map((player) => player.ovr), 60)) * 0.28,
   };
 
   return tacticalProfile(raw, { ...DEFAULT_SETTINGS, ...settings });
@@ -179,18 +202,25 @@ function scoreFromXg(xg: number) {
 }
 
 export function simulateMatch(team1Id: string, team1: Profile, team2Id: string, team2: Profile): SimulatedMatchResult {
+  // Set-pieces add a modest, separate xG channel (clamped so they supplement
+  // rather than dominate open play).
+  const team1SetPiece = clamp((team1.setPieceAttack - team2.setPieceDefense) / 55, -0.45, 0.6);
+  const team2SetPiece = clamp((team2.setPieceAttack - team1.setPieceDefense) / 55, -0.45, 0.6);
+
   const team1Chance =
     0.9
     + ((team1.attack + team1.central + team1.wing) / 3 - ((team2.defense * 0.72) + (team2.keeper * 0.28))) / 22
     + (team1.midfield - team2.midfield) / 55
     + (team1.readiness - team2.readiness) / 80
-    + team1.tacticalFit / 28;
+    + team1.tacticalFit / 28
+    + team1SetPiece;
   const team2Chance =
     0.9
     + ((team2.attack + team2.central + team2.wing) / 3 - ((team1.defense * 0.72) + (team1.keeper * 0.28))) / 22
     + (team2.midfield - team1.midfield) / 55
     + (team2.readiness - team1.readiness) / 80
-    + team2.tacticalFit / 28;
+    + team2.tacticalFit / 28
+    + team2SetPiece;
 
   let score1 = scoreFromXg(clamp(team1Chance, 0.15, 3.8));
   let score2 = scoreFromXg(clamp(team2Chance, 0.15, 3.8));

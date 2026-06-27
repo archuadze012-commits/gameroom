@@ -3,6 +3,7 @@
 import { revalidatePath, updateTag } from 'next/cache';
 import { logAdminAction, requirePermission } from '@/lib/admin';
 import { asPlayManagerDb } from '@/lib/playmanager/db';
+import { getBaseTransferValueGel, getCurrentTransferValueGel } from '@/lib/playmanager/economy';
 import { createInitialPlayerStats, normalizePlayerStats, type PlayerCardStatsInput } from '@/lib/playmanager/player-card-stats';
 import { TRAIT_KEYS } from '@/lib/playmanager/traits';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
@@ -108,8 +109,10 @@ export async function updatePlayManagerPlayerAdmin(
     fatigue: clamp(Math.round(draft.fatigue), 0, 100),
     injury_matches: clamp(Math.round(draft.injuryMatches), 0, 99),
     status,
-    current_transfer_value_gel: Math.max(0, Math.round(draft.currentTransferValueGel)),
-    base_transfer_value_gel: Math.max(0, Math.round(draft.baseTransferValueGel)),
+    // Base price is OVR-derived (talent premium is applied at display time, like
+    // the market). Editing OVR/talent now flows straight into the stored value.
+    base_transfer_value_gel: getBaseTransferValueGel(ovrBase),
+    current_transfer_value_gel: getCurrentTransferValueGel(ovrBase, ovrCurrent),
     card_image_url: draft.cardImageUrl.trim() || null,
     card_sil_width: draft.cardSilWidth,
     card_sil_height: draft.cardSilHeight,

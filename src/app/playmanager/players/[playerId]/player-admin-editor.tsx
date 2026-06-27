@@ -6,7 +6,12 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { DEFAULT_FUT_CARD_EDITOR_CONFIG, PlayerFutCard } from '@/components/playmanager/player-fut-card';
+import { PlayerFutCard } from '@/components/playmanager/player-fut-card';
+import {
+  formatGel,
+  getCurrentTransferValueGel,
+  getTalentClassAdjustedTransferValueGel,
+} from '@/lib/playmanager/economy';
 import { GK_LABELS, normalizePlayerStats, OUT_LABELS, type PlayerStatKey } from '@/lib/playmanager/player-card-stats';
 import { TRAITS, TRAIT_KEYS } from '@/lib/playmanager/traits';
 import type { PlayManagerPlayerAdminDraft } from './actions';
@@ -55,6 +60,12 @@ export function PlayManagerPlayerAdminEditor({ playerId, draft: initialDraft }: 
   const router = useRouter();
 
   const previewName = `${draft.firstName.trim()} ${draft.lastName.trim()}`.trim() || 'Player';
+
+  // Mirror the save-time + market formula: OVR-derived value, talent premium on top.
+  const derivedMarketValue = getTalentClassAdjustedTransferValueGel(
+    getCurrentTransferValueGel(draft.ovrBase, draft.ovrCurrent),
+    draft.talent,
+  );
 
   function patch<K extends keyof PlayManagerPlayerAdminDraft>(key: K, value: PlayManagerPlayerAdminDraft[K]) {
     setDraft((current) => sanitizeDraft({ ...current, [key]: value }));
@@ -156,8 +167,7 @@ export function PlayManagerPlayerAdminEditor({ playerId, draft: initialDraft }: 
             <NumberField label="დაღლა" value={draft.fatigue} min={0} max={100} onChange={(value) => patch('fatigue', value)} />
             <NumberField label="ტრავმის მატჩები" value={draft.injuryMatches} min={0} max={99} onChange={(value) => patch('injuryMatches', value)} />
             <SelectField label="სტატუსი" value={draft.status} options={STATUS_OPTIONS.map((option) => option.value)} labels={Object.fromEntries(STATUS_OPTIONS.map((option) => [option.value, option.label]))} onChange={(value) => patch('status', value)} />
-            <NumberField label="საწყისი ფასი" value={draft.baseTransferValueGel} min={0} step={1000} onChange={(value) => patch('baseTransferValueGel', value)} />
-            <NumberField label="მიმდინარე ფასი" value={draft.currentTransferValueGel} min={0} step={1000} onChange={(value) => patch('currentTransferValueGel', value)} />
+            <ReadOnlyField label="საბაზრო ფასი (OVR × talent)" value={formatGel(derivedMarketValue)} />
           </div>
 
           <div className="rounded-3xl border border-white/10 bg-black/30 p-4">
@@ -236,17 +246,6 @@ export function PlayManagerPlayerAdminEditor({ playerId, draft: initialDraft }: 
             </div>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-2">
-            <RangeField label="Image Width" min={120} max={320} step={1} value={draft.cardSilWidth} onChange={(value) => patch('cardSilWidth', value)} />
-            <RangeField label="Image Height" min={120} max={320} step={1} value={draft.cardSilHeight} onChange={(value) => patch('cardSilHeight', value)} />
-            <RangeField label="Image X" min={-120} max={120} step={1} value={draft.cardSilX} onChange={(value) => patch('cardSilX', value)} />
-            <RangeField label="Image Y" min={-120} max={120} step={1} value={draft.cardSilY} onChange={(value) => patch('cardSilY', value)} />
-            <RangeField label="Opacity" min={0} max={1} step={0.01} value={draft.cardSilOpacity} onChange={(value) => patch('cardSilOpacity', value)} />
-            <RangeField label="Content Y" min={-140} max={20} step={1} value={draft.cardContentY} onChange={(value) => patch('cardContentY', value)} />
-            <RangeField label="Name Size" min={12} max={34} step={1} value={draft.cardNameSize} onChange={(value) => patch('cardNameSize', value)} />
-            <RangeField label="Stats Scale" min={0.5} max={1.4} step={0.01} value={draft.cardStatsScale} onChange={(value) => patch('cardStatsScale', value)} />
-          </div>
-
           <div className="rounded-3xl border border-white/10 bg-black/30 p-4">
             <div className="mb-3">
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/42">Playing profile</p>
@@ -281,17 +280,6 @@ export function PlayManagerPlayerAdminEditor({ playerId, draft: initialDraft }: 
               stats={draft.cardStats}
               availability={draft.status === 'injured' || draft.injuryMatches > 0 ? 'injured' : 'ready'}
               talent={draft.talent}
-              editorConfig={{
-                ...DEFAULT_FUT_CARD_EDITOR_CONFIG,
-                silWidth: draft.cardSilWidth,
-                silHeight: draft.cardSilHeight,
-                silX: draft.cardSilX,
-                silY: draft.cardSilY,
-                silOpacity: draft.cardSilOpacity,
-                contentY: draft.cardContentY,
-                nameSize: draft.cardNameSize,
-                statsScale: draft.cardStatsScale,
-              }}
             />
           </div>
         </div>
@@ -317,6 +305,17 @@ function TextField({
         onChange={(event) => onChange(event.target.value)}
         className="h-11 rounded-2xl border-white/10 bg-black/40 text-white"
       />
+    </label>
+  );
+}
+
+function ReadOnlyField({ label, value }: { label: string; value: string }) {
+  return (
+    <label className="block space-y-2">
+      <span className="text-[10px] font-black uppercase tracking-[0.18em] text-white/42">{label}</span>
+      <div className="flex h-11 items-center rounded-2xl border border-emerald-300/20 bg-emerald-500/[0.06] px-3 text-sm font-black text-emerald-100">
+        {value}
+      </div>
     </label>
   );
 }
@@ -398,18 +397,22 @@ function RangeField({
   value: number;
   onChange: (value: number) => void;
 }) {
+  // Guard against undefined/NaN so the input stays controlled for its whole
+  // lifetime (DB-derived stats can be null before normalization).
+  const numeric = Number(value);
+  const safeValue = Number.isFinite(numeric) ? numeric : min;
   return (
     <label className="block space-y-2 rounded-2xl border border-white/10 bg-black/28 p-3">
       <div className="flex items-center justify-between gap-3">
         <span className="text-[10px] font-black uppercase tracking-[0.18em] text-white/42">{label}</span>
-        <span className="text-xs font-black text-white">{Number(value).toFixed(step < 1 ? 2 : 0)}</span>
+        <span className="text-xs font-black text-white">{safeValue.toFixed(step < 1 ? 2 : 0)}</span>
       </div>
       <input
         type="range"
         min={min}
         max={max}
         step={step}
-        value={value}
+        value={safeValue}
         onChange={(event) => onChange(Number(event.target.value))}
         className="w-full accent-emerald-300"
       />

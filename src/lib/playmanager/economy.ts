@@ -158,11 +158,15 @@ export function getProjectedMatchdayIncome(input: {
   return Math.max(0, roundToNearest(attendance * ticketPrice, CASH_ROUNDING_GEL));
 }
 
+// A single player's weekly wage: OVR drives the bulk, age adds a veteran premium,
+// and a starting-XI slot (lineupSlot ≤ 11) costs more than a bench/reserve role.
+export function getPlayerWeeklyWageGel(player: { ovrCurrent: number; age: number; lineupSlot: number | null }): number {
+  const rolePremium = player.lineupSlot !== null && player.lineupSlot <= 11 ? 2200 : 900;
+  return (player.ovrCurrent * 180) + (player.age * 40) + rolePremium;
+}
+
 export function getProjectedWeeklyWages(players: Array<{ ovrCurrent: number; age: number; lineupSlot: number | null }>) {
-  const wages = players.reduce((sum, player) => {
-    const rolePremium = player.lineupSlot !== null && player.lineupSlot <= 11 ? 2200 : 900;
-    return sum + (player.ovrCurrent * 180) + (player.age * 40) + rolePremium;
-  }, 0);
+  const wages = players.reduce((sum, player) => sum + getPlayerWeeklyWageGel(player), 0);
 
   return roundToNearest(wages, CASH_ROUNDING_GEL);
 }
