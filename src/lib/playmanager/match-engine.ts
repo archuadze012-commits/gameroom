@@ -160,8 +160,12 @@ function tacticalProfile(profile: Profile, settings: MatchSettings) {
 export function buildMatchProfile(
   rows: PlayerRow[],
   settings: Partial<MatchSettings> = {},
-  setPiecePct = 0,
+  bonuses: { setPiecePct?: number; readinessFlat?: number } = {},
 ): Profile {
+  const setPiecePct = bonuses.setPiecePct ?? 0;
+  // Head coach ("მენეჯერის ასისტენტი") lifts match readiness; previously this
+  // only showed on the dashboard and never reached the simulation.
+  const readinessFlat = bonuses.readinessFlat ?? 0;
   const starters = rows
     .filter((row) => (row.shirt_number ?? 99) <= 11)
     .map(playerLane)
@@ -179,7 +183,7 @@ export function buildMatchProfile(
     midfield: avg(midfielders.map((player) => player.midfield), avg(outfield.map((player) => player.midfield), 60)),
     defense: avg(defenders.map((player) => player.defense), avg(outfield.map((player) => player.defense), 60)),
     keeper: keeper?.keeper ?? avg(starters.map((player) => player.ovr), 60),
-    readiness: clamp(avg(starters.map((player) => player.ovr), 60), 35, 100),
+    readiness: clamp(avg(starters.map((player) => player.ovr), 60) + readinessFlat, 35, 100),
     tacticalFit: 0,
     // Squad-wide aerial threat, lifted by the best dead-ball specialist, then
     // amplified by the set-piece coach. Defence blends the back line with the GK.

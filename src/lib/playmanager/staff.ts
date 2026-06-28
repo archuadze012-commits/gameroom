@@ -138,9 +138,6 @@ type StaffBonuses = {
   marketExtraPlayers: number;
   academyExtraProspects: number;
   projectedIncomePct: number;
-  gkTrainingPct: number;
-  defenceTrainingPct: number;
-  attackTrainingPct: number;
   doctorRecoveryPct: number;
   physioRecoveryPct: number;
   psychologistMoralePct: number;
@@ -212,15 +209,9 @@ export function getStaffBonuses(
         case 'head_coach':
           acc.readinessFlat += level * 2;
           break;
-        case 'gk_coach':
-          acc.gkTrainingPct += level * 6;
-          break;
-        case 'defence_coach':
-          acc.defenceTrainingPct += level * 5;
-          break;
-        case 'attack_coach':
-          acc.attackTrainingPct += level * 5;
-          break;
+        // gk_coach / defence_coach / attack_coach affect OVR growth via the DB
+        // training function (pm_train_player), not match-time bonuses — no TS
+        // aggregate needed beyond their wages (added above).
         case 'scout':
           acc.marketExtraPlayers += level;
           break;
@@ -250,9 +241,6 @@ export function getStaffBonuses(
       marketExtraPlayers: 0,
       academyExtraProspects: 0,
       projectedIncomePct: 0,
-      gkTrainingPct: 0,
-      defenceTrainingPct: 0,
-      attackTrainingPct: 0,
       doctorRecoveryPct: 0,
       physioRecoveryPct: 0,
       psychologistMoralePct: 0,
