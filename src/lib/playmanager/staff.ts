@@ -27,7 +27,7 @@ export const STAFF_ROLES: StaffRoleDefinition[] = [
   {
     key: 'head_coach',
     name: 'მენეჯერის ასისტენტი',
-    shortName: 'Head Coach',
+    shortName: 'Manager Assistant',
     category: 'coaching',
     description: 'ზრდის გუნდის readiness-ს და მატებს საერთო მატჩის დისციპლინას.',
     baseHireCost: 140_000,
