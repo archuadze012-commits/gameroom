@@ -157,17 +157,125 @@ function tacticalProfile(profile: Profile, settings: MatchSettings) {
   return next;
 }
 
+// Position families — used to score how well a bench player fits a vacated slot.
+const POSITION_GROUP: Record<string, string> = {
+  GK: 'GK',
+  CB: 'DEF', LB: 'DEF', RB: 'DEF', LWB: 'DEF', RWB: 'DEF',
+  CDM: 'MID', CM: 'MID', CAM: 'MID', LM: 'MID', RM: 'MID',
+  LW: 'ATT', RW: 'ATT', ST: 'ATT', CF: 'ATT',
+};
+
+function isUnavailable(row: PlayerRow) {
+  const p = row.player;
+  if (!p) return true;
+  return (p.injury_matches ?? 0) > 0 || p.status === 'injured';
+}
+
+function rowPos(row: PlayerRow) {
+  return (row.position || row.player?.primary_position || 'CM').toUpperCase();
+}
+
+function rowOvr(row: PlayerRow) {
+  return row.player?.ovr_current ?? 60;
+}
+
+// OVR after the fatigue hit — used to judge whether a fresh sub beats a tired starter.
+function rowEffectiveOvr(row: PlayerRow) {
+  const p = row.player;
+  if (!p) return 0;
+  return (p.ovr_current ?? 60) - clamp((p.fatigue ?? 0) * 0.28, 0, 24);
+}
+
+// How well a bench player's natural position covers a vacated slot: exact > group > none.
+function slotFit(bench: PlayerRow, slotPos: string) {
+  const np = rowPos(bench);
+  if (np === slotPos) return 2;
+  if (POSITION_GROUP[np] === POSITION_GROUP[slotPos]) return 1;
+  return 0;
+}
+
+// The substitute fills the vacated slot (keeping team shape) with its own stats,
+// cleared of any injury flag.
+function asSub(slotRow: PlayerRow, bench: PlayerRow): PlayerRow {
+  return {
+    shirt_number: slotRow.shirt_number,
+    position: rowPos(slotRow),
+    player: { ...bench.player!, injury_matches: 0, status: 'active' },
+  };
+}
+
+/**
+ * Manager-assistant auto-lineup repair. Baseline (level 0) still swaps
+ * unavailable starters for the best available bench player (blind, by OVR) so a
+ * team is never knowingly fielded a man down. The assistant upgrades the first
+ * `level` swaps to position-aware (best positional fit), and at level 5 also
+ * rotates one heavily-fatigued starter out for a fresher sub.
+ */
+function repairLineup(rows: PlayerRow[], assistantLevel: number): PlayerRow[] {
+  const nominalXI = rows.filter((row) => (row.shirt_number ?? 99) <= 11);
+  const benchAvail = rows
+    .filter((row) => (row.shirt_number ?? 99) > 11 && !isUnavailable(row))
+    .sort((a, b) => rowOvr(b) - rowOvr(a));
+
+  const hasGaps = nominalXI.some(isUnavailable);
+  if (!hasGaps && assistantLevel < 5) return nominalXI;
+
+  const effective = new Map<PlayerRow, PlayerRow>();
+  nominalXI.forEach((row) => effective.set(row, row));
+
+  const take = (slotPos: string, positionAware: boolean) => {
+    if (benchAvail.length === 0) return null;
+    const pick = benchAvail
+      .slice()
+      .sort((a, b) =>
+        (positionAware ? slotFit(b, slotPos) - slotFit(a, slotPos) : 0) || rowOvr(b) - rowOvr(a),
+      )[0];
+    benchAvail.splice(benchAvail.indexOf(pick), 1);
+    return pick;
+  };
+
+  // 1. Injury/unavailability repair — weakest gap first (mirrors the league SQL).
+  nominalXI
+    .filter(isUnavailable)
+    .sort((a, b) => rowOvr(a) - rowOvr(b))
+    .forEach((starter, i) => {
+      const pick = take(rowPos(starter), i < assistantLevel);
+      if (pick) effective.set(starter, asSub(starter, pick));
+    });
+
+  // 2. Level 5: rotate one heavily-fatigued starter for a meaningfully fresher sub.
+  if (assistantLevel >= 5 && benchAvail.length > 0) {
+    const FATIGUE_THRESHOLD = 80;
+    const tired = nominalXI
+      .filter((row) => effective.get(row) === row && !isUnavailable(row) && (row.player?.fatigue ?? 0) >= FATIGUE_THRESHOLD)
+      .sort((a, b) => (b.player?.fatigue ?? 0) - (a.player?.fatigue ?? 0))[0];
+    if (tired) {
+      const slotPos = rowPos(tired);
+      const fresh = benchAvail
+        .slice()
+        .sort((a, b) => slotFit(b, slotPos) - slotFit(a, slotPos) || rowEffectiveOvr(b) - rowEffectiveOvr(a))[0];
+      if (fresh && rowEffectiveOvr(fresh) > rowEffectiveOvr(tired)) {
+        effective.set(tired, asSub(tired, fresh));
+      }
+    }
+  }
+
+  return nominalXI.map((row) => effective.get(row)!);
+}
+
 export function buildMatchProfile(
   rows: PlayerRow[],
   settings: Partial<MatchSettings> = {},
-  bonuses: { setPiecePct?: number; readinessFlat?: number } = {},
+  bonuses: { setPiecePct?: number; readinessFlat?: number; assistantLevel?: number } = {},
 ): Profile {
   const setPiecePct = bonuses.setPiecePct ?? 0;
   // Head coach ("მენეჯერის ასისტენტი") lifts match readiness; previously this
   // only showed on the dashboard and never reached the simulation.
   const readinessFlat = bonuses.readinessFlat ?? 0;
-  const starters = rows
-    .filter((row) => (row.shirt_number ?? 99) <= 11)
+  // The manager assistant repairs the XI before kickoff (auto-substitutes
+  // injured/unavailable starters); level scales repair quality + fatigue rotation.
+  const assistantLevel = bonuses.assistantLevel ?? 0;
+  const starters = repairLineup(rows, assistantLevel)
     .map(playerLane)
     .filter((row): row is NonNullable<ReturnType<typeof playerLane>> => row !== null);
 
