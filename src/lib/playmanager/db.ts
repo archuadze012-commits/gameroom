@@ -19,6 +19,7 @@ interface SingleQueryResult<T> {
 interface PlayManagerQuery<T> extends PromiseLike<QueryResult<T>> {
   select(columns: string, options?: { count?: 'exact'; head?: boolean }): PlayManagerQuery<T>;
   eq(column: string, value: unknown): PlayManagerQuery<T>;
+  in(column: string, values: readonly unknown[]): PlayManagerQuery<T>;
   is(column: string, value: unknown): PlayManagerQuery<T>;
   insert(values: Record<string, unknown> | Array<Record<string, unknown>>): PlayManagerQuery<T>;
   update(values: Record<string, unknown>): PlayManagerQuery<T>;

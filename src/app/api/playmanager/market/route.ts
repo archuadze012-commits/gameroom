@@ -402,6 +402,76 @@ export async function GET(request: Request) {
     });
   }
 
+  if (moduleKey === 'transfer_market') {
+    // Manager-to-manager listings (pm_transfer_listings), excluding your own.
+    type ListingRow = {
+      id: string;
+      asking_price: number;
+      seller_team_id: string;
+      player: MarketDbRow | MarketDbRow[] | null;
+    };
+    const { data: listingData, error: listingError } = await db
+      .from('pm_transfer_listings')
+      .select(`
+        id, asking_price, seller_team_id,
+        player:pm_players (
+          id, normalized_name, display_name, card_display_name, primary_position,
+          card_image_url, nationality_code, is_real, ea_fc_ovr,
+          card_sil_width, card_sil_height, card_sil_x, card_sil_y, card_sil_opacity,
+          card_content_y, card_name_size, card_stats_scale, card_stats, talent,
+          ovr_source, real_age, age, ovr_current, current_transfer_value_gel,
+          owner_id, status, available_via_career, pending_repack
+        )
+      `)
+      .eq('status', 'listed')
+      .neq('seller_team_id', team.id)
+      .order('created_at', { ascending: false });
+    if (listingError) return NextResponse.json({ error: listingError.message }, { status: 500 });
+
+    const listings = ((listingData ?? []) as ListingRow[])
+      .map((listing) => {
+        const player = Array.isArray(listing.player) ? listing.player[0] : listing.player;
+        return player ? { listing, player } : null;
+      })
+      .filter((entry): entry is { listing: ListingRow; player: MarketDbRow } => entry !== null)
+      .filter(({ player }) => {
+        if (player.pending_repack) return false;
+        const datasetPlayer = datasetByName.get(player.normalized_name);
+        const position = player.primary_position ?? datasetPlayer?.position ?? 'CM';
+        if (!matchesFilter({ position } as Eafc26DatasetPlayer, filter)) return false;
+        if (filter === 'SHORTLIST' && !shortlistSet.has(player.normalized_name)) return false;
+        if (q) {
+          const name = (player.display_name || player.normalized_name).toLowerCase();
+          if (!name.includes(q) && !player.normalized_name.includes(q)) return false;
+        }
+        return true;
+      });
+
+    const total = listings.length;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const resolvedPage = Math.min(page, totalPages);
+    const start = (resolvedPage - 1) * pageSize;
+
+    const items = await Promise.all(
+      listings.slice(start, start + pageSize).map(async ({ listing, player }) => {
+        const base = await buildMarketPlayerItemFromRow(player, shortlistSet, datasetByName);
+        const askingPrice = Math.max(0, Number(listing.asking_price ?? base.value));
+        return {
+          ...base,
+          listingId: listing.id,
+          value: askingPrice,
+          valueLabel: formatGel(askingPrice),
+          demand: 'ბაზარზე გამოტანილი',
+        };
+      }),
+    );
+
+    return NextResponse.json({
+      items,
+      pagination: { total, page: resolvedPage, pageSize, totalPages },
+    });
+  }
+
   const rowByName = new Map<string, MarketDbRow>(availableRows.map((row: MarketDbRow) => [row.normalized_name, row]));
 
   // Cheap pass: filter + sort using only fields we already have in memory. The

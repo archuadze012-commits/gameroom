@@ -17,6 +17,7 @@ import { SpotlightCard } from '@/components/react-bits/spotlight-card';
 import { hasPermission } from '@/lib/admin';
 import { PlayManagerPlayerAdminEditor } from './player-admin-editor';
 import { CareerDecisionButtons } from './contract-renew-button';
+import { OvrUpgradePanel, type FodderOption } from './ovr-upgrade-panel';
 import type { PlayManagerPlayerAdminDraft } from './actions';
 import {
   DEFAULT_FUT_CARD_EDITOR_CONFIG,
@@ -69,6 +70,10 @@ type PlayerRow = {
   status: string;
   owner_id: string | null;
   card_stats: PlayerCardStatsInput | null;
+  pending_card_stats: PlayerCardStatsInput | null;
+  xp: number | null;
+  skill_moves_cap: number | null;
+  skill_dev_pct: number | null;
   card_image_url: string | null;
   card_sil_width: number | null;
   card_sil_height: number | null;
@@ -117,6 +122,7 @@ type PlayManagerLooseDb = {
     getUser: () => Promise<{ data: { user: { id: string } | null } }>;
   };
   from: (table: string) => LooseQuery;
+  rpc: <T = unknown>(fn: string, args: Record<string, unknown>) => Promise<{ data: T | null; error?: unknown }>;
 };
 
 const STAT_LABELS: Record<string, string> = {
@@ -276,6 +282,10 @@ export default async function PlayManagerPlayerPage(
         'status',
         'owner_id',
         'card_stats',
+        'pending_card_stats',
+        'xp',
+        'skill_moves_cap',
+        'skill_dev_pct',
         'card_image_url',
         'card_sil_width',
         'card_sil_height',
@@ -368,6 +378,61 @@ export default async function PlayManagerPlayerPage(
   const displayAge = canManageContent ? (player.real_age ?? player.age) : player.age;
   const cardEditorConfig = buildPlayManagerPlayerCardLayout(player);
   const behavioral = getBehavioral(player.behavioral);
+
+  // Player development: XP-grown pending mini-stats stay inactive until an OVR
+  // upgrade is confirmed by sacrificing Pro-class fodder. Preview is shown only
+  // to the owning manager (the confirm action is owner-gated server-side too).
+  const pendingStats = player.pending_card_stats && Object.keys(player.pending_card_stats).length > 0
+    ? player.pending_card_stats
+    : null;
+  const pendingDeltas: { code: string; delta: number }[] = [];
+  let upgrade: { newOvr: number; fodderCost: number; fodder: FodderOption[] } | null = null;
+  if (pendingStats) {
+    const current = (player.card_stats ?? {}) as Record<string, unknown>;
+    for (const [code, raw] of Object.entries(pendingStats as Record<string, unknown>)) {
+      const cur = Number(current[code] ?? 0);
+      const next = Number(raw ?? 0);
+      if (Number.isFinite(next) && next > cur) pendingDeltas.push({ code, delta: next - cur });
+    }
+    pendingDeltas.sort((a, b) => b.delta - a.delta);
+
+    if (isOwnedByViewer && team) {
+      const { data: newOvr } = await db.rpc<number>('pm_player_overall_from_stats', {
+        p_position: position,
+        p_card_stats: pendingStats,
+        p_fallback: player.ovr_current,
+      });
+      if (typeof newOvr === 'number' && newOvr > player.ovr_current) {
+        const { data: fodderCost } = await db.rpc<number>('pm_ovr_upgrade_total_cost', {
+          p_from_ovr: player.ovr_current,
+          p_to_ovr: newOvr,
+        });
+        const { data: fodderRows } = await db
+          .from('pm_players')
+          .select('id,display_name,ovr_current,talent,primary_position')
+          .eq('owner_id', team.id)
+          .returns<{ id: string; display_name: string; ovr_current: number; talent: number; primary_position: string | null }[]>();
+        const fodder: FodderOption[] = (fodderRows ?? [])
+          .filter((row) => row.id !== player.id && row.talent >= 1 && row.talent <= 3)
+          .map((row) => ({
+            id: row.id,
+            name: row.display_name,
+            ovr: row.ovr_current,
+            talent: row.talent,
+            position: (row.primary_position?.trim().toUpperCase() || 'CM'),
+          }));
+        upgrade = { newOvr, fodderCost: Math.max(1, Number(fodderCost ?? 0)), fodder };
+      }
+    }
+  }
+
+  // Manager-assistant skill-moves development (1→cap as game-time advances).
+  const skillCap = player.skill_moves_cap ?? null;
+  const skillDevPct = Math.max(0, Math.min(1, player.skill_dev_pct ?? 0));
+  const showSkillDev = isOwnedByViewer
+    && skillCap != null
+    && skillCap > 1
+    && (player.skill_moves ?? 0) < skillCap;
 
   return (
     <PlayManagerLightShell>
@@ -565,6 +630,27 @@ export default async function PlayManagerPlayerPage(
                     </div>
                   ) : null}
 
+                  {pendingDeltas.length > 0 ? (
+                    <div className="mb-4 rounded-[22px] border border-amber-300/20 bg-amber-300/[0.06] p-4">
+                      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-200/72">pending development</p>
+                      <p className="mt-1 text-sm font-black text-white">გაუაქტიურებელი ზრდა</p>
+                      <p className="mt-1 text-[11px] font-bold leading-5 text-white/45">
+                        ვარჯიშით დაგროვილი ქულები. მატჩში ჯერ არ მოქმედებს — გასააქტიურებლად დაადასტურე OVR აფგრეიდი.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {pendingDeltas.map((d) => (
+                          <span
+                            key={d.code}
+                            className="inline-flex items-center gap-1 rounded-lg border border-amber-300/24 bg-black/24 px-2.5 py-1 text-xs font-black text-amber-100"
+                          >
+                            {STAT_LABELS[d.code] ?? d.code}
+                            <span className="text-emerald-300">+{d.delta}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
                   <div className="grid gap-3 sm:grid-cols-2">
                     {derivedStats.map((stat) => (
                       <AttributeRow
@@ -659,6 +745,50 @@ export default async function PlayManagerPlayerPage(
                       Peak ითვლება ტალანტის ლიმიტით: Base OVR + talent cap.
                     </p>
                   </SpotlightCard>
+
+                  {(upgrade || showSkillDev) ? (
+                    <SpotlightCard
+                      fillHeight={false}
+                      className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4"
+                    >
+                      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-200/62">academy lab</p>
+                      <h2 className="mt-1 text-xl font-black text-white">განვითარების ლაბორატორია</h2>
+                      <div className="mt-4 space-y-3">
+                        {upgrade ? (
+                          <OvrUpgradePanel
+                            playerId={player.id}
+                            oldOvr={player.ovr_current}
+                            newOvr={upgrade.newOvr}
+                            fodderCost={upgrade.fodderCost}
+                            fodder={upgrade.fodder}
+                          />
+                        ) : null}
+
+                        {showSkillDev ? (
+                          <div className="rounded-[22px] border border-white/8 bg-black/22 p-4">
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/34">skill moves</p>
+                                <p className="mt-1 text-sm font-black text-white">ოსტატობის განვითარება</p>
+                              </div>
+                              <span className="text-sm font-black tabular-nums text-amber-300">
+                                {player.skill_moves ?? 1}<span className="text-white/40"> / {skillCap}★</span>
+                              </span>
+                            </div>
+                            <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
+                              <div
+                                className="h-full rounded-full bg-[linear-gradient(90deg,#f59e0b,#fcd34d)]"
+                                style={{ width: `${Math.round(skillDevPct * 100)}%` }}
+                              />
+                            </div>
+                            <p className="mt-2 text-[11px] font-bold leading-5 text-white/42">
+                              მენეჯერის ასისტენტი დროთა განმავლობაში აღადგენს ოსტატობას მაქს. {skillCap}★-მდე.
+                            </p>
+                          </div>
+                        ) : null}
+                      </div>
+                    </SpotlightCard>
+                  ) : null}
 
                   <SpotlightCard
                     fillHeight={false}

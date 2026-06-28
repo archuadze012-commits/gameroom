@@ -37,6 +37,8 @@ import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   buyPlayManagerMarketPlayer,
+  buyPlayManagerListedPlayer,
+  listPlayManagerPlayer,
   hirePlayManagerStaff,
   joinCupAction,
   negotiatePlayManagerSponsor,
@@ -1288,6 +1290,7 @@ function FacilityModule({
   const [marketLoading, setMarketLoading] = useState(bootsMarketFromLiveFetch);
   const [matchSettingsDraft] = useState(snapshot.matchSettings);
   const [ticketPriceDraft, setTicketPriceDraft] = useState(snapshot.finance.ticketPrice);
+  const [listPriceDraft, setListPriceDraft] = useState<Record<string, string>>({});
   const marketPageRaw = Number.parseInt(searchParams.get('page') ?? '1', 10);
   const marketPage = Number.isFinite(marketPageRaw) && marketPageRaw > 0 ? marketPageRaw : 1;
   const marketFilterLabels: Record<MarketFilterKey, string> = {
@@ -1480,14 +1483,24 @@ function FacilityModule({
                 </div>
               </div>
               <div className="mt-3 flex gap-2">
-                <button
-                  type="button"
-                  disabled={pendingAction === `buy:${player.key}`}
-                  onClick={() => onRunPlayerAction(`buy:${player.key}`, () => buyPlayManagerMarketPlayer(player.key))}
-                  className="flex-1 rounded-xl border border-emerald-300/18 bg-emerald-300/10 px-3 py-2 text-xs font-black text-white transition hover:bg-emerald-300/16 disabled:cursor-not-allowed disabled:opacity-55"
-                >
-                  {pendingAction === `buy:${player.key}` ? 'მუშავდება...' : 'ყიდვა'}
-                </button>
+                {(() => {
+                  const buyKey = `buy:${player.listingId ?? player.key}`;
+                  return (
+                    <button
+                      type="button"
+                      disabled={pendingAction === buyKey}
+                      onClick={() => onRunPlayerAction(
+                        buyKey,
+                        () => (player.listingId
+                          ? buyPlayManagerListedPlayer(player.listingId)
+                          : buyPlayManagerMarketPlayer(player.key)),
+                      )}
+                      className="flex-1 rounded-xl border border-emerald-300/18 bg-emerald-300/10 px-3 py-2 text-xs font-black text-white transition hover:bg-emerald-300/16 disabled:cursor-not-allowed disabled:opacity-55"
+                    >
+                      {pendingAction === buyKey ? 'მუშავდება...' : 'ყიდვა'}
+                    </button>
+                  );
+                })()}
                 {player.id ? (
                   <Link
                     href={`/playmanager/players/${player.id}`}
@@ -1683,13 +1696,36 @@ function FacilityModule({
                   <span className="pm-rating-pill">{player.ovrCurrent}</span>
                 </div>
                 <p className="mt-4 text-sm font-black text-emerald-100">{player.valueLabel}</p>
+                <div className="mt-3 flex gap-2">
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    placeholder={String(player.value)}
+                    value={listPriceDraft[player.id] ?? ''}
+                    onChange={(event) => setListPriceDraft((prev) => ({ ...prev, [player.id]: event.target.value }))}
+                    className="w-24 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-xs font-black text-white outline-none focus:border-amber-300/30"
+                  />
+                  <button
+                    type="button"
+                    disabled={pendingAction === `list:${player.id}`}
+                    onClick={() => {
+                      const price = Math.floor(Number(listPriceDraft[player.id] ?? player.value));
+                      if (!Number.isFinite(price) || price <= 0) return;
+                      onRunPlayerAction(`list:${player.id}`, () => listPlayManagerPlayer(player.id, price));
+                    }}
+                    className="flex-1 rounded-xl border border-amber-300/24 bg-amber-300/12 px-3 py-2 text-xs font-black text-amber-50 transition hover:bg-amber-300/18 disabled:cursor-not-allowed disabled:opacity-55"
+                  >
+                    {pendingAction === `list:${player.id}` ? 'მუშავდება...' : 'ბაზარზე გამოტანა'}
+                  </button>
+                </div>
                 <button
                   type="button"
                   disabled={pendingAction === `sell:${player.id}`}
                   onClick={() => onRunPlayerAction(`sell:${player.id}`, () => sellPlayManagerPlayer(player.id))}
-                  className="mt-3 w-full rounded-xl border border-red-900/30 bg-red-950/30 px-3 py-2 text-xs font-black text-white transition hover:bg-red-950/40 disabled:cursor-not-allowed disabled:opacity-55"
+                  className="mt-2 w-full rounded-xl border border-red-900/30 bg-red-950/30 px-3 py-2 text-xs font-black text-white transition hover:bg-red-950/40 disabled:cursor-not-allowed disabled:opacity-55"
                 >
-                  {pendingAction === `sell:${player.id}` ? 'მუშავდება...' : 'გაყიდვა'}
+                  {pendingAction === `sell:${player.id}` ? 'მუშავდება...' : 'სწრაფი გაყიდვა'}
                 </button>
               </div>
             ))}
@@ -2171,15 +2207,19 @@ function FacilityModule({
       ticketPrice: ticketPriceDraft,
       stadiumLevel,
     });
-    const projectedIncome = getProjectedMatchdayIncome({
+    const baseMatchdayIncome = getProjectedMatchdayIncome({
       attendance: projectedAttendance,
       ticketPrice: ticketPriceDraft,
     });
+    // finance_manager boost is now a real DB effect (pm_simulate_league_round),
+    // so the displayed total income reflects it. Per-seat stays on gate receipts.
+    const financeIncomePct = snapshot.staff.bonuses.projectedIncomePct ?? 0;
+    const projectedIncome = Math.round(baseMatchdayIncome * (1 + financeIncomePct / 100));
     const stadiumUpgradeCost = `${fmtInt(getFacilityUpgradeCostGel('arena', stadiumLevel))} ₾`;
     const stadiumCanUpgrade = manager.level >= stadiumLevel + 1;
     const stadiumUpgradePending = pendingAction === 'arena:facility_upgrade';
     const occupancyPct = Math.min(100, Math.round((projectedAttendance / stadiumCapacity) * 100));
-    const incomePerSeat = projectedAttendance > 0 ? Math.round(projectedIncome / projectedAttendance) : 0;
+    const incomePerSeat = projectedAttendance > 0 ? Math.round(baseMatchdayIncome / projectedAttendance) : 0;
     const priceMood =
       ticketPriceDraft <= 24
         ? 'დასწრება იზრდება, მაგრამ ერთ გულშემატკივარზე შემოსავალი დაბალია.'
@@ -3084,6 +3124,21 @@ function ArenaQuickLinks({ recentForm }: { recentForm: Array<'W' | 'D' | 'L'> })
           <div className="mt-auto">
             <h3 className="text-lg font-black text-white">ტროფეების მუზეუმი</h3>
             <p className="mt-2 text-sm font-bold text-white/60">ყველა მოგებული ტიტული და კლუბის ისტორია</p>
+          </div>
+        </div>
+      </Link>
+      <Link
+        href="/playmanager/shop"
+        className="group/module relative overflow-hidden rounded-[24px] border border-white/10 bg-black/32 p-5 transition hover:border-amber-300/28 sm:col-span-2"
+      >
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(245,158,11,0.12),rgba(0,0,0,0.4))]" />
+        <div className="relative flex min-h-[150px] flex-col">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-amber-300/22 bg-amber-300/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-amber-100">
+            Shop
+          </div>
+          <div className="mt-auto">
+            <h3 className="text-lg font-black text-white">ბარათების მაღაზია</h3>
+            <p className="mt-2 text-sm font-bold text-white/60">გახსენი პაკები, მოიპოვე Pro ბარათები OVR აფგრეიდისთვის</p>
           </div>
         </div>
       </Link>
