@@ -1,5 +1,9 @@
 export const PLAYMANAGER_REAL_PLAYER_RESET_AGE = 18;
 
+// Academy youth enter at a fixed young age and keep it (they are not reset to the
+// senior entry age), then age up via time-advance until they graduate at 18.
+export const PLAYMANAGER_ACADEMY_ENTRY_AGE = 15;
+
 export function getTalentDecayFromAgeTransition(previousAge: number, nextAge: number) {
   let decay = 0;
   if (previousAge < 32 && nextAge >= 32) decay += 1;
