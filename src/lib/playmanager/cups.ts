@@ -162,20 +162,20 @@ export async function processDueCupMatches() {
   for (const match of dueMatches) {
     const team1Id = match.team1_id!;
     const team2Id = match.team2_id!;
-    const [team1Rows, team2Rows, team1Settings, team2Settings, team1SetPiecePct, team2SetPiecePct] = await Promise.all([
+    const [team1Rows, team2Rows, team1Settings, team2Settings, team1Bonuses, team2Bonuses] = await Promise.all([
       loadCupTeamRows(team1Id),
       loadCupTeamRows(team2Id),
       loadCupSettings(team1Id),
       loadCupSettings(team2Id),
-      loadCupSetPiecePct(team1Id),
-      loadCupSetPiecePct(team2Id),
+      loadCupStaffBonuses(team1Id),
+      loadCupStaffBonuses(team2Id),
     ]);
 
     const simulated = simulateMatch(
       team1Id,
-      buildMatchProfile(team1Rows, team1Settings, team1SetPiecePct),
+      buildMatchProfile(team1Rows, team1Settings, team1Bonuses),
       team2Id,
-      buildMatchProfile(team2Rows, team2Settings, team2SetPiecePct),
+      buildMatchProfile(team2Rows, team2Settings, team2Bonuses),
     );
     const team1Score = simulated.score1;
     const team2Score = simulated.score2;
@@ -236,21 +236,22 @@ async function loadCupTeamRows(teamId: string) {
   return data || [];
 }
 
-// Set-piece coach amplification for the cup engine — mirrors the league SQL
-// (pm_simulate_league_round reads sum(level*4) for role set_piece_coach).
-async function loadCupSetPiecePct(teamId: string) {
+// Staff bonuses that feed the cup match engine — mirrors the league SQL
+// (set_piece_coach amplifies set-piece threat, head_coach lifts readiness).
+async function loadCupStaffBonuses(teamId: string) {
   const db = createSupabaseAdminClient() as any;
   const { data } = await db
     .from('pm_staff')
     .select('role_key, level')
     .eq('team_id', teamId);
 
-  return getStaffBonuses(
+  const bonuses = getStaffBonuses(
     (data ?? []).map((row: { role_key: string; level: number }) => ({
       roleKey: row.role_key,
       level: row.level,
     })),
-  ).setPiecePct;
+  );
+  return { setPiecePct: bonuses.setPiecePct, readinessFlat: bonuses.readinessFlat };
 }
 
 async function loadCupSettings(teamId: string) {
