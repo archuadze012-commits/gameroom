@@ -4,8 +4,9 @@
 - [PlayManager Match v2 vision](project_playmanager_match_v2_vision.md) — agreed roadmap: tactics, talent classes 1–12, traits, behavioral, formation/position-fit, auto-subs, 100k stadium
 - [PlayManager real economy](project_playmanager_real_economy.md) — real-players-only overhaul context
 - [PlayManager talent classes](project_playmanager_talent_classes.md) — 6 named tiers over talent 1-12; class ageOffset shifts decay thresholds; talent.ts ↔ DB synced
-- [PlayManager TAC attribute](project_playmanager_tac_attribute.md) — 7th "tactical IQ" stat; APPLIED (20260628)
-- [PlayManager pending migrations](project_playmanager_pending_migrations.md) — all migrations through 20260709 APPLIED to remote DB; none pending
+- [PlayManager development system](project_playmanager_development_system.md) — ⭐ BUILT 2026-06-28: XP→pending stats → Pro-fodder OVR confirm, midfield coach, assistant skill_moves dev, trainable tac, pack GEL-sink. Full loop verified. TODO: UI + finance_manager fix
+- [PlayManager TAC attribute](project_playmanager_tac_attribute.md) — 7th "tactical IQ" stat; APPLIED (20260628) + now TRAINABLE (grows via XP pipeline)
+- [PlayManager pending migrations](project_playmanager_pending_migrations.md) — all migrations through 20260709 + this session's 20260628e–m APPLIED to remote DB; none pending
 
 ## 2026-06-27 mega-overhaul features (each detailed file)
 - [position-fit](project_playmanager_position_fit.md) — out-of-position penalty ×0.5–1.0 (20260630)

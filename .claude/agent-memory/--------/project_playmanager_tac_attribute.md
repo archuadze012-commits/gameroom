@@ -21,4 +21,6 @@ GK branch = 0.66*OVR + 20 + seed
 
 Validated: Wirtz 92 · Salah 87 · Van Dijk 78 · low pros ~50. OVR is NOT changed (`ea_fc_ovr` stays the anchor for real players). EA's real OVR is a position-weighted blend of ~35 sub-stats, not an average of the 6 face stats — that is why the gap exists.
 
-**How to apply:** code is done (tsc/eslint clean) but NOT yet applied — see [[playmanager-pending-migrations]]. Migration `20260628_playmanager_player_tac.sql` (column + `pm_player_compute_tac` fn + extends the `pm_players_sync_card_stats` trigger + backfill). Engine hook in `20260627_..._tactical_depth.sql`: avg starter TAC → small style-execution factor in `pm_simulate_league_round`. Display in `src/app/playmanager/players/[playerId]/page.tsx`.
+**APPLIED + EVOLVED (2026-06-28).** Migration `20260628_playmanager_player_tac.sql` is live (column + `pm_player_compute_tac` + trigger + backfill). Engine hook (`20260627_..._tactical_depth.sql`) live. Display in `src/app/playmanager/players/[playerId]/page.tsx`.
+
+**TAC is now a TRAINED attribute** (migration `20260628l_tac_trainable.sql`): the `pm_players_sync_card_stats` trigger seeds TAC only when null (no longer overwrites it), and TAC grows via the XP development pipeline (`pm_grant_match_development`) alongside mini-stats — +1/match with a position coach + youth, up to a coach-scaled ceiling. So the designed-derivation formula above is now just the INITIAL seed, not a permanent value. See [[playmanager-development-system]].
