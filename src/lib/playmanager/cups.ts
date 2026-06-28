@@ -2,6 +2,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { generateSingleElimBracket } from '@/lib/tournament/generate-bracket';
 import { formatGel } from '@/lib/playmanager/economy';
 import { buildMatchProfile, simulateMatch } from '@/lib/playmanager/match-engine';
+import { getStaffBonuses } from '@/lib/playmanager/staff';
 
 export async function joinPlayManagerCup(teamId: string, cupInstanceId: string) {
   const db = createSupabaseAdminClient() as any;
@@ -161,18 +162,20 @@ export async function processDueCupMatches() {
   for (const match of dueMatches) {
     const team1Id = match.team1_id!;
     const team2Id = match.team2_id!;
-    const [team1Rows, team2Rows, team1Settings, team2Settings] = await Promise.all([
+    const [team1Rows, team2Rows, team1Settings, team2Settings, team1SetPiecePct, team2SetPiecePct] = await Promise.all([
       loadCupTeamRows(team1Id),
       loadCupTeamRows(team2Id),
       loadCupSettings(team1Id),
       loadCupSettings(team2Id),
+      loadCupSetPiecePct(team1Id),
+      loadCupSetPiecePct(team2Id),
     ]);
 
     const simulated = simulateMatch(
       team1Id,
-      buildMatchProfile(team1Rows, team1Settings),
+      buildMatchProfile(team1Rows, team1Settings, team1SetPiecePct),
       team2Id,
-      buildMatchProfile(team2Rows, team2Settings),
+      buildMatchProfile(team2Rows, team2Settings, team2SetPiecePct),
     );
     const team1Score = simulated.score1;
     const team2Score = simulated.score2;
@@ -231,6 +234,23 @@ async function loadCupTeamRows(teamId: string) {
     .order('shirt_number', { ascending: true });
 
   return data || [];
+}
+
+// Set-piece coach amplification for the cup engine — mirrors the league SQL
+// (pm_simulate_league_round reads sum(level*4) for role set_piece_coach).
+async function loadCupSetPiecePct(teamId: string) {
+  const db = createSupabaseAdminClient() as any;
+  const { data } = await db
+    .from('pm_staff')
+    .select('role_key, level')
+    .eq('team_id', teamId);
+
+  return getStaffBonuses(
+    (data ?? []).map((row: { role_key: string; level: number }) => ({
+      roleKey: row.role_key,
+      level: row.level,
+    })),
+  ).setPiecePct;
 }
 
 async function loadCupSettings(teamId: string) {

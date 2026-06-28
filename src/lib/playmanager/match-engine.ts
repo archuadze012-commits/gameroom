@@ -105,8 +105,10 @@ function playerLane(row: PlayerRow) {
     keeper: pos === 'GK' ? gk : 0,
     // Aerial + dead-ball threat (PHY drives heading, SHO the taker, PAS the delivery).
     setPieceAttack: phy * 0.45 + sho * 0.35 + pas * 0.2,
-    // Aerial clearing + marking strength when defending set-pieces.
-    setPieceDefense: def * 0.45 + phy * 0.4 + pas * 0.15,
+    // Aerial clearing + marking strength when defending set-pieces. Outfield
+    // base only (def + phy); the keeper is blended in at profile level. Weighted
+    // so that × 0.8 reproduces the league SQL split (def*0.5 + phy*0.3).
+    setPieceDefense: def * 0.625 + phy * 0.375,
   };
 }
 
@@ -187,8 +189,8 @@ export function buildMatchProfile(
       return (base + (best - base) * 0.2) * (1 + clamp(setPiecePct, 0, 60) / 100);
     })(),
     setPieceDefense:
-      avg(defenders.map((player) => player.setPieceDefense), avg(outfield.map((player) => player.setPieceDefense), 60)) * 0.72
-      + (keeper?.keeper ?? avg(starters.map((player) => player.ovr), 60)) * 0.28,
+      avg(defenders.map((player) => player.setPieceDefense), avg(outfield.map((player) => player.setPieceDefense), 60)) * 0.8
+      + (keeper?.keeper ?? avg(starters.map((player) => player.ovr), 60)) * 0.2,
   };
 
   return tacticalProfile(raw, { ...DEFAULT_SETTINGS, ...settings });
