@@ -2,7 +2,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { generateSingleElimBracket } from '@/lib/tournament/generate-bracket';
 import { formatGel } from '@/lib/playmanager/economy';
 import { buildMatchProfile, simulateMatch } from '@/lib/playmanager/match-engine';
-import { getStaffBonuses } from '@/lib/playmanager/staff';
+import { getStaffBonuses, type StaffRoleKey } from '@/lib/playmanager/staff';
 
 export async function joinPlayManagerCup(teamId: string, cupInstanceId: string) {
   const db = createSupabaseAdminClient() as any;
@@ -237,7 +237,8 @@ async function loadCupTeamRows(teamId: string) {
 }
 
 // Staff bonuses that feed the cup match engine — mirrors the league SQL
-// (set_piece_coach amplifies set-piece threat, head_coach lifts readiness).
+// (set_piece_coach amplifies set-piece threat, head_coach lifts readiness and
+// drives auto-lineup repair).
 async function loadCupStaffBonuses(teamId: string) {
   const db = createSupabaseAdminClient() as any;
   const { data } = await db
@@ -245,13 +246,12 @@ async function loadCupStaffBonuses(teamId: string) {
     .select('role_key, level')
     .eq('team_id', teamId);
 
-  const bonuses = getStaffBonuses(
-    (data ?? []).map((row: { role_key: string; level: number }) => ({
-      roleKey: row.role_key,
-      level: row.level,
-    })),
-  );
-  return { setPiecePct: bonuses.setPiecePct, readinessFlat: bonuses.readinessFlat };
+  const rows: Array<{ role_key: StaffRoleKey; level: number }> = data ?? [];
+  const bonuses = getStaffBonuses(rows.map((row) => ({ roleKey: row.role_key, level: row.level })));
+  const assistantLevel = rows
+    .filter((row) => row.role_key === 'head_coach')
+    .reduce((max, row) => Math.max(max, row.level ?? 0), 0);
+  return { setPiecePct: bonuses.setPiecePct, readinessFlat: bonuses.readinessFlat, assistantLevel };
 }
 
 async function loadCupSettings(teamId: string) {
