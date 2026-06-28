@@ -190,6 +190,12 @@ export async function processDueCupMatches() {
       status: 'completed',
     }).eq('id', match.id);
 
+    // Both line-ups earn development XP for playing this cup match (Phase 3).
+    await Promise.all([
+      db.rpc('pm_grant_match_development', { p_team_id: team1Id }),
+      db.rpc('pm_grant_match_development', { p_team_id: team2Id }),
+    ]);
+
     // Propagate winner to next round
     const nextRound = match.round + 1;
     const nextPosition = Math.ceil(match.position / 2);
