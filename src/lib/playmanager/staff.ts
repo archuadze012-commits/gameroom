@@ -191,7 +191,9 @@ export function getStaffBenefitLabel(roleKey: StaffRoleKey, level: number) {
     case 'finance_manager':
       return `Projected income +${safeLevel * 3}%`;
     case 'set_piece_coach':
-      return `Set-piece threat +${safeLevel * 4}%`;
+      // Engine caps the set-piece boost at +60% (see buildMatchProfile /
+      // pm_simulate_league_round); reflect that cap in the displayed benefit.
+      return `Set-piece threat +${Math.min(60, safeLevel * 4)}%`;
   }
 }
 
