@@ -235,7 +235,7 @@ async function loadCupTeamRows(teamId: string) {
   const db = createSupabaseAdminClient() as any;
   const { data } = await db
     .from('pm_squads')
-    .select('shirt_number, position, player:pm_players(primary_position, ovr_current, fatigue, morale, injury_matches, status, card_stats)')
+    .select('shirt_number, position, player:pm_players(primary_position, ovr_current, fatigue, morale, injury_matches, status, card_stats, skill_moves)')
     .eq('team_id', teamId)
     .order('shirt_number', { ascending: true });
 

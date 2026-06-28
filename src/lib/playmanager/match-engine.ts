@@ -16,6 +16,7 @@ type PlayerRow = {
     injury_matches: number | null;
     status: string | null;
     card_stats: Record<string, number | string> | null;
+    skill_moves: number | null;
   } | null;
 };
 
@@ -83,19 +84,21 @@ function playerLane(row: PlayerRow) {
   const def = effective(stat(player, 'DEF'), player);
   const phy = effective(stat(player, 'PHY'), player);
   const gk = effective(avg(['DIV', 'HAN', 'REF', 'POS'].map((key) => stat(player, key)), player.ovr_current ?? 60), player);
+  // Skill moves (1–5) add dribble/attack flair: ±1.5% per star off the 3-star baseline.
+  const skillMult = 1 + (clamp(player.skill_moves ?? 3, 1, 5) - 3) * 0.015;
 
   return {
     pos,
     ovr: effective(player.ovr_current ?? 60, player),
-    attack: pos === 'ST' || pos === 'CF'
+    attack: (pos === 'ST' || pos === 'CF'
       ? sho * 0.42 + pac * 0.18 + dri * 0.24 + phy * 0.16
-      : sho * 0.22 + pac * 0.22 + dri * 0.28 + pas * 0.28,
-    wing: ['LW', 'RW', 'LM', 'RM', 'LB', 'RB'].includes(pos)
+      : sho * 0.22 + pac * 0.22 + dri * 0.28 + pas * 0.28) * skillMult,
+    wing: (['LW', 'RW', 'LM', 'RM', 'LB', 'RB'].includes(pos)
       ? pac * 0.36 + dri * 0.3 + pas * 0.18 + def * 0.16
-      : pac * 0.2 + dri * 0.25 + pas * 0.25 + sho * 0.3,
-    central: ['ST', 'CF', 'CAM', 'CM', 'CDM'].includes(pos)
+      : pac * 0.2 + dri * 0.25 + pas * 0.25 + sho * 0.3) * skillMult,
+    central: (['ST', 'CF', 'CAM', 'CM', 'CDM'].includes(pos)
       ? sho * 0.26 + pas * 0.25 + dri * 0.25 + phy * 0.24
-      : sho * 0.18 + pas * 0.24 + dri * 0.22 + phy * 0.18 + def * 0.18,
+      : sho * 0.18 + pas * 0.24 + dri * 0.22 + phy * 0.18 + def * 0.18) * skillMult,
     midfield: ['CDM', 'CM', 'CAM', 'LM', 'RM'].includes(pos)
       ? pas * 0.34 + dri * 0.24 + def * 0.2 + phy * 0.14 + pac * 0.08
       : pas * 0.25 + dri * 0.2 + def * 0.25 + phy * 0.2 + pac * 0.1,

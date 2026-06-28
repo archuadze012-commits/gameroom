@@ -222,6 +222,8 @@ async function advancePlayManagerTime(teamId: string, days = 1) {
   await db.rpc('pm_develop_academy_prospects', { p_team_id: teamId, p_days: days });
   // Career-end: notify on final season, auto-resolve players who age out undecided.
   await db.rpc('pm_process_career_ends', { p_team_id: teamId, p_days: days });
+  // Manager assistant passively develops squad skill-moves toward each player's cap.
+  await db.rpc('pm_grant_skill_development', { p_team_id: teamId, p_days: days });
   return data ?? null;
 }
 
