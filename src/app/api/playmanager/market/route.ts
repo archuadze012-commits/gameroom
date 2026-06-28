@@ -346,6 +346,9 @@ export async function GET(request: Request) {
         row.owner_id === null
         && row.status === 'active'
         && !row.pending_repack
+        // Academy youth segment (real_age<=19 AND talent<=8) belongs to the
+        // academy channel, not free agents. Young elites (talent>=9) stay here.
+        && !((row.real_age ?? 99) <= 19 && row.talent <= 8)
         && (row.available_via_career === true || row.talent <= talentCap),
       );
       const preferredFreshPool = pool.length > FREE_AGENT_OFFER_COUNT * 2

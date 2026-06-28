@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { asPlayManagerDb } from '@/lib/playmanager/db';
-import { generateAcademyProspects } from '@/lib/playmanager/players';
 import { processDueCupMatches } from '@/lib/playmanager/cups';
 import { getTeam } from '@/lib/playmanager/team';
 
@@ -24,19 +23,9 @@ export async function POST() {
     db.rpc('pm_ensure_finance_state', { p_team_id: team.id }),
   ]);
 
-  const { data: academyNameRows } = await db
-    .from('pm_academy_prospects')
-    .select('normalized_name')
-    .eq('team_id', team.id)
-    .eq('status', 'active');
-  const generatedProspects = await generateAcademyProspects(
-    new Set(((academyNameRows ?? []) as { normalized_name: string }[]).map((r) => r.normalized_name)),
-    3,
-  );
-  await db.rpc('pm_ensure_academy_prospects', {
-    p_team_id: team.id,
-    p_prospects: generatedProspects,
-  });
+  // Academy draws from the real unowned youth pool (real_age<=19, talent<=8);
+  // tops the team up to 3 active prospects. No virtual generation.
+  await db.rpc('pm_ensure_academy_youth', { p_team_id: team.id });
 
   return NextResponse.json({ ok: true });
 }
