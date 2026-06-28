@@ -469,6 +469,35 @@ export async function trainPlayManagerPlayer(playerId: string): Promise<PlayMana
   };
 }
 
+export async function confirmPlayManagerOvrUpgrade(
+  playerId: string,
+  fodderIds: string[],
+): Promise<PlayManagerPlayerActionResult> {
+  const { user, team } = await getAuthenticatedTeam();
+  if (!user) return { success: false, error: 'unauthenticated' };
+  if (!team) return { success: false, error: 'team_missing' };
+
+  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const { data, error } = await db.rpc<{ oldOvr: number; newOvr: number; fodderConsumed: number }>(
+    'pm_confirm_ovr_upgrade',
+    { p_team_id: team.id, p_player_id: playerId, p_fodder_ids: fodderIds },
+  );
+  if (error) return mapPlayerActionError(error.message);
+
+  await logPlayManagerEvent({
+    teamId: team.id,
+    category: 'board',
+    accent: 'green',
+    title: 'OVR აფგრეიდი დადასტურდა',
+    detail: `OVR ${data?.oldOvr} → ${data?.newOvr} · ${data?.fodderConsumed} Pro ბარათი შეიწირა`,
+  });
+  revalidatePath('/playmanager');
+  return {
+    success: true,
+    message: `OVR ${data?.oldOvr} → ${data?.newOvr} · ${data?.fodderConsumed} Pro ბარათი`,
+  };
+}
+
 export async function signPlayManagerAcademyProspect(prospectId: string): Promise<PlayManagerPlayerActionResult> {
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
