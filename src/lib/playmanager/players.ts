@@ -1,5 +1,6 @@
 import { generateUniqueName } from './names';
 import { getBaseTransferValueGel, getCurrentTransferValueGel } from './economy';
+import { PLAYMANAGER_ACADEMY_ENTRY_AGE } from './player-age';
 import type { GeneratedPlayer, Position } from './types';
 
 export function ovrGrowthCap(talent: number): number {
@@ -64,7 +65,7 @@ export async function generateAcademyProspects(
   for (let index = 0; index < count; index += 1) {
     const position = positions[index % positions.length];
     const player = await generateVirtualPlayer(localExcluded, position);
-    const age = 15 + Math.floor(Math.random() * 4);
+    const age = PLAYMANAGER_ACADEMY_ENTRY_AGE;
     const potential_ovr = Math.min(95, player.ovr_base + 12 + Math.floor(Math.random() * 10));
     const signing_cost = 80_000 + player.talent * 10_000 + (potential_ovr - player.ovr_base) * 2_500;
     localExcluded.add(player.normalized_name);
