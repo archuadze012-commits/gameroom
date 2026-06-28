@@ -2,6 +2,7 @@ export type StaffRoleKey =
   | 'head_coach'
   | 'gk_coach'
   | 'defence_coach'
+  | 'midfield_coach'
   | 'attack_coach'
   | 'scout'
   | 'youth_scout'
@@ -50,6 +51,15 @@ export const STAFF_ROLES: StaffRoleDefinition[] = [
     description: 'მცველებს აძლიერებს და დაცვით სტრუქტურას უფრო მყარად ხდის.',
     baseHireCost: 100_000,
     baseWeeklyWage: 12_500,
+  },
+  {
+    key: 'midfield_coach',
+    name: 'ნახევარდაცვის მწვრთნელი',
+    shortName: 'Midfield',
+    category: 'coaching',
+    description: 'ნახევარმცველებს ავითარებს — პასი, კონტროლი და შუა ხაზის ბალანსი.',
+    baseHireCost: 104_000,
+    baseWeeklyWage: 12_800,
   },
   {
     key: 'attack_coach',
@@ -173,6 +183,8 @@ export function getStaffBenefitLabel(roleKey: StaffRoleKey, level: number) {
       return `GK training +${safeLevel * 6}%`;
     case 'defence_coach':
       return `Defence training +${safeLevel * 5}%`;
+    case 'midfield_coach':
+      return `Midfield training +${safeLevel * 5}%`;
     case 'attack_coach':
       return `Attack training +${safeLevel * 5}%`;
     case 'scout':
