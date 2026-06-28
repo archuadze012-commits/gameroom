@@ -129,6 +129,8 @@ export function BuildingPageClient({
         insufficient_funds: 'ბალანსი არ არის საკმარისი',
         player_unavailable: 'ელემენტი მიუწვდომელია',
         player_owned: 'ეს ელემენტი უკვე დაჯავშნილია',
+        insufficient_fodder: 'საკმარისი Pro ბარათი არ არის',
+        no_upgrade_available: 'OVR აფგრეიდი მიუწვდომელია',
         unavailable: 'მოქმედება ჯერ მიუწვდომელია',
       };
       setActionMessage(result.message ?? labels[result.error]);

@@ -62,6 +62,10 @@ type CityMarketPlayer = {
   demand: string;
   available: boolean;
   shortlisted: boolean;
+  // Set only for manager-listed players (transfer_market module); drives the
+  // buy flow to pm_buy_listed_player instead of the free-pool buy.
+  listingId?: string | null;
+  sellerTeamName?: string | null;
 };
 
 function normalizeMarketPosition(position: string | null | undefined) {

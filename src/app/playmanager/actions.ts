@@ -118,6 +118,8 @@ export type PlayManagerPlayerActionResult =
         | 'insufficient_funds'
         | 'player_unavailable'
         | 'player_owned'
+        | 'insufficient_fodder'
+        | 'no_upgrade_available'
         | 'unavailable';
       message?: string;
     };
@@ -477,11 +479,31 @@ export async function openPlayManagerPack(packId: number): Promise<PlayManagerPl
   if (!team) return { success: false, error: 'team_missing' };
 
   const db = asPlayManagerDb(createSupabaseAdminClient());
-  const { data, error } = await db.rpc<{ count: number; cost: number }>('pm_open_pack', {
+  const { data, error } = await db.rpc<{ count: number; cost: number; received: string[] }>('pm_open_pack', {
     p_team_id: team.id,
     p_pack_id: packId,
   });
   if (error) return mapPlayerActionError(error.message);
+
+  const receivedIds = Array.isArray(data?.received) ? data.received : [];
+  let players: unknown[] = [];
+  if (receivedIds.length > 0) {
+    const { data: cards } = await db
+      .from<{
+        id: string;
+        display_name: string;
+        ovr_current: number;
+        talent: number;
+        primary_position: string | null;
+        nationality_code: string | null;
+        card_image_url: string | null;
+      }>('pm_players')
+      .select('id,display_name,ovr_current,talent,primary_position,nationality_code,card_image_url')
+      .in('id', receivedIds);
+    // Preserve draw order from the RPC's received array.
+    const byId = new Map((cards ?? []).map((c) => [c.id, c]));
+    players = receivedIds.map((id) => byId.get(id)).filter(Boolean);
+  }
 
   await logPlayManagerEvent({
     teamId: team.id,
@@ -495,6 +517,7 @@ export async function openPlayManagerPack(packId: number): Promise<PlayManagerPl
     success: true,
     message: `პაკი გაიხსნა · ${data?.count ?? 0} ბარათი`,
     amount: -(data?.cost ?? 0),
+    players,
   };
 }
 
@@ -997,6 +1020,10 @@ function mapPlayerActionError(message: string): PlayManagerPlayerActionResult {
   }
   if (message.includes('duplicate_player')) return { success: false, error: 'invalid_player' };
   if (message.includes('player_owned')) return { success: false, error: 'player_owned' };
+  if (message.includes('insufficient_fodder')) return { success: false, error: 'insufficient_fodder' };
+  if (message.includes('no_upgrade_available') || message.includes('no_pending_development')) {
+    return { success: false, error: 'no_upgrade_available' };
+  }
   if (message.includes('invalid_ticket_price') || message.includes('invalid_lineup')) {
     return { success: false, error: 'invalid_player' };
   }
