@@ -1,6 +1,5 @@
 import { generateUniqueName } from './names';
 import { getBaseTransferValueGel, getCurrentTransferValueGel } from './economy';
-import { PLAYMANAGER_ACADEMY_ENTRY_AGE } from './player-age';
 import type { GeneratedPlayer, Position } from './types';
 
 export function ovrGrowthCap(talent: number): number {
@@ -52,32 +51,6 @@ export async function generateVirtualPlayer(
     age: rollAge(),
     position,
   };
-}
-
-export async function generateAcademyProspects(
-  excluded: Set<string>,
-  count = 3,
-): Promise<Array<GeneratedPlayer & { potential_ovr: number; signing_cost: number }>> {
-  const positions: Position[] = ['GK', 'CB', 'CM', 'CAM', 'LW', 'RW', 'ST', 'CDM'];
-  const prospects: Array<GeneratedPlayer & { potential_ovr: number; signing_cost: number }> = [];
-  const localExcluded = new Set(excluded);
-
-  for (let index = 0; index < count; index += 1) {
-    const position = positions[index % positions.length];
-    const player = await generateVirtualPlayer(localExcluded, position);
-    const age = PLAYMANAGER_ACADEMY_ENTRY_AGE;
-    const potential_ovr = Math.min(95, player.ovr_base + 12 + Math.floor(Math.random() * 10));
-    const signing_cost = 80_000 + player.talent * 10_000 + (potential_ovr - player.ovr_base) * 2_500;
-    localExcluded.add(player.normalized_name);
-    prospects.push({
-      ...player,
-      age,
-      potential_ovr,
-      signing_cost,
-    });
-  }
-
-  return prospects;
 }
 
 // 4-3-3 base: 11 starters + 4 subs = 15 total
