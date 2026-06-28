@@ -471,6 +471,33 @@ export async function trainPlayManagerPlayer(playerId: string): Promise<PlayMana
   };
 }
 
+export async function openPlayManagerPack(packId: number): Promise<PlayManagerPlayerActionResult> {
+  const { user, team } = await getAuthenticatedTeam();
+  if (!user) return { success: false, error: 'unauthenticated' };
+  if (!team) return { success: false, error: 'team_missing' };
+
+  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const { data, error } = await db.rpc<{ count: number; cost: number }>('pm_open_pack', {
+    p_team_id: team.id,
+    p_pack_id: packId,
+  });
+  if (error) return mapPlayerActionError(error.message);
+
+  await logPlayManagerEvent({
+    teamId: team.id,
+    category: 'board',
+    accent: 'gold',
+    title: 'პაკი გაიხსნა',
+    detail: `${data?.count ?? 0} ბარათი${(data?.cost ?? 0) > 0 ? ` · -${(data?.cost ?? 0).toLocaleString('ka-GE')} ₾` : ''}`,
+  });
+  revalidatePath('/playmanager');
+  return {
+    success: true,
+    message: `პაკი გაიხსნა · ${data?.count ?? 0} ბარათი`,
+    amount: -(data?.cost ?? 0),
+  };
+}
+
 export async function confirmPlayManagerOvrUpgrade(
   playerId: string,
   fodderIds: string[],
