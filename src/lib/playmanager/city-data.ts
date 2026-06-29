@@ -107,9 +107,11 @@ type CityMatchHistory = {
 
 type CityAcademyProspect = {
   id: string;
+  playerId: string | null;
   name: string;
   position: string;
   age: number;
+  talent: number;
   ovr: number;
   potential: number;
   signingCost: number;
@@ -465,10 +467,12 @@ type SeasonStateRow = {
 
 type AcademyProspectRow = {
   id: string;
+  player_id: string | null;
   normalized_name: string;
   display_name: string;
   position: string;
   age: number;
+  talent: number;
   ovr_base: number;
   potential_ovr: number;
   signing_cost: number;
@@ -725,7 +729,7 @@ export async function getPlayManagerCitySnapshot(
         ? Promise.resolve({ data: [] as AcademyProspectRow[] })
         : db
             .from<AcademyProspectRow>('pm_academy_prospects')
-            .select('id, normalized_name, display_name, position, age, ovr_base, potential_ovr, signing_cost')
+            .select('id, player_id, normalized_name, display_name, position, age, talent, ovr_base, potential_ovr, signing_cost')
             .eq('team_id', teamId)
             .eq('status', 'active')
             .order('potential_ovr', { ascending: false })
@@ -988,9 +992,11 @@ export async function getPlayManagerCitySnapshot(
   }));
   const academy = isLineupOnly ? [] : typedAcademyRows.map((row) => ({
     id: row.id,
+    playerId: row.player_id ?? null,
     name: row.display_name,
     position: row.position,
     age: row.age,
+    talent: row.talent,
     ovr: row.ovr_base,
     potential: row.potential_ovr,
     signingCost: row.signing_cost,

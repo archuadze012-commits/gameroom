@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { TalentClassBadge } from '@/components/playmanager/talent-class-badge';
 
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -1960,6 +1961,9 @@ function FacilityModule({
                   <span className="rounded-full border border-emerald-300/30 bg-emerald-300/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-emerald-200">მზად</span>
                 ) : null}
               </div>
+              <div className="mt-2">
+                <TalentClassBadge talent={prospect.talent} showValue />
+              </div>
               <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                 <MiniStat label="POS" value={prospect.position} />
                 <MiniStat label="OVR" value={String(prospect.ovr)} />
@@ -1986,6 +1990,15 @@ function FacilityModule({
               >
                 {pendingAction === `academy:${prospect.id}` ? 'მუშავდება...' : `ხელმოწერა ${prospect.signingCostLabel}`}
               </button>
+              {prospect.playerId ? (
+                <Link
+                  href={`/playmanager/players/${prospect.playerId}`}
+                  className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] font-black text-white/70 transition hover:border-emerald-300/20 hover:text-white"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  პროფილი
+                </Link>
+              ) : null}
             </div>
           );
           })}
