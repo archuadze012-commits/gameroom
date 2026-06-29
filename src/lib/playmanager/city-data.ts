@@ -68,6 +68,16 @@ type CityMarketPlayer = {
   sellerTeamName?: string | null;
 };
 
+type CityOutgoingListing = {
+  listingId: string;
+  playerId: string;
+  name: string;
+  position: string;
+  ovr: number;
+  askingPrice: number;
+  askingPriceLabel: string;
+};
+
 function normalizeMarketPosition(position: string | null | undefined) {
   const normalized = position?.trim().toUpperCase();
   if (normalized === 'CF') return 'ST';
@@ -159,6 +169,7 @@ export type PlayManagerCitySnapshot = {
   formationLabel: string;
   academy: CityAcademyProspect[];
   market: CityMarketPlayer[];
+  outgoingListings: CityOutgoingListing[];
   transactions: CityTransaction[];
   matchHistory: CityMatchHistory[];
   standings: Array<{
@@ -559,6 +570,7 @@ type CupMatchRow = {
 type UntypedSupabaseQuery = PromiseLike<{ data: unknown; error: unknown }> & {
   select: (columns: string) => UntypedSupabaseQuery;
   or: (filters: string) => UntypedSupabaseQuery;
+  eq: (column: string, value: unknown) => UntypedSupabaseQuery;
   in: (column: string, values: readonly string[]) => UntypedSupabaseQuery;
   order: (column: string, options?: { ascending?: boolean }) => UntypedSupabaseQuery;
 };
@@ -1096,6 +1108,39 @@ export async function getPlayManagerCitySnapshot(
       })()
     : null;
 
+  // This team's own active transfer listings (for the outgoing module: view + unlist).
+  type OutgoingListingRow = {
+    id: string;
+    asking_price: number;
+    player: { id: string; display_name: string; primary_position: string | null; ovr_current: number }
+      | { id: string; display_name: string; primary_position: string | null; ovr_current: number }[]
+      | null;
+  };
+  const { data: outgoingListingRows } = isReduced
+    ? { data: [] as OutgoingListingRow[] }
+    : await untypedAdmin
+        .from('pm_transfer_listings')
+        .select('id, asking_price, player:pm_players(id, display_name, primary_position, ovr_current)')
+        .eq('seller_team_id', teamId)
+        .eq('status', 'listed')
+        .order('created_at', { ascending: false });
+  const outgoingListings: CityOutgoingListing[] = ((outgoingListingRows ?? []) as OutgoingListingRow[])
+    .map((row) => {
+      const player = Array.isArray(row.player) ? row.player[0] : row.player;
+      if (!player) return null;
+      const askingPrice = Math.max(0, Number(row.asking_price ?? 0));
+      return {
+        listingId: row.id,
+        playerId: player.id,
+        name: player.display_name,
+        position: normalizeMarketPosition(player.primary_position),
+        ovr: player.ovr_current,
+        askingPrice,
+        askingPriceLabel: formatGel(askingPrice),
+      };
+    })
+    .filter((entry): entry is CityOutgoingListing => entry !== null);
+
   return {
     squad,
       starters,
@@ -1104,6 +1149,7 @@ export async function getPlayManagerCitySnapshot(
       formationLabel: '4-3-3',
       academy,
       market: liveMarket.length > 0 ? liveMarket : seededMarket,
+      outgoingListings,
     transactions: isLineupOnly ? [] : (transactionRows ?? []).map((row) => ({
       amount: row.amount,
       amountLabel: `${row.amount > 0 ? '+' : ''}${formatGel(row.amount)}`,
