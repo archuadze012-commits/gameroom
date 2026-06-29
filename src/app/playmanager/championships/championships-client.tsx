@@ -67,6 +67,7 @@ export function CreateLeagueForm() {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState('');
+  const [format, setFormat] = useState<'round_robin' | 'knockout'>('round_robin');
   const [divisionLevel, setDivisionLevel] = useState(4);
   const [maxTeams, setMaxTeams] = useState(8);
   const [prizePool, setPrizePool] = useState(500000);
@@ -82,6 +83,13 @@ export function CreateLeagueForm() {
           placeholder="სახელი (მაგ. D დივიზიონი — სეზონი 1)"
           className="sm:col-span-2 rounded-xl border border-white/10 bg-black/30 px-3 h-10 text-sm font-bold text-white outline-none focus:border-emerald-300/30"
         />
+        <label className="sm:col-span-2 flex items-center justify-between gap-2 rounded-xl border border-white/8 bg-black/24 px-3 h-10 text-xs font-black text-white/60">
+          ფორმატი
+          <select value={format} onChange={(e) => setFormat(e.target.value as 'round_robin' | 'knockout')} className="bg-transparent text-white outline-none">
+            <option value="round_robin">ჩემპიონატი (round-robin)</option>
+            <option value="knockout">ევრო ტურნირი (knockout)</option>
+          </select>
+        </label>
         <label className="flex items-center justify-between gap-2 rounded-xl border border-white/8 bg-black/24 px-3 h-10 text-xs font-black text-white/60">
           დივიზიონი
           <select value={divisionLevel} onChange={(e) => setDivisionLevel(Number(e.target.value))} className="bg-transparent text-white outline-none">
@@ -104,7 +112,7 @@ export function CreateLeagueForm() {
         type="button"
         disabled={pending || !name.trim()}
         onClick={() => startTransition(async () => {
-          const r = await createPlayManagerLeague({ name: name.trim(), divisionLevel, maxTeams, prizePool });
+          const r = await createPlayManagerLeague({ name: name.trim(), divisionLevel, maxTeams, prizePool, format });
           if (r.success) { toast.success('ჩემპიონატი შეიქმნა'); setName(''); router.refresh(); }
           else toast.error(errText(r.error));
         })}

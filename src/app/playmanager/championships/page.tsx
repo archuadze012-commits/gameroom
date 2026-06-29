@@ -16,6 +16,7 @@ type LeagueRow = {
   name: string;
   division_level: number;
   status: 'registration' | 'in_progress' | 'completed';
+  format: 'round_robin' | 'knockout';
   max_teams: number;
   prize_pool: number;
 };
@@ -54,7 +55,7 @@ export default async function ChampionshipsPage() {
   const isAdmin = await hasPermission('manage_content');
 
   const [{ data: leagueRows }, { data: participantRows }, { data: fixtureRows }] = await Promise.all([
-    db.from('pm_league_instances').select('id,name,division_level,status,max_teams,prize_pool').order('created_at', { ascending: false }),
+    db.from('pm_league_instances').select('id,name,division_level,status,format,max_teams,prize_pool').order('created_at', { ascending: false }),
     db.from('pm_league_participants').select('league_id,team_id,played,won,drawn,lost,goals_for,goals_against,points'),
     db.from('pm_league_fixtures').select('league_id,round,home_team_id,away_team_id,home_goals,away_goals,status').order('round', { ascending: true }),
   ]);
@@ -129,7 +130,7 @@ export default async function ChampionshipsPage() {
                 <div>
                   <h2 className="text-xl font-black text-white">{league.name}</h2>
                   <p className="mt-1 text-[11px] font-black uppercase tracking-[0.14em] text-white/42">
-                    დივიზიონი {DIV_LABEL[league.division_level] ?? league.division_level} · {parts.length}/{league.max_teams} გუნდი · პრიზი {league.prize_pool.toLocaleString('ka-GE')} ₾
+                    {league.format === 'knockout' ? 'ევრო ტურნირი' : 'ჩემპიონატი'} · დივიზიონი {DIV_LABEL[league.division_level] ?? league.division_level} · {parts.length}/{league.max_teams} გუნდი · პრიზი {league.prize_pool.toLocaleString('ka-GE')} ₾
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -139,7 +140,7 @@ export default async function ChampionshipsPage() {
                 </div>
               </div>
 
-              {league.status !== 'registration' && standings.length > 0 ? (
+              {league.status !== 'registration' && league.format === 'round_robin' && standings.length > 0 ? (
                 <div className="mt-4 overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead>
