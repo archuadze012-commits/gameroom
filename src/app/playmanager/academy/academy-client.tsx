@@ -7,7 +7,17 @@ import { toast } from 'sonner';
 import { ArrowLeft, ArrowUpCircle, ExternalLink, GraduationCap, Sparkles, Users } from 'lucide-react';
 import { SpotlightCard } from '@/components/react-bits/spotlight-card';
 import { TalentClassBadge } from '@/components/playmanager/talent-class-badge';
-import { runPlayManagerCityAction, signPlayManagerAcademyProspect } from '@/app/playmanager/actions';
+import { runPlayManagerCityAction, signPlayManagerAcademyProspect, hirePlayManagerStaff, upgradePlayManagerStaff } from '@/app/playmanager/actions';
+
+export type AcademyScout = {
+  isHired: boolean;
+  level: number;
+  maxLevel: number;
+  hireCostLabel: string;
+  upgradeCostLabel: string | null;
+  weeklyWageLabel: string;
+  benefitLabel: string;
+};
 
 export type AcademyProspect = {
   id: string;
@@ -33,6 +43,7 @@ type Props = {
   canUpgrade: boolean;
   nextLevelPreview: { count: number };
   prospects: AcademyProspect[];
+  scout: AcademyScout | null;
 };
 
 export function AcademyClient({
@@ -47,6 +58,7 @@ export function AcademyClient({
   canUpgrade,
   nextLevelPreview,
   prospects,
+  scout,
 }: Props) {
   const router = useRouter();
   const [busy, startTransition] = useTransition();
@@ -68,6 +80,18 @@ export function AcademyClient({
       const r = await signPlayManagerAcademyProspect(prospectId);
       setBusyId(null);
       if (r.success) { toast.success(r.message ?? 'ხელი მოეწერა'); router.refresh(); }
+      else toast.error(r.error === 'insufficient_funds' ? 'საკმარისი თანხა არ არის' : 'ვერ მოხერხდა');
+    });
+  }
+
+  function scoutAction(kind: 'hire' | 'upgrade') {
+    setBusyId('scout');
+    startTransition(async () => {
+      const r = kind === 'hire'
+        ? await hirePlayManagerStaff('youth_scout')
+        : await upgradePlayManagerStaff('youth_scout');
+      setBusyId(null);
+      if (r.success) { toast.success(r.message ?? (kind === 'hire' ? 'სკაუტი დაქირავდა' : 'სკაუტი გაუმჯობესდა')); router.refresh(); }
       else toast.error(r.error === 'insufficient_funds' ? 'საკმარისი თანხა არ არის' : 'ვერ მოხერხდა');
     });
   }
@@ -194,9 +218,46 @@ export function AcademyClient({
         )}
       </SpotlightCard>
 
-      <p className="px-1 pb-2 text-center text-[11px] font-bold text-white/30">
-        <Sparkles className="mr-1 inline h-3 w-3" /> სკაუტის დაქირავება/გაუმჯობესება ხდება პერსონალის გვერდზე.
-      </p>
+      {/* 3 — ACADEMY SCOUT (very bottom) — hire/upgrade without leaving the page */}
+      {scout ? (
+        <SpotlightCard fillHeight={false} className="rounded-[24px] border border-white/10 bg-[linear-gradient(135deg,rgba(56,189,248,0.08),rgba(255,255,255,0.02))] p-5">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-sky-200/62">academy scout</p>
+          <div className="mt-1 flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-xl font-black text-white">
+                აკადემიის სკაუტი
+                {scout.isHired ? <span className="ml-2 text-sm text-white/45">LVL {scout.level}/{scout.maxLevel}</span> : null}
+              </h2>
+              <p className="mt-1 text-[11px] font-bold leading-5 text-white/52">
+                {scout.benefitLabel} · ხელფასი {scout.weeklyWageLabel}/კვ. სკაუტი ზრდის აკადემიის ტალანტების <b className="text-white/75">ხარისხის ჭერს</b>.
+              </p>
+            </div>
+            {!scout.isHired ? (
+              <button
+                type="button"
+                onClick={() => scoutAction('hire')}
+                disabled={busy}
+                className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl border border-sky-300/30 bg-sky-300/14 px-4 text-sm font-black text-sky-50 transition hover:bg-sky-300/22 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Sparkles className="h-4 w-4" />
+                {busyId === 'scout' && busy ? '...' : `დაქირავება · ${scout.hireCostLabel}`}
+              </button>
+            ) : scout.level < scout.maxLevel && scout.upgradeCostLabel ? (
+              <button
+                type="button"
+                onClick={() => scoutAction('upgrade')}
+                disabled={busy}
+                className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl border border-sky-300/30 bg-sky-300/14 px-4 text-sm font-black text-sky-50 transition hover:bg-sky-300/22 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Sparkles className="h-4 w-4" />
+                {busyId === 'scout' && busy ? '...' : `გაუმჯობესება · ${scout.upgradeCostLabel}`}
+              </button>
+            ) : (
+              <span className="shrink-0 rounded-xl border border-white/10 bg-white/[0.05] px-4 h-11 inline-flex items-center text-sm font-black text-white/55">მაქს. დონე</span>
+            )}
+          </div>
+        </SpotlightCard>
+      ) : null}
     </div>
   );
 }
