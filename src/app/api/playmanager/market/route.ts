@@ -42,13 +42,15 @@ type MarketDbRow = {
   pending_repack: boolean | null;
 };
 
-// Free-agent talent-class cap by division level (1=A top … 4=D bottom):
-//   D → pro (≤3) · C → pro+star (≤6) · A/B → up to elite (≤9).
+// Free-agent talent-class cap by division level (1=A top … 4=D bottom). Pro
+// (talent 1-3) is fodder-only and NEVER appears here — the floor is star (4):
+//   D → star (4–5) · C → star (4–6) · A/B → up to elite (4–9).
 // World-class/rising-star (10–11) only appear via career-end (available_via_career);
 // legend (12) never (pending_repack → admin pack).
+const FREE_AGENT_TALENT_FLOOR = 4;
 function getFreeAgentTalentCap(divisionId: number | null): number {
   const level = Math.max(1, Math.min(4, Number(divisionId ?? 4)));
-  if (level >= 4) return 3;
+  if (level >= 4) return 5;
   if (level === 3) return 6;
   return 9;
 }
@@ -347,6 +349,8 @@ export async function GET(request: Request) {
         row.owner_id === null
         && row.status === 'active'
         && !row.pending_repack
+        // Pro (talent 1-3) is fodder-only — never a free agent.
+        && row.talent >= FREE_AGENT_TALENT_FLOOR
         // Academy youth segment (real_age<=19 AND talent<=8) belongs to the
         // academy channel, not free agents. Young elites (talent>=9) stay here.
         && !((row.real_age ?? 99) <= 19 && row.talent <= 8)

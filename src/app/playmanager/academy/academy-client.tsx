@@ -160,7 +160,7 @@ export function AcademyClient({
           <h2 className="text-xl font-black text-white">ტალანტები</h2>
         </div>
         <p className="mt-2 text-[11px] font-bold leading-5 text-white/52">
-          ნამდვილი ახალგაზრდები (real ასაკი ≤19), აკადემიაში 15 წლის ასაკით. <b className="text-white/75">აკადემიის სკაუტი</b> განსაზღვრავს ხარისხს (ჭერი ≤{talentCap}),
+          ნამდვილი ახალგაზრდები (real ასაკი ≤19), აკადემიაში 15 წლის ასაკით. Pro-კლასი (≤3) გამორიცხულია — ის მხოლოდ fodder-ია. <b className="text-white/75">აკადემიის სკაუტი</b> განსაზღვრავს ხარისხს (ჭერი 4–{talentCap}),
           <b className="text-white/75"> აკადემიის დონე</b> — რაოდენობას და განვითარების სიჩქარეს. ხელმოწერა მოთამაშეს პირდაპირ გუნდში გადაიყვანს.
         </p>
 

@@ -27,7 +27,7 @@ export default async function PlayManagerAcademyPage() {
   const scoutMember = snapshot.staff.members.find((m) => m.roleKey === 'youth_scout');
   const youthScoutLevel = scoutMember?.isHired ? scoutMember.level : 0;
   const prospectTarget = 2 + academyLevel;
-  const talentCap = Math.min(8, 3 + youthScoutLevel);
+  const talentCap = Math.min(8, 4 + youthScoutLevel);
   const canUpgrade = academyLevel < MAX_ACADEMY_LEVEL;
 
   const prospects: AcademyProspect[] = snapshot.academy.map((p) => ({
