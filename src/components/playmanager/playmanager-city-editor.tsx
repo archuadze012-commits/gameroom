@@ -39,6 +39,7 @@ import {
   buyPlayManagerMarketPlayer,
   buyPlayManagerListedPlayer,
   listPlayManagerPlayer,
+  unlistPlayManagerPlayer,
   hirePlayManagerStaff,
   joinCupAction,
   negotiatePlayManagerSponsor,
@@ -1683,8 +1684,37 @@ function FacilityModule({
           </>
         ) : null}
         {moduleKey === 'outgoing' ? (
-          <div className="mt-3 grid gap-2 lg:grid-cols-3">
-            {snapshot.squad.map((player) => (
+          <>
+            {snapshot.outgoingListings.length > 0 ? (
+              <div className="mb-4 rounded-[22px] border border-amber-300/20 bg-amber-300/[0.05] p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-200/72">on the market</p>
+                <p className="mt-1 text-sm font-black text-white">ბაზარზე გამოტანილი</p>
+                <div className="mt-3 grid gap-2 lg:grid-cols-2">
+                  {snapshot.outgoingListings.map((listing) => (
+                    <div key={listing.listingId} className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-black/24 px-3 py-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-black text-white">{listing.name}</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-white/42">
+                          {listing.position} · OVR {listing.ovr} · {listing.askingPriceLabel}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={pendingAction === `unlist:${listing.listingId}`}
+                        onClick={() => onRunPlayerAction(`unlist:${listing.listingId}`, () => unlistPlayManagerPlayer(listing.listingId))}
+                        className="shrink-0 rounded-lg border border-white/12 bg-white/[0.05] px-3 py-1.5 text-[11px] font-black text-white/75 transition hover:bg-white/[0.09] disabled:cursor-not-allowed disabled:opacity-55"
+                      >
+                        {pendingAction === `unlist:${listing.listingId}` ? '...' : 'მოხსნა'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            <div className="mt-3 grid gap-2 lg:grid-cols-3">
+            {snapshot.squad.map((player) => {
+              const isListed = snapshot.outgoingListings.some((listing) => listing.playerId === player.id);
+              return (
               <div key={player.id} className="pm-game-row">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -1708,7 +1738,7 @@ function FacilityModule({
                   />
                   <button
                     type="button"
-                    disabled={pendingAction === `list:${player.id}`}
+                    disabled={isListed || pendingAction === `list:${player.id}`}
                     onClick={() => {
                       const price = Math.floor(Number(listPriceDraft[player.id] ?? player.value));
                       if (!Number.isFinite(price) || price <= 0) return;
@@ -1716,7 +1746,7 @@ function FacilityModule({
                     }}
                     className="flex-1 rounded-xl border border-amber-300/24 bg-amber-300/12 px-3 py-2 text-xs font-black text-amber-50 transition hover:bg-amber-300/18 disabled:cursor-not-allowed disabled:opacity-55"
                   >
-                    {pendingAction === `list:${player.id}` ? 'მუშავდება...' : 'ბაზარზე გამოტანა'}
+                    {isListed ? 'ბაზარზეა' : pendingAction === `list:${player.id}` ? 'მუშავდება...' : 'ბაზარზე გამოტანა'}
                   </button>
                 </div>
                 <button
@@ -1728,8 +1758,10 @@ function FacilityModule({
                   {pendingAction === `sell:${player.id}` ? 'მუშავდება...' : 'სწრაფი გაყიდვა'}
                 </button>
               </div>
-            ))}
-          </div>
+              );
+            })}
+            </div>
+          </>
         ) : null}
       </GamePanel>
     );
