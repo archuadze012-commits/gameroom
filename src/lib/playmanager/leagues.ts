@@ -348,6 +348,32 @@ async function maybeFinalizeLeague(db: any, leagueId: string) {
       p_accent: 'gold',
     });
   }
+
+  // Promotion / relegation: the champion climbs one division (toward A=1), the
+  // last-placed team drops one (toward D=4). Clamped to [1,4]. Round-robin only
+  // (this fn isn't called for knockout euro tournaments).
+  if (sorted.length >= 2) {
+    const last = sorted[sorted.length - 1];
+    await movePromotion(db, champion.team_id, 'promote', (league as any).name);
+    await movePromotion(db, last.team_id, 'relegate', (league as any).name);
+  }
+}
+
+async function movePromotion(db: any, teamId: string, dir: 'promote' | 'relegate', leagueName: string) {
+  const { data: team } = await db.from('pm_teams').select('division_id').eq('id', teamId).maybeSingle();
+  if (!team) return;
+  const current = Number((team as any).division_id ?? 4);
+  const next = dir === 'promote' ? Math.max(1, current - 1) : Math.min(4, current + 1);
+  if (next === current) return; // already at the boundary (A can't promote, D can't relegate)
+  await db.from('pm_teams').update({ division_id: next }).eq('id', teamId);
+  const divLabel = ['', 'A', 'B', 'C', 'D'];
+  await db.rpc('pm_log_event', {
+    p_team_id: teamId,
+    p_category: 'board',
+    p_title: dir === 'promote' ? 'დივიზიონში ახვევა! 🔼' : 'დივიზიონიდან ჩავარდნა 🔽',
+    p_detail: `${leagueName} · ${divLabel[current] ?? current} → ${divLabel[next] ?? next} დივიზიონი`,
+    p_accent: dir === 'promote' ? 'green' : 'red',
+  });
 }
 
 // ── Loaders (mirror cups.ts) ─────────────────────────────────────────────────

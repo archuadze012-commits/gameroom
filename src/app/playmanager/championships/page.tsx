@@ -154,16 +154,25 @@ export default async function ChampionshipsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {standings.map((p, i) => (
+                      {standings.map((p, i) => {
+                        const done = league.status === 'completed';
+                        const promoted = done && i === 0 && standings.length >= 2;
+                        const relegated = done && i === standings.length - 1 && standings.length >= 2;
+                        return (
                         <tr key={p.team_id} className={`border-t border-white/6 ${team && p.team_id === team.id ? 'bg-emerald-300/[0.06]' : ''}`}>
-                          <td className="px-2 py-1.5 font-black text-white/50">{i + 1}</td>
+                          <td className="px-2 py-1.5 font-black text-white/50">
+                            {i + 1}
+                            {promoted ? <span title="ახვევა" className="ml-1 text-emerald-400">🔼</span> : null}
+                            {relegated ? <span title="ჩავარდნა" className="ml-1 text-red-400">🔽</span> : null}
+                          </td>
                           <td className="px-2 py-1.5 font-black text-white">{teamName(p.team_id)}</td>
                           <td className="px-2 py-1.5 text-center text-white/70">{p.played}</td>
                           <td className="px-2 py-1.5 text-center text-white/70">{p.won}-{p.drawn}-{p.lost}</td>
                           <td className="px-2 py-1.5 text-center text-white/70">{p.goals_for - p.goals_against >= 0 ? '+' : ''}{p.goals_for - p.goals_against}</td>
                           <td className="px-2 py-1.5 text-center font-black text-emerald-100">{p.points}</td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
