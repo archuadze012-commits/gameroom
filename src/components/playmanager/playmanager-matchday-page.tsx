@@ -253,7 +253,7 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
           <p className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/40">შეჯიბრები</p>
           <div className="grid gap-3 sm:grid-cols-3">
             <Shortcut
-              href="/playmanager/league"
+              href="/playmanager/cups"
               icon={<Trophy className="h-5 w-5" />}
               title="ყოველდღიური თასები"
               sub={activeCup ? `${activeCup.participantCount}/${activeCup.maxTeams} · ${activeCup.prizePoolLabel}` : activeCupName ?? `${cupsCount} ღია თასი`}
