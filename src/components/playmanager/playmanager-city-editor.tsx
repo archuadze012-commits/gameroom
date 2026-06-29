@@ -1944,8 +1944,9 @@ function FacilityModule({
 
   if (spriteKey === 'academy' || (spriteKey === 'residence' && moduleKey === 'academy')) {
     const academyLevel = facilities.academy?.level ?? 1;
+    const youthScoutLevel = snapshot.staff.members.find((member) => member.roleKey === 'youth_scout')?.level ?? 0;
     const prospectTarget = 2 + academyLevel;
-    const talentCap = Math.min(8, 3 + academyLevel);
+    const talentCap = Math.min(8, 3 + youthScoutLevel);
     return (
       <GamePanel title="აკადემიის ტალანტები" icon={<UsersRound className="h-4 w-4" />}>
         <div className="mb-4 rounded-[18px] border border-emerald-300/16 bg-emerald-300/[0.05] p-4">
@@ -1956,9 +1957,9 @@ function FacilityModule({
             </span>
           </div>
           <p className="mt-2 text-[11px] font-bold leading-5 text-white/52">
-            აკადემიის დონის აწევა ზრდის ტალანტების <b className="text-white/75">რაოდენობას</b> (2+დონე),
-            მათ <b className="text-white/75">კლასის ჭერს</b> (≤{talentCap}) და <b className="text-white/75">განვითარების სიჩქარეს</b>.
-            სკაუტი ცალკეა — ის თავისუფალ აგენტებზე მოქმედებს, არა აკადემიაზე. ხელმოწერა მოთამაშეს პირდაპირ გუნდში 15 წლის ასაკით გადაიყვანს.
+            <b className="text-white/75">აკადემიის დონე</b> ზრდის ტალანტების <b className="text-white/75">რაოდენობას</b> (2+დონე) და <b className="text-white/75">განვითარების სიჩქარეს</b>.
+            <b className="text-white/75"> აკადემიის სკაუტი</b> (პერსონალი, ახლა დონე {youthScoutLevel}) განსაზღვრავს <b className="text-white/75">ხარისხს</b> — ტალანტის ჭერს (≤{talentCap}). სკაუტის გარეშე მხოლოდ pro-დონის (≤3) ტალანტები მოდის.
+            ხელმოწერა მოთამაშეს პირდაპირ გუნდში 15 წლის ასაკით გადაიყვანს.
           </p>
         </div>
         <div className="grid gap-2 lg:grid-cols-3">
