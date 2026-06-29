@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { unstable_cache } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
 import { loadEafc26Dataset, resolveRealPlayerStats, type Eafc26DatasetPlayer } from '@/lib/playmanager/eafc26-dataset';
 import { getTalent11AdjustedTransferValueGel } from '@/lib/playmanager/economy';
@@ -74,59 +73,61 @@ type GlobalWithCache = typeof globalThis & {
   __pmMarketRowsCache?: { data: MarketDbRow[]; timestamp: number };
 };
 
-const getCachedMarketRows = unstable_cache(
-  async () => {
-    const globalCache = globalThis as GlobalWithCache;
-    const now = Date.now();
-    if (process.env.NODE_ENV !== 'production' && globalCache.__pmMarketRowsCache && now - globalCache.__pmMarketRowsCache.timestamp < 60000) {
-      return globalCache.__pmMarketRowsCache.data;
-    }
+const MARKET_ROWS_CACHE_TTL_MS = 60_000;
 
-    const db = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
-      process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
-      { auth: { persistSession: false, autoRefreshToken: false } }
+// The full unowned real-player pool is ~16k rows (~14MB) — far above Next's
+// unstable_cache 2MB per-item ceiling, which threw "items over 2MB can not be
+// cached" → 500 on every market request. Cache it in a module-global instead
+// with the same 60s revalidation window; no data-cache size limit applies.
+async function fetchAvailableMarketRows(): Promise<MarketDbRow[]> {
+  const globalCache = globalThis as GlobalWithCache;
+  const now = Date.now();
+  if (globalCache.__pmMarketRowsCache && now - globalCache.__pmMarketRowsCache.timestamp < MARKET_ROWS_CACHE_TTL_MS) {
+    return globalCache.__pmMarketRowsCache.data;
+  }
+
+  const db = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
+    { auth: { persistSession: false, autoRefreshToken: false } }
+  );
+
+  const { count, error: countError } = await db
+    .from('pm_players')
+    .select('id', { count: 'exact', head: true })
+    .is('owner_id', null)
+    .eq('status', 'active');
+
+  if (countError) throw new Error(countError.message);
+  const total = count ?? 0;
+
+  const promises = [];
+  for (let from = 0; from < total; from += MARKET_DB_FETCH_CHUNK) {
+    promises.push(
+      db
+        .from('pm_players')
+        .select('id, normalized_name, display_name, card_display_name, primary_position, card_image_url, nationality_code, is_real, ea_fc_ovr, card_sil_width, card_sil_height, card_sil_x, card_sil_y, card_sil_opacity, card_content_y, card_name_size, card_stats_scale, card_stats, talent, ovr_source, real_age, age, ovr_current, current_transfer_value_gel, owner_id, status, available_via_career, pending_repack')
+        .is('owner_id', null)
+        .eq('status', 'active')
+        .order('id', { ascending: true })
+        .range(from, from + MARKET_DB_FETCH_CHUNK - 1)
     );
-    
-    const { count, error: countError } = await db
-      .from('pm_players')
-      .select('id', { count: 'exact', head: true })
-      .is('owner_id', null)
-      .eq('status', 'active');
-      
-    if (countError) throw new Error(countError.message);
-    const total = count ?? 0;
-    
-    const promises = [];
-    for (let from = 0; from < total; from += MARKET_DB_FETCH_CHUNK) {
-      promises.push(
-        db
-          .from('pm_players')
-          .select('id, normalized_name, display_name, card_display_name, primary_position, card_image_url, nationality_code, is_real, ea_fc_ovr, card_sil_width, card_sil_height, card_sil_x, card_sil_y, card_sil_opacity, card_content_y, card_name_size, card_stats_scale, card_stats, talent, ovr_source, real_age, age, ovr_current, current_transfer_value_gel, owner_id, status, available_via_career, pending_repack')
-          .is('owner_id', null)
-          .eq('status', 'active')
-          .order('id', { ascending: true })
-          .range(from, from + MARKET_DB_FETCH_CHUNK - 1)
-      );
-    }
+  }
 
-    const results = await Promise.all(promises);
-    const rows: MarketDbRow[] = [];
-    for (const res of results) {
-      if (res.error) throw new Error(res.error.message);
-      rows.push(...(res.data as MarketDbRow[]));
-    }
+  const results = await Promise.all(promises);
+  const rows: MarketDbRow[] = [];
+  for (const res of results) {
+    if (res.error) throw new Error(res.error.message);
+    rows.push(...(res.data as MarketDbRow[]));
+  }
 
-    globalCache.__pmMarketRowsCache = { data: rows, timestamp: now };
-    return rows;
-  },
-  ['pm-market-free-players'],
-  { revalidate: 60, tags: ['market-players'] }
-);
+  globalCache.__pmMarketRowsCache = { data: rows, timestamp: now };
+  return rows;
+}
 
 async function loadAvailableMarketRows() {
   try {
-    const data = await getCachedMarketRows();
+    const data = await fetchAvailableMarketRows();
     return { data, error: null };
   } catch (error: unknown) {
     return { data: null, error: error instanceof Error ? error : new Error('market_rows_failed') };
