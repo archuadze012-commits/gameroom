@@ -24,6 +24,8 @@ import {
   type StaffRoleKey,
 } from '@/lib/playmanager/staff';
 import { getTeam } from '@/lib/playmanager/team';
+import { hasPermission } from '@/lib/admin';
+import { createLeague, joinLeague, startLeague } from '@/lib/playmanager/leagues';
 
 export type RunCityActionResult =
   | {
@@ -1048,5 +1050,45 @@ export async function joinCupAction(cupInstanceId: string): Promise<{ success: b
 
   revalidatePath('/playmanager/league');
   return { success: true, message: 'წარმატებით დარეგისტრირდით თასზე' };
+}
+
+// ── Real-manager leagues (championships) ─────────────────────────────────────
+
+export async function createPlayManagerLeague(input: {
+  name: string;
+  divisionLevel: number;
+  maxTeams: number;
+  prizePool: number;
+}): Promise<{ success: boolean; error?: string; leagueId?: string }> {
+  if (!(await hasPermission('manage_content'))) return { success: false, error: 'forbidden' };
+  const name = input.name?.trim();
+  if (!name) return { success: false, error: 'invalid_name' };
+  const divisionLevel = Math.max(1, Math.min(4, Math.trunc(input.divisionLevel || 4)));
+  const maxTeams = Math.max(2, Math.min(20, Math.trunc(input.maxTeams || 8)));
+  const prizePool = Math.max(0, Math.trunc(input.prizePool || 0));
+
+  const result = await createLeague({ name, divisionLevel, maxTeams, prizePool });
+  if (!result.success) return { success: false, error: result.error };
+  revalidatePath('/playmanager/championships');
+  return { success: true, leagueId: result.leagueId };
+}
+
+export async function joinPlayManagerLeague(leagueId: string): Promise<{ success: boolean; error?: string }> {
+  const { user, team } = await getAuthenticatedTeam();
+  if (!user) return { success: false, error: 'unauthenticated' };
+  if (!team) return { success: false, error: 'team_missing' };
+
+  const result = await joinLeague(team.id, leagueId);
+  if (!result.success) return { success: false, error: result.error };
+  revalidatePath('/playmanager/championships');
+  return { success: true };
+}
+
+export async function startPlayManagerLeague(leagueId: string): Promise<{ success: boolean; error?: string }> {
+  if (!(await hasPermission('manage_content'))) return { success: false, error: 'forbidden' };
+  const result = await startLeague(leagueId);
+  if (!result.success) return { success: false, error: result.error };
+  revalidatePath('/playmanager/championships');
+  return { success: true };
 }
 
