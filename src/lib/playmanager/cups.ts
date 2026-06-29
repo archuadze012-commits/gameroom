@@ -73,11 +73,14 @@ export async function generateCupBracket(cupInstanceId: string) {
   await db.from('pm_cup_matches').insert(dbMatches);
 }
 
-export async function checkAndFillStaleCupsWithBots() {
+// No bots (user decision): after 20 min a registration cup auto-starts with
+// whatever REAL teams registered (>= 2), generates its bracket, and spawns a
+// fresh registration instance so the cup type stays open. Cups with < 2 real
+// teams keep waiting.
+export async function checkAndStartStaleCups() {
   const db = createSupabaseAdminClient() as any;
   const cutoff = new Date(Date.now() - 20 * 60 * 1000).toISOString();
 
-  // Find all cup instances in registration status created more than 20 minutes ago
   const { data: staleCups } = await db
     .from('pm_cup_instances')
     .select('*, pm_cup_templates(id, schedule_type, max_teams), pm_cup_participants(team_id)')
@@ -90,7 +93,10 @@ export async function checkAndFillStaleCupsWithBots() {
     const template = cup.pm_cup_templates;
     if (!template || template.schedule_type !== 'auto_fill') continue;
 
-    // Try to claim this cup by setting status to in_progress (optimistic lock)
+    const participants = cup.pm_cup_participants || [];
+    if (participants.length < 2) continue; // wait for at least 2 real teams — never bot-fill
+
+    // Claim this cup (optimistic lock) and start it with the real participants.
     const { data: updatedCup } = await db
       .from('pm_cup_instances')
       .update({ status: 'in_progress', started_at: new Date().toISOString() })
@@ -102,42 +108,12 @@ export async function checkAndFillStaleCupsWithBots() {
       continue; // Already processed by another request
     }
 
-    const participants = cup.pm_cup_participants || [];
-    const maxTeams = template.max_teams || 8;
-    const currentCount = participants.length;
-
-    if (currentCount < maxTeams) {
-      const needed = maxTeams - currentCount;
-      const currentTeamIds = participants.map((p: any) => p.team_id);
-
-      // Select random bots that are not already in this cup
-      let botQuery = db
-        .from('pm_teams')
-        .select('id')
-        .eq('is_bot', true);
-
-      if (currentTeamIds.length > 0) {
-        botQuery = botQuery.not('id', 'in', `(${currentTeamIds.join(',')})`);
-      }
-
-      const { data: botTeams } = await botQuery.limit(needed);
-
-      if (botTeams && botTeams.length > 0) {
-        const inserts = botTeams.map((bot: any) => ({
-          cup_instance_id: cup.id,
-          team_id: bot.id,
-        }));
-        await db.from('pm_cup_participants').insert(inserts);
-      }
-    }
-
-    // Spawn new instance so others can register
+    // Keep the cup type open for the next cohort.
     await db.from('pm_cup_instances').insert({
       template_id: template.id,
-      status: 'registration'
+      status: 'registration',
     });
 
-    // Generate bracket for this cup
     await generateCupBracket(cup.id);
   }
 }
@@ -146,8 +122,8 @@ export async function checkAndFillStaleCupsWithBots() {
 export async function processDueCupMatches() {
   const db = createSupabaseAdminClient() as any;
   
-  // Check and fill stale cups with bots
-  await checkAndFillStaleCupsWithBots();
+  // Auto-start stale cups with real teams only (no bots)
+  await checkAndStartStaleCups();
   
   // Find matches that are 'ready' and past their start_time
   const { data: dueMatches } = await (createSupabaseAdminClient() as any)
