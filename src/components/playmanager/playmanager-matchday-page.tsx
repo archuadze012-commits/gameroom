@@ -19,7 +19,7 @@ import {
   Trophy,
   UsersRound,
 } from 'lucide-react';
-import { runPlayManagerCityAction, type MatchResult } from '@/app/playmanager/actions';
+import { playPlayManagerNextFixture, type MatchResult } from '@/app/playmanager/actions';
 import { PlayManagerSidebar } from '@/components/playmanager/playmanager-side-nav';
 import { Dock } from '@/components/react-bits/dock';
 import { SpotlightCard } from '@/components/react-bits/spotlight-card';
@@ -60,6 +60,8 @@ type MatchdayPageProps = {
   cupsCount: number;
   activeCup: { name: string; prizePoolLabel: string; participantCount: number; maxTeams: number } | null;
   championship: { name: string; status: string } | null;
+  realFixtureReady: boolean;
+  hasRealFixture: boolean;
   recentForm: FormEntry[];
 };
 
@@ -106,6 +108,8 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
     cupsCount,
     activeCup,
     championship,
+    realFixtureReady,
+    hasRealFixture,
     recentForm,
   } = props;
 
@@ -115,23 +119,35 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
 
   const xiReady = startersCount === 11;
+  // The match button plays your next REAL fixture (cup/championship). startMatch
+  // gives guidance when there is no scheduled fixture or it hasn't kicked off yet.
 
   async function startMatch() {
     if (!xiReady) return;
+    if (!hasRealFixture) {
+      setMessage('დაგეგმილი მატჩი არ გაქვს — დარეგისტრირდი ჩემპიონატში ან თასში.');
+      return;
+    }
+    if (!realFixtureReady) {
+      setMessage('მატჩი ჯერ არ დაწყებულა — დაელოდე საათის დადგომას.');
+      return;
+    }
     setPending(true);
     setMessage(null);
-    const result = await runPlayManagerCityAction({ spriteKey: 'league', action: 'league_sim' });
+    const result = await playPlayManagerNextFixture();
     setPending(false);
 
     if (!result.success) {
       setMessage('მატჩის გაშვება ვერ მოხერხდა');
       return;
     }
-    if (result.matchResult) {
-      setMatchResult(result.matchResult);
-      return;
+    if (result.fixture) {
+      const f = result.fixture;
+      const label = f.result === 'W' ? 'გამარჯვება' : f.result === 'D' ? 'ფრე' : 'დამარცხება';
+      setMessage(`${f.competition} · ${teamName} ${f.scored}–${f.conceded} ${f.opponentName} · ${label}`);
+    } else {
+      setMessage('მზად მატჩი ვერ მოიძებნა.');
     }
-    setMessage(result.detail ?? 'მატჩი განახლდა');
     router.refresh();
   }
 
