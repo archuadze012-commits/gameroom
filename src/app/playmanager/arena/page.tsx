@@ -49,6 +49,21 @@ export default async function PlayManagerArenaPage() {
   const upcoming = citySnapshot.upcomingCupMatch;
   const settings = citySnapshot.matchSettings;
 
+  // The team's active championship (real-manager league), if any.
+  const { data: champRows } = await (supabase as unknown as {
+    from: (t: string) => any;
+  })
+    .from('pm_league_participants')
+    .select('league:pm_league_instances(name,status)')
+    .eq('team_id', team.id);
+  const championship = (() => {
+    for (const row of (champRows ?? []) as { league: { name: string; status: string } | { name: string; status: string }[] | null }[]) {
+      const league = Array.isArray(row.league) ? row.league[0] : row.league;
+      if (league && league.status !== 'completed') return { name: league.name, status: league.status };
+    }
+    return null;
+  })();
+
   return (
     <PlayManagerMatchdayPage
       teamName={team.name}
@@ -78,6 +93,7 @@ export default async function PlayManagerArenaPage() {
       }}
       activeCupName={activeCup?.name ?? null}
       cupsCount={citySnapshot.cups.length}
+      championship={championship}
       activeCup={
         activeCup
           ? {
