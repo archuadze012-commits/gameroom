@@ -59,6 +59,7 @@ type MatchdayPageProps = {
   activeCupName: string | null;
   cupsCount: number;
   activeCup: { name: string; prizePoolLabel: string; participantCount: number; maxTeams: number } | null;
+  championship: { name: string; status: string } | null;
   recentForm: FormEntry[];
 };
 
@@ -104,6 +105,7 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
     activeCupName,
     cupsCount,
     activeCup,
+    championship,
     recentForm,
   } = props;
 
@@ -246,23 +248,41 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
           </SpotlightCard>
         </motion.div>
 
-        {/* ── SHORTCUTS ── */}
-        <section className="mt-4 grid gap-3 sm:grid-cols-3">
-          <Shortcut
-            href={cupsCount > 0 ? '/playmanager/league' : '/playmanager/arena?module=matchday'}
-            icon={<Trophy className="h-5 w-5" />}
-            title="ტურნირები"
-            sub={activeCup ? `${activeCup.participantCount}/${activeCup.maxTeams} · ${activeCup.prizePoolLabel}` : activeCupName ?? 'ღია თასები'}
-            tone="amber"
-            index={0}
-          />
+        {/* ── COMPETITIONS ── */}
+        <section className="mt-4">
+          <p className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/40">შეჯიბრები</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Shortcut
+              href="/playmanager/league"
+              icon={<Trophy className="h-5 w-5" />}
+              title="ყოველდღიური თასები"
+              sub={activeCup ? `${activeCup.participantCount}/${activeCup.maxTeams} · ${activeCup.prizePoolLabel}` : activeCupName ?? `${cupsCount} ღია თასი`}
+              tone="amber"
+              index={0}
+            />
+            <Shortcut
+              href="/playmanager/championships"
+              icon={<Medal className="h-5 w-5" />}
+              title="ჩემპიონატები"
+              sub={championship
+                ? `${championship.name} · ${championship.status === 'in_progress' ? 'მიმდინარე' : 'რეგისტრაცია'}`
+                : 'დარეგისტრირდი ლიგაში'}
+              tone="emerald"
+              index={1}
+            />
+            <CompetitionSoon title="ევრო ტურნირები" sub="მალე" index={2} />
+          </div>
+        </section>
+
+        {/* ── ARCHIVE ── */}
+        <section className="mt-3 grid gap-3 sm:grid-cols-2">
           <Shortcut
             href="/playmanager/history"
             icon={<History className="h-5 w-5" />}
             title="ისტორია"
             sub={recentForm.length > 0 ? `ფორმა: ${recentForm.map((entry) => entry.result).join(' ')}` : 'ბოლო მატჩები'}
             tone="emerald"
-            index={1}
+            index={0}
           />
           <Shortcut
             href="/playmanager/museum"
@@ -270,7 +290,7 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
             title="მუზეუმი"
             sub="ტროფეები და ტიტულები"
             tone="amber"
-            index={2}
+            index={1}
           />
         </section>
       </div>
@@ -603,6 +623,29 @@ function Shortcut({
         </div>
         <ChevronRight className="h-5 w-5 text-white/30 transition group-hover:translate-x-0.5 group-hover:text-white/60" />
       </Link>
+    </motion.div>
+  );
+}
+
+function CompetitionSoon({ title, sub, index }: { title: string; sub: string; index: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.4, delay: index * 0.07 }}
+      className="flex items-center gap-3 rounded-[22px] border border-white/8 bg-white/[0.02] p-4 opacity-70"
+    >
+      <span className="grid h-12 w-12 flex-none place-items-center rounded-2xl border border-white/10 bg-black/40 text-sky-200/70">
+        <Trophy className="h-5 w-5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-base font-black text-white/80">{title}</p>
+        <p className="truncate text-[12px] font-bold text-white/40">{sub}</p>
+      </div>
+      <span className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-white/45">
+        მალე
+      </span>
     </motion.div>
   );
 }
