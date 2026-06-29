@@ -121,7 +121,7 @@ export async function startLeague(leagueId: string) {
     home_team_id: fixture.home,
     away_team_id: fixture.away,
     status: 'ready',
-    start_time: new Date(now + fixture.round * ROUND_INTERVAL_MIN * 60000).toISOString(),
+    start_time: new Date(now + (fixture.round - 1) * ROUND_INTERVAL_MIN * 60000).toISOString(),
   }));
   await db.from('pm_league_fixtures').insert(rows);
   return { success: true as const, fixtures: rows.length };
