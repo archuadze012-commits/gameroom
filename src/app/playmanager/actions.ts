@@ -26,6 +26,7 @@ import {
 import { getTeam } from '@/lib/playmanager/team';
 import { hasPermission } from '@/lib/admin';
 import { createLeague, joinLeague, startLeague } from '@/lib/playmanager/leagues';
+import { playNextFixtureForTeam, type PlayedFixture } from '@/lib/playmanager/next-fixture';
 
 export type RunCityActionResult =
   | {
@@ -1092,5 +1093,20 @@ export async function startPlayManagerLeague(leagueId: string): Promise<{ succes
   if (!result.success) return { success: false, error: result.error };
   revalidatePath('/playmanager/championships');
   return { success: true };
+}
+
+// Play the team's next ready REAL fixture (cup/championship) now — the unified
+// "main match" that replaces the old fake-opponent league round.
+export async function playPlayManagerNextFixture(): Promise<
+  { success: true; fixture: PlayedFixture | null } | { success: false; error: string }
+> {
+  const { user, team } = await getAuthenticatedTeam();
+  if (!user) return { success: false, error: 'unauthenticated' };
+  if (!team) return { success: false, error: 'team_missing' };
+
+  const fixture = await playNextFixtureForTeam(team.id);
+  revalidatePath('/playmanager');
+  revalidatePath('/playmanager/arena');
+  return { success: true, fixture };
 }
 

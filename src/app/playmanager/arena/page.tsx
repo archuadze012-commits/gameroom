@@ -4,6 +4,7 @@ import { getSession } from '@/lib/auth';
 import { formatGel } from '@/lib/playmanager/economy';
 import { getTeam } from '@/lib/playmanager/team';
 import { getPlayManagerCitySnapshot } from '@/lib/playmanager/city-data';
+import { getNextFixtureForTeam } from '@/lib/playmanager/next-fixture';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -36,7 +37,12 @@ export default async function PlayManagerArenaPage() {
     (user.user_metadata?.avatar_url as string | undefined) ||
     null;
 
-  const nextOpponentName = citySnapshot.upcomingCupMatch?.opponentName ?? extractOpponentName(citySnapshot.nextMatchLabel);
+  // The unified "main match": the team's next real fixture (cup/championship).
+  // Falls back to the legacy label only when the team has no scheduled fixture.
+  const nextFixture = await getNextFixtureForTeam(team.id);
+  const nextOpponentName = nextFixture?.opponentName
+    ?? citySnapshot.upcomingCupMatch?.opponentName
+    ?? extractOpponentName(citySnapshot.nextMatchLabel);
   const activeCup =
     citySnapshot.cups.find((cup) => cup.isRegistered && (cup.status === 'registration' || cup.status === 'in_progress')) ?? null;
 
@@ -74,9 +80,11 @@ export default async function PlayManagerArenaPage() {
       weekLabel={citySnapshot.clock.label}
       nextMatchLabel={citySnapshot.nextMatchLabel}
       nextOpponentName={nextOpponentName}
-      competitionLabel={activeCup?.name ?? `ლიგა · D${team.division_id}`}
-      roundLabel={upcoming ? `${upcoming.round} ტური` : null}
-      isHome={upcoming?.isHome ?? true}
+      competitionLabel={nextFixture?.competition ?? activeCup?.name ?? `ლიგა · D${team.division_id}`}
+      roundLabel={nextFixture ? `${nextFixture.round} ტური` : upcoming ? `${upcoming.round} ტური` : null}
+      isHome={nextFixture ? nextFixture.isHome : upcoming?.isHome ?? true}
+      realFixtureReady={nextFixture?.ready ?? false}
+      hasRealFixture={Boolean(nextFixture)}
       teamRating={teamRating}
       opponentRating={opponentRating}
       readiness={settings.readiness}
