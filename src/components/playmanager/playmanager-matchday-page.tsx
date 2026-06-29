@@ -117,6 +117,9 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
+  const [fixtureResult, setFixtureResult] = useState<
+    { competition: string; opponentName: string; scored: number; conceded: number; result: 'W' | 'D' | 'L' } | null
+  >(null);
 
   const xiReady = startersCount === 11;
   // The match button plays your next REAL fixture (cup/championship). startMatch
@@ -142,9 +145,7 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
       return;
     }
     if (result.fixture) {
-      const f = result.fixture;
-      const label = f.result === 'W' ? 'გამარჯვება' : f.result === 'D' ? 'ფრე' : 'დამარცხება';
-      setMessage(`${f.competition} · ${teamName} ${f.scored}–${f.conceded} ${f.opponentName} · ${label}`);
+      setFixtureResult(result.fixture);
     } else {
       setMessage('მზად მატჩი ვერ მოიძებნა.');
     }
@@ -333,6 +334,13 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
       <AnimatePresence>
         {matchResult ? (
           <MatchResultModal result={matchResult} onClose={() => { setMatchResult(null); router.refresh(); }} />
+        ) : null}
+        {fixtureResult ? (
+          <FixtureResultModal
+            teamName={teamName}
+            result={fixtureResult}
+            onClose={() => { setFixtureResult(null); router.refresh(); }}
+          />
         ) : null}
       </AnimatePresence>
     </main>
@@ -646,6 +654,55 @@ function Shortcut({
         </div>
         <ChevronRight className="h-5 w-5 text-white/30 transition group-hover:translate-x-0.5 group-hover:text-white/60" />
       </Link>
+    </motion.div>
+  );
+}
+
+function FixtureResultModal({
+  teamName,
+  result,
+  onClose,
+}: {
+  teamName: string;
+  result: { competition: string; opponentName: string; scored: number; conceded: number; result: 'W' | 'D' | 'L' };
+  onClose: () => void;
+}) {
+  const isWin = result.result === 'W';
+  const isDraw = result.result === 'D';
+  const color = isWin ? 'text-emerald-400' : isDraw ? 'text-yellow-400' : 'text-red-400';
+  const border = isWin ? 'border-emerald-500/30' : isDraw ? 'border-yellow-500/30' : 'border-red-500/30';
+  const label = isWin ? 'გამარჯვება' : isDraw ? 'ფრე' : 'დამარცხება';
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md"
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 18 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.92, y: 18 }}
+        transition={{ type: 'spring', stiffness: 280, damping: 24 }}
+        onClick={(event) => event.stopPropagation()}
+        className={`w-full max-w-md rounded-[24px] border ${border} bg-[#030b07] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.6)]`}
+      >
+        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/42">{result.competition}</p>
+        <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-center">
+          <p className="truncate text-sm font-black text-white">{teamName}</p>
+          <p className={`text-4xl font-black tabular-nums ${color}`}>{result.scored}–{result.conceded}</p>
+          <p className="truncate text-sm font-black text-white/70">{result.opponentName}</p>
+        </div>
+        <p className={`mt-4 text-center text-2xl font-black ${color}`}>{label}</p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-6 w-full rounded-xl border border-white/12 bg-white/[0.05] py-3 text-sm font-black text-white transition hover:bg-white/10"
+        >
+          დახურვა
+        </button>
+      </motion.div>
     </motion.div>
   );
 }
