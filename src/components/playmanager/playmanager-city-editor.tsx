@@ -192,9 +192,7 @@ const BUILDING_MODULES: Record<string, BuildingModule[]> = {
     { key: 'doctor', title: 'ექიმი და პერსონალი', eyebrow: 'Staff', description: 'ექიმის დაქირავება, ყოველდღიური მკურნალობა და upgrade benefit.', icon: UsersRound, status: 'planned' },
   ],
   academy: [
-    { key: 'prospects', title: 'ტალანტები', eyebrow: 'Prospects', description: 'ახალგაზრდები, potential, ხელმოწერის ფასი და როლი.', icon: UsersRound, status: 'ready' },
-    { key: 'youth_training', title: 'U19 განვითარება', eyebrow: 'Youth growth', description: 'ტალანტის ზრდის გეგმა და აკადემიის ხარისხის ეფექტი.', icon: Dumbbell, status: 'planned' },
-    { key: 'contracts', title: 'ახალგაზრდული კონტრაქტები', eyebrow: 'Contracts', description: 'ვის მივცეთ კონტრაქტი და როდის გადავიყვანოთ მთავარ გუნდში.', icon: ShieldCheck, status: 'planned' },
+    { key: 'prospects', title: 'ტალანტები', eyebrow: 'Prospects', description: 'ახალგაზრდები, potential, განვითარება და ხელმოწერა — ერთ ადგილას.', icon: UsersRound, status: 'ready' },
   ],
   media: [
     { key: 'direct_messages', title: 'მესენჯერი', eyebrow: 'Direct messages', description: 'პირადი მესიჯები, პასუხები და მიმდინარე დიალოგები.', icon: Send, status: 'ready' },
@@ -1945,8 +1943,24 @@ function FacilityModule({
   }
 
   if (spriteKey === 'academy' || (spriteKey === 'residence' && moduleKey === 'academy')) {
+    const academyLevel = facilities.academy?.level ?? 1;
+    const prospectTarget = 2 + academyLevel;
+    const talentCap = Math.min(8, 3 + academyLevel);
     return (
       <GamePanel title="აკადემიის ტალანტები" icon={<UsersRound className="h-4 w-4" />}>
+        <div className="mb-4 rounded-[18px] border border-emerald-300/16 bg-emerald-300/[0.05] p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-black text-white">აკადემია · დონე {academyLevel}</p>
+            <span className="rounded-full border border-emerald-300/24 bg-black/24 px-3 py-1 text-[11px] font-black text-emerald-100">
+              {snapshot.academy.length}/{prospectTarget} ტალანტი · მაქს. კლასი {talentCap}
+            </span>
+          </div>
+          <p className="mt-2 text-[11px] font-bold leading-5 text-white/52">
+            აკადემიის დონის აწევა ზრდის ტალანტების <b className="text-white/75">რაოდენობას</b> (2+დონე),
+            მათ <b className="text-white/75">კლასის ჭერს</b> (≤{talentCap}) და <b className="text-white/75">განვითარების სიჩქარეს</b>.
+            სკაუტი ცალკეა — ის თავისუფალ აგენტებზე მოქმედებს, არა აკადემიაზე. ხელმოწერა მოთამაშეს პირდაპირ გუნდში 15 წლის ასაკით გადაიყვანს.
+          </p>
+        </div>
         <div className="grid gap-2 lg:grid-cols-3">
           {snapshot.academy.map((prospect) => {
             const matured = prospect.ovr >= prospect.potential;
