@@ -2,6 +2,9 @@ import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { formatGel } from '@/lib/playmanager/economy';
 import { buildMatchProfile, simulateMatch } from '@/lib/playmanager/match-engine';
 import { getStaffBonuses, type StaffRoleKey } from '@/lib/playmanager/staff';
+import { generateSingleElimBracket } from '@/lib/tournament/generate-bracket';
+
+export type LeagueFormat = 'round_robin' | 'knockout';
 
 // Minutes between league rounds (each round's fixtures unlock progressively).
 const ROUND_INTERVAL_MIN = 10;
@@ -14,6 +17,7 @@ export async function createLeague(input: {
   divisionLevel: number;
   maxTeams: number;
   prizePool: number;
+  format?: LeagueFormat;
 }) {
   const db = createSupabaseAdminClient() as any;
   const { data, error } = await db
@@ -23,6 +27,7 @@ export async function createLeague(input: {
       division_level: input.divisionLevel,
       max_teams: input.maxTeams,
       prize_pool: input.prizePool,
+      format: input.format ?? 'round_robin',
       status: 'registration',
     })
     .select('id')
@@ -92,7 +97,7 @@ export async function startLeague(leagueId: string) {
 
   const { data: league } = await db
     .from('pm_league_instances')
-    .select('id, status')
+    .select('id, status, format')
     .eq('id', leagueId)
     .maybeSingle();
   if (!league) return { success: false as const, error: 'league_not_found' };
@@ -115,14 +120,37 @@ export async function startLeague(leagueId: string) {
   if (!locked || (locked as unknown[]).length === 0) return { success: false as const, error: 'already_started' };
 
   const now = Date.now();
-  const rows = buildRoundRobin(teamIds).map((fixture) => ({
-    league_id: leagueId,
-    round: fixture.round,
-    home_team_id: fixture.home,
-    away_team_id: fixture.away,
-    status: 'ready',
-    start_time: new Date(now + (fixture.round - 1) * ROUND_INTERVAL_MIN * 60000).toISOString(),
-  }));
+  let rows: Record<string, unknown>[];
+
+  if ((league as any).format === 'knockout') {
+    const { data: teamRows } = await db.from('pm_teams').select('id, name').in('id', teamIds);
+    const nameById = new Map<string, string>(((teamRows ?? []) as { id: string; name: string }[]).map((t) => [t.id, t.name]));
+    const seeded = [...teamIds]
+      .map((id, i) => ({ id, sort: ((i * 2654435761) % 1000) + Math.floor((now / (i + 1)) % 1000) }))
+      .sort((a, b) => a.sort - b.sort)
+      .map((entry, i) => ({ id: entry.id, name: nameById.get(entry.id) ?? 'Team', seed: i + 1 }));
+    const { matches } = generateSingleElimBracket(seeded);
+    rows = matches.map((m) => ({
+      league_id: leagueId,
+      round: m.round,
+      position: m.position,
+      home_team_id: m.player1?.id ?? null,
+      away_team_id: m.player2?.id ?? null,
+      winner_id: m.winner?.id ?? null,
+      status: m.status ?? 'pending',
+      start_time: new Date(now + (m.round - 1) * ROUND_INTERVAL_MIN * 60000).toISOString(),
+    }));
+  } else {
+    rows = buildRoundRobin(teamIds).map((fixture) => ({
+      league_id: leagueId,
+      round: fixture.round,
+      home_team_id: fixture.home,
+      away_team_id: fixture.away,
+      status: 'ready',
+      start_time: new Date(now + (fixture.round - 1) * ROUND_INTERVAL_MIN * 60000).toISOString(),
+    }));
+  }
+
   await db.from('pm_league_fixtures').insert(rows);
   return { success: true as const, fixtures: rows.length };
 }
@@ -140,11 +168,22 @@ export async function processDueLeagueMatches() {
     .order('round', { ascending: true });
   if (!dueMatches || (dueMatches as unknown[]).length === 0) return;
 
-  const affectedLeagues = new Set<string>();
+  const leagueIds = Array.from(new Set((dueMatches as any[]).map((m) => m.league_id as string)));
+  const { data: instances } = await db
+    .from('pm_league_instances')
+    .select('id, format, prize_pool, name')
+    .in('id', leagueIds);
+  const instanceById = new Map<string, any>(((instances ?? []) as any[]).map((i) => [i.id, i]));
+
+  const roundRobinAffected = new Set<string>();
 
   for (const match of dueMatches as any[]) {
-    const homeId = match.home_team_id as string;
-    const awayId = match.away_team_id as string;
+    const homeId = match.home_team_id as string | null;
+    const awayId = match.away_team_id as string | null;
+    if (!homeId || !awayId) continue; // bracket slot not filled yet
+    const instance = instanceById.get(match.league_id);
+    const isKnockout = instance?.format === 'knockout';
+
     const [homeRows, awayRows, homeSettings, awaySettings, homeBonuses, awayBonuses] = await Promise.all([
       loadTeamRows(homeId),
       loadTeamRows(awayId),
@@ -162,7 +201,8 @@ export async function processDueLeagueMatches() {
     );
     const homeGoals = simulated.score1;
     const awayGoals = simulated.score2;
-    const winnerId = homeGoals === awayGoals ? null : simulated.winnerId;
+    // Knockout never draws — simulateMatch always resolves a winner.
+    const winnerId = isKnockout ? simulated.winnerId : (homeGoals === awayGoals ? null : simulated.winnerId);
 
     await db.from('pm_league_fixtures').update({
       home_goals: homeGoals,
@@ -173,17 +213,67 @@ export async function processDueLeagueMatches() {
     }).eq('id', match.id);
 
     await Promise.all([
-      applyStanding(db, match.league_id, homeId, homeGoals, awayGoals),
-      applyStanding(db, match.league_id, awayId, awayGoals, homeGoals),
       db.rpc('pm_grant_match_development', { p_team_id: homeId }),
       db.rpc('pm_grant_match_development', { p_team_id: awayId }),
     ]);
-    affectedLeagues.add(match.league_id as string);
+
+    if (isKnockout) {
+      await propagateKnockout(db, instance, match, winnerId as string);
+    } else {
+      await Promise.all([
+        applyStanding(db, match.league_id, homeId, homeGoals, awayGoals),
+        applyStanding(db, match.league_id, awayId, awayGoals, homeGoals),
+      ]);
+      roundRobinAffected.add(match.league_id as string);
+    }
   }
 
-  for (const leagueId of affectedLeagues) {
+  for (const leagueId of roundRobinAffected) {
     await maybeFinalizeLeague(db, leagueId);
   }
+}
+
+// Knockout: advance the winner into the next round's slot; if there is no next
+// match this was the final → complete the tournament and pay the champion.
+async function propagateKnockout(db: any, instance: any, match: any, winnerId: string) {
+  const nextRound = (match.round as number) + 1;
+  const nextPosition = Math.ceil((match.position as number) / 2);
+  const isHomeSlot = (match.position as number) % 2 !== 0;
+
+  const { data: nextMatch } = await db
+    .from('pm_league_fixtures')
+    .select('id, home_team_id, away_team_id')
+    .eq('league_id', match.league_id)
+    .eq('round', nextRound)
+    .eq('position', nextPosition)
+    .maybeSingle();
+
+  if (!nextMatch) {
+    // Final completed → finalize + prize.
+    await db.from('pm_league_instances')
+      .update({ status: 'completed', completed_at: new Date().toISOString() })
+      .eq('id', match.league_id)
+      .eq('status', 'in_progress');
+    const prize = Number(instance?.prize_pool ?? 0);
+    if (prize > 0) {
+      await db.rpc('pm_credit', { p_team_id: winnerId, p_amount: prize, p_reason: 'euro_winner' });
+      await db.rpc('pm_log_event', {
+        p_team_id: winnerId,
+        p_category: 'finance',
+        p_title: `${instance?.name ?? 'ევრო ტურნირი'} მოიგე!`,
+        p_detail: `+${formatGel(prize)}`,
+        p_accent: 'gold',
+      });
+    }
+    return;
+  }
+
+  const update: Record<string, unknown> = isHomeSlot
+    ? { home_team_id: winnerId }
+    : { away_team_id: winnerId };
+  const otherSlot = isHomeSlot ? (nextMatch as any).away_team_id : (nextMatch as any).home_team_id;
+  if (otherSlot) update.status = 'ready';
+  await db.from('pm_league_fixtures').update(update).eq('id', (nextMatch as any).id);
 }
 
 async function applyStanding(
