@@ -78,7 +78,9 @@ export default async function PlayManagerArenaPage() {
       managerAvatarUrl={managerAvatarUrl}
       balanceLabel={formatGel(team.balance)}
       weekLabel={citySnapshot.clock.label}
-      nextMatchLabel={citySnapshot.nextMatchLabel}
+      nextMatchLabel={nextFixture
+        ? `${nextFixture.competition} · ${nextFixture.isHome ? 'საშინაო' : 'სტუმრად'}`
+        : citySnapshot.nextMatchLabel}
       nextOpponentName={nextOpponentName}
       competitionLabel={nextFixture?.competition ?? activeCup?.name ?? `ლიგა · D${team.division_id}`}
       roundLabel={nextFixture ? `${nextFixture.round} ტური` : upcoming ? `${upcoming.round} ტური` : null}
