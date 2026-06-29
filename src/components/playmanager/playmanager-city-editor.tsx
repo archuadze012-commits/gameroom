@@ -3173,6 +3173,21 @@ function ArenaQuickLinks({ recentForm }: { recentForm: Array<'W' | 'D' | 'L'> })
         </div>
       </Link>
       <Link
+        href="/playmanager/championships"
+        className="group/module relative overflow-hidden rounded-[24px] border border-white/10 bg-black/32 p-5 transition hover:border-amber-300/28 sm:col-span-2"
+      >
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(245,158,11,0.10),rgba(0,0,0,0.4))]" />
+        <div className="relative flex min-h-[120px] flex-col">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-amber-300/22 bg-amber-300/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-amber-100">
+            Championships
+          </div>
+          <div className="mt-auto">
+            <h3 className="text-lg font-black text-white">ჩემპიონატები</h3>
+            <p className="mt-2 text-sm font-bold text-white/60">ნამდვილ მენეჯერებთან ლიგები — დარეგისტრირდი და ითამაშე</p>
+          </div>
+        </div>
+      </Link>
+      <Link
         href="/playmanager/shop"
         className="group/module relative overflow-hidden rounded-[24px] border border-white/10 bg-black/32 p-5 transition hover:border-amber-300/28 sm:col-span-2"
       >

@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { asPlayManagerDb } from '@/lib/playmanager/db';
 import { processDueCupMatches } from '@/lib/playmanager/cups';
+import { processDueLeagueMatches } from '@/lib/playmanager/leagues';
 import { getTeam } from '@/lib/playmanager/team';
 
 export async function POST() {
@@ -17,6 +18,7 @@ export async function POST() {
 
   await Promise.all([
     processDueCupMatches(),
+    processDueLeagueMatches(),
     db.rpc('pm_ensure_season_rows', { p_team_id: team.id }),
     db.rpc('pm_ensure_match_settings', { p_team_id: team.id }),
     db.rpc('pm_ensure_calendar', { p_team_id: team.id }),
