@@ -156,8 +156,6 @@ const BUILDING_MODULES: Record<string, BuildingModule[]> = {
     { key: 'lineup', title: 'შემადგენლობა და ტაქტიკა', eyebrow: 'Squad builder', description: 'მოედანზე ფუტქარდებით XI, სათადარიგოები, ფორმაცია და ტაქტიკის კონტროლი.', icon: UsersRound, status: 'ready' },
     { key: 'calendar', title: 'კალენდარი და ისტორია', eyebrow: 'Schedule', description: 'მომავალი ტურები, ბოლო შედეგები და head-to-head ანალიზი.', icon: CalendarDays, status: 'ready' },
     { key: 'daily_cups', title: 'ყოველდღიური თასები', eyebrow: 'Cups', description: 'უფასო/ფასიანი თასები, მონაწილეები, prize pool და რეგისტრაცია.', icon: Trophy, status: 'ready' },
-    { key: 'euro_cups', title: 'ევროტურნირები', eyebrow: 'Europe', description: 'ევროპის ჩემპიონთა თასი, კონფერენციის თასი და ევროპული დიდება.', icon: Globe, status: 'planned' },
-    { key: 'championships', title: 'ჩემპიონატები', eyebrow: 'League', description: 'რეგულარული ჩემპიონატები, დივიზიონები და სეზონური ცხრილი.', icon: Trophy, status: 'planned' },
   ],
   market: [
     { key: 'transfer_market', title: 'სატრანსფერო ბაზარი', eyebrow: 'Market', description: 'ფილტრები, ფასები, OVR, ასაკი, მოთხოვნა და სწრაფი ყიდვა.', icon: Store, status: 'ready' },
@@ -167,14 +165,11 @@ const BUILDING_MODULES: Record<string, BuildingModule[]> = {
   ],
   training: [
     { key: 'sessions', title: 'სავარჯიშო სესიები', eyebrow: 'Growth', description: 'მოთამაშეების attribute/OVR ზრდა და ვარჯიშის ღირებულება.', icon: Dumbbell, status: 'ready' },
-    { key: 'lineup_templates', title: 'შემადგენლობის template-ები', eyebrow: 'Presets', description: 'ლიგა, თასი, როტაცია და დაცვითი/შეტევითი სასტარტოები.', icon: ShieldCheck, status: 'planned' },
     { key: 'tactics_lab', title: 'ტაქტიკის ლაბი', eyebrow: 'Coverage', description: 'ფორმაციები, პოზიციების დაფარვა, pressing და ინტენსივობის სკალა.', icon: Activity, status: 'ready' },
-    { key: 'fitness', title: 'ფიზმომზადება', eyebrow: 'Fitness', description: 'fatigue, readiness და ტრავმის რისკის კონტროლი.', icon: Zap, status: 'planned' },
   ],
   league: [
     { key: 'calendar', title: 'კალენდარი', eyebrow: 'Fixtures', description: 'მომავალი მატჩები, ტურის დრო და countdown-ის ლოგიკა.', icon: CalendarDays, status: 'ready' },
     { key: 'history', title: 'მატჩების ისტორია', eyebrow: 'Results', description: 'ბოლო შედეგები, შემოსავალი, დასწრება და form trend.', icon: Landmark, status: 'ready' },
-    { key: 'head_to_head', title: 'პირისპირ სტატისტიკა', eyebrow: 'H2H', description: 'მეტოქესთან წინა შეხვედრები და ტაქტიკური მინიშნებები.', icon: Search, status: 'planned' },
   ],
   finance: [
     { key: 'transfer_market', title: 'სატრანსფერო ბაზარი', eyebrow: 'Transfers', description: 'ფილტრები, ფასები, OVR, ასაკი, მოთხოვნა და სწრაფი ყიდვა.', icon: Store, status: 'ready', href: '/playmanager/market?module=transfer_market' },
@@ -186,10 +181,7 @@ const BUILDING_MODULES: Record<string, BuildingModule[]> = {
     { key: 'tickets', title: 'სტადიონის მენეჯმენტი', eyebrow: 'Arena revenue', description: 'ტევადობა, ბილეთის ფასი, დასწრება, საშინაო შემოსავალი და სტადიონის upgrade.', icon: Trophy, status: 'ready' },
   ],
   medical: [
-    { key: 'injuries', title: 'ტრავმები', eyebrow: 'Injuries', description: 'ტრავმირებული მოთამაშეები, დაბრუნების დრო და მატჩის რისკი.', icon: Stethoscope, status: 'planned' },
-    { key: 'recovery', title: 'გამოჯანმრთელება', eyebrow: 'Recovery', description: 'დასვენება, ექიმის ეფექტი და fatigue-ის შემცირება.', icon: ShieldCheck, status: 'planned' },
     { key: 'risk', title: 'რისკის ანალიზი', eyebrow: 'Risk', description: 'რომელი ფეხბურთელი არ უნდა ათამაშო ზედიზედ მძიმე მატჩებში.', icon: Activity, status: 'ready' },
-    { key: 'doctor', title: 'ექიმი და პერსონალი', eyebrow: 'Staff', description: 'ექიმის დაქირავება, ყოველდღიური მკურნალობა და upgrade benefit.', icon: UsersRound, status: 'planned' },
   ],
   academy: [
     { key: 'prospects', title: 'ტალანტები', eyebrow: 'Prospects', description: 'ახალგაზრდები, potential, განვითარება და ხელმოწერა — ერთ ადგილას.', icon: UsersRound, status: 'ready' },
@@ -198,15 +190,12 @@ const BUILDING_MODULES: Record<string, BuildingModule[]> = {
     { key: 'direct_messages', title: 'მესენჯერი', eyebrow: 'Direct messages', description: 'პირადი მესიჯები, პასუხები და მიმდინარე დიალოგები.', icon: Send, status: 'ready' },
     { key: 'announcements', title: 'უწყებები', eyebrow: 'Announcements', description: 'სისტემური განცხადებები, კლუბის შეტყობინებები და read status.', icon: Megaphone, status: 'ready' },
     { key: 'global_chat', title: 'გლობალური ჩატი', eyebrow: 'Global chat', description: 'საერთო საკომუნიკაციო არხი, სწრაფი საუბარი და აქტივობა.', icon: MessageCircle, status: 'ready' },
-    { key: 'missions', title: 'ყოველდღიური მისიები', eyebrow: 'Missions', description: 'აქტივობის დავალებები, reward, progress და claim flow.', icon: CheckCircle2, status: 'planned' },
     { key: 'daily_reward', title: 'დღიური ჯილდო', eyebrow: 'Streak', description: 'day streak, cash reward და დაბრუნების მოტივაცია.', icon: Sparkles, status: 'ready' },
     { key: 'news', title: 'კლუბის სიახლეები', eyebrow: 'Feed', description: 'event feed, მატჩის შედეგები, ტრავმები და ფანების რეაქცია.', icon: RadioTower, status: 'ready' },
     { key: 'reputation', title: 'რეპუტაცია', eyebrow: 'Fans', description: 'ფანები, მედია კამპანია და public image.', icon: Star, status: 'ready' },
   ],
   residence: [
     { key: 'academy', title: 'აკადემია', eyebrow: 'Academy', description: 'ახალგაზრდები, ტალანტები და მომავალი ხელმოწერები გუნდის შიგნით.', icon: GraduationCap, status: 'ready' },
-    { key: 'capacity', title: 'გუნდის ლიმიტი', eyebrow: 'Capacity', description: 'რამდენი ფეხბურთელის ყოლა შეუძლია კლუბს მიმდინარე დონეზე.', icon: Home, status: 'planned' },
-    { key: 'hotel', title: 'დროებითი განთავსება', eyebrow: 'Hotel', description: 'ზედმეტი მოთამაშეების დროებითი ადგილი და ავტომატური რისკები.', icon: UsersRound, status: 'planned' },
     { key: 'staff', title: 'პერსონალი', eyebrow: 'Staff', description: 'მწვრთნელები, ექიმი, სკაუტი და მათი monthly cost.', icon: ShieldCheck, status: 'ready' },
   ],
 };
