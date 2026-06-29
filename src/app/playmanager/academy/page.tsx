@@ -24,7 +24,8 @@ export default async function PlayManagerAcademyPage() {
   ]);
 
   const academyLevel = facilities.find((f) => f.spriteKey === 'academy')?.level ?? 1;
-  const youthScoutLevel = snapshot.staff.members.find((m) => m.roleKey === 'youth_scout')?.level ?? 0;
+  const scoutMember = snapshot.staff.members.find((m) => m.roleKey === 'youth_scout');
+  const youthScoutLevel = scoutMember?.isHired ? scoutMember.level : 0;
   const prospectTarget = 2 + academyLevel;
   const talentCap = Math.min(8, 3 + youthScoutLevel);
   const canUpgrade = academyLevel < MAX_ACADEMY_LEVEL;
@@ -55,6 +56,15 @@ export default async function PlayManagerAcademyPage() {
         canUpgrade={canUpgrade}
         nextLevelPreview={{ count: 2 + Math.min(MAX_ACADEMY_LEVEL, academyLevel + 1) }}
         prospects={prospects}
+        scout={scoutMember ? {
+          isHired: scoutMember.isHired,
+          level: scoutMember.level,
+          maxLevel: scoutMember.maxLevel,
+          hireCostLabel: scoutMember.hireCostLabel,
+          upgradeCostLabel: scoutMember.upgradeCostLabel,
+          weeklyWageLabel: scoutMember.weeklyWageLabel,
+          benefitLabel: scoutMember.benefitLabel,
+        } : null}
       />
     </PlayManagerLightShell>
   );
