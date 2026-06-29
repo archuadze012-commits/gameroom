@@ -47,7 +47,7 @@ const FACILITY_RULES: Record<FacilityKey, FacilityRule> = {
   },
   academy: {
     key: 'academy',
-    baseUpgradeCostGel: 380_000,
+    baseUpgradeCostGel: 800_000,
     matchdayRewardGel: 0,
     defaultStatus: 'upgradeable',
     unlockLevel: 1,
