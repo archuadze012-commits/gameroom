@@ -31,6 +31,9 @@ type NewsRow = {
 
 const getNews = unstable_cache(
   async () => {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return [];
+  }
   const admin = createSupabaseAdminClient();
   const { data } = await admin
     .from("news_articles")
