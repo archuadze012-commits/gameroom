@@ -74,7 +74,7 @@ export default async function PlayManagerAchievementsPage() {
                 title={ACHIEVEMENT_CATEGORY_LABELS[category]}
                 subtitle={`${done}/${items.length} გახსნილი`}
               />
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className={`grid grid-cols-2 gap-3 ${items.length % 2 === 1 ? '[&>*:first-child]:col-span-2 sm:[&>*:first-child]:col-span-1' : ''}`}>
                 {items.map((a) => (
                   <div
                     key={a.id}

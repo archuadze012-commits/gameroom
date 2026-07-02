@@ -83,11 +83,11 @@ export default async function PlayManagerNotificationsPage() {
                       <Icon className="h-4 w-4" />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="flex items-center gap-2 text-sm font-black text-white">
-                        <span className="min-w-0 truncate">{n.title}</span>
-                        {n.unread ? <span className="shrink-0 rounded-full bg-emerald-400/90 px-1.5 py-px text-[8px] font-black uppercase tracking-wide text-black">new</span> : null}
+                      <p className="flex items-start gap-2 text-[13px] font-black leading-tight text-white">
+                        <span className="min-w-0 break-words">{n.title}</span>
+                        {n.unread ? <span className="mt-0.5 shrink-0 rounded-full bg-emerald-400/90 px-1.5 py-px text-[8px] font-black uppercase tracking-wide text-black">new</span> : null}
                       </p>
-                      {n.detail ? <p className="mt-0.5 text-[12px] font-bold leading-4 text-white/55">{n.detail}</p> : null}
+                      {n.detail ? <p className="mt-0.5 text-[11px] font-bold leading-4 text-white/55">{n.detail}</p> : null}
                     </div>
                     <span className="shrink-0 text-[10px] font-black uppercase tracking-[0.12em] text-white/35">
                       კვ {n.weekNo} · დღე {n.dayNo}

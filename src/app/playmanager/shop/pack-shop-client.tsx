@@ -65,7 +65,7 @@ export function PackShopClient({ packs, balance }: { packs: ShopPack[]; balance:
 
   return (
     <>
-      <div className="pm-feedskin grid gap-4 md:grid-cols-2">
+      <div className={`pm-feedskin grid grid-cols-2 gap-4 md:grid-cols-2 ${packs.length % 2 === 1 ? '[&>*:first-child]:col-span-2 md:[&>*:first-child]:col-span-1' : ''}`}>
         {packs.map((pack) => {
           const affordable = balance >= pack.cost_pm;
           const busy = busyId === pack.id;

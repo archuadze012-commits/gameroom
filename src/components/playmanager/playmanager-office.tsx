@@ -101,6 +101,7 @@ function DepartmentCard({
   pill,
   tone,
   onClick,
+  className = '',
 }: {
   icon: LucideIcon;
   title: string;
@@ -108,9 +109,10 @@ function DepartmentCard({
   pill: string;
   tone: Tone;
   onClick: () => void;
+  className?: string;
 }) {
   return (
-    <button type="button" onClick={onClick} className="pubg-loadout-link group block w-full text-left">
+    <button type="button" onClick={onClick} className={`pubg-loadout-link group block w-full text-left ${className}`}>
       <div className="pubg-loadout-card relative aspect-[4/3] overflow-hidden">
         {/* Photo inset from the edge so the neon frame is never covered. */}
         <div className="absolute inset-[5px] overflow-hidden rounded-[12px]">
@@ -302,8 +304,9 @@ export function PlayManagerOffice(props: PlayManagerOfficeProps) {
             </OfficeCard>
 
             {/* ── DEPARTMENTS (photo feed cards) ── */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {departments.map((dep) => (
+            {/* Mobile: 2-per-row; odd count → first card spans full width. */}
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+              {departments.map((dep, index) => (
                 <DepartmentCard
                   key={dep.key}
                   icon={dep.icon}
@@ -312,6 +315,7 @@ export function PlayManagerOffice(props: PlayManagerOfficeProps) {
                   pill={dep.pill}
                   tone={dep.tone}
                   onClick={() => openModule(dep.key, dep.href)}
+                  className={index === 0 && departments.length % 2 === 1 ? 'col-span-2 lg:col-span-1' : ''}
                 />
               ))}
             </div>

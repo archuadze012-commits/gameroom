@@ -135,7 +135,8 @@ export function PlayManagerTraining(props: PlayManagerTrainingProps) {
             </PmCard>
 
             {/* ── DEPARTMENTS (photo feed cards) ── */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* Mobile: 2-per-row (even count → no full-width first). */}
+            <div className="grid grid-cols-2 gap-4">
               <PmPhotoCard
                 icon={Dumbbell}
                 title="სავარჯიშო სესიები"

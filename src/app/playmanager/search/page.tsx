@@ -271,10 +271,10 @@ export default async function PlayManagerSearchPage({
             {activeType === 'managers' && (
               <div>
                 <SectionHeader icon={<Shield className="h-4 w-4" />} title="მენეჯერები" count={totalCount} />
-                <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className={`mt-3 grid grid-cols-2 gap-3 lg:grid-cols-3 ${managerResults.length % 2 === 1 ? '[&>*:first-child]:col-span-2 lg:[&>*:first-child]:col-span-1' : ''}`}>
                   {managerResults.length ? managerResults.map(({ profile, team: managerTeam }) => (
                     <ManagerCard key={profile.id} profile={profile} team={managerTeam} isMe={profile.id === user.id} />
-                  )) : <EmptyState q={q} />}
+                  )) : <div className="col-span-full"><EmptyState q={q} /></div>}
                 </div>
               </div>
             )}
@@ -282,10 +282,10 @@ export default async function PlayManagerSearchPage({
             {activeType === 'teams' && (
               <div>
                 <SectionHeader icon={<UsersRound className="h-4 w-4" />} title="გუნდები" count={totalCount} />
-                <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className={`mt-3 grid grid-cols-2 gap-3 lg:grid-cols-3 ${teams.length % 2 === 1 ? '[&>*:first-child]:col-span-2 lg:[&>*:first-child]:col-span-1' : ''}`}>
                   {teams.length ? teams.map((row) => (
                     <TeamCard key={row.id} team={row} isMine={row.id === myTeam.id} />
-                  )) : <EmptyState q={q} />}
+                  )) : <div className="col-span-full"><EmptyState q={q} /></div>}
                 </div>
               </div>
             )}
@@ -293,7 +293,7 @@ export default async function PlayManagerSearchPage({
             {activeType === 'players' && (
               <div>
                 <SectionHeader icon={<Search className="h-4 w-4" />} title="ფეხბურთელები" count={totalCount} />
-                <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   {players.length ? players.map((player) => (
                     <PlayerCard key={player.id} player={player} ownerTeamMap={ownerTeamMap} />
                   )) : <EmptyState q={q} />}

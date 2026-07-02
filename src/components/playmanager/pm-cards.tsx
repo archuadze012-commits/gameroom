@@ -118,6 +118,7 @@ export function PmPhotoCard({
   pill,
   tone = 'green',
   onClick,
+  className = '',
 }: {
   icon: LucideIcon;
   title: string;
@@ -125,9 +126,10 @@ export function PmPhotoCard({
   pill?: string;
   tone?: PmTone;
   onClick: () => void;
+  className?: string;
 }) {
   return (
-    <button type="button" onClick={onClick} className="pubg-loadout-link group block w-full text-left">
+    <button type="button" onClick={onClick} className={`pubg-loadout-link group block w-full text-left ${className}`}>
       <div className="pubg-loadout-card relative aspect-[4/3] overflow-hidden">
         <div className="absolute inset-[5px] overflow-hidden rounded-[12px]">
           <Image

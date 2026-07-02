@@ -50,7 +50,7 @@ export default async function PlayManagerCupsPage() {
             <p className="text-sm font-bold text-white/50">ამჟამად ხელმისაწვდომი თასი არ არის.</p>
           </PmCard>
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className={`grid grid-cols-2 gap-4 md:grid-cols-2 ${cups.length % 2 === 1 ? '[&>*:first-child]:col-span-2 md:[&>*:first-child]:col-span-1' : ''}`}>
             {cups.map((cup) => {
               const meta = STATUS_META[cup.status];
               return (

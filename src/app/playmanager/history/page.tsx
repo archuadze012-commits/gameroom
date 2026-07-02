@@ -48,7 +48,7 @@ export default async function MatchHistoryPage() {
         </PmCard>
 
         {matches.length > 0 ? (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div className={`grid grid-cols-2 gap-3 xl:grid-cols-3 ${matches.length % 2 === 1 ? '[&>*:first-child]:col-span-2 xl:[&>*:first-child]:col-span-1' : ''}`}>
             {matches.map((match) => (
               <MatchHistoryCard key={match.id} match={match} />
             ))}

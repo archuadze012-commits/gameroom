@@ -46,7 +46,7 @@ export default async function MuseumPage() {
         </PmCard>
 
         {trophies.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className={`grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4 ${trophies.length % 2 === 1 ? '[&>*:first-child]:col-span-2 lg:[&>*:first-child]:col-span-1' : ''}`}>
             {trophies.map((trophy) => (
               <TrophyCard key={trophy.id} trophy={trophy} />
             ))}

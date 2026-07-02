@@ -157,7 +157,8 @@ export function PlayManagerResidence(props: PlayManagerResidenceProps) {
             </PmCard>
 
             {/* ── DEPARTMENTS (photo feed cards) ── */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Mobile: 2-per-row; odd count (3) → first card spans full width. */}
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
               <PmPhotoCard
                 icon={UsersRound}
                 title="მთავარი გუნდი"
@@ -165,6 +166,7 @@ export function PlayManagerResidence(props: PlayManagerResidenceProps) {
                 pill={`${squad.length} მოთამაშე`}
                 tone="green"
                 onClick={() => openModule('squad')}
+                className="col-span-2 lg:col-span-1"
               />
               <PmPhotoCard
                 icon={GraduationCap}
