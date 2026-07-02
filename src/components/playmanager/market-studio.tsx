@@ -22,6 +22,7 @@ import CountUp from '@/components/CountUp';
 import type { PlayerCardStatsInput } from '@/lib/playmanager/player-card-stats';
 import type { PlayManagerPlayerCardLayout } from '@/lib/playmanager/player-card';
 import { TalentClassBadge } from '@/components/playmanager/talent-class-badge';
+import { NestedMiniBox } from '@/components/playmanager/panel-primitives';
 
 type MarketFilterKey = 'ALL' | 'GK' | 'DEF' | 'MID' | 'ATT' | 'SHORTLIST';
 
@@ -121,6 +122,14 @@ export function MarketStudio({
   }, [searchDraft, query, isFreeAgents, setQuery]);
 
   // Fetch the current page (10 players) — the heavy lifting is paginated server-side.
+  // NOTE: `setQuery` is intentionally excluded from the deps below. It's a
+  // useCallback closing over `searchParams`, which Next.js does not guarantee
+  // to be referentially stable across renders — including it here caused this
+  // effect to restart on every render, so the fetch was always cancelled by
+  // the next run before it could resolve, leaving `loading` stuck at `true`
+  // forever (a permanent skeleton). The effect's real reactive inputs are the
+  // primitive values below; `setQuery` is only invoked conditionally inside
+  // (pagination correction) and doesn't need to retrigger the fetch itself.
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -153,7 +162,8 @@ export function MarketStudio({
     return () => {
       cancelled = true;
     };
-  }, [moduleKey, filter, page, query, isFreeAgents, setQuery]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [moduleKey, filter, page, query, isFreeAgents]);
 
   function buy(player: MarketPlayer) {
     setBuyingKey(player.key);
@@ -245,7 +255,7 @@ export function MarketStudio({
             <AnimatePresence mode="popLayout">
               <motion.div
                 key={`${moduleKey}-${filter}-${query}-${page}`}
-                className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+                className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
               >
                 {items.map((player, index) => (
                   <PlayerCard
@@ -355,7 +365,7 @@ function PlayerCard({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.4) }}
-      className="group overflow-hidden rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,18,17,0.96),rgba(5,11,10,0.98))] p-3 shadow-[0_18px_46px_rgba(0,0,0,0.34)] transition hover:border-emerald-300/24"
+      className="group overflow-hidden rounded-[26px] border border-white/10 bg-[linear-gradient(135deg,rgba(8,18,17,0.96),rgba(4,8,6,0.98))] p-3 shadow-[0_18px_46px_rgba(0,0,0,0.34)] transition hover:border-emerald-300/24"
     >
       <div className="flex items-center justify-between">
         <div className="min-w-0">
@@ -389,10 +399,7 @@ function PlayerCard({
       </div>
 
       <div className="mt-2 flex items-center justify-between gap-2">
-        <div>
-          <p className="text-[9px] font-black uppercase tracking-[0.14em] text-white/38">ფასი</p>
-          <p className="text-sm font-black text-emerald-100">{player.valueLabel}</p>
-        </div>
+        <NestedMiniBox label="ფასი" value={player.valueLabel} valueClassName="text-emerald-100" />
         <TalentClassBadge talent={player.talent} size="sm" />
       </div>
 
@@ -501,7 +508,7 @@ function visiblePages(page: number, totalPages: number): number[] {
 
 function MarketGridSkeleton({ count }: { count: number }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
       {Array.from({ length: count }).map((_, index) => (
         <div key={index} className="rounded-[26px] border border-white/8 bg-white/[0.03] p-3">
           <div className="flex items-center justify-between">

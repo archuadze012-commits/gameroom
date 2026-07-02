@@ -91,6 +91,11 @@ function makeClouds(): Cloud[] {
     const op = d.roam ? d.op : Math.min(0.72, d.op + 0.2);
     out.push(makeOne(d.src, d.w * rand(0.85, 1.15), op, d.roam));
   });
+  // third pass — extra clouds for a fuller sky; slightly smaller, varied opacity
+  DEFS.forEach((d) => {
+    const op = d.roam ? d.op : Math.min(0.66, d.op + 0.12);
+    out.push(makeOne(d.src, d.w * rand(0.7, 1.0), op, d.roam));
+  });
   return out;
 }
 

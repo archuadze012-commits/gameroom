@@ -349,7 +349,7 @@ function MatchHero({
 }) {
   return (
     <div className="mb-5 overflow-hidden rounded-[30px] border border-white/10 bg-black/50 shadow-[inset_0_0_60px_rgba(34,197,94,0.08)]">
-      <div className="grid items-stretch lg:grid-cols-[minmax(0,1fr)_260px_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 items-stretch lg:grid-cols-[minmax(0,1fr)_260px_minmax(0,1fr)]">
         <FaceoffTeam team={home} profile={homeProfile} side="home" />
         <div className="flex flex-col items-center justify-center border-y border-white/10 bg-[radial-gradient(circle_at_50%_30%,rgba(34,197,94,0.2),transparent_40%),rgba(0,0,0,0.42)] p-5 text-center lg:border-x lg:border-y-0">
           <p className="text-[10px] font-black uppercase tracking-[0.24em] text-emerald-200/62">Match center</p>
@@ -360,7 +360,7 @@ function MatchHero({
             {isCompleted ? <CircleCheck className="h-4 w-4" /> : <Clock3 className="h-4 w-4" />}
             {isCompleted ? 'Final score' : 'Kickoff timer'}
           </p>
-          <div className="mt-5 rounded-2xl border border-yellow-200/18 bg-yellow-300/8 px-4 py-2 text-sm font-black text-yellow-100">
+          <div className="mt-5 rounded-2xl border border-emerald-200/18 bg-emerald-300/8 px-4 py-2 text-sm font-black text-emerald-100">
             <Trophy className="mr-2 inline h-4 w-4" />
             {formatGel(prizePool)}
           </div>

@@ -68,13 +68,13 @@ export function OvrUpgradePanel({
   }
 
   return (
-    <div className="rounded-[22px] border border-amber-300/24 bg-[linear-gradient(135deg,rgba(245,158,11,0.14),rgba(245,158,11,0.03))] p-4">
+    <div className="rounded-[22px] border border-emerald-300/24 bg-[linear-gradient(135deg,rgba(245,158,11,0.14),rgba(245,158,11,0.03))] p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-200/72">upgrade available</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-200/72">upgrade available</p>
           <p className="mt-1 text-lg font-black text-white">OVR აფგრეიდი მზადაა</p>
         </div>
-        <p className="text-3xl font-black tabular-nums text-amber-100">
+        <p className="text-3xl font-black tabular-nums text-emerald-100">
           {oldOvr}<span className="mx-1 text-base text-white/40">→</span>{newOvr}
         </p>
       </div>
@@ -91,7 +91,7 @@ export function OvrUpgradePanel({
         <>
           <div className="mt-3 flex items-center justify-between text-[11px] font-black uppercase tracking-[0.14em] text-white/40">
             <span>აირჩიე შესაწირი</span>
-            <span className={selected.size >= fodderCost ? 'text-emerald-200' : 'text-amber-200'}>
+            <span className={selected.size >= fodderCost ? 'text-emerald-200' : 'text-emerald-200'}>
               {selected.size}/{fodderCost}
             </span>
           </div>
@@ -131,7 +131,7 @@ export function OvrUpgradePanel({
             type="button"
             onClick={confirm}
             disabled={!ready || pending}
-            className="mt-3 h-10 w-full rounded-xl border border-amber-300/30 bg-amber-300/16 px-3 text-sm font-black text-amber-50 transition hover:bg-amber-300/24 disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-3 h-10 w-full rounded-xl border border-emerald-300/30 bg-emerald-300/16 px-3 text-sm font-black text-emerald-50 transition hover:bg-emerald-300/24 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {pending ? '...' : `დაადასტურე · ${fodderCost} ბარათი შეიწირება`}
           </button>

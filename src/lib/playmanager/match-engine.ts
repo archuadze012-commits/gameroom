@@ -287,13 +287,16 @@ export function buildMatchProfile(
   const attackers = outfield.filter((player) => ['ST', 'CF', 'LW', 'RW', 'CAM', 'LM', 'RM'].includes(player.pos));
   const midfielders = outfield.filter((player) => ['CDM', 'CM', 'CAM', 'LM', 'RM'].includes(player.pos));
   const keeper = starters.find((player) => player.pos === 'GK');
+  // Fielding no recognised keeper must be punished, not rewarded: falling back to
+  // squad-average OVR made a GK-less XI stronger in goal than a real keeper.
+  const keeperRating = keeper?.keeper ?? 40;
   const raw: Profile = {
     attack: avg(attackers.map((player) => player.attack), avg(outfield.map((player) => player.attack), 60)),
     wing: avg(outfield.map((player) => player.wing), 60),
     central: avg(outfield.map((player) => player.central), 60),
     midfield: avg(midfielders.map((player) => player.midfield), avg(outfield.map((player) => player.midfield), 60)),
     defense: avg(defenders.map((player) => player.defense), avg(outfield.map((player) => player.defense), 60)),
-    keeper: keeper?.keeper ?? avg(starters.map((player) => player.ovr), 60),
+    keeper: keeperRating,
     readiness: clamp(avg(starters.map((player) => player.ovr), 60) + readinessFlat, 35, 100),
     tacticalFit: 0,
     // Squad-wide aerial threat, lifted by the best dead-ball specialist, then
@@ -305,7 +308,7 @@ export function buildMatchProfile(
     })(),
     setPieceDefense:
       avg(defenders.map((player) => player.setPieceDefense), avg(outfield.map((player) => player.setPieceDefense), 60)) * 0.8
-      + (keeper?.keeper ?? avg(starters.map((player) => player.ovr), 60)) * 0.2,
+      + keeperRating * 0.2,
   };
 
   return tacticalProfile(raw, { ...DEFAULT_SETTINGS, ...settings });
@@ -341,18 +344,26 @@ export function simulateMatch(team1Id: string, team1: Profile, team2Id: string, 
 
   let score1 = scoreFromXg(clamp(team1Chance, 0.15, 3.8));
   let score2 = scoreFromXg(clamp(team2Chance, 0.15, 3.8));
+  const edge = (team1.attack + team1.midfield + team1.defense + team1.keeper) - (team2.attack + team2.midfield + team2.defense + team2.keeper);
   if (score1 === score2) {
-    const edge = (team1.attack + team1.midfield + team1.defense + team1.keeper) - (team2.attack + team2.midfield + team2.defense + team2.keeper);
     if (Math.abs(edge) > 8 || Math.random() > 0.45) {
       if (edge >= 0) score1 += 1;
       else score2 += 1;
     }
   }
 
+  // Decide a nominal winner. Leagues detect a genuine draw via score1 === score2
+  // (so this only matters to knockout callers); on a remaining tie pick by squad
+  // edge, then a coin flip — never a blanket team1 default.
+  let winnerId: string;
+  if (score1 > score2) winnerId = team1Id;
+  else if (score2 > score1) winnerId = team2Id;
+  else winnerId = (edge > 0 || (edge === 0 && Math.random() < 0.5)) ? team1Id : team2Id;
+
   return {
     score1,
     score2,
-    winnerId: score1 >= score2 ? team1Id : team2Id,
+    winnerId,
     profile1: team1,
     profile2: team2,
   };

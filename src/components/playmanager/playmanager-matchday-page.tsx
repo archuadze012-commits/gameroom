@@ -10,19 +10,15 @@ import {
   ChevronRight,
   Dumbbell,
   History,
-  Home,
   Medal,
-  Megaphone,
   Play,
-  ShoppingCart,
   Swords,
   Trophy,
-  UsersRound,
 } from 'lucide-react';
 import { playPlayManagerNextFixture, type MatchResult } from '@/app/playmanager/actions';
 import { PlayManagerSidebar } from '@/components/playmanager/playmanager-side-nav';
-import { Dock } from '@/components/react-bits/dock';
-import { SpotlightCard } from '@/components/react-bits/spotlight-card';
+import { PlayManagerBottomNav } from '@/components/playmanager/playmanager-bottom-nav';
+import { PmCard } from '@/components/playmanager/pm-cards';
 import CountUp from '@/components/CountUp';
 import { getTrait } from '@/lib/playmanager/traits';
 
@@ -73,14 +69,6 @@ const STYLE_KA: Record<Tactics['tacticalStyle'], string> = {
 };
 const LINE_KA: Record<Tactics['defensiveLine'], string> = { low: 'დაბალი', mid: 'საშუალო', high: 'მაღალი' };
 const TEMPO_KA: Record<Tactics['tempo'], string> = { controlled: 'კონტროლი', balanced: 'ბალანსი', direct: 'პირდაპირი' };
-
-const dockItems = [
-  { label: 'მთავარი', icon: Home, href: '/playmanager' },
-  { label: 'მატჩი', icon: Trophy, href: '/playmanager/arena?module=matchday', active: true },
-  { label: 'გუნდი', icon: UsersRound, href: '/playmanager/residence' },
-  { label: 'მარკეტი', icon: ShoppingCart, href: '/playmanager/market' },
-  { label: 'მეტი', icon: Megaphone, href: '/playmanager/announcements' },
-];
 
 export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
   const {
@@ -153,7 +141,7 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
   }
 
   return (
-    <main className="pm-hq-home relative min-h-screen overflow-x-hidden bg-[#03070c] text-white">
+    <main className="pm-hq-home pm-feedskin relative min-h-screen overflow-x-hidden bg-[#03070c] text-white">
       <NavRail />
 
       <div className="mx-auto w-full max-w-[1280px] px-4 pb-28 pt-4 sm:px-6 lg:px-8 xl:pb-10 xl:pl-[96px]">
@@ -189,7 +177,7 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
           <div className="relative flex flex-col p-5 sm:p-7 lg:p-9">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
-                <StageChip tone="amber"><Trophy className="h-3.5 w-3.5" />{competitionLabel}</StageChip>
+                <StageChip tone="emerald"><Trophy className="h-3.5 w-3.5" />{competitionLabel}</StageChip>
                 {roundLabel ? <StageChip tone="plain">{roundLabel}</StageChip> : null}
               </div>
               <div className="flex items-center gap-2">
@@ -198,7 +186,7 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
               </div>
             </div>
 
-            <div className="mt-6 grid items-center gap-5 sm:mt-8 md:grid-cols-[1fr_auto_1fr]">
+            <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:mt-8 sm:gap-5">
               <TeamColumn name={teamName} rating={teamRating} tone="emerald" side="home" form={recentForm} />
 
               <KickoffMedallion
@@ -224,6 +212,26 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
           </motion.div>
         ) : null}
 
+        {/* ── LINEUP CTA (standalone, between the fixture stage and the briefing) ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.08 }}
+          className="mt-4"
+        >
+          <Link
+            href="/playmanager/arena/lineup"
+            className="group flex w-full items-center justify-center gap-2 rounded-2xl border border-emerald-200/25 bg-emerald-300/10 px-5 py-4 text-sm font-black text-emerald-50 transition hover:border-emerald-200/45 hover:bg-emerald-300/18"
+          >
+            <Dumbbell className="h-4 w-4" />
+            <span className="flex flex-col items-start leading-tight">
+              შემადგენლობა
+              <span className="text-[10px] font-bold text-emerald-200/60">XI {startersCount}/11 · ტაქტიკა</span>
+            </span>
+            <ChevronRight className="h-4 w-4 opacity-50 transition group-hover:translate-x-0.5" />
+          </Link>
+        </motion.div>
+
         {/* ── BRIEFING RAIL ── */}
         <motion.div
           initial={{ opacity: 0, y: 18 }}
@@ -231,8 +239,8 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
           transition={{ duration: 0.5, delay: 0.12 }}
           className="mt-4"
         >
-          <SpotlightCard className="rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(9,16,26,0.9),rgba(4,8,14,0.95))] p-4 sm:p-5">
-            <div className="grid items-center gap-4 lg:grid-cols-[auto_1fr_auto]">
+          <PmCard>
+            <div className="grid grid-cols-1 items-center gap-4 lg:grid-cols-[auto_1fr]">
               <ReadinessRing value={readiness} />
 
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -249,32 +257,20 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
                   </p>
                 </div>
               </div>
-
-              <Link
-                href="/playmanager/arena/lineup"
-                className="group inline-flex h-14 items-center justify-center gap-2 rounded-2xl border border-emerald-200/25 bg-emerald-300/10 px-5 text-sm font-black text-emerald-50 transition hover:border-emerald-200/45 hover:bg-emerald-300/18"
-              >
-                <Dumbbell className="h-4 w-4" />
-                <span className="flex flex-col items-start leading-tight">
-                  შემადგენლობა
-                  <span className="text-[10px] font-bold text-emerald-200/60">XI {startersCount}/11 · ტაქტიკა</span>
-                </span>
-                <ChevronRight className="h-4 w-4 opacity-50 transition group-hover:translate-x-0.5" />
-              </Link>
             </div>
-          </SpotlightCard>
+          </PmCard>
         </motion.div>
 
         {/* ── COMPETITIONS ── */}
         <section className="mt-4">
           <p className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/40">შეჯიბრები</p>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Shortcut
               href="/playmanager/cups"
               icon={<Trophy className="h-5 w-5" />}
               title="ყოველდღიური თასები"
               sub={activeCup ? `${activeCup.participantCount}/${activeCup.maxTeams} · ${activeCup.prizePoolLabel}` : activeCupName ?? `${cupsCount} ღია თასი`}
-              tone="amber"
+              tone="red"
               index={0}
             />
             <Shortcut
@@ -284,7 +280,7 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
               sub={championship
                 ? `${championship.name} · ${championship.status === 'in_progress' ? 'მიმდინარე' : 'რეგისტრაცია'}`
                 : 'დარეგისტრირდი ლიგაში'}
-              tone="emerald"
+              tone="green"
               index={1}
             />
             <Shortcut
@@ -292,7 +288,7 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
               icon={<Trophy className="h-5 w-5" />}
               title="ევრო ტურნირები"
               sub="knockout — ნოკ-აუტ ბადე"
-              tone="amber"
+              tone="red"
               index={2}
             />
           </div>
@@ -305,7 +301,7 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
             icon={<History className="h-5 w-5" />}
             title="ისტორია"
             sub={recentForm.length > 0 ? `ფორმა: ${recentForm.map((entry) => entry.result).join(' ')}` : 'ბოლო მატჩები'}
-            tone="emerald"
+            tone="green"
             index={0}
           />
           <Shortcut
@@ -313,23 +309,13 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
             icon={<Medal className="h-5 w-5" />}
             title="მუზეუმი"
             sub="ტროფეები და ტიტულები"
-            tone="amber"
+            tone="red"
             index={1}
           />
         </section>
       </div>
 
-      <Dock
-        items={dockItems.map((item) => {
-          const Icon = item.icon;
-          return {
-            label: item.label,
-            icon: <Icon className="h-5 w-5" />,
-            onClick: () => router.push(item.href),
-            className: item.active ? 'bg-emerald-300/18 text-emerald-100' : 'text-white/62',
-          };
-        })}
-      />
+      <PlayManagerBottomNav />
 
       <AnimatePresence>
         {matchResult ? (
@@ -389,7 +375,7 @@ function TopStrip({
       <div className="flex flex-none items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.04] px-3 py-2 backdrop-blur-xl">
         <div className="hidden text-right sm:block">
           <p className="text-[10px] font-black text-white/38">მენეჯერი</p>
-          <p className="max-w-[150px] truncate text-[14px] font-black text-amber-100">{managerName}</p>
+          <p className="max-w-[150px] truncate text-[14px] font-black text-emerald-100">{managerName}</p>
         </div>
         <div className="relative h-10 w-10 overflow-hidden rounded-full border border-white/10 bg-white/10">
           {managerAvatarUrl ? (
@@ -406,7 +392,7 @@ function TopStrip({
 function StageChip({ children, tone }: { children: React.ReactNode; tone: 'amber' | 'emerald' | 'plain' | 'live' }) {
   const cls =
     tone === 'amber'
-      ? 'border-amber-300/24 bg-amber-300/10 text-amber-100/90'
+      ? 'border-emerald-300/24 bg-emerald-300/10 text-emerald-100/90'
       : tone === 'emerald'
         ? 'border-emerald-300/22 bg-emerald-300/10 text-emerald-100/85'
         : tone === 'live'
@@ -434,8 +420,8 @@ function TeamColumn({
 }) {
   const accent =
     tone === 'emerald'
-      ? { ring: 'border-emerald-300/45', glow: 'from-emerald-400/35', text: 'text-emerald-200', bar: 'from-emerald-400 to-lime-300' }
-      : { ring: 'border-rose-300/45', glow: 'from-rose-400/28', text: 'text-rose-200', bar: 'from-rose-400 to-amber-300' };
+      ? { ring: 'border-emerald-300/45', glow: 'from-emerald-400/35', text: 'text-emerald-200', bar: 'from-emerald-400 to-emerald-300' }
+      : { ring: 'border-rose-300/45', glow: 'from-rose-400/28', text: 'text-rose-200', bar: 'from-rose-400 to-emerald-300' };
   return (
     <motion.div
       initial={{ opacity: 0, x: side === 'home' ? -40 : 40 }}
@@ -443,15 +429,15 @@ function TeamColumn({
       transition={{ type: 'spring', stiffness: 200, damping: 22, delay: 0.15 }}
       className="flex flex-col items-center text-center"
     >
-      <div className={`relative grid h-24 w-24 place-items-center rounded-[26px] border ${accent.ring} bg-black/40 shadow-[0_18px_50px_rgba(0,0,0,0.45)] sm:h-28 sm:w-28`}>
-        <div className={`absolute inset-0 rounded-[26px] bg-gradient-to-br ${accent.glow} to-transparent`} />
-        <span className="relative text-4xl font-black text-white sm:text-5xl">{name.slice(0, 1).toUpperCase()}</span>
+      <div className={`relative grid h-16 w-16 place-items-center rounded-2xl border ${accent.ring} bg-black/40 shadow-[0_18px_50px_rgba(0,0,0,0.45)] sm:h-28 sm:w-28 sm:rounded-[26px]`}>
+        <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${accent.glow} to-transparent sm:rounded-[26px]`} />
+        <span className="relative text-2xl font-black text-white sm:text-5xl">{name.slice(0, 1).toUpperCase()}</span>
       </div>
-      <p className="mt-3 max-w-[180px] truncate text-lg font-black text-white sm:text-xl">{name}</p>
-      <p className={`mt-0.5 text-4xl font-black tabular-nums ${accent.text}`}>
+      <p className="mt-2 max-w-[96px] truncate text-xs font-black text-white sm:mt-3 sm:max-w-[180px] sm:text-xl">{name}</p>
+      <p className={`mt-0.5 text-3xl font-black tabular-nums ${accent.text} sm:text-4xl`}>
         <CountUp to={rating} duration={1.4} />
       </p>
-      <div className="mt-2 h-1.5 w-28 overflow-hidden rounded-full bg-white/10">
+      <div className="mt-2 h-1.5 w-16 overflow-hidden rounded-full bg-white/10 sm:w-28">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${Math.max(0, Math.min(100, rating))}%` }}
@@ -460,7 +446,7 @@ function TeamColumn({
         />
       </div>
       {form && form.length > 0 ? (
-        <div className="mt-3 flex items-center gap-1">
+        <div className="mt-3 hidden items-center gap-1 sm:flex">
           {form.slice(0, 5).map((entry, index) => (
             <span
               key={`${entry.opponent}-${index}`}
@@ -469,7 +455,7 @@ function TeamColumn({
                 entry.result === 'W'
                   ? 'bg-emerald-400/20 text-emerald-100'
                   : entry.result === 'D'
-                    ? 'bg-amber-300/18 text-amber-100'
+                    ? 'bg-emerald-300/18 text-emerald-100'
                     : 'bg-rose-500/20 text-rose-100'
               }`}
             >
@@ -509,16 +495,16 @@ function KickoffMedallion({
             />
           ))
         : null}
-      <span className="relative z-10 grid place-items-center">
+      <span className="relative z-10 grid place-items-center px-1">
         {ready ? (
           <>
-            <Play className="h-7 w-7 fill-current" />
-            <span className="mt-1 text-[11px] font-black">{pending ? 'მიმდინარეობს…' : 'მატჩის დაწყება'}</span>
+            <Play className="h-6 w-6 fill-current sm:h-7 sm:w-7" />
+            <span className="mt-1 text-[9px] font-black leading-tight sm:text-[11px]">{pending ? 'მიმდინარეობს…' : 'მატჩის დაწყება'}</span>
           </>
         ) : (
           <>
-            <span className="text-2xl font-black tabular-nums">{startersCount}/11</span>
-            <span className="mt-0.5 text-[10px] font-black opacity-80">შეავსე XI</span>
+            <span className="text-xl font-black tabular-nums sm:text-2xl">{startersCount}/11</span>
+            <span className="mt-0.5 text-[9px] font-black opacity-80 sm:text-[10px]">შეავსე XI</span>
           </>
         )}
       </span>
@@ -526,7 +512,7 @@ function KickoffMedallion({
   );
 
   const baseCls =
-    'relative grid h-32 w-32 place-items-center rounded-full text-center transition sm:h-36 sm:w-36';
+    'relative grid h-24 w-24 place-items-center rounded-full text-center transition sm:h-36 sm:w-36';
 
   return (
     <div className="flex flex-col items-center">
@@ -547,13 +533,13 @@ function KickoffMedallion({
         ) : (
           <Link
             href="/playmanager/arena/lineup"
-            className={`${baseCls} border-2 border-amber-200/45 bg-[radial-gradient(120%_120%_at_50%_0%,rgba(253,224,71,0.25),rgba(0,0,0,0.5))] text-amber-50 shadow-[0_0_40px_rgba(251,191,36,0.3)] hover:brightness-110`}
+            className={`${baseCls} border-2 border-emerald-200/45 bg-[radial-gradient(120%_120%_at_50%_0%,rgba(253,224,71,0.25),rgba(0,0,0,0.5))] text-emerald-50 shadow-[0_0_40px_rgba(251,191,36,0.3)] hover:brightness-110`}
           >
             {content}
           </Link>
         )}
       </motion.div>
-      <p className="mt-3 max-w-[180px] text-center text-[11px] font-black uppercase tracking-[0.12em] text-white/45">{label}</p>
+      <p className="mt-2 max-w-[104px] text-center text-[9px] font-black uppercase leading-tight tracking-[0.1em] text-white/45 sm:mt-3 sm:max-w-[180px] sm:text-[11px]">{label}</p>
     </div>
   );
 }
@@ -629,13 +615,10 @@ function Shortcut({
   icon: React.ReactNode;
   title: string;
   sub: string;
-  tone: 'emerald' | 'amber';
+  tone: 'green' | 'red';
   index: number;
 }) {
-  const accent =
-    tone === 'amber'
-      ? 'border-amber-300/16 hover:border-amber-300/35 text-amber-200'
-      : 'border-emerald-300/16 hover:border-emerald-300/35 text-emerald-200';
+  const iconTone = tone === 'red' ? 'text-rose-300' : 'text-emerald-300';
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -643,16 +626,17 @@ function Shortcut({
       viewport={{ once: true, margin: '-40px' }}
       transition={{ duration: 0.4, delay: index * 0.07 }}
     >
-      <Link
-        href={href}
-        className={`group flex items-center gap-3 rounded-[22px] border bg-white/[0.03] p-4 transition hover:bg-white/[0.06] ${accent}`}
-      >
-        <span className="grid h-12 w-12 flex-none place-items-center rounded-2xl border border-white/10 bg-black/40">{icon}</span>
-        <div className="min-w-0 flex-1">
-          <p className="text-base font-black text-white">{title}</p>
-          <p className="truncate text-[12px] font-bold text-white/50">{sub}</p>
-        </div>
-        <ChevronRight className="h-5 w-5 text-white/30 transition group-hover:translate-x-0.5 group-hover:text-white/60" />
+      <Link href={href} className="group block">
+        <PmCard className="!p-0">
+          <div className="flex items-center gap-3 p-4">
+            <span className={`grid h-12 w-12 flex-none place-items-center rounded-2xl border border-white/10 bg-black/40 ${iconTone}`}>{icon}</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-base font-black text-white">{title}</p>
+              <p className="truncate text-[12px] font-bold text-white/50">{sub}</p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-white/30 transition group-hover:translate-x-0.5 group-hover:text-white/60" />
+          </div>
+        </PmCard>
       </Link>
     </motion.div>
   );
@@ -669,8 +653,8 @@ function FixtureResultModal({
 }) {
   const isWin = result.result === 'W';
   const isDraw = result.result === 'D';
-  const color = isWin ? 'text-emerald-400' : isDraw ? 'text-yellow-400' : 'text-red-400';
-  const border = isWin ? 'border-emerald-500/30' : isDraw ? 'border-yellow-500/30' : 'border-red-500/30';
+  const color = isWin ? 'text-emerald-400' : isDraw ? 'text-zinc-300' : 'text-red-400';
+  const border = isWin ? 'border-emerald-500/30' : isDraw ? 'border-zinc-400/30' : 'border-red-500/30';
   const label = isWin ? 'გამარჯვება' : isDraw ? 'ფრე' : 'დამარცხება';
   return (
     <motion.div
@@ -707,12 +691,38 @@ function FixtureResultModal({
   );
 }
 
+function buildMatchCommentary(result: MatchResult): string[] {
+  const lines: string[] = [];
+  const engine = result.matchEngine;
+  const scorers = engine?.playerEvents?.goalscorers ?? [];
+  const topScorer = [...scorers].sort((a, b) => b.goals - a.goals)[0];
+
+  if (result.result === 'W') lines.push('სამი ქულა ჯიბეშია — გუნდმა დღეს იმუშავა.');
+  else if (result.result === 'D') lines.push('ფრე — ქულა მოიპოვე, მაგრამ მეტი გინდოდა.');
+  else lines.push('რთული დღე — შედეგი არ გამოვიდა.');
+
+  if (engine) {
+    const { homeXg, awayXg } = engine;
+    if (homeXg >= awayXg + 1) lines.push(`მოედანზე დომინირებდი (${homeXg.toFixed(1)} xG ${awayXg.toFixed(1)}-ის წინააღმდეგ).`);
+    else if (awayXg >= homeXg + 1) lines.push(`მეტოქემ მეტი მომენტი შექმნა (${awayXg.toFixed(1)} xG) — შედეგით გაგიმართლა.`);
+    else lines.push('ბალანსირებული, დაძაბული მატჩი მოედნის ორივე ბოლოში.');
+  }
+
+  if (topScorer) {
+    lines.push(topScorer.goals > 1 ? `${topScorer.name}-მ ${topScorer.goals} გოლი გაიტანა.` : `${topScorer.name}-მ მოინიშნა ტაბლოზე.`);
+  }
+  return lines.slice(0, 3);
+}
+
 function MatchResultModal({ result, onClose }: { result: MatchResult; onClose: () => void }) {
   const isWin = result.result === 'W';
   const isDraw = result.result === 'D';
-  const resultColor = isWin ? 'text-emerald-400' : isDraw ? 'text-yellow-400' : 'text-red-400';
-  const resultBorder = isWin ? 'border-emerald-500/30' : isDraw ? 'border-yellow-500/30' : 'border-red-500/30';
+  const resultColor = isWin ? 'text-emerald-400' : isDraw ? 'text-zinc-300' : 'text-red-400';
+  const resultBorder = isWin ? 'border-emerald-500/30' : isDraw ? 'border-zinc-400/30' : 'border-red-500/30';
   const resultLabel = isWin ? 'გამარჯვება' : isDraw ? 'ფრე' : 'დამარცხება';
+  const ratings = result.matchEngine?.playerEvents?.ratings ?? [];
+  const potm = ratings.length ? [...ratings].sort((a, b) => b.rating - a.rating)[0] : null;
+  const commentary = buildMatchCommentary(result);
 
   return (
     <motion.div
@@ -738,7 +748,34 @@ function MatchResultModal({ result, onClose }: { result: MatchResult; onClose: (
             <p className="mt-1.5 text-sm font-bold text-white/60">vs {result.opponent}</p>
           </div>
         </div>
-        <div className="mt-5 grid grid-cols-3 gap-2">
+        {/* Commentary highlights */}
+        {commentary.length > 0 && (
+          <div className="mt-4 space-y-1.5 rounded-[18px] border border-white/8 bg-white/[0.03] p-3.5">
+            {commentary.map((line, i) => (
+              <p key={i} className="flex gap-2 text-[12px] font-bold leading-4 text-white/70">
+                <span className="text-emerald-400/60">›</span>
+                {line}
+              </p>
+            ))}
+          </div>
+        )}
+
+        {/* Player of the Match */}
+        {potm && (
+          <div className="mt-3 flex items-center gap-3 rounded-[18px] border border-amber-300/24 bg-amber-300/[0.07] p-3.5">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-amber-300/26 bg-amber-300/12 text-2xl">⭐</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-amber-200/70">მატჩის საუკეთესო მოთამაშე</p>
+              <p className="truncate text-sm font-black text-white">{potm.name}</p>
+              <p className="text-[11px] font-bold text-white/50">{potm.position}</p>
+            </div>
+            <span className="rounded-xl border border-amber-300/28 bg-amber-300/14 px-3 py-1.5 text-xl font-black tabular-nums text-amber-100">
+              {potm.rating.toFixed(1)}
+            </span>
+          </div>
+        )}
+
+        <div className="mt-4 grid grid-cols-3 gap-2">
           <ModalStat label="დასწრება" value={result.attendance} caption="სტადიონი" />
           <ModalStat label="შემოსავალი" value={result.income} caption="მატჩის დღე" />
           <ModalStat label="ფორმა" value={result.formPercent} suffix="%" caption="განახლდა" />
@@ -896,7 +933,7 @@ function MatchEngineBadge({ me }: { me: NonNullable<MatchResult['matchEngine']> 
 
       {autoSubs.length > 0 && (
         <div className="space-y-1.5 border-t border-white/8 pt-3">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-amber-200/55">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-200/55">
             ავტომატური ცვლები
           </p>
           {autoSubs.map((sub, i) => (

@@ -64,12 +64,17 @@ export function generateSingleElimBracket(
       const prevB = matches.find(
         (m) => m.round === r - 1 && m.position === i * 2 + 2,
       );
+      const p1 = prevA?.winner ?? null;
+      const p2 = prevB?.winner ?? null;
       matches.push({
         round: r,
         position: i + 1,
-        player1: prevA?.winner ?? null,
-        player2: prevB?.winner ?? null,
-        status: "pending",
+        player1: p1,
+        player2: p2,
+        // If both feeder matches were byes, this slot is already filled and must
+        // be 'ready' — otherwise nothing ever flips it and the bracket deadlocks
+        // (participant counts 5, 9, 10, 11, …). A half-filled slot stays pending.
+        status: p1 && p2 ? "ready" : "pending",
       });
     }
   }

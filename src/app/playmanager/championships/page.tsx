@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { ArrowLeft, Trophy } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { PlayManagerLightShell } from '@/components/playmanager/playmanager-light-shell';
-import { SpotlightCard } from '@/components/react-bits/spotlight-card';
+import { PmCard, PmCardHead, PmPill } from '@/components/playmanager/pm-cards';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getTeam } from '@/lib/playmanager/team';
 import { hasPermission } from '@/lib/admin';
@@ -34,10 +34,10 @@ type FixtureRow = {
 };
 
 const DIV_LABEL = ['', 'A', 'B', 'C', 'D'];
-const STATUS_META: Record<string, { label: string; tone: string }> = {
-  registration: { label: 'რეგისტრაცია', tone: 'border-emerald-300/24 bg-emerald-300/10 text-emerald-100' },
-  in_progress: { label: 'მიმდინარე', tone: 'border-amber-300/24 bg-amber-300/10 text-amber-100' },
-  completed: { label: 'დასრულდა', tone: 'border-white/14 bg-white/[0.05] text-white/60' },
+const STATUS_META: Record<string, { label: string; tone: 'green' | 'red' | undefined }> = {
+  registration: { label: 'რეგისტრაცია', tone: 'green' },
+  in_progress: { label: 'მიმდინარე', tone: 'red' },
+  completed: { label: 'დასრულდა', tone: undefined },
 };
 
 export default async function ChampionshipsPage() {
@@ -79,37 +79,27 @@ export default async function ChampionshipsPage() {
   return (
     <PlayManagerLightShell>
       <div className="mx-auto w-full max-w-[1100px] space-y-4">
-        <SpotlightCard fillHeight={false} className="rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(8,22,16,0.94),rgba(4,8,6,0.98))] p-4 sm:p-5">
+        <PmCard>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Link href="/playmanager" className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-4 text-sm font-black text-white/88 transition hover:bg-white/[0.08]">
               <ArrowLeft className="h-4 w-4" /> უკან
             </Link>
             {team ? (
-              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-sm font-black text-emerald-100">
-                {team.name} · D{team.division_id}
-              </span>
+              <PmPill tone="green">{team.name} · D{team.division_id}</PmPill>
             ) : null}
           </div>
-          <div className="mt-5 flex items-center gap-3">
-            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-amber-300/24 bg-amber-300/12 text-amber-100">
-              <Trophy className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-200/62">championships</p>
-              <h1 className="text-3xl font-black text-white">ჩემპიონატები</h1>
-            </div>
-          </div>
-          <p className="mt-2 max-w-2xl text-sm font-bold leading-6 text-white/50">
+          <PmCardHead icon={Trophy} title="ჩემპიონატები" subtitle="championships" tone="green" />
+          <p className="max-w-2xl text-sm font-bold leading-6 text-white/50">
             ნამდვილ მენეჯერებთან round-robin ლიგები. დარეგისტრირდი, დაელოდე დაწყებას — მატჩები დროთა განმავლობაში ავტომატურად თამაშდება.
           </p>
-        </SpotlightCard>
+        </PmCard>
 
         {isAdmin ? <CreateLeagueForm /> : null}
 
         {leagues.length === 0 ? (
-          <SpotlightCard fillHeight={false} className="rounded-[24px] border border-white/10 bg-white/[0.04] p-8 text-center">
+          <PmCard className="text-center">
             <p className="text-sm font-bold text-white/50">ჯერ ჩემპიონატი არ შექმნილა.</p>
-          </SpotlightCard>
+          </PmCard>
         ) : null}
 
         {leagues.map((league) => {
@@ -125,7 +115,7 @@ export default async function ChampionshipsPage() {
           const meta = STATUS_META[league.status];
 
           return (
-            <SpotlightCard key={league.id} fillHeight={false} className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4 sm:p-5">
+            <PmCard key={league.id}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h2 className="text-xl font-black text-white">{league.name}</h2>
@@ -134,7 +124,7 @@ export default async function ChampionshipsPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] ${meta.tone}`}>{meta.label}</span>
+                  <PmPill tone={meta.tone}>{meta.label}</PmPill>
                   {league.status === 'registration' && team && !joined && !full ? <JoinLeagueButton leagueId={league.id} /> : null}
                   {league.status === 'registration' && isAdmin ? <StartLeagueButton leagueId={league.id} /> : null}
                 </div>
@@ -159,7 +149,7 @@ export default async function ChampionshipsPage() {
                         const promoted = done && i === 0 && standings.length >= 2;
                         const relegated = done && i === standings.length - 1 && standings.length >= 2;
                         return (
-                        <tr key={p.team_id} className={`border-t border-white/6 ${team && p.team_id === team.id ? 'bg-emerald-300/[0.06]' : ''}`}>
+                        <tr key={p.team_id} className={`border-t border-white/6 ${team && p.team_id === team.id ? 'bg-emerald-400/[0.08]' : ''}`}>
                           <td className="px-2 py-1.5 font-black text-white/50">
                             {i + 1}
                             {promoted ? <span title="ახვევა" className="ml-1 text-emerald-400">🔼</span> : null}
@@ -181,7 +171,7 @@ export default async function ChampionshipsPage() {
               {league.status === 'registration' && parts.length > 0 ? (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {parts.map((p) => (
-                    <span key={p.team_id} className="rounded-lg border border-white/8 bg-black/24 px-2.5 py-1 text-xs font-black text-white/70">{teamName(p.team_id)}</span>
+                    <PmPill key={p.team_id}>{teamName(p.team_id)}</PmPill>
                   ))}
                 </div>
               ) : null}
@@ -202,7 +192,7 @@ export default async function ChampionshipsPage() {
                   </div>
                 </div>
               ) : null}
-            </SpotlightCard>
+            </PmCard>
           );
         })}
       </div>

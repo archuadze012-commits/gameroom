@@ -8,12 +8,13 @@ import {
   ShieldCheck,
   Sparkles,
   Star,
+  TrendingUp,
   Trophy,
   UserRound,
 } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { PlayManagerLightShell } from '@/components/playmanager/playmanager-light-shell';
-import { SpotlightCard } from '@/components/react-bits/spotlight-card';
+import { PmCard, PmCardHead, PmPill, PmGauge } from '@/components/playmanager/pm-cards';
 import { hasPermission } from '@/lib/admin';
 import { PlayManagerPlayerAdminEditor } from './player-admin-editor';
 import { CareerDecisionButtons } from './contract-renew-button';
@@ -172,17 +173,14 @@ function playerCardRole(squad: SquadRow | null): 'starter' | 'bench' | 'reserve'
   return 'reserve';
 }
 
-function statusText(player: PlayerRow): { label: string; tone: string } {
+function statusText(player: PlayerRow): { label: string; tone: 'green' | 'red' } {
   if (player.injury_matches > 0) {
-    return {
-      label: `ტრავმა: ${player.injury_matches} მატჩი`,
-      tone: 'border-red-300/30 bg-red-500/10 text-red-100',
-    };
+    return { label: `ტრავმა: ${player.injury_matches} მატჩი`, tone: 'red' };
   }
   if (player.status === 'injured') {
-    return { label: 'ტრავმირებული', tone: 'border-red-300/30 bg-red-500/10 text-red-100' };
+    return { label: 'ტრავმირებული', tone: 'red' };
   }
-  return { label: 'მზად არის', tone: 'border-emerald-300/30 bg-emerald-300/10 text-emerald-100' };
+  return { label: 'მზად არის', tone: 'green' };
 }
 
 function percent(value: number, max = 100): number {
@@ -437,10 +435,7 @@ export default async function PlayManagerPlayerPage(
   return (
     <PlayManagerLightShell>
       <div className="mx-auto w-full max-w-[1280px] space-y-4">
-        <SpotlightCard
-          fillHeight={false}
-          className="rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(8,22,16,0.94),rgba(4,8,6,0.98))] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.34)] sm:p-5"
-        >
+        <PmCard>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Link
               href="/playmanager"
@@ -450,21 +445,14 @@ export default async function PlayManagerPlayerPage(
               უკან
             </Link>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex rounded-full border border-emerald-300/16 bg-emerald-300/10 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-emerald-100/80">
-                {player.is_real ? 'EA FC' : 'Custom'}
-              </span>
-              <span className={`rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] ${status.tone}`}>
-                {status.label}
-              </span>
+              <PmPill tone="green">{player.is_real ? 'EA FC' : 'Custom'}</PmPill>
+              <PmPill tone={status.tone}>{status.label}</PmPill>
             </div>
           </div>
 
-          <div className="mt-4 grid gap-4 xl:grid-cols-[340px_minmax(0,1fr)]">
+          <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[340px_minmax(0,1fr)]">
             <div className="space-y-4 xl:sticky xl:top-4 xl:self-start">
-              <SpotlightCard
-                fillHeight={false}
-                className="rounded-[28px] border border-white/10 bg-white/[0.045] p-4"
-              >
+              <PmCard>
                 <div className="mx-auto h-[497px] w-[360px] max-w-full overflow-hidden">
                   <div style={{ transform: 'scale(1.04)', transformOrigin: 'top left' }}>
                     <PlayerFutCard
@@ -488,14 +476,11 @@ export default async function PlayManagerPlayerPage(
                   <CompactBadge label="ასაკი" value={`${displayAge}`} />
                   <CompactBadge label="პოზიცია" value={position} />
                 </div>
-              </SpotlightCard>
+              </PmCard>
 
-              <SpotlightCard
-                fillHeight={false}
-                className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4"
-              >
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/34">კლუბი და მენეჯერი</p>
-                <div className="mt-4 space-y-3">
+              <PmCard>
+                <PmCardHead icon={ShieldCheck} title="კლუბი და მენეჯერი" />
+                <div className="space-y-3">
                   <div className="rounded-2xl border border-white/8 bg-black/24 p-3">
                     <p className="text-[11px] font-black uppercase tracking-[0.16em] text-white/34">კლუბი</p>
                     <p className="mt-1 text-lg font-black text-white">{clubLabel}</p>
@@ -515,14 +500,11 @@ export default async function PlayManagerPlayerPage(
                     </div>
                   </div>
                 </div>
-              </SpotlightCard>
+              </PmCard>
             </div>
 
             <div className="space-y-4">
-              <SpotlightCard
-                fillHeight={false}
-                className="rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-5"
-              >
+              <PmCard>
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="min-w-0">
                     <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-200/62">player profile</p>
@@ -543,22 +525,16 @@ export default async function PlayManagerPlayerPage(
                     <HeroMetric label="Role" value={roleLabel} icon={<Trophy className="h-4 w-4" />} />
                   </div>
                 </div>
-              </SpotlightCard>
+              </PmCard>
 
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]">
-                <SpotlightCard
-                  fillHeight={false}
-                  className="rounded-[28px] border border-white/10 bg-white/[0.04] p-4 sm:p-5"
-                >
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-200/62">saved attributes</p>
-                      <h2 className="mt-1 text-2xl font-black text-white">ადმინით შენახული სტატები</h2>
-                    </div>
-                    <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-black text-white/58">
-                      {position}
-                    </span>
-                  </div>
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]">
+                <PmCard>
+                  <PmCardHead
+                    icon={Gauge}
+                    title="ადმინით შენახული სტატები"
+                    subtitle="saved attributes"
+                    right={<PmPill>{position}</PmPill>}
+                  />
 
                   {player.tac != null ? (
                     <div className="mb-4 flex items-center justify-between gap-3 rounded-[22px] border border-emerald-300/24 bg-[linear-gradient(135deg,rgba(16,185,129,0.16),rgba(16,185,129,0.04))] p-4">
@@ -574,10 +550,10 @@ export default async function PlayManagerPlayerPage(
                   ) : null}
 
                   {!attributesRevealed && (behavioral || (player.traits && player.traits.length > 0)) ? (
-                    <div className="mb-4 flex items-center gap-3 rounded-[22px] border border-amber-300/16 bg-amber-300/[0.06] p-4">
+                    <div className="mb-4 flex items-center gap-3 rounded-[22px] border border-red-300/20 bg-red-500/[0.08] p-4">
                       <span className="text-2xl" aria-hidden>🔒</span>
                       <div>
-                        <p className="text-sm font-black text-amber-100">თვისებები და ქცევითი პროფილი დამალულია</p>
+                        <p className="text-sm font-black text-red-100">თვისებები და ქცევითი პროფილი დამალულია</p>
                         <p className="mt-0.5 text-[11px] font-bold leading-4 text-white/45">
                           ამ მოთამაშის ფარული მახასიათებლების სანახავად დაიქირავე სკაუტი.
                         </p>
@@ -597,7 +573,7 @@ export default async function PlayManagerPlayerPage(
                   {attributesRevealed && behavioral ? (
                     <div className="mb-4 rounded-[22px] border border-white/8 bg-black/22 p-4">
                       <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/34">ქცევითი პროფილი</p>
-                      <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
+                      <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                         {BEHAVIORAL_META.map((meta) => {
                           const value = behavioral[meta.key];
                           return (
@@ -606,8 +582,8 @@ export default async function PlayManagerPlayerPage(
                                 <p className="text-sm font-black text-white">{meta.label}</p>
                                 <span className={`text-lg font-black tabular-nums ${behavioralTone(value)}`}>{value}</span>
                               </div>
-                              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
-                                <div className="h-full rounded-full bg-[linear-gradient(90deg,#38bdf8,#a855f7)]" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
+                              <div className="mt-2">
+                                <PmGauge percent={value} />
                               </div>
                               <p className="mt-1.5 text-[10px] font-bold leading-4 text-white/38">{meta.blurb}</p>
                             </div>
@@ -631,8 +607,8 @@ export default async function PlayManagerPlayerPage(
                   ) : null}
 
                   {pendingDeltas.length > 0 ? (
-                    <div className="mb-4 rounded-[22px] border border-amber-300/20 bg-amber-300/[0.06] p-4">
-                      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-200/72">pending development</p>
+                    <div className="mb-4 rounded-[22px] border border-emerald-300/20 bg-emerald-300/[0.06] p-4">
+                      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-200/72">pending development</p>
                       <p className="mt-1 text-sm font-black text-white">გაუაქტიურებელი ზრდა</p>
                       <p className="mt-1 text-[11px] font-bold leading-5 text-white/45">
                         ვარჯიშით დაგროვილი ქულები. მატჩში ჯერ არ მოქმედებს — გასააქტიურებლად დაადასტურე OVR აფგრეიდი.
@@ -641,7 +617,7 @@ export default async function PlayManagerPlayerPage(
                         {pendingDeltas.map((d) => (
                           <span
                             key={d.code}
-                            className="inline-flex items-center gap-1 rounded-lg border border-amber-300/24 bg-black/24 px-2.5 py-1 text-xs font-black text-amber-100"
+                            className="inline-flex items-center gap-1 rounded-lg border border-emerald-300/24 bg-black/24 px-2.5 py-1 text-xs font-black text-emerald-100"
                           >
                             {STAT_LABELS[d.code] ?? d.code}
                             <span className="text-emerald-300">+{d.delta}</span>
@@ -651,7 +627,7 @@ export default async function PlayManagerPlayerPage(
                     </div>
                   ) : null}
 
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {derivedStats.map((stat) => (
                       <AttributeRow
                         key={stat.label}
@@ -661,10 +637,10 @@ export default async function PlayManagerPlayerPage(
                       />
                     ))}
                   </div>
-                </SpotlightCard>
+                </PmCard>
 
                 <div className="grid gap-4">
-                  <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                  <div className="grid grid-cols-3 gap-3 lg:grid-cols-1">
                     <InfoTile
                       icon={<BadgeDollarSign className="h-5 w-5" />}
                       label="საბაზრო ფასი"
@@ -685,10 +661,7 @@ export default async function PlayManagerPlayerPage(
                     />
                   </div>
 
-                  <SpotlightCard
-                    fillHeight={false}
-                    className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4"
-                  >
+                  <PmCard>
                     {(() => {
                       const careerEnd = player.career_end_age ?? 0;
                       const yearsLeft = Math.max(0, careerEnd - player.age);
@@ -717,43 +690,30 @@ export default async function PlayManagerPlayerPage(
                         </>
                       );
                     })()}
-                  </SpotlightCard>
+                  </PmCard>
 
-                  <SpotlightCard
-                    fillHeight={false}
-                    className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4"
-                  >
-                    <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-200/62">development</p>
-                    <h2 className="mt-1 text-xl font-black text-white">ფორმის მონიტორინგი</h2>
-                    <div className="mt-4 flex items-center justify-between text-sm font-black text-white/72">
+                  <PmCard>
+                    <PmCardHead icon={TrendingUp} title="ფორმის მონიტორინგი" subtitle="development" />
+                    <div className="flex items-center justify-between text-sm font-black text-white/72">
                       <span>Base {player.ovr_base}</span>
                       <span>Current {player.ovr_current}</span>
                       <span>Peak {peakOvr}</span>
                     </div>
-                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
-                      <div
-                        className="h-full rounded-full bg-[linear-gradient(90deg,#22c55e,#6ee7b7,#f59e0b)]"
-                        style={{ width: `${growthPct}%` }}
-                      />
-                    </div>
-                    <p className="mt-3 text-sm font-bold leading-6 text-white/54">
+                    <PmGauge percent={growthPct} />
+                    <p className="text-sm font-bold leading-6 text-white/54">
                       {growth === 0
                         ? 'ბაზისური და მიმდინარე OVR ერთმანეთს ემთხვევა.'
                         : `${growth > 0 ? 'ზრდა' : 'ვარდნა'}: ${signed(growth)} OVR საბაზისოსთან შედარებით.`}
                     </p>
-                    <p className="mt-2 text-xs font-bold leading-6 text-white/42">
+                    <p className="text-xs font-bold leading-6 text-white/42">
                       Peak ითვლება ტალანტის ლიმიტით: Base OVR + talent cap.
                     </p>
-                  </SpotlightCard>
+                  </PmCard>
 
                   {(upgrade || showSkillDev) ? (
-                    <SpotlightCard
-                      fillHeight={false}
-                      className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4"
-                    >
-                      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-200/62">academy lab</p>
-                      <h2 className="mt-1 text-xl font-black text-white">განვითარების ლაბორატორია</h2>
-                      <div className="mt-4 space-y-3">
+                    <PmCard>
+                      <PmCardHead icon={Sparkles} title="განვითარების ლაბორატორია" subtitle="academy lab" />
+                      <div className="space-y-3">
                         {upgrade ? (
                           <OvrUpgradePanel
                             playerId={player.id}
@@ -771,15 +731,12 @@ export default async function PlayManagerPlayerPage(
                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/34">skill moves</p>
                                 <p className="mt-1 text-sm font-black text-white">ოსტატობის განვითარება</p>
                               </div>
-                              <span className="text-sm font-black tabular-nums text-amber-300">
+                              <span className="text-sm font-black tabular-nums text-emerald-300">
                                 {player.skill_moves ?? 1}<span className="text-white/40"> / {skillCap}★</span>
                               </span>
                             </div>
-                            <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
-                              <div
-                                className="h-full rounded-full bg-[linear-gradient(90deg,#f59e0b,#fcd34d)]"
-                                style={{ width: `${Math.round(skillDevPct * 100)}%` }}
-                              />
+                            <div className="mt-3">
+                              <PmGauge percent={Math.round(skillDevPct * 100)} />
                             </div>
                             <p className="mt-2 text-[11px] font-bold leading-5 text-white/42">
                               მენეჯერის ასისტენტი დროთა განმავლობაში აღადგენს ოსტატობას მაქს. {skillCap}★-მდე.
@@ -787,30 +744,21 @@ export default async function PlayManagerPlayerPage(
                           </div>
                         ) : null}
                       </div>
-                    </SpotlightCard>
+                    </PmCard>
                   ) : null}
 
-                  <SpotlightCard
-                    fillHeight={false}
-                    className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(6,14,11,0.92),rgba(4,8,6,0.96))] p-4"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-200/62">manager note</p>
-                        <h2 className="mt-1 text-xl font-black text-white">ტაქტიკური გამოყენება</h2>
-                      </div>
-                      <ShieldCheck className="h-5 w-5 text-emerald-200" />
-                    </div>
-                    <p className="mt-3 text-sm font-bold leading-7 text-white/56">
+                  <PmCard>
+                    <PmCardHead icon={ShieldCheck} title="ტაქტიკური გამოყენება" subtitle="manager note" />
+                    <p className="text-sm font-bold leading-7 text-white/56">
                       {player.display_name} ახლა {position} პოზიციაზეა. თუ დაღლა 55%-ს გადაცდება, როტაცია უფრო უსაფრთხოა;
                       მაღალი მორალისას კი უფრო აგრესიულ tempo-ს და pressing-ს უკეთ გაუძლებს.
                     </p>
-                  </SpotlightCard>
+                  </PmCard>
                 </div>
               </div>
             </div>
           </div>
-        </SpotlightCard>
+        </PmCard>
 
         {adminDraft ? <PlayManagerPlayerAdminEditor key={`${player.id}:${JSON.stringify(adminDraft)}`} playerId={player.id} draft={adminDraft} /> : null}
       </div>
@@ -822,10 +770,7 @@ function PlayerEmptyState() {
   return (
     <PlayManagerLightShell>
       <div className="mx-auto max-w-[900px]">
-        <SpotlightCard
-          fillHeight={false}
-          className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,22,16,0.94),rgba(4,8,6,0.98))] p-6 text-center"
-        >
+        <PmCard className="text-center">
           <p className="text-xs font-black uppercase tracking-[0.24em] text-emerald-200/60">Player profile</p>
           <h1 className="mt-3 text-3xl font-black text-white">მოთამაშე ვერ მოიძებნა</h1>
           <p className="mx-auto mt-3 max-w-xl text-sm font-bold leading-7 text-white/50">
@@ -838,7 +783,7 @@ function PlayerEmptyState() {
             <ArrowLeft className="h-4 w-4" />
             ქალაქში დაბრუნება
           </Link>
-        </SpotlightCard>
+        </PmCard>
       </div>
     </PlayManagerLightShell>
   );
@@ -847,7 +792,7 @@ function PlayerEmptyState() {
 function Stars({ value }: { value: number }) {
   const filled = Math.max(0, Math.min(5, Math.round(value)));
   return (
-    <p className="mt-2 text-xl font-black tracking-[0.12em] text-amber-300">
+    <p className="mt-2 text-xl font-black tracking-[0.12em] text-emerald-300">
       {'★'.repeat(filled)}
       <span className="text-white/18">{'★'.repeat(5 - filled)}</span>
     </p>
@@ -893,15 +838,12 @@ function InfoTile({
   sub: string;
 }) {
   return (
-    <SpotlightCard
-      fillHeight={false}
-      className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4"
-    >
-      <div className="mb-3 text-emerald-200/72">{icon}</div>
+    <PmCard>
+      <div className="text-emerald-200/72">{icon}</div>
       <p className="text-xs font-black uppercase tracking-[0.18em] text-white/34">{label}</p>
-      <p className="mt-2 text-2xl font-black text-white">{value}</p>
-      <p className="mt-1 text-xs font-bold text-white/42">{sub}</p>
-    </SpotlightCard>
+      <p className="text-2xl font-black text-white">{value}</p>
+      <p className="text-xs font-bold text-white/42">{sub}</p>
+    </PmCard>
   );
 }
 

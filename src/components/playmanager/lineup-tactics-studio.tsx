@@ -339,9 +339,9 @@ export function LineupTacticsStudio({
         />
 
         <LayoutGroup>
-          <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_372px]">
+          <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_372px]">
             <div className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/8 bg-white/[0.03] px-3 py-2">
+              <div className="pm-facility-module pm-facility-module-tone-green flex flex-wrap items-center justify-between gap-2">
                 <p className="text-[11px] font-bold text-white/45">
                   {selectedId
                     ? 'დააკლიკე სხვა ფუტქარდს — ადგილებს გაცვლიან'
@@ -374,7 +374,7 @@ export function LineupTacticsStudio({
                 onSlotClick={onSlotClick}
               />
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <SquadShelf
                   title="სათადარიგო"
                   icon={<Users className="h-3.5 w-3.5" />}
@@ -477,7 +477,7 @@ function CommandBar({
 }) {
   const complete = starterCount === 11;
   return (
-    <header className="flex flex-wrap items-center gap-3 rounded-[22px] border border-white/10 bg-white/[0.04] p-3 backdrop-blur-xl">
+    <header className="pm-facility-module pm-facility-module-tone-green flex flex-wrap items-center gap-3 backdrop-blur-xl">
       <Link
         href="/playmanager/arena?module=matchday"
         className="grid h-11 w-11 flex-none place-items-center rounded-2xl border border-white/10 bg-white/[0.05] text-white/70 transition hover:border-emerald-300/30 hover:bg-emerald-300/10 hover:text-white"

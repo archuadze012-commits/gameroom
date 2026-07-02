@@ -136,6 +136,17 @@ export async function processDueCupMatches() {
   if (!dueMatches || dueMatches.length === 0) return;
 
   for (const match of dueMatches) {
+    // Atomically claim this fixture (ready → processing). If another concurrent
+    // processor already grabbed it, the guarded update returns no rows and we
+    // skip — prevents double-simulation, double XP, and double prize payout.
+    const { data: claimed } = await db
+      .from('pm_cup_matches')
+      .update({ status: 'processing' })
+      .eq('id', match.id)
+      .eq('status', 'ready')
+      .select('id');
+    if (!claimed || (claimed as unknown[]).length === 0) continue;
+
     const team1Id = match.team1_id!;
     const team2Id = match.team2_id!;
     const [team1Rows, team2Rows, team1Settings, team2Settings, team1Bonuses, team2Bonuses] = await Promise.all([
@@ -254,12 +265,16 @@ async function loadCupSettings(teamId: string) {
 
 async function distributeCupPrizes(cupInstanceId: string, winnerId: string, runnerUpId: string) {
   const db = createSupabaseAdminClient() as any;
-  
-  // Mark cup as completed
-  await db.from('pm_cup_instances').update({
-    status: 'completed',
-    completed_at: new Date().toISOString()
-  }).eq('id', cupInstanceId);
+
+  // Optimistic lock: only the first caller to flip in_progress → completed pays
+  // the prize. A racing processor gets no rows back and returns without paying.
+  const { data: lockedInstance } = await db
+    .from('pm_cup_instances')
+    .update({ status: 'completed', completed_at: new Date().toISOString() })
+    .eq('id', cupInstanceId)
+    .eq('status', 'in_progress')
+    .select('id');
+  if (!lockedInstance || (lockedInstance as unknown[]).length === 0) return;
 
   // Get template info for prizes
   const { data: instance } = await db
@@ -271,12 +286,14 @@ async function distributeCupPrizes(cupInstanceId: string, winnerId: string, runn
   if (!instance || !(instance as any).pm_cup_templates) return;
 
   const template = (instance as any).pm_cup_templates;
-  
+  const prizePool = Number(template.prize_pool ?? 0);
+  if (prizePool <= 0) return;
+
   if (template.id === 'champions_cup') {
     // 75-25 split
-    const winnerPrize = Math.floor(template.prize_pool! * 0.75);
-    const runnerUpPrize = template.prize_pool! - winnerPrize;
-    
+    const winnerPrize = Math.floor(prizePool * 0.75);
+    const runnerUpPrize = prizePool - winnerPrize;
+
     await db.rpc('pm_credit', { p_team_id: winnerId, p_amount: winnerPrize, p_reason: 'cup_winner' });
     await db.rpc('pm_log_event', { p_team_id: winnerId, p_category: 'finance', p_title: `ჩემპიონთა თასი მოიგეთ!`, p_detail: `+${formatGel(winnerPrize)}`, p_accent: 'gold' });
 
@@ -284,7 +301,7 @@ async function distributeCupPrizes(cupInstanceId: string, winnerId: string, runn
     await db.rpc('pm_log_event', { p_team_id: runnerUpId, p_category: 'finance', p_title: `ჩემპიონთა თასის ფინალისტი`, p_detail: `+${formatGel(runnerUpPrize)}`, p_accent: 'gold' });
   } else {
     // Winner takes all for normal cups
-    await db.rpc('pm_credit', { p_team_id: winnerId, p_amount: template.prize_pool!, p_reason: 'cup_winner' });
-    await db.rpc('pm_log_event', { p_team_id: winnerId, p_category: 'finance', p_title: `${template.name} მოიგეთ!`, p_detail: `+${formatGel(template.prize_pool!)}`, p_accent: 'gold' });
+    await db.rpc('pm_credit', { p_team_id: winnerId, p_amount: prizePool, p_reason: 'cup_winner' });
+    await db.rpc('pm_log_event', { p_team_id: winnerId, p_category: 'finance', p_title: `${template.name} მოიგეთ!`, p_detail: `+${formatGel(prizePool)}`, p_accent: 'gold' });
   }
 }

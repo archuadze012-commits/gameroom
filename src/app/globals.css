@@ -1142,13 +1142,299 @@ main:has(.pm-playmanager-root) {
   position: relative;
   z-index: 10;
   margin-top: 20px;
-  border: 1px solid rgba(134, 239, 172, 0.12);
+  border: 1px solid rgba(134, 239, 172, 0.14);
   border-radius: 22px;
-  background: rgba(0, 0, 0, 0.46);
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.012) 55%, transparent),
+    radial-gradient(circle at 12% -10%, rgba(52, 211, 153, 0.08), transparent 48%),
+    rgba(6, 10, 8, 0.62);
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.025),
-    0 18px 54px rgba(0, 0, 0, 0.34);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 22px 60px rgba(0, 0, 0, 0.4);
+  padding: 16px;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.pm-facility-module:hover {
+  border-color: rgba(134, 239, 172, 0.22);
+}
+
+.pm-facility-module-tone-green {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 34px rgba(52, 211, 153, 0.1),
+    0 22px 60px rgba(0, 0, 0, 0.4);
+}
+
+.pm-facility-module-tone-red {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 34px rgba(248, 113, 113, 0.09),
+    0 22px 60px rgba(0, 0, 0, 0.4);
+}
+
+.pm-facility-module-tone-gold {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 34px rgba(253, 224, 71, 0.09),
+    0 22px 60px rgba(0, 0, 0, 0.4);
+}
+
+.pm-facility-command-page {
+  background:
+    radial-gradient(circle at 24% 4%, rgba(34, 211, 238, 0.08), transparent 28%),
+    radial-gradient(circle at 82% 10%, rgba(234, 179, 8, 0.08), transparent 26%),
+    linear-gradient(180deg, #030706 0%, #060807 48%, #020302 100%);
+}
+
+.pm-facility-command-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: linear-gradient(180deg, black, transparent 78%);
+  opacity: 0.55;
+}
+
+.pm-facility-command-hero {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  min-height: 340px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 22px;
+  background:
+    linear-gradient(120deg, rgba(9, 14, 12, 0.98) 0%, rgba(10, 24, 19, 0.92) 46%, rgba(20, 16, 8, 0.86) 100%),
+    rgba(5, 8, 7, 0.96);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 30px 80px rgba(0, 0, 0, 0.52);
+}
+
+.pm-facility-command-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(115deg, transparent 0 52%, rgba(52, 211, 153, 0.09) 52% 53%, transparent 53%),
+    linear-gradient(115deg, transparent 0 67%, rgba(234, 179, 8, 0.1) 67% 68%, transparent 68%);
+  opacity: 0.9;
+}
+
+.pm-facility-command-copy {
+  position: relative;
+  z-index: 2;
+  max-width: 680px;
+  padding: clamp(22px, 4vw, 48px);
+}
+
+.pm-facility-command-copy h1 {
+  margin-top: 18px;
+  max-width: 12ch;
+  color: #fff;
+  font-size: clamp(2.6rem, 7vw, 6.6rem);
+  font-weight: 950;
+  line-height: 0.82;
+  letter-spacing: 0;
+  text-wrap: balance;
+}
+
+.pm-facility-command-copy p {
+  margin-top: 18px;
+  max-width: 58ch;
+  color: rgba(236, 253, 245, 0.62);
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.75;
+}
+
+.pm-facility-kicker {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 7px 10px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.pm-facility-command-hero .pm-facility-status {
+  border-radius: 8px;
+}
+
+.pm-facility-live-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  border-radius: 16px;
+  background: rgba(1, 12, 9, 0.62);
+  padding: 12px 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.pm-facility-live-icon {
+  display: grid;
+  height: 42px;
+  width: 42px;
+  place-items: center;
+  border: 1px solid rgba(52, 211, 153, 0.22);
+  border-radius: 12px;
+  background: rgba(52, 211, 153, 0.11);
+  color: #bbf7d0;
+}
+
+.pm-facility-live-card b,
+.pm-facility-live-card small {
+  display: block;
+}
+
+.pm-facility-live-card b {
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 950;
+}
+
+.pm-facility-live-card small {
+  margin-top: 2px;
+  color: rgba(236, 253, 245, 0.48);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.pm-facility-command-visual {
+  position: relative;
+  min-height: 280px;
+}
+
+.pm-facility-command-sprite {
+  position: absolute;
+  right: clamp(-90px, -4vw, -32px);
+  bottom: -38px;
+  width: min(720px, 58vw);
+  height: auto;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 0 36px rgba(52, 211, 153, 0.22))
+    drop-shadow(0 36px 58px rgba(0, 0, 0, 0.68));
+}
+
+.pm-facility-level-plate {
+  position: absolute;
+  right: clamp(18px, 4vw, 42px);
+  bottom: clamp(18px, 4vw, 34px);
+  display: grid;
+  min-width: 104px;
+  border: 1px solid rgba(253, 224, 71, 0.24);
+  border-radius: 18px;
+  background: rgba(12, 10, 4, 0.72);
   padding: 14px;
+  text-align: center;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.42);
+}
+
+.pm-facility-level-plate span {
+  color: rgba(253, 224, 71, 0.62);
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+}
+
+.pm-facility-level-plate b {
+  color: #fff7cc;
+  font-family: var(--font-orbitron), sans-serif;
+  font-size: 2.4rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.pm-facility-command-body {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.pm-section-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.pm-section-label b {
+  color: rgba(255, 255, 255, 0.72);
+  font-family: var(--font-orbitron), sans-serif;
+}
+
+.pm-module-grid-shell {
+  margin-top: 12px;
+}
+
+.pm-module-card {
+  border-radius: 18px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 22px 54px rgba(0, 0, 0, 0.44);
+}
+
+.pm-facility-command-body > .pm-facility-module {
+  margin-top: 0;
+  border-radius: 18px;
+}
+
+.pm-facility-command-body .pm-facility-progress {
+  max-width: none;
+  border-color: rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.014)),
+    rgba(0, 0, 0, 0.38);
+}
+
+.pm-facility-action-card,
+.pm-facility-empty-card,
+.pm-facility-result-card {
+  border-radius: 14px;
+}
+
+@media (min-width: 960px) {
+  .pm-facility-command-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 0.85fr);
+  }
+
+  .pm-facility-command-body {
+    grid-template-columns: minmax(0, 1fr) minmax(330px, 380px);
+    align-items: start;
+  }
+}
+
+@media (max-width: 720px) {
+  .pm-facility-command-copy h1 {
+    max-width: 10ch;
+  }
+
+  .pm-facility-command-sprite {
+    right: -96px;
+    width: 520px;
+    opacity: 0.72;
+  }
 }
 
 .pm-game-row {
@@ -1159,7 +1445,10 @@ main:has(.pm-playmanager-root) {
   aspect-ratio: 4 / 3;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.045);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02)),
+    rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
   padding: 13px;
 }
 
@@ -1200,15 +1489,27 @@ main:has(.pm-playmanager-root) {
 }
 
 .pm-finance-card-green {
-  box-shadow: inset 0 0 0 1px rgba(134, 239, 172, 0.06), 0 0 24px rgba(34, 197, 94, 0.08);
+  border-color: rgba(134, 239, 172, 0.14);
+  box-shadow:
+    inset 0 0 0 1px rgba(134, 239, 172, 0.08),
+    0 0 26px rgba(34, 197, 94, 0.12),
+    0 14px 30px rgba(0, 0, 0, 0.3);
 }
 
 .pm-finance-card-red {
-  box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.08), 0 0 24px rgba(127, 29, 29, 0.1);
+  border-color: rgba(248, 113, 113, 0.14);
+  box-shadow:
+    inset 0 0 0 1px rgba(248, 113, 113, 0.08),
+    0 0 26px rgba(127, 29, 29, 0.18),
+    0 14px 30px rgba(0, 0, 0, 0.3);
 }
 
 .pm-finance-card-gold {
-  box-shadow: inset 0 0 0 1px rgba(253, 224, 71, 0.08), 0 0 24px rgba(234, 179, 8, 0.08);
+  border-color: rgba(253, 224, 71, 0.14);
+  box-shadow:
+    inset 0 0 0 1px rgba(253, 224, 71, 0.08),
+    0 0 26px rgba(234, 179, 8, 0.1),
+    0 14px 30px rgba(0, 0, 0, 0.3);
 }
 
 .pm-building-icon {
@@ -1911,4 +2212,134 @@ main:has(.pm-playmanager-root) {
 .pm-playmanager-root .font-black {
   font-family: var(--font-alk-sanet), var(--font-orbitron), sans-serif;
   letter-spacing: -0.01em;
+}
+
+/* ── Manager Office — PlayGame post-card language, recolored green/red ────── */
+.pm-office {
+  background:
+    radial-gradient(120% 90% at 92% -8%, rgba(22, 163, 74, 0.05), transparent 46%),
+    radial-gradient(120% 90% at 8% 108%, rgba(239, 68, 68, 0.045), transparent 46%),
+    #05070a;
+}
+
+/* Recolor the pubg-loadout neon border (hardcoded blue/purple/red at globals.css:267)
+   to green→red. Scoped to .pm-feedskin — added on every PlayManager content shell
+   (office, light-shell, matchday) so the card language is shared. Reuses the shared
+   mask, @property --border-angle, @keyframes border-rotate and gradient-pan unchanged. */
+.pm-feedskin .pubg-loadout-card::before,
+.pm-feedskin .pubg-loadout-card::after {
+  background: conic-gradient(from var(--border-angle), #16a34a, #ef4444, #22c55e, #16a34a) !important;
+}
+/* These cards have no mouse-tilt JS, so drop the 3D perspective/transform layer the
+   feed uses — otherwise the GPU-rasterised layer jitters the photo and bottom frame
+   by a sub-pixel each time the 8s border-rotate animation loops. */
+.pm-feedskin .pubg-loadout-link { perspective: none; }
+.pm-feedskin .pubg-loadout-card {
+  --huashu-purple: rgba(22, 163, 74, 0.18);
+  --huashu-blue: rgba(239, 68, 68, 0.16);
+  --huashu-red: rgba(34, 197, 94, 0.10);
+  --huashu-border-purple: rgba(74, 222, 128, 0.85);
+  --huashu-border-blue: rgba(248, 113, 113, 0.85);
+  background: rgba(6, 10, 8, 0.35);
+  transform: none;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.pm-feedskin .pubg-loadout-link:hover > .pubg-loadout-card,
+.pm-feedskin .pubg-loadout-link:focus-visible > .pubg-loadout-card {
+  box-shadow:
+    0 30px 60px -15px rgba(0, 0, 0, 0.9),
+    0 0 12px rgba(22, 163, 74, 0.5),
+    0 0 28px rgba(239, 68, 68, 0.4),
+    0 0 48px rgba(34, 197, 94, 0.32);
+}
+.pm-feedskin .pubg-loadout-link:hover > .pubg-loadout-card > .pubg-loadout-field,
+.pm-feedskin .pubg-loadout-link:focus-visible > .pubg-loadout-card > .pubg-loadout-field {
+  background: linear-gradient(
+    135deg,
+    var(--huashu-purple) 0%,
+    transparent 20%,
+    rgba(239, 68, 68, 0.14) 50%,
+    transparent 80%,
+    var(--huashu-blue) 100%
+  );
+  background-size: 200% 200%;
+}
+
+/* Card title — mirrors the feed post name (uppercase display glow). */
+.pm-office-title {
+  font-family: var(--font-display), sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 900;
+  color: #d6fbe6;
+  text-shadow: 0 0 8px rgba(34, 197, 94, 0.45);
+}
+.pm-office-title--red { color: #ffdcdc; text-shadow: 0 0 8px rgba(239, 68, 68, 0.45); }
+
+/* Icon "avatar" — like the post avatar. */
+.pm-office-ava {
+  display: grid;
+  place-items: center;
+  height: 48px;
+  width: 48px;
+  flex: none;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.01));
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.14);
+  color: #bbf7d0;
+}
+.pm-office-ava--red { box-shadow: 0 0 18px rgba(239, 68, 68, 0.16); color: #fca5a5; }
+
+/* Reaction-style stat pills (GG / PRO / NOOB analog). */
+.pm-office-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.62);
+}
+.pm-office-pill--green { border-color: rgba(34, 197, 94, 0.32); background: rgba(34, 197, 94, 0.1); color: #86efac; }
+.pm-office-pill--red   { border-color: rgba(239, 68, 68, 0.32); background: rgba(239, 68, 68, 0.1); color: #fca5a5; }
+
+/* Footer action button (like the post's like / delete buttons). */
+.pm-office-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  border: 1px solid transparent;
+  color: #fff;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.pm-office-act:disabled { opacity: 0.55; cursor: not-allowed; }
+.pm-office-act--green { border-color: rgba(34, 197, 94, 0.34); background: rgba(34, 197, 94, 0.12); color: #bbf7d0; }
+.pm-office-act--green:not(:disabled):hover { background: rgba(34, 197, 94, 0.2); color: #fff; }
+.pm-office-act--red { border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.1); color: #fca5a5; }
+.pm-office-act--red:not(:disabled):hover { background: rgba(239, 68, 68, 0.18); color: #fff; }
+
+/* Occupancy gauge. */
+.pm-office-gauge {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.pm-office-gauge-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #22c55e, #a3e635, #ef4444);
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.35);
+  transition: width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
 }

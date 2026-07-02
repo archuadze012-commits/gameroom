@@ -134,26 +134,26 @@ export function PlayManagerPlayerAdminEditor({ playerId, draft: initialDraft }: 
   }
 
   return (
-    <section className="rounded-[28px] border border-amber-300/20 bg-[linear-gradient(180deg,rgba(29,17,3,0.88),rgba(5,5,5,0.94))] p-4 shadow-[inset_0_0_50px_rgba(245,158,11,0.06)]">
+    <section className="rounded-[28px] border border-emerald-300/20 bg-[linear-gradient(180deg,rgba(29,17,3,0.88),rgba(5,5,5,0.94))] p-4 shadow-[inset_0_0_50px_rgba(245,158,11,0.06)]">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-200/70">Admin editor</p>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-emerald-200/70">Admin editor</p>
           <h2 className="mt-1 text-xl font-black text-white">მოთამაშის რედაქტირება</h2>
         </div>
         <Button
           type="button"
           onClick={save}
           disabled={pending || uploading}
-          className="rounded-2xl bg-amber-300 px-4 text-xs font-black text-black hover:bg-amber-200"
+          className="rounded-2xl bg-emerald-300 px-4 text-xs font-black text-black hover:bg-emerald-200"
         >
           {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           შენახვა
         </Button>
       </div>
 
-      <div className="mt-4 grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="mt-4 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <TextField label="სახელი" value={draft.firstName} onChange={(value) => patch('firstName', value)} />
             <TextField label="გვარი" value={draft.lastName} onChange={(value) => patch('lastName', value)} />
             <TextField label="FUTCARD გვარი" value={draft.cardDisplayName} onChange={(value) => patch('cardDisplayName', value)} />
@@ -251,7 +251,7 @@ export function PlayManagerPlayerAdminEditor({ playerId, draft: initialDraft }: 
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/42">Playing profile</p>
               <p className="mt-1 text-sm font-bold text-white/70">სათამაშო პროფილის რედაქტირება</p>
             </div>
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               {statKeys.map((statKey) => (
                 <RangeField
                   key={statKey}

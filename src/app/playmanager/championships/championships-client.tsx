@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Plus, Play, UserPlus } from 'lucide-react';
+import { PmCard } from '@/components/playmanager/pm-cards';
 import {
   createPlayManagerLeague,
   joinPlayManagerLeague,
@@ -35,7 +36,7 @@ export function JoinLeagueButton({ leagueId }: { leagueId: string }) {
         if (r.success) { toast.success('დარეგისტრირდი'); router.refresh(); }
         else toast.error(errText(r.error));
       })}
-      className="inline-flex items-center gap-2 rounded-xl border border-emerald-300/24 bg-emerald-300/12 px-4 h-10 text-sm font-black text-emerald-50 transition hover:bg-emerald-300/18 disabled:cursor-not-allowed disabled:opacity-50"
+      className="pm-office-act pm-office-act--green disabled:cursor-not-allowed disabled:opacity-50"
     >
       <UserPlus className="h-4 w-4" />
       {pending ? '...' : 'რეგისტრაცია'}
@@ -55,7 +56,7 @@ export function StartLeagueButton({ leagueId }: { leagueId: string }) {
         if (r.success) { toast.success('ლიგა დაიწყო'); router.refresh(); }
         else toast.error(errText(r.error));
       })}
-      className="inline-flex items-center gap-2 rounded-xl border border-amber-300/28 bg-amber-300/14 px-4 h-10 text-sm font-black text-amber-50 transition hover:bg-amber-300/20 disabled:cursor-not-allowed disabled:opacity-50"
+      className="pm-office-act pm-office-act--green disabled:cursor-not-allowed disabled:opacity-50"
     >
       <Play className="h-4 w-4" />
       {pending ? '...' : 'დაწყება'}
@@ -73,15 +74,17 @@ export function CreateLeagueForm() {
   const [prizePool, setPrizePool] = useState(500000);
 
   return (
-    <div className="rounded-[22px] border border-white/10 bg-white/[0.04] p-4">
-      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-200/62">admin</p>
-      <p className="mt-1 text-lg font-black text-white">ახალი ჩემპიონატის შექმნა</p>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+    <PmCard>
+      <div>
+        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-200/62">admin</p>
+        <p className="mt-1 text-lg font-black text-white">ახალი ჩემპიონატის შექმნა</p>
+      </div>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="სახელი (მაგ. D დივიზიონი — სეზონი 1)"
-          className="sm:col-span-2 rounded-xl border border-white/10 bg-black/30 px-3 h-10 text-sm font-bold text-white outline-none focus:border-emerald-300/30"
+          className="sm:col-span-2 rounded-xl border border-white/10 bg-black/30 px-3 h-10 text-sm font-bold text-white outline-none focus:border-emerald-400/40"
         />
         <label className="sm:col-span-2 flex items-center justify-between gap-2 rounded-xl border border-white/8 bg-black/24 px-3 h-10 text-xs font-black text-white/60">
           ფორმატი
@@ -116,11 +119,11 @@ export function CreateLeagueForm() {
           if (r.success) { toast.success('ჩემპიონატი შეიქმნა'); setName(''); router.refresh(); }
           else toast.error(errText(r.error));
         })}
-        className="mt-3 inline-flex items-center gap-2 rounded-xl border border-emerald-300/24 bg-emerald-300/12 px-4 h-10 text-sm font-black text-emerald-50 transition hover:bg-emerald-300/18 disabled:cursor-not-allowed disabled:opacity-50"
+        className="pm-office-act pm-office-act--green disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Plus className="h-4 w-4" />
         {pending ? '...' : 'შექმნა'}
       </button>
-    </div>
+    </PmCard>
   );
 }

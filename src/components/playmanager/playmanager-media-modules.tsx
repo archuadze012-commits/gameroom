@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, MessageCircle, Send, UsersRound } from "lucide-react";
+import { BadgeCheck, Loader2, MessageCircle, Send, Sparkles, UsersRound } from "lucide-react";
 import { sendMessageAction, type SendMessageState } from "@/app/messages/actions";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -48,6 +48,33 @@ function displayName(profile: Profile | null) {
 function timeLabel(value?: string | null) {
   if (!value) return "";
   return new Date(value).toLocaleTimeString("ka-GE", { hour: "2-digit", minute: "2-digit" });
+}
+
+function initialOf(profile: Profile | null) {
+  return displayName(profile).charAt(0).toUpperCase();
+}
+
+function ChatAvatar({ profile, size = 38 }: { profile: Profile | null; size?: number }) {
+  const url = profile?.avatar_url;
+  if (url) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return (
+      <img
+        src={url}
+        alt=""
+        className="shrink-0 rounded-full object-cover ring-1 ring-white/14"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+  return (
+    <div
+      style={{ width: size, height: size }}
+      className="grid shrink-0 place-items-center rounded-full bg-[linear-gradient(135deg,rgba(52,211,153,0.34),rgba(16,84,60,0.28))] text-sm font-black text-emerald-100 ring-1 ring-emerald-300/24"
+    >
+      {initialOf(profile)}
+    </div>
+  );
 }
 
 export function PlayManagerDirectMessages() {
@@ -149,7 +176,7 @@ export function PlayManagerDirectMessages() {
   }, [messages.length, activeId]);
 
   return (
-    <div className="grid min-h-[620px] overflow-hidden rounded-2xl border border-emerald-300/14 bg-black/34 lg:grid-cols-[320px_minmax(0,1fr)]">
+    <div className="grid min-h-[620px] grid-cols-1 overflow-hidden rounded-2xl border border-emerald-300/14 bg-black/34 lg:grid-cols-[320px_minmax(0,1fr)]">
       <aside className="border-b border-white/10 bg-black/24 lg:border-b-0 lg:border-r">
         <div className="flex h-16 items-center gap-3 border-b border-white/10 px-4">
           <UsersRound className="h-5 w-5 text-emerald-200" />
@@ -344,77 +371,136 @@ export function PlayManagerGlobalChat() {
     setSending(false);
   }
 
+  const remaining = 500 - draft.length;
+
   return (
-    <div className="flex min-h-[620px] flex-col overflow-hidden rounded-2xl border border-emerald-300/14 bg-black/34">
-      <header className="flex h-16 items-center gap-3 border-b border-white/10 px-4">
-        <MessageCircle className="h-5 w-5 text-emerald-200" />
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/40">Global chat</p>
-          <h3 className="text-lg font-black text-white">საერთო ჩატი</h3>
+    <div className="flex h-[calc(100dvh-8rem)] max-h-[860px] min-h-[480px] flex-col overflow-hidden rounded-[26px] border border-emerald-300/16 bg-[linear-gradient(180deg,rgba(8,20,15,0.94),rgba(3,7,5,0.97))] shadow-[0_30px_70px_-34px_rgba(0,0,0,0.85)]">
+      {/* Header */}
+      <header className="relative flex items-center gap-3 border-b border-white/10 bg-[linear-gradient(135deg,rgba(16,52,38,0.6),rgba(6,14,10,0.3))] px-5 py-4">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-emerald-300/26 bg-emerald-300/12 text-emerald-100 shadow-[0_0_22px_-4px_rgba(52,211,153,0.55)]">
+          <MessageCircle className="h-5 w-5" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-200/60">Global chat</p>
+          <h3 className="truncate text-lg font-black text-white">საერთო ჩატი</h3>
         </div>
+        <span className="ml-auto inline-flex items-center gap-2 rounded-full border border-emerald-300/24 bg-emerald-300/10 px-3 py-1.5 text-[11px] font-black text-emerald-100">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/70" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+          </span>
+          ცოცხალი
+        </span>
       </header>
 
-      <div ref={scrollRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+      {/* Messages */}
+      <div
+        ref={scrollRef}
+        className="min-h-0 flex-1 overflow-y-auto px-4 py-5 [background:radial-gradient(120%_60%_at_50%_0%,rgba(52,211,153,0.05),transparent_60%)]"
+      >
         {loading ? (
-          <div className="grid h-full min-h-[420px] place-items-center text-white/40">
+          <div className="grid h-full min-h-[360px] place-items-center text-white/40">
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
         ) : messages.length === 0 ? (
-          <div className="grid h-full min-h-[420px] place-items-center text-sm font-bold text-white/42">
-            ჯერ საერთო ჩატში არაფერი წერია.
+          <div className="grid h-full min-h-[360px] place-items-center px-6 text-center">
+            <div>
+              <span className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-3xl border border-emerald-300/22 bg-emerald-300/8 text-emerald-200/80">
+                <Sparkles className="h-7 w-7" />
+              </span>
+              <p className="text-base font-black text-white">ჯერ საუბარი არ დაწყებულა</p>
+              <p className="mx-auto mt-1.5 max-w-xs text-sm font-bold leading-6 text-white/45">
+                დაწერე პირველი მესიჯი — ყველა მენეჯერი დაინახავს.
+              </p>
+            </div>
           </div>
         ) : (
-          messages.map((message) => {
-            const profile = getProfile(message);
-            const mine = message.author_id === currentUserId;
-            return (
-              <div key={message.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[78%] ${mine ? "text-right" : "text-left"}`}>
+          <div className="space-y-1">
+            {messages.map((message, i) => {
+              const profile = getProfile(message);
+              const mine = message.author_id === currentUserId;
+              const prev = messages[i - 1];
+              const grouped =
+                !!prev &&
+                prev.author_id === message.author_id &&
+                !!message.created_at &&
+                !!prev.created_at &&
+                new Date(message.created_at).getTime() - new Date(prev.created_at).getTime() < 5 * 60 * 1000;
+
+              return (
+                <div
+                  key={message.id}
+                  className={`flex items-end gap-2.5 ${grouped ? "mt-0.5" : "mt-4"} ${mine ? "flex-row-reverse" : "flex-row"}`}
+                >
+                  {/* avatar gutter (others only) */}
                   {!mine ? (
-                    <p className="mb-1 text-[11px] font-black uppercase tracking-[0.12em] text-emerald-100/55">
-                      {displayName(profile)}
-                    </p>
+                    grouped ? (
+                      <span className="w-[38px] shrink-0" />
+                    ) : (
+                      <ChatAvatar profile={profile} />
+                    )
                   ) : null}
-                  <div
-                    className={`rounded-2xl px-4 py-3 ${
-                      mine
-                        ? "rounded-br-md bg-emerald-300/16 text-emerald-50"
-                        : "rounded-bl-md bg-white/[0.06] text-white"
-                    }`}
-                  >
-                    <p className="whitespace-pre-wrap break-words text-sm font-bold leading-6">{message.body}</p>
-                    <p className="mt-1 text-[10px] font-black text-white/34">{timeLabel(message.created_at)}</p>
+
+                  <div className={`flex max-w-[76%] flex-col ${mine ? "items-end" : "items-start"}`}>
+                    {!mine && !grouped ? (
+                      <span className="mb-1 ml-1 inline-flex items-center gap-1 text-[11px] font-black tracking-wide text-emerald-100/70">
+                        {displayName(profile)}
+                        {profile?.is_verified ? <BadgeCheck className="h-3 w-3 text-emerald-300" /> : null}
+                      </span>
+                    ) : null}
+                    <div
+                      className={`group relative px-3.5 py-2.5 text-sm font-bold leading-6 shadow-[0_8px_22px_-16px_rgba(0,0,0,0.9)] ${
+                        mine
+                          ? `rounded-2xl ${grouped ? "rounded-tr-md" : "rounded-br-md"} bg-[linear-gradient(135deg,rgba(52,211,153,0.26),rgba(16,84,60,0.22))] text-emerald-50 ring-1 ring-emerald-300/22`
+                          : `rounded-2xl ${grouped ? "rounded-tl-md" : "rounded-bl-md"} bg-white/[0.055] text-white ring-1 ring-white/8`
+                      }`}
+                    >
+                      <p className="whitespace-pre-wrap break-words">{message.body}</p>
+                      <span
+                        className={`mt-0.5 block text-[10px] font-black ${mine ? "text-emerald-100/45" : "text-white/30"}`}
+                      >
+                        {timeLabel(message.created_at)}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })
+              );
+            })}
+          </div>
         )}
       </div>
 
-      <div className="flex items-center gap-3 border-t border-white/10 bg-black/26 p-4">
-        <input
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              void sendMessage();
-            }
-          }}
-          placeholder="დაწერე საერთო ჩატში..."
-          maxLength={500}
-          className="h-12 min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[0.05] px-4 text-sm font-bold text-white outline-none transition placeholder:text-white/28 focus:border-emerald-300/36"
-        />
-        <button
-          type="button"
-          onClick={() => void sendMessage()}
-          disabled={!draft.trim() || sending}
-          className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-emerald-300/22 bg-emerald-300/12 text-emerald-100 transition hover:bg-emerald-300/18 disabled:cursor-not-allowed disabled:opacity-45"
-          aria-label="გაგზავნა"
-        >
-          {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-        </button>
+      {/* Composer */}
+      <div className="border-t border-white/10 bg-[linear-gradient(0deg,rgba(8,18,13,0.7),rgba(0,0,0,0.1))] p-3.5">
+        <div className="flex items-center gap-2.5 rounded-2xl border border-white/10 bg-white/[0.04] py-1.5 pl-4 pr-1.5 transition focus-within:border-emerald-300/40 focus-within:bg-white/[0.06]">
+          <input
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                void sendMessage();
+              }
+            }}
+            placeholder="დაწერე საერთო ჩატში..."
+            maxLength={500}
+            className="h-10 min-w-0 flex-1 bg-transparent text-sm font-bold text-white outline-none placeholder:text-white/28"
+          />
+          {draft.length > 400 ? (
+            <span className={`shrink-0 text-[10px] font-black tabular-nums ${remaining <= 0 ? "text-red-400" : "text-white/35"}`}>
+              {remaining}
+            </span>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => void sendMessage()}
+            disabled={!draft.trim() || sending}
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[linear-gradient(135deg,rgba(52,211,153,0.9),rgba(16,122,84,0.9))] text-black shadow-[0_0_20px_-6px_rgba(52,211,153,0.8)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+            aria-label="გაგზავნა"
+          >
+            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          </button>
+        </div>
       </div>
     </div>
   );

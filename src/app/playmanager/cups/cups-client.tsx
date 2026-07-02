@@ -18,7 +18,7 @@ export function JoinCupButton({ cupId, entryFeeLabel }: { cupId: string; entryFe
         if (r.success) { toast.success(r.message ?? 'დარეგისტრირდი'); router.refresh(); }
         else toast.error(r.error ?? 'ვერ მოხერხდა');
       })}
-      className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-300/24 bg-emerald-300/12 px-4 h-10 text-sm font-black text-emerald-50 transition hover:bg-emerald-300/18 disabled:cursor-not-allowed disabled:opacity-50"
+      className="pm-office-act pm-office-act--green disabled:cursor-not-allowed disabled:opacity-50"
     >
       <UserPlus className="h-4 w-4" />
       {pending ? '...' : `მონაწილეობა · ${entryFeeLabel}`}
