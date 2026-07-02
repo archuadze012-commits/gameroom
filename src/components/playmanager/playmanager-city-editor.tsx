@@ -66,7 +66,7 @@ import { PLAYMANAGER_AI_CLUBS, PLAYMANAGER_FIXTURE_ROW_ORDER } from '@/lib/playm
 
 // Deterministic number formatter — avoids ka-GE locale mismatch between Node.js and browser ICU
 function fmtInt(n: number): string {
-  return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, String.fromCharCode(160));
 }
 
 export type EditableCityBuilding = {
@@ -835,7 +835,7 @@ export function BuildingWorkspace({
   }
 
   return (
-    <main className="pm-hq-home pm-hq-shell pm-facility-command-page min-h-screen overflow-x-hidden pb-24 text-white xl:pb-0">
+    <main className="pm-hq-home pm-feedskin pm-hq-shell pm-facility-command-page min-h-screen overflow-x-hidden pb-24 text-white xl:pb-0">
       <LightweightSideNav />
       <div className="relative mx-auto flex min-h-screen w-full max-w-[1400px] flex-col px-4 py-4 sm:px-6 lg:px-8">
         <div>

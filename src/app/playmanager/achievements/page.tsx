@@ -23,10 +23,18 @@ const CATEGORY_ICON: Record<AchievementCategory, LucideIcon> = {
 
 const CATEGORY_ORDER: AchievementCategory[] = ['match', 'squad', 'economy', 'progress'];
 
+// ka-GE groups thousands with a plain space, which wraps mid-number at narrow
+// (2-up mobile) card widths — swap in a non-breaking space so "1 000 000"
+// stays on one line; the " / " separator around it can still wrap if needed.
+function nbsp(n: number): string {
+  const NBSP = String.fromCharCode(160);
+  return n.toLocaleString('ka-GE').split(String.fromCharCode(32)).join(NBSP);
+}
+
 function formatMetric(a: AchievementProgress): string {
-  if (a.metric === 'balance') return `${a.current.toLocaleString('ka-GE')} / ${a.goal.toLocaleString('ka-GE')} ₾`;
+  if (a.metric === 'balance') return `${nbsp(a.current)} / ${nbsp(a.goal)} ₾`;
   if (a.metric === 'hasLegend' || a.metric === 'divisionA') return a.unlocked ? 'შესრულებულია' : 'ჯერ არა';
-  return `${a.current.toLocaleString('ka-GE')} / ${a.goal.toLocaleString('ka-GE')}`;
+  return `${nbsp(a.current)} / ${nbsp(a.goal)}`;
 }
 
 export default async function PlayManagerAchievementsPage() {

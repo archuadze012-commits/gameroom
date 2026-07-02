@@ -108,8 +108,12 @@ export function getTalent11AdjustedTransferValueGel(value: number, talent: numbe
 }
 
 export function formatGel(amount: number): string {
-  const formatted = Math.trunc(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-  return `${formatted} ${PLAYMANAGER_CURRENCY}`;
+  // Non-breaking space (U+00A0) between digit groups and before the currency
+  // symbol — a plain space lets the browser wrap mid-number ("1 000 000")
+  // inside narrow containers (2-up mobile cards), which reads as broken text.
+  const NBSP = String.fromCharCode(160);
+  const formatted = Math.trunc(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, NBSP);
+  return `${formatted}${NBSP}${PLAYMANAGER_CURRENCY}`;
 }
 
 export function clampTicketPriceGel(ticketPrice: number): number {

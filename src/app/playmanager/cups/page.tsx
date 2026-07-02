@@ -50,7 +50,9 @@ export default async function PlayManagerCupsPage() {
             <p className="text-sm font-bold text-white/50">ამჟამად ხელმისაწვდომი თასი არ არის.</p>
           </PmCard>
         ) : (
-          <div className={`grid grid-cols-2 gap-4 md:grid-cols-2 ${cups.length % 2 === 1 ? '[&>*:first-child]:col-span-2 md:[&>*:first-child]:col-span-1' : ''}`}>
+          // Cup cards are text-dense (title + fee stats + register/view buttons) —
+          // too narrow to survive a 2-up mobile grid, unlike simple photo/stat tiles.
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {cups.map((cup) => {
               const meta = STATUS_META[cup.status];
               return (

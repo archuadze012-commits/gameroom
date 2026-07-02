@@ -23,6 +23,8 @@ import type { PlayerCardStatsInput } from '@/lib/playmanager/player-card-stats';
 import type { PlayManagerPlayerCardLayout } from '@/lib/playmanager/player-card';
 import { TalentClassBadge } from '@/components/playmanager/talent-class-badge';
 import { NestedMiniBox } from '@/components/playmanager/panel-primitives';
+import { PlayManagerSidebar } from '@/components/playmanager/playmanager-side-nav';
+import { PlayManagerBottomNav } from '@/components/playmanager/playmanager-bottom-nav';
 
 type MarketFilterKey = 'ALL' | 'GK' | 'DEF' | 'MID' | 'ATT' | 'SHORTLIST';
 
@@ -182,7 +184,8 @@ export function MarketStudio({
   }
 
   return (
-    <main className="pm-hq-home pm-hq-shell relative min-h-screen overflow-x-hidden bg-[#04100a] pb-16 text-white">
+    <main className="pm-hq-home pm-feedskin pm-hq-shell relative min-h-screen overflow-x-hidden bg-[#04100a] pb-24 text-white xl:pb-16 xl:pl-[92px]">
+      <PlayManagerSidebar />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[360px] bg-[radial-gradient(115%_80%_at_50%_-10%,rgba(16,185,129,0.16),transparent_60%)]" />
 
       <div className="relative mx-auto w-full max-w-[1320px] px-3 py-4 sm:px-5 lg:px-7">
@@ -293,6 +296,8 @@ export function MarketStudio({
           </motion.div>
         ) : null}
       </AnimatePresence>
+
+      <PlayManagerBottomNav />
     </main>
   );
 }

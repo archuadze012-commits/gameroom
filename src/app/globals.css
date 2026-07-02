@@ -505,6 +505,15 @@
 /* Keep the bar's own content above the ring's stacking context */
 .neon-rail > * { position: relative; z-index: 4; }
 
+/* PlayManagerBottomNav reuses .neon-rail (PlayGame's site-wide blue/purple/red
+   ring) for the animated border, but PM's identity is green/red — recolor it
+   the same way .pubg-loadout-card is recolored above, scoped to .pm-feedskin
+   so the main-site nav (mobile-top-nav, site-header) keeps its own palette. */
+.pm-feedskin .neon-rail::before,
+.pm-feedskin .neon-rail::after {
+  background: conic-gradient(from var(--border-angle), #16a34a, #ef4444, #22c55e, #16a34a) !important;
+}
+
 /* ── Neon button ── rotating conic ring for CTA buttons. Brightens (never
    darkens) on hover. Apply to a positioned, rounded element with NO clipPath
    and NO overflow-hidden (the halo must be able to bleed outside). */

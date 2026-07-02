@@ -114,6 +114,9 @@ export function CupMatchLineupWorkbench({
   const [settings, setSettings] = useState<CupWorkbenchSettings>(own.settings);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  // Touch-friendly alternative to native HTML5 drag (which doesn't fire on
+  // phones): tap a card to select it, then tap a slot/zone to place it.
+  const [selected, setSelected] = useState<DragPayload | null>(null);
 
   const starterCount = starterSlots.filter(Boolean).length;
   const currentAvg = useMemo(() => {
@@ -210,6 +213,35 @@ export function CupMatchLineupWorkbench({
     else setReserves((items) => [...items, moved]);
   }
 
+  // ── Tap-to-move (touch) ──
+  function tapCard(payload: DragPayload) {
+    if (!canEdit) return;
+    if (selected && selected.playerId === payload.playerId) {
+      setSelected(null); // tapping the selected card again deselects
+      return;
+    }
+    if (selected) {
+      // A card is armed → the tapped card's location is the destination.
+      if (payload.source === 'starter') moveToStarter(selected, payload.slotIndex);
+      else moveToList(selected, payload.source);
+      setSelected(null);
+      return;
+    }
+    setSelected(payload);
+  }
+
+  function tapSlot(index: number) {
+    if (!canEdit || !selected) return;
+    moveToStarter(selected, index);
+    setSelected(null);
+  }
+
+  function tapZone(target: 'bench' | 'reserve') {
+    if (!canEdit || !selected) return;
+    moveToList(selected, target);
+    setSelected(null);
+  }
+
   function saveLineup() {
     const lineupIds = [
       ...starterSlots.filter((player): player is CupWorkbenchPlayer => Boolean(player)).map((player) => player.id),
@@ -243,7 +275,9 @@ export function CupMatchLineupWorkbench({
               </p>
               <h2 className="mt-1 text-2xl font-black text-white">{own.name}</h2>
               <p className="mt-1 text-xs font-bold text-white/45">
-                Drag FUT card მოედანზე ან სათადარიგო ზონაში.
+                {selected
+                  ? 'აირჩიე სად განათავსო — დააჭირე სლოტს ან ზონას.'
+                  : 'დააჭირე ბარათს ასარჩევად, მერე — სლოტს/ზონას (ან გადაათრიე).'}
               </p>
             </div>
             <div className="grid grid-cols-3 gap-2 text-right">
@@ -262,6 +296,7 @@ export function CupMatchLineupWorkbench({
                   key={`${slot.label}-${index}`}
                   className="absolute z-10 -translate-x-1/2 -translate-y-1/2"
                   style={{ top: `${slot.top}%`, left: `${slot.left}%` }}
+                  onClick={() => { if (!player) tapSlot(index); }}
                   onDragOver={(event) => {
                     event.preventDefault();
                     event.dataTransfer.dropEffect = 'move';
@@ -277,12 +312,22 @@ export function CupMatchLineupWorkbench({
                       player={player}
                       source={{ source: 'starter', playerId: player.id, slotIndex: index }}
                       canDrag={canEdit}
+                      selected={selected?.playerId === player.id}
                       onDragStart={writeDrag}
+                      onTap={tapCard}
                     />
                   ) : (
-                    <div className="grid h-[132px] w-[96px] place-items-center rounded-2xl border border-dashed border-white/20 bg-black/48 text-center text-[10px] font-black uppercase tracking-[0.12em] text-white/35">
+                    <button
+                      type="button"
+                      onClick={() => tapSlot(index)}
+                      className={`grid h-[132px] w-[96px] place-items-center rounded-2xl border border-dashed text-center text-[10px] font-black uppercase tracking-[0.12em] transition ${
+                        selected
+                          ? 'border-emerald-300/70 bg-emerald-300/12 text-emerald-100'
+                          : 'border-white/20 bg-black/48 text-white/35'
+                      }`}
+                    >
                       {slot.label}
-                    </div>
+                    </button>
                   )}
                 </div>
               );
@@ -295,16 +340,24 @@ export function CupMatchLineupWorkbench({
               players={bench}
               target="bench"
               canEdit={canEdit}
+              selectedId={selected?.playerId ?? null}
+              armed={Boolean(selected)}
               onDropPlayer={moveToList}
               onDragStart={writeDrag}
+              onTap={tapCard}
+              onZoneTap={tapZone}
             />
             <PlayerDropList
               title="რეზერვი"
               players={reserves}
               target="reserve"
               canEdit={canEdit}
+              selectedId={selected?.playerId ?? null}
+              armed={Boolean(selected)}
               onDropPlayer={moveToList}
               onDragStart={writeDrag}
+              onTap={tapCard}
+              onZoneTap={tapZone}
             />
           </div>
         </div>
@@ -396,18 +449,28 @@ function DraggableFutCard({
   player,
   source,
   canDrag,
+  selected = false,
   onDragStart,
+  onTap,
 }: {
   player: CupWorkbenchPlayer;
   source: DragPayload;
   canDrag: boolean;
+  selected?: boolean;
   onDragStart: (event: DragEvent, payload: DragPayload) => void;
+  onTap?: (payload: DragPayload) => void;
 }) {
   return (
     <div
       draggable={canDrag}
       onDragStart={(event) => onDragStart(event, source)}
-      className={`relative h-[132px] w-[96px] ${canDrag ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
+      onClick={(event) => {
+        event.stopPropagation();
+        onTap?.(source);
+      }}
+      className={`relative h-[132px] w-[96px] rounded-2xl ${canDrag ? 'cursor-pointer active:cursor-grabbing sm:cursor-grab' : 'cursor-default'} ${
+        selected ? 'ring-2 ring-emerald-300 ring-offset-2 ring-offset-black' : ''
+      }`}
       title={player.name}
     >
       <Link
@@ -440,19 +503,30 @@ function PlayerDropList({
   players,
   target,
   canEdit,
+  selectedId,
+  armed,
   onDropPlayer,
   onDragStart,
+  onTap,
+  onZoneTap,
 }: {
   title: string;
   players: CupWorkbenchPlayer[];
   target: 'bench' | 'reserve';
   canEdit: boolean;
+  selectedId: string | null;
+  armed: boolean;
   onDropPlayer: (payload: DragPayload, target: 'bench' | 'reserve') => void;
   onDragStart: (event: DragEvent, payload: DragPayload) => void;
+  onTap: (payload: DragPayload) => void;
+  onZoneTap: (target: 'bench' | 'reserve') => void;
 }) {
   return (
     <div
-      className="min-h-[190px] rounded-[22px] border border-white/10 bg-black/46 p-3"
+      onClick={() => onZoneTap(target)}
+      className={`min-h-[190px] rounded-[22px] border bg-black/46 p-3 transition ${
+        armed ? 'border-emerald-300/45 bg-emerald-300/[0.04]' : 'border-white/10'
+      }`}
       onDragOver={(event) => {
         event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
@@ -472,13 +546,15 @@ function PlayerDropList({
             player={player}
             source={{ source: target, playerId: player.id }}
             canDrag={canEdit}
+            selected={selectedId === player.id}
             onDragStart={onDragStart}
+            onTap={onTap}
           />
         ))}
       </div>
       {players.length === 0 ? (
         <div className="grid min-h-[120px] place-items-center rounded-2xl border border-dashed border-white/10 text-xs font-black text-white/28">
-          Drop here
+          {armed ? 'აქ დასადებად დააჭირე' : 'ცარიელია'}
         </div>
       ) : null}
     </div>
