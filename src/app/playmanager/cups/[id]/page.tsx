@@ -257,9 +257,9 @@ export default async function CupPage(props: { params: Promise<{ id: string }> }
             </div>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
             <div className="space-y-4">
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                 <CupStat icon={<Trophy className="h-4 w-4" />} label="საპრიზო ფონდი" value={formatGel(template.prize_pool)} tone="gold" />
                 <CupStat icon={<Coins className="h-4 w-4" />} label="შესვლა" value={entryFeeLabel} tone="green" />
                 <CupStat icon={<UsersRound className="h-4 w-4" />} label="მონაწილეები" value={`${participantCount}/${template.max_teams}`} tone="green" />
@@ -280,14 +280,14 @@ export default async function CupPage(props: { params: Promise<{ id: string }> }
                 </div>
                 <div className="h-3 overflow-hidden rounded-full bg-white/10">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-emerald-300 via-lime-300 to-red-500 shadow-[0_0_24px_rgba(52,211,153,0.5)]"
+                    className="h-full rounded-full bg-gradient-to-r from-emerald-300 via-emerald-300 to-red-500 shadow-[0_0_24px_rgba(52,211,153,0.5)]"
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
               </div>
 
               {isRegistration ? (
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
                   <ParticipantsPanel participants={participants || []} maxTeams={template.max_teams} />
                   <div className="rounded-[22px] border border-emerald-300/14 bg-black/58 p-4">
                     <div className="grid h-12 w-12 place-items-center rounded-2xl border border-emerald-300/20 bg-emerald-300/10 text-emerald-100">
@@ -436,7 +436,7 @@ function CupStat({
   const toneClass = {
     green: 'pm-dashboard-stat-green text-emerald-100',
     red: 'pm-dashboard-stat-red text-red-100',
-    gold: 'pm-dashboard-stat-gold text-yellow-100',
+    gold: 'pm-dashboard-stat-gold text-emerald-100',
   }[tone];
 
   return (
@@ -470,7 +470,7 @@ function ParticipantsPanel({
           {participants.length}/{maxTeams}
         </span>
       </div>
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {participants.map((participant, index) => (
           <div key={participant.team_id} className="flex min-w-0 items-center gap-3 rounded-2xl border border-emerald-300/10 bg-emerald-300/[0.06] px-3 py-2.5">
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-emerald-300/12 text-xs font-black text-emerald-100">

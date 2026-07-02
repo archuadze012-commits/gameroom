@@ -410,7 +410,13 @@ export async function buyPlayManagerMarketPlayer(playerKey: string): Promise<Pla
   });
 
   if (error) return mapPlayerActionError(error.message);
-  const refund = getPercentBonusAmount(price, actionContext.bonuses.transferDiscountPct);
+  // The discount refund MUST stay strictly below the 15% resale spread
+  // (pm_sell_player pays 85% of sticker). A freshly bought market player is
+  // stored at full sticker value and instantly resellable, so if the refund
+  // ever reached ≥15% a buy→sell round-trip would print money. The manager +
+  // market-facility discount can reach 18%+, so clamp it here at 14%.
+  const rawRefund = getPercentBonusAmount(price, actionContext.bonuses.transferDiscountPct);
+  const refund = Math.min(rawRefund, Math.floor(price * 0.14));
   const xpReward = 18;
   await applyPostActionRewards({
     userId: user.id,
@@ -1013,6 +1019,37 @@ export async function negotiatePlayManagerSponsor(): Promise<PlayManagerPlayerAc
   return {
     success: true,
     message: `სპონსორი განახლდა · ${(data?.sponsorWeeklyAmount ?? 0).toLocaleString('ka-GE')} ₾ weekly`,
+  };
+}
+
+export async function buyPlayManagerXpPack(pack: 'starter' | 'prep' | 'elite'): Promise<PlayManagerPlayerActionResult> {
+  const { user, team } = await getAuthenticatedTeam();
+  if (!user) return { success: false, error: 'unauthenticated' };
+  if (!team) return { success: false, error: 'team_missing' };
+
+  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const { data, error } = await db.rpc<{ xp: number; price: number; newXp: number }>('pm_buy_xp_pack', {
+    p_team_id: team.id,
+    p_pack: pack,
+  });
+
+  if (error) {
+    if (error.message.includes('invalid_pack')) return { success: false, error: 'unavailable' };
+    return mapPlayerActionError(error.message);
+  }
+  await logPlayManagerEvent({
+    teamId: team.id,
+    category: 'finance',
+    accent: 'gold',
+    title: `XP პაკეტი შეძენილია · +${(data?.xp ?? 0).toLocaleString('ka-GE')} XP`,
+    detail: `-${(data?.price ?? 0).toLocaleString('ka-GE')} ₾`,
+  });
+  revalidatePath('/playmanager/training');
+  revalidatePath('/playmanager');
+  return {
+    success: true,
+    message: `+${(data?.xp ?? 0).toLocaleString('ka-GE')} XP`,
+    amount: data?.price ?? 0,
   };
 }
 

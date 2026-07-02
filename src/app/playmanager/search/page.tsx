@@ -4,7 +4,10 @@ import { redirect } from 'next/navigation';
 import { Search, Shield, UsersRound } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { PlayManagerLightShell } from '@/components/playmanager/playmanager-light-shell';
+import { PmCard, PmCardHead, PmPill } from '@/components/playmanager/pm-cards';
 import { PlayerFutCard } from '@/components/playmanager/player-fut-card';
+import { buildPlayManagerPlayerCardLayout } from '@/lib/playmanager/player-card';
+import type { PlayerCardStatsInput } from '@/lib/playmanager/player-card-stats';
 import { formatGel } from '@/lib/playmanager/economy';
 import { getTeam } from '@/lib/playmanager/team';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
@@ -31,15 +34,26 @@ type TeamRow = {
 type PlayerRow = {
   id: string;
   display_name: string;
+  card_display_name: string | null;
   normalized_name: string;
   primary_position: string | null;
+  nationality_code: string | null;
   card_image_url: string | null;
+  card_stats: PlayerCardStatsInput | null;
   real_age: number | null;
   age: number;
   ovr_current: number;
   talent: number;
   current_transfer_value_gel: number;
   owner_id: string | null;
+  card_sil_width: number | null;
+  card_sil_height: number | null;
+  card_sil_x: number | null;
+  card_sil_y: number | null;
+  card_sil_opacity: number | null;
+  card_content_y: number | null;
+  card_name_size: number | null;
+  card_stats_scale: number | null;
 };
 
 const CATEGORY_ITEMS = [
@@ -159,7 +173,7 @@ export default async function PlayManagerSearchPage({
     } else if (activeType === 'players') {
       const playerQuery = admin
         .from('pm_players')
-        .select('id,display_name,normalized_name,primary_position,card_image_url,real_age,age,ovr_current,talent,current_transfer_value_gel,owner_id', { count: 'exact' })
+        .select('id,display_name,card_display_name,normalized_name,primary_position,nationality_code,card_image_url,card_stats,real_age,age,ovr_current,talent,current_transfer_value_gel,owner_id,card_sil_width,card_sil_height,card_sil_x,card_sil_y,card_sil_opacity,card_content_y,card_name_size,card_stats_scale', { count: 'exact' })
         .order('ovr_current', { ascending: false });
 
       const res = await (searchTerm
@@ -183,41 +197,28 @@ export default async function PlayManagerSearchPage({
 
   return (
     <PlayManagerLightShell>
-      <section className="relative overflow-hidden rounded-xl bg-[#020806]/90 p-4 shadow-[0_28px_100px_rgba(0,0,0,0.45)] sm:p-6">
-        <div className="pointer-events-none absolute inset-0 opacity-80">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_10%,rgba(34,197,94,0.16),transparent_30%),radial-gradient(circle_at_88%_18%,rgba(56,189,248,0.12),transparent_30%),linear-gradient(135deg,rgba(2,18,10,0.98),rgba(0,0,0,0.98)_64%)]" />
-        </div>
+      <div className="mx-auto w-full max-w-[1160px] space-y-4">
+        <PmCard>
+          <PmCardHead icon={Search} title="ძებნა" subtitle="მენეჯერები, გუნდები და ფეხბურთელები ერთ სივრცეში" />
 
-        <div className="relative z-10">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.28em] text-emerald-200/70">Search hub</p>
-              <h1 className="mt-2 flex items-center gap-3 text-3xl font-black leading-none text-white sm:text-4xl">
-                <Search className="h-7 w-7 text-emerald-300" />
-                ძებნა
-              </h1>
-              <p className="mt-2 text-sm font-bold text-white/52">მენეჯერები, გუნდები და ფეხბურთელები ერთ სივრცეში</p>
-            </div>
+          <form action="/playmanager/search" className="flex w-full flex-col gap-2 sm:flex-row">
+            <input type="hidden" name="type" defaultValue={activeType} />
+            <input
+              type="text"
+              name="q"
+              defaultValue={q}
+              placeholder="მოძებნე სახელი..."
+              className="h-12 flex-1 rounded-2xl border border-white/10 bg-black/40 px-4 text-sm font-bold text-white outline-none transition focus:border-emerald-300/34"
+            />
+            <button
+              type="submit"
+              className="inline-flex h-12 items-center justify-center rounded-2xl border border-emerald-300/18 bg-emerald-300/12 px-4 text-sm font-black text-white transition hover:bg-emerald-300/18"
+            >
+              ძებნა
+            </button>
+          </form>
 
-            <form action="/playmanager/search" className="flex w-full max-w-[420px] gap-2">
-              <input type="hidden" name="type" defaultValue={activeType} />
-              <input
-                type="text"
-                name="q"
-                defaultValue={q}
-                placeholder="მოძებნე სახელი..."
-                className="h-12 flex-1 rounded-2xl border border-white/10 bg-black/40 px-4 text-sm font-bold text-white outline-none transition focus:border-emerald-300/34"
-              />
-              <button
-                type="submit"
-                className="inline-flex h-12 items-center justify-center rounded-2xl border border-emerald-300/18 bg-emerald-300/12 px-4 text-sm font-black text-white transition hover:bg-emerald-300/18"
-              >
-                ძებნა
-              </button>
-            </form>
-          </div>
-
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
             {CATEGORY_ITEMS.map((item) => {
               const isActive = activeType === item.key;
               return (
@@ -226,7 +227,7 @@ export default async function PlayManagerSearchPage({
                   href={`/playmanager/search?type=${item.key}&q=${q}`}
                   className={`inline-flex items-center rounded-full border px-3 py-1.5 text-[11px] font-black transition-all ${
                     isActive
-                      ? 'border-emerald-300/30 bg-emerald-300/18 text-white shadow-[0_0_12px_rgba(52,211,153,0.18)]'
+                      ? 'border-emerald-300/40 bg-emerald-300/20 text-emerald-50 shadow-[0_0_14px_rgba(52,211,153,0.28)]'
                       : 'border-white/10 bg-white/[0.04] text-white/50 hover:border-emerald-300/14 hover:bg-[#071710] hover:text-white'
                   }`}
                 >
@@ -235,97 +236,97 @@ export default async function PlayManagerSearchPage({
               );
             })}
           </div>
+        </PmCard>
 
-          {showWelcome ? (
-            <div className="mt-8 rounded-2xl border border-dashed border-emerald-500/20 bg-[#04140c]/40 px-6 py-16 text-center">
-              <Search className="mx-auto h-12 w-12 text-emerald-400/60" />
-              <h3 className="mt-4 text-lg font-black text-white">საძიებო ჰაბი</h3>
-              <p className="mx-auto mt-2 max-w-md text-sm text-white/52">
-                შეიყვანეთ საძიებო სიტყვა მენეჯერების, გუნდების და ფეხბურთელების მოსაძებნად, ან აირჩიეთ კატეგორია სიის სანახავად.
-              </p>
-              <div className="mt-6 flex flex-wrap justify-center gap-3">
+        {showWelcome ? (
+          <PmCard className="items-center py-16 text-center">
+            <Search className="mx-auto h-12 w-12 text-emerald-400/60" />
+            <h3 className="mt-4 text-lg font-black text-white">საძიებო ჰაბი</h3>
+            <p className="mx-auto mt-2 max-w-md text-sm text-white/52">
+              შეიყვანეთ საძიებო სიტყვა მენეჯერების, გუნდების და ფეხბურთელების მოსაძებნად, ან აირჩიეთ კატეგორია სიის სანახავად.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Link
+                href={`/playmanager/search?type=managers&q=${q}`}
+                className="rounded-xl border border-white/8 bg-white/[0.04] px-4 py-2 text-xs font-black text-white transition hover:bg-white/8"
+              >
+                მენეჯერების ბრაუზი
+              </Link>
+              <Link
+                href={`/playmanager/search?type=teams&q=${q}`}
+                className="rounded-xl border border-white/8 bg-white/[0.04] px-4 py-2 text-xs font-black text-white transition hover:bg-white/8"
+              >
+                გუნდების ბრაუზი
+              </Link>
+              <Link
+                href={`/playmanager/search?type=players&q=${q}`}
+                className="rounded-xl border border-white/8 bg-white/[0.04] px-4 py-2 text-xs font-black text-white transition hover:bg-white/8"
+              >
+                ფეხბურთელების ბრაუზი
+              </Link>
+            </div>
+          </PmCard>
+        ) : (
+          <div className="space-y-4">
+            {activeType === 'managers' && (
+              <div>
+                <SectionHeader icon={<Shield className="h-4 w-4" />} title="მენეჯერები" count={totalCount} />
+                <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {managerResults.length ? managerResults.map(({ profile, team: managerTeam }) => (
+                    <ManagerCard key={profile.id} profile={profile} team={managerTeam} isMe={profile.id === user.id} />
+                  )) : <EmptyState q={q} />}
+                </div>
+              </div>
+            )}
+
+            {activeType === 'teams' && (
+              <div>
+                <SectionHeader icon={<UsersRound className="h-4 w-4" />} title="გუნდები" count={totalCount} />
+                <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {teams.length ? teams.map((row) => (
+                    <TeamCard key={row.id} team={row} isMine={row.id === myTeam.id} />
+                  )) : <EmptyState q={q} />}
+                </div>
+              </div>
+            )}
+
+            {activeType === 'players' && (
+              <div>
+                <SectionHeader icon={<Search className="h-4 w-4" />} title="ფეხბურთელები" count={totalCount} />
+                <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {players.length ? players.map((player) => (
+                    <PlayerCard key={player.id} player={player} ownerTeamMap={ownerTeamMap} />
+                  )) : <EmptyState q={q} />}
+                </div>
+              </div>
+            )}
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-4">
                 <Link
-                  href={`/playmanager/search?type=managers&q=${q}`}
-                  className="rounded-xl border border-white/8 bg-white/[0.04] px-4 py-2 text-xs font-black text-white transition hover:bg-white/8"
+                  href={`/playmanager/search?type=${activeType}&q=${q}&page=${page - 1}`}
+                  className={`inline-flex h-10 items-center justify-center rounded-xl border border-white/10 px-4 text-xs font-black text-white transition ${
+                    page <= 1 ? 'pointer-events-none opacity-40' : 'bg-white/[0.04] hover:bg-white/10'
+                  }`}
                 >
-                  მენეჯერების ბრაუზი
+                  უკან
                 </Link>
+                <span className="text-xs font-bold text-white/60">
+                  გვერდი {page} / {totalPages}
+                </span>
                 <Link
-                  href={`/playmanager/search?type=teams&q=${q}`}
-                  className="rounded-xl border border-white/8 bg-white/[0.04] px-4 py-2 text-xs font-black text-white transition hover:bg-white/8"
+                  href={`/playmanager/search?type=${activeType}&q=${q}&page=${page + 1}`}
+                  className={`inline-flex h-10 items-center justify-center rounded-xl border border-white/10 px-4 text-xs font-black text-white transition ${
+                    page >= totalPages ? 'pointer-events-none opacity-40' : 'bg-white/[0.04] hover:bg-white/10'
+                  }`}
                 >
-                  გუნდების ბრაუზი
-                </Link>
-                <Link
-                  href={`/playmanager/search?type=players&q=${q}`}
-                  className="rounded-xl border border-white/8 bg-white/[0.04] px-4 py-2 text-xs font-black text-white transition hover:bg-white/8"
-                >
-                  ფეხბურთელების ბრაუზი
+                  წინ
                 </Link>
               </div>
-            </div>
-          ) : (
-            <div className="mt-6">
-              {activeType === 'managers' && (
-                <div className="rounded-2xl border border-white/8 bg-black/34 p-4">
-                  <SectionHeader icon={<Shield className="h-4 w-4" />} title="მენეჯერები" count={totalCount} />
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {managerResults.length ? managerResults.map(({ profile, team: managerTeam }) => (
-                      <ManagerCard key={profile.id} profile={profile} team={managerTeam} isMe={profile.id === user.id} />
-                    )) : <EmptyState q={q} />}
-                  </div>
-                </div>
-              )}
-
-              {activeType === 'teams' && (
-                <div className="rounded-2xl border border-white/8 bg-black/34 p-4">
-                  <SectionHeader icon={<UsersRound className="h-4 w-4" />} title="გუნდები" count={totalCount} />
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {teams.length ? teams.map((row) => (
-                      <TeamCard key={row.id} team={row} isMine={row.id === myTeam.id} />
-                    )) : <EmptyState q={q} />}
-                  </div>
-                </div>
-              )}
-
-              {activeType === 'players' && (
-                <div className="border-t border-white/8 pt-5">
-                  <SectionHeader icon={<Search className="h-4 w-4" />} title="ფეხბურთელები" count={totalCount} />
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    {players.length ? players.map((player) => (
-                      <PlayerCard key={player.id} player={player} ownerTeamMap={ownerTeamMap} />
-                    )) : <EmptyState q={q} />}
-                  </div>
-                </div>
-              )}
-
-              {totalPages > 1 && (
-                <div className="mt-6 flex items-center justify-center gap-4">
-                  <Link
-                    href={`/playmanager/search?type=${activeType}&q=${q}&page=${page - 1}`}
-                    className={`inline-flex h-10 items-center justify-center rounded-xl border border-white/10 px-4 text-xs font-black text-white transition ${
-                      page <= 1 ? 'pointer-events-none opacity-40' : 'bg-white/[0.04] hover:bg-white/10'
-                    }`}
-                  >
-                    უკან
-                  </Link>
-                  <span className="text-xs font-bold text-white/60">
-                    გვერდი {page} / {totalPages}
-                  </span>
-                  <Link
-                    href={`/playmanager/search?type=${activeType}&q=${q}&page=${page + 1}`}
-                    className={`inline-flex h-10 items-center justify-center rounded-xl border border-white/10 px-4 text-xs font-black text-white transition ${
-                      page >= totalPages ? 'pointer-events-none opacity-40' : 'bg-white/[0.04] hover:bg-white/10'
-                    }`}
-                  >
-                    წინ
-                  </Link>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </section>
+            )}
+          </div>
+        )}
+      </div>
     </PlayManagerLightShell>
   );
 }
@@ -364,51 +365,46 @@ function EmptyState({ q }: { q: string }) {
 
 function ManagerCard({ profile, team, isMe }: { profile: ManagerRow; team: TeamRow; isMe?: boolean }) {
   return (
-    <Link 
-      href={`/playmanager/managers/${profile.id}`}
-      className={`block rounded-2xl border p-3 transition-all ${
-      isMe 
-        ? 'border-emerald-500/40 bg-emerald-950/20 shadow-[0_0_15px_rgba(16,185,129,0.1)] hover:border-emerald-400/60' 
-        : 'border-white/8 bg-white/[0.03] hover:border-emerald-300/26 hover:bg-emerald-300/[0.06]'
-    }`}>
-      <div className="flex items-center gap-3">
-        <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-white/10">
-          {profile.avatar_url ? (
-            <Image src={profile.avatar_url} alt={profile.display_name ?? profile.username ?? 'Manager'} fill sizes="44px" className="object-cover" />
-          ) : (
-            <div className="grid h-full w-full place-items-center text-sm font-black text-white/70">
-              {(profile.display_name ?? profile.username ?? 'M').slice(0, 1).toUpperCase()}
-            </div>
-          )}
+    <Link href={`/playmanager/managers/${profile.id}`} className="block">
+      <PmCard>
+        <div className="flex items-center gap-3">
+          <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-white/10">
+            {profile.avatar_url ? (
+              <Image src={profile.avatar_url} alt={profile.display_name ?? profile.username ?? 'Manager'} fill sizes="44px" className="object-cover" />
+            ) : (
+              <div className="grid h-full w-full place-items-center text-sm font-black text-white/70">
+                {(profile.display_name ?? profile.username ?? 'M').slice(0, 1).toUpperCase()}
+              </div>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-black text-white flex items-center gap-1.5">
+              <span className="truncate">{profile.display_name ?? profile.username ?? 'მენეჯერი'}</span>
+              {isMe && <span className="shrink-0 text-[9px] text-emerald-400 font-extrabold uppercase">მე</span>}
+            </p>
+            <p className="truncate text-[11px] font-bold text-white/46">@{profile.username ?? 'manager'}</p>
+          </div>
         </div>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-black text-white flex items-center gap-1.5">
-            <span className="truncate">{profile.display_name ?? profile.username ?? 'მენეჯერი'}</span>
-            {isMe && <span className="shrink-0 text-[9px] text-emerald-400 font-extrabold uppercase">მე</span>}
-          </p>
-          <p className="truncate text-[11px] font-bold text-white/46">@{profile.username ?? 'manager'}</p>
+        <div className="mt-auto">
+          <PmPill tone={isMe ? 'green' : undefined}>{team.name} · D{team.division_id}</PmPill>
         </div>
-      </div>
-      <p className="mt-3 truncate text-[11px] font-bold text-emerald-100/70">{team.name} · D{team.division_id}</p>
+      </PmCard>
     </Link>
   );
 }
 
 function TeamCard({ team, isMine }: { team: TeamRow; isMine?: boolean }) {
   return (
-    <Link 
-      href={`/playmanager/teams/${team.id}`}
-      className={`block rounded-2xl border p-3 transition-all hover:bg-white/[0.06] ${
-        isMine 
-          ? 'border-emerald-500/40 bg-emerald-950/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]' 
-          : 'border-white/8 bg-white/[0.03]'
-      }`}
-    >
-      <p className="flex items-center gap-1.5 text-sm font-black text-white">
-        <span className="truncate">{team.name}</span>
-        {isMine && <span className="shrink-0 text-[9px] text-emerald-400 font-extrabold uppercase">ჩემი</span>}
-      </p>
-      <p className="mt-2 truncate text-[11px] font-bold text-white/46">D{team.division_id}</p>
+    <Link href={`/playmanager/teams/${team.id}`} className="block">
+      <PmCard>
+        <p className="flex items-center gap-1.5 text-sm font-black text-white">
+          <span className="truncate">{team.name}</span>
+          {isMine && <span className="shrink-0 text-[9px] text-emerald-400 font-extrabold uppercase">ჩემი</span>}
+        </p>
+        <div className="mt-auto">
+          <PmPill tone={isMine ? 'green' : undefined}>D{team.division_id}</PmPill>
+        </div>
+      </PmCard>
     </Link>
   );
 }
@@ -417,31 +413,36 @@ function PlayerCard({ player, ownerTeamMap }: { player: PlayerRow; ownerTeamMap:
   const position = (player.primary_position ?? 'CM').toUpperCase();
 
   return (
-    <Link
-      href={`/playmanager/players/${player.id}`}
-      className="group flex min-w-0 items-center gap-3 border-b border-white/8 py-3 transition hover:border-emerald-300/30 hover:bg-emerald-300/[0.035]"
-    >
-      <div className="h-[138px] w-[101px] shrink-0 overflow-visible">
-        <div className="origin-top-left scale-[0.4]">
-          <PlayerFutCard
-            name={player.display_name}
-            position={position}
-            ovr={player.ovr_current}
-            talent={player.talent}
-            imageUrl={player.card_image_url}
-            availability="ready"
-          />
+    <Link href={`/playmanager/players/${player.id}`} className="group block">
+      <PmCard>
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="h-[138px] w-[101px] shrink-0 overflow-visible">
+            <div className="origin-top-left scale-[0.4]">
+              <PlayerFutCard
+                name={player.display_name}
+                labelOverride={player.card_display_name}
+                position={position}
+                ovr={player.ovr_current}
+                talent={player.talent}
+                stats={player.card_stats}
+                imageUrl={player.card_image_url}
+                nationalityCode={player.nationality_code}
+                editorConfig={buildPlayManagerPlayerCardLayout(player)}
+                availability="ready"
+              />
+            </div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-base font-black text-white transition group-hover:text-emerald-100">{player.display_name}</p>
+            <p className="mt-1 truncate text-[11px] font-bold uppercase tracking-[0.1em] text-white/44">
+              {player.real_age ?? player.age} წლის · {player.owner_id ? ownerTeamMap.get(player.owner_id) ?? 'კლუბშია' : 'თავისუფალი აგენტი'}
+            </p>
+            <p className="mt-3">
+              <PmPill tone="green">{formatGel(player.current_transfer_value_gel)}</PmPill>
+            </p>
+          </div>
         </div>
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-base font-black text-white transition group-hover:text-emerald-100">{player.display_name}</p>
-        <p className="mt-1 truncate text-[11px] font-bold uppercase tracking-[0.1em] text-white/44">
-          {player.real_age ?? player.age} წლის · {player.owner_id ? ownerTeamMap.get(player.owner_id) ?? 'კლუბშია' : 'თავისუფალი აგენტი'}
-        </p>
-        <p className="mt-3 text-sm font-black text-emerald-100/86">
-          {formatGel(player.current_transfer_value_gel)}
-        </p>
-      </div>
+      </PmCard>
     </Link>
   );
 }

@@ -22,7 +22,7 @@ export function ScoutingReport({ squad }: { squad: ScoutingPlayer[] }) {
         <p className="mt-2 text-sm font-bold leading-6 text-white/55">{report.headline}</p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {report.groups.map((g) => {
           const style = NEED_STYLE[g.need];
           const depthPct = Math.min(100, Math.round((g.count / g.recommendedDepth) * 100));

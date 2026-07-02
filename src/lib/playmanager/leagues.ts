@@ -181,6 +181,17 @@ export async function processDueLeagueMatches() {
     const homeId = match.home_team_id as string | null;
     const awayId = match.away_team_id as string | null;
     if (!homeId || !awayId) continue; // bracket slot not filled yet
+
+    // Atomically claim the fixture (ready → processing). A racing processor gets
+    // no rows and skips — prevents double standings, double XP, double prize.
+    const { data: claimed } = await db
+      .from('pm_league_fixtures')
+      .update({ status: 'processing' })
+      .eq('id', match.id)
+      .eq('status', 'ready')
+      .select('id');
+    if (!claimed || (claimed as unknown[]).length === 0) continue;
+
     const instance = instanceById.get(match.league_id);
     const isKnockout = instance?.format === 'knockout';
 

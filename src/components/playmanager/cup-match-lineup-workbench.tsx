@@ -234,7 +234,7 @@ export function CupMatchLineupWorkbench({
 
   return (
     <section className="space-y-5">
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="rounded-[28px] border border-emerald-300/16 bg-black/50 p-4 shadow-[inset_0_0_45px_rgba(16,185,129,0.08)]">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -553,7 +553,7 @@ function ScoutingReport({
         </span>
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <ScoutRow icon={<UsersRound className="h-4 w-4" />} label="ძალა" value={`${opponent.avgOvr} OVR`} />
         <ScoutRow icon={<Gauge className="h-4 w-4" />} label="დაღლა" value={`${opponent.avgFatigue}%`} />
         <ScoutRow icon={<Activity className="h-4 w-4" />} label="მორალი" value={`${opponent.avgMorale}%`} />

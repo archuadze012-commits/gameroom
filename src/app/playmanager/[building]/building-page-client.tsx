@@ -19,6 +19,9 @@ import {
   type RunCityActionError,
   type PlayerActionError,
 } from '@/components/playmanager/playmanager-city-editor';
+import { PlayManagerOffice } from '@/components/playmanager/playmanager-office';
+import { PlayManagerTraining } from '@/components/playmanager/playmanager-training';
+import { PlayManagerResidence } from '@/components/playmanager/playmanager-residence';
 
 type Props = {
   building: EditableCityBuilding;
@@ -138,6 +141,63 @@ export function BuildingPageClient({
     }
     startTransition(() => router.refresh());
     setActionMessage(result.amount ? `${result.message} · ${result.amount.toLocaleString('ka-GE')} ₾` : result.message);
+  }
+
+  if (building.spriteKey === 'finance') {
+    return (
+      <div className="relative min-h-screen w-full bg-[#070503]">
+        <PlayManagerOffice
+          building={building}
+          manager={manager}
+          team={team}
+          snapshot={citySnapshot}
+          clubEffects={clubEffects}
+          facilities={facilities}
+          pendingAction={pendingAction}
+          actionMessage={actionMessage}
+          onRunAction={runCityAction}
+          onRunPlayerAction={runPlayerAction}
+        />
+      </div>
+    );
+  }
+
+  if (building.spriteKey === 'residence') {
+    return (
+      <div className="relative min-h-screen w-full bg-[#05070a]">
+        <PlayManagerResidence
+          building={building}
+          manager={manager}
+          team={team}
+          snapshot={citySnapshot}
+          clubEffects={clubEffects}
+          facilities={facilities}
+          pendingAction={pendingAction}
+          actionMessage={actionMessage}
+          onRunAction={runCityAction}
+          onRunPlayerAction={runPlayerAction}
+        />
+      </div>
+    );
+  }
+
+  if (building.spriteKey === 'training') {
+    return (
+      <div className="relative min-h-screen w-full bg-[#05070a]">
+        <PlayManagerTraining
+          building={building}
+          manager={manager}
+          team={team}
+          snapshot={citySnapshot}
+          clubEffects={clubEffects}
+          facilities={facilities}
+          pendingAction={pendingAction}
+          actionMessage={actionMessage}
+          onRunAction={runCityAction}
+          onRunPlayerAction={runPlayerAction}
+        />
+      </div>
+    );
   }
 
   return (

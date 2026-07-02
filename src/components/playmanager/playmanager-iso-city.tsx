@@ -56,7 +56,7 @@ const SPRITES: BuildingSprite[] = [
   { key: 'trophy_hall', src: '/playmanager/city/buildings/trophy_hall.webp', label: 'თასების დარბაზი', href: '/playmanager/museum',    tone: 'gold',  imgX: 1300, imgY: 650, w: 720, h: 620, rot: 0, sy: 1 },
   { key: 'academy',     src: '/playmanager/city/buildings/academy.webp',     label: 'აკადემია',        href: '/playmanager/academy',   tone: 'green', imgX: 760,  imgY: 120, w: 820, h: 740, rot: 0, sy: 1 },
   { key: 'headquarters', src: '/playmanager/city/buildings/headquarters.webp', label: 'ოფისი',          href: '/playmanager/finance',   tone: 'gold',  imgX: 1240, imgY: 60,  w: 700, h: 700, rot: 0, sy: 1 },
-  { key: 'fountain',    src: '/playmanager/city/buildings/fountain.webp',    label: 'შადრევანი',       href: '',                       tone: 'green', imgX: 1430, imgY: 560, w: 560, h: 470, rot: 0, sy: 1, decorative: true },
+  { key: 'fountain',    src: '/playmanager/city/buildings/fountain.webp',    label: 'სასაუბრო',        href: '/playmanager/chat',      tone: 'gold',  imgX: 1430, imgY: 560, w: 560, h: 470, rot: 0, sy: 1 },
   { key: 'gamestore',   src: '/playmanager/city/buildings/gamestore.webp',   label: 'PlayGame',        href: '/',                      tone: 'green', imgX: 250,  imgY: 700, w: 680, h: 620, rot: 0, sy: 1 },
   { key: 'tower',       src: '/playmanager/city/buildings/tower.webp',       label: 'გუნდი',           href: '/playmanager/residence', tone: 'green', imgX: 1240, imgY: -120, w: 720, h: 980, rot: 0, sy: 1 },
 ];
@@ -424,7 +424,9 @@ export function PlayManagerIsoCity() {
                 cursor: adminOpen ? 'move' : s.decorative ? 'default' : 'pointer',
                 outline: active ? '3px dashed rgba(52,211,153,0.9)' : 'none',
                 outlineOffset: '4px',
-                filter: on && !adminOpen && !s.decorative ? `drop-shadow(0 0 26px rgba(${TONE[s.tone]},0.85))` : 'none',
+                filter: !adminOpen && !s.decorative
+                  ? `drop-shadow(0 0 ${on ? 26 : 14}px rgba(${TONE[s.tone]},${on ? 0.85 : 0.5}))`
+                  : 'none',
               }}
             />
           );

@@ -255,7 +255,7 @@ export type PlayManagerDashboardSnapshot = {
   } | null;
 };
 
-type PlayManagerCitySnapshotMode = 'full' | 'lineup' | 'light';
+type PlayManagerCitySnapshotMode = 'full' | 'lineup' | 'light' | 'residence';
 
 type BaseSquadPlayer = Omit<CitySquadPlayer, 'role'> & {
   normalizedName: string;
@@ -655,7 +655,10 @@ export async function getPlayManagerCitySnapshot(
   // finance, calendar, match settings, eventFeed) but drops the heavy ones that
   // a non-squad building (e.g. media/chat) never reads — market, transactions,
   // match history, academy, shortlist and cups.
-  const isReduced = isLineupOnly || mode === 'light';
+  const isReduced = isLineupOnly || mode === 'light' || mode === 'residence';
+  // 'residence' is like 'light' but keeps academy — the residence page renders
+  // squad + academy + staff and nothing else, so it can skip everything else.
+  const includeAcademy = !isReduced || mode === 'residence';
   const db = asPlayManagerDb(createSupabaseAdminClient());
   const admin = createSupabaseAdminClient();
   const untypedAdmin = admin as unknown as UntypedSupabaseClient;
@@ -725,7 +728,7 @@ export async function getPlayManagerCitySnapshot(
         .select('season_no, is_completed, last_finish, last_reward, last_outcome')
         .eq('team_id', teamId)
         .single(),
-      isReduced
+      !includeAcademy
         ? Promise.resolve({ data: [] as AcademyProspectRow[] })
         : db
             .from<AcademyProspectRow>('pm_academy_prospects')

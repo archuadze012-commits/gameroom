@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { ArrowLeft, UsersRound, CalendarDays, Award, Shield } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { PlayManagerLightShell } from '@/components/playmanager/playmanager-light-shell';
+import { PmCard, PmCardHead, PmPill } from '@/components/playmanager/pm-cards';
+import { NestedMiniBox } from '@/components/playmanager/panel-primitives';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { formatGel } from '@/lib/playmanager/economy';
 
@@ -94,116 +96,105 @@ export default async function PlayManagerTeamPage(
 
   const isMe = team.user_id === userData.user.id;
 
+  const avgOvr = squadPlayers.length
+    ? Math.round(squadPlayers.reduce((sum, p) => sum + p.ovr_current, 0) / squadPlayers.length)
+    : 0;
+  const squadValue = squadPlayers.reduce((sum, p) => sum + p.current_transfer_value_gel, 0);
+
   return (
     <PlayManagerLightShell>
-      <section className="relative overflow-hidden rounded-xl bg-[#020806]/90 p-4 shadow-[0_28px_100px_rgba(0,0,0,0.45)] sm:p-6">
-        <div className="pointer-events-none absolute inset-0 opacity-80">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.12),transparent_40%),radial-gradient(circle_at_88%_18%,rgba(56,189,248,0.08),transparent_30%),linear-gradient(135deg,rgba(2,18,10,0.98),rgba(0,0,0,0.98)_64%)]" />
+      <div className="mx-auto w-full max-w-[1160px] space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Link
+            href="/playmanager/search?type=teams"
+            className="inline-flex h-10 items-center gap-2 rounded-full border border-white/12 bg-white/[0.05] px-3 text-xs font-black text-white/70 transition hover:bg-white/10"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            ძებნაში დაბრუნება
+          </Link>
+          {isMe && <PmPill tone="green">ჩემი გუნდი</PmPill>}
         </div>
 
-        <div className="relative z-10">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <Link
-              href="/playmanager/search?type=teams"
-              className="inline-flex h-11 items-center gap-2 rounded-2xl border border-white/10 bg-black/44 px-4 text-sm font-black text-white/70 transition hover:border-white/20 hover:bg-white/[0.04] hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              ძებნაში დაბრუნება
-            </Link>
-            {isMe && (
-              <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-emerald-400">
-                ჩემი გუნდი
+        {/* ── TEAM IDENTITY ── */}
+        <PmCard>
+          <PmCardHead
+            icon={Shield}
+            title={team.name}
+            subtitle="გუნდის პროფილი"
+            right={<PmPill tone="green">D{team.division_id}</PmPill>}
+          />
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="flex items-center gap-3 rounded-2xl border border-white/8 bg-black/24 p-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-emerald-300/18 bg-emerald-300/10 text-emerald-100">
+                <Award className="h-5 w-5" />
               </span>
-            )}
-          </div>
-
-          <div className="mx-auto max-w-4xl">
-            <div className="rounded-[32px] border border-emerald-300/14 bg-black/40 p-6 shadow-[inset_0_0_55px_rgba(16,185,129,0.04)] sm:p-8">
-              <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:items-start sm:text-left">
-                <div className="relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-[28px] border-2 border-emerald-300/20 bg-emerald-950/40 shadow-2xl">
-                  <Shield className="h-12 w-12 text-emerald-400/50" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-emerald-200/60">
-                    გუნდის პროფილი
-                  </p>
-                  <h1 className="mt-2 text-3xl font-black text-white sm:text-4xl md:text-5xl">
-                    {team.name}
-                  </h1>
-                  
-                  <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] p-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10">
-                        <Award className="h-5 w-5 text-blue-400" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-[10px] font-bold text-white/40">დივიზიონი</p>
-                        <p className="truncate text-sm font-black text-white">Division {team.division_id}</p>
-                      </div>
-                    </div>
-                    
-                    <Link href={`/playmanager/managers/${team.user_id}`} className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] p-3 transition hover:bg-white/[0.04]">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-500/10">
-                        <UsersRound className="h-5 w-5 text-purple-400" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-[10px] font-bold text-white/40">მენეჯერი</p>
-                        <p className="truncate text-sm font-black text-purple-300">{profile?.display_name ?? profile?.username ?? 'მენეჯერი'}</p>
-                      </div>
-                    </Link>
-
-                    <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] p-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10">
-                        <CalendarDays className="h-5 w-5 text-amber-400" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-[10px] font-bold text-white/40">დარეგისტრირდა</p>
-                        <p className="truncate text-sm font-black text-white">
-                          {new Date(team.created_at).toLocaleDateString('ka-GE', { year: 'numeric', month: 'short', day: 'numeric' })}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div className="min-w-0">
+                <p className="truncate text-[10px] font-black uppercase tracking-[0.14em] text-white/40">დივიზიონი</p>
+                <p className="truncate text-sm font-black text-white">Division {team.division_id}</p>
               </div>
             </div>
 
-            <div className="mt-8 rounded-[32px] border border-white/10 bg-black/40 p-6 sm:p-8">
-              <h2 className="mb-6 flex items-center gap-3 text-lg font-black text-white">
-                <UsersRound className="h-5 w-5 text-emerald-400" />
-                შემადგენლობა ({squadPlayers.length})
-              </h2>
+            <Link
+              href={`/playmanager/managers/${team.user_id}`}
+              className="flex items-center gap-3 rounded-2xl border border-white/8 bg-black/24 p-3 transition hover:border-emerald-300/24 hover:bg-white/[0.04]"
+            >
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-emerald-300/18 bg-emerald-300/10 text-emerald-100">
+                <UsersRound className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-[10px] font-black uppercase tracking-[0.14em] text-white/40">მენეჯერი</p>
+                <p className="truncate text-sm font-black text-emerald-200">{profile?.display_name ?? profile?.username ?? 'მენეჯერი'}</p>
+              </div>
+            </Link>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {squadPlayers.map((player) => (
-                  <Link
-                    key={player.id}
-                    href={`/playmanager/players/${player.id}`}
-                    className="block rounded-2xl border border-white/8 bg-white/[0.03] p-3 transition hover:border-emerald-300/26 hover:bg-emerald-300/[0.06]"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-black text-white">{player.display_name}</p>
-                        <p className="mt-1 truncate text-[11px] font-bold text-white/46">
-                          {(player.primary_position ?? 'CM').toUpperCase()} · OVR {player.ovr_current} · {player.real_age ?? player.age} წელი
-                        </p>
-                      </div>
-                      <span className="shrink-0 rounded-full border border-emerald-300/18 bg-emerald-300/10 px-2.5 py-1 text-[10px] font-black text-emerald-100">
-                        {formatGel(player.current_transfer_value_gel)}
+            <div className="flex items-center gap-3 rounded-2xl border border-white/8 bg-black/24 p-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-emerald-300/18 bg-emerald-300/10 text-emerald-100">
+                <CalendarDays className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-[10px] font-black uppercase tracking-[0.14em] text-white/40">დარეგისტრირდა</p>
+                <p className="truncate text-sm font-black text-white">
+                  {new Date(team.created_at).toLocaleDateString('ka-GE', { year: 'numeric', month: 'short', day: 'numeric' })}
+                </p>
+              </div>
+            </div>
+          </div>
+        </PmCard>
+
+        {/* ── SQUAD ── */}
+        <PmCard>
+          <PmCardHead icon={UsersRound} title="შემადგენლობა" subtitle={`${squadPlayers.length} ფეხბურთელი`} />
+          <div className="grid grid-cols-3 gap-2">
+            <NestedMiniBox label="მოთამაშეები" value={String(squadPlayers.length)} />
+            <NestedMiniBox label="საშ. OVR" value={String(avgOvr)} />
+            <NestedMiniBox label="ღირებულება" value={formatGel(squadValue)} />
+          </div>
+          {squadPlayers.length === 0 ? (
+            <p className="py-6 text-center text-sm font-bold text-white/40">ამ გუნდს ჯერ ფეხბურთელები არ ჰყავს.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {squadPlayers.map((player) => (
+                <Link
+                  key={player.id}
+                  href={`/playmanager/players/${player.id}`}
+                  className="group grid grid-cols-[1fr_auto] items-center gap-3 rounded-2xl border border-white/8 bg-black/24 px-3 py-2.5 transition hover:border-emerald-300/24 hover:bg-white/[0.04]"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-white transition group-hover:text-emerald-100">{player.display_name}</p>
+                    <p className="mt-0.5 flex items-center gap-2 text-[11px] font-bold text-white/44">
+                      <span className="rounded border border-white/12 bg-white/[0.05] px-1.5 py-px text-[10px] font-black tracking-wide text-white/65">
+                        {(player.primary_position ?? 'CM').toUpperCase()}
                       </span>
-                    </div>
-                  </Link>
-                ))}
-                {squadPlayers.length === 0 && (
-                  <p className="col-span-full py-8 text-center text-sm font-bold text-white/40">
-                    ამ გუნდს ჯერ ფეხბურთელები არ ჰყავს.
-                  </p>
-                )}
-              </div>
+                      OVR {player.ovr_current} · {player.real_age ?? player.age} წელი
+                    </p>
+                  </div>
+                  <PmPill tone="green">{formatGel(player.current_transfer_value_gel)}</PmPill>
+                </Link>
+              ))}
             </div>
-          </div>
-        </div>
-      </section>
+          )}
+        </PmCard>
+      </div>
     </PlayManagerLightShell>
   );
 }

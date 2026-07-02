@@ -3,19 +3,15 @@
 import {
   Activity,
   CalendarDays,
-  CheckCircle2,
   CircleQuestionMark,
   Coins,
   Dumbbell,
   ExternalLink,
-  Globe,
   GraduationCap,
   Home,
   Landmark,
   Megaphone,
   MessageCircle,
-  MessageSquareMore,
-  Menu,
   Play,
   RadioTower,
   Search,
@@ -28,7 +24,6 @@ import {
   Trophy,
   TrendingUp,
   UsersRound,
-  Zap,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -55,7 +50,7 @@ import {
   type RunCityActionResult,
 } from '@/app/playmanager/actions';
 import SpotlightCard from '@/components/SpotlightCard';
-import { Dock } from '@/components/react-bits/dock';
+import { PlayManagerBottomNav } from '@/components/playmanager/playmanager-bottom-nav';
 import { SpotlightCard as ReactBitsSpotlightCard } from '@/components/react-bits/spotlight-card';
 import { PlayManagerDirectMessages, PlayManagerGlobalChat } from '@/components/playmanager/playmanager-media-modules';
 import { ScoutingReport } from '@/components/playmanager/scouting-report';
@@ -195,18 +190,11 @@ const BUILDING_MODULES: Record<string, BuildingModule[]> = {
     { key: 'reputation', title: 'რეპუტაცია', eyebrow: 'Fans', description: 'ფანები, მედია კამპანია და public image.', icon: Star, status: 'ready' },
   ],
   residence: [
+    { key: 'squad', title: 'მთავარი გუნდი', eyebrow: 'First team', description: 'სრული შემადგენლობა — საბაზო XI, სათადარიგოები და რეზერვი, OVR-ით და ასაკით.', icon: UsersRound, status: 'ready' },
     { key: 'academy', title: 'აკადემია', eyebrow: 'Academy', description: 'ახალგაზრდები, ტალანტები და მომავალი ხელმოწერები გუნდის შიგნით.', icon: GraduationCap, status: 'ready' },
     { key: 'staff', title: 'პერსონალი', eyebrow: 'Staff', description: 'მწვრთნელები, ექიმი, სკაუტი და მათი monthly cost.', icon: ShieldCheck, status: 'ready' },
   ],
 };
-
-const LIGHTWEIGHT_DOCK_NAV = [
-  { label: 'მთავარი', icon: Home, href: '/playmanager' },
-  { label: 'ძებნა', icon: Search, href: '/playmanager/search' },
-  { label: 'მესენჯერი', icon: MessageSquareMore, href: '/playmanager/messages' },
-  { label: 'უწყებები', icon: Megaphone, href: '/playmanager/announcements' },
-  { label: 'მეტი', icon: Menu, href: '/playmanager/office' },
-];
 
 export const DEFAULT_FACILITY_STATE: Record<string, FacilityState> = {
   arena: { status: 'active', level: 2, progress: 68, upgradeCost: '₾620K', nextUnlock: 'VIP ლოჟები' },
@@ -320,7 +308,7 @@ const TRAINING_SLOTS = [
   { name: 'ახალგაზრდა მცველი', pos: 'CB', ovr: '63 -> 64', gain: '+₾2M' },
 ];
 
-function getTrainingGrowthCap(talent: number) {
+export function getTrainingGrowthCap(talent: number) {
   if (talent >= 11) return 30;
   if (talent === 10) return 25;
   if (talent === 9) return 20;
@@ -328,11 +316,11 @@ function getTrainingGrowthCap(talent: number) {
   return talent * 2 + 1;
 }
 
-function getPlayerPotentialForTraining(player: PlayManagerCitySnapshot['squad'][number]) {
+export function getPlayerPotentialForTraining(player: PlayManagerCitySnapshot['squad'][number]) {
   return player.ovrBase + getTrainingGrowthCap(player.talent);
 }
 
-function getDevelopmentXpCost(player: PlayManagerCitySnapshot['squad'][number]) {
+export function getDevelopmentXpCost(player: PlayManagerCitySnapshot['squad'][number]) {
   const growth = Math.max(0, player.ovrCurrent - player.ovrBase);
   return Math.round((120 + player.ovrCurrent * 4 + growth * 35) / 10) * 10;
 }
@@ -406,7 +394,7 @@ function ActionCard({
       type="button"
       onClick={onClick}
       disabled={pending}
-      className={`w-full rounded-none border px-4 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-55 ${border} ${bg}`}
+      className={`pm-facility-action-card w-full border px-4 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-55 ${border} ${bg}`}
     >
       <p className="text-sm font-black text-white">
         {pending ? 'მუშავდება...' : label}
@@ -433,11 +421,13 @@ function BuildingModuleGrid({
   if (modules.length === 0) return null;
   const gridClass =
     buildingKey === 'arena'
-      ? 'grid gap-3 md:grid-cols-2 lg:grid-cols-3'
-      : 'grid gap-3 sm:grid-cols-2 lg:grid-cols-4';
+      ? 'grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3'
+      : modules.length <= 2
+        ? 'grid grid-cols-1 gap-4 md:grid-cols-2'
+        : 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4';
 
   return (
-    <div className="mt-7">
+    <div className="pm-module-grid-shell">
       <div className={gridClass}>
         {modules.map((module) => (
           <ModuleCard
@@ -470,7 +460,7 @@ function ModuleCard({
   return (
     <ReactBitsSpotlightCard
       spotlightColor={signal.spotlight}
-      className={`group/module relative aspect-[4/3] cursor-pointer overflow-hidden rounded-xl border p-0 transition duration-300 hover:-translate-y-1 hover:z-10 ${signal.frame}`}
+      className={`pm-module-card group/module relative aspect-[4/3] cursor-pointer overflow-hidden border p-0 transition duration-300 hover:-translate-y-1 hover:z-10 ${signal.frame}`}
     >
       <div className="absolute inset-0">
         <button
@@ -759,7 +749,7 @@ function BuildingModulePlaceholder({ module }: { module: BuildingModule }) {
             Soon
           </span>
         </div>
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <div className="mt-5 grid grid-cols-3 gap-3 sm:grid-cols-3">
           {['მონაცემების მოდელი', 'ქმედებები', 'UI კონტროლები'].map((item) => (
             <div key={item} className="rounded-none border border-white/8 bg-white/[0.03] p-4">
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/34">{item}</p>
@@ -845,9 +835,9 @@ export function BuildingWorkspace({
   }
 
   return (
-    <main className="pm-hq-home pm-hq-shell min-h-screen overflow-x-hidden bg-[#020604] pb-24 text-white xl:pb-0">
+    <main className="pm-hq-home pm-hq-shell pm-facility-command-page min-h-screen overflow-x-hidden pb-24 text-white xl:pb-0">
       <LightweightSideNav />
-      <div className="relative mx-auto flex min-h-screen w-full max-w-[1360px] flex-col px-4 py-4 sm:px-6 lg:px-8">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-[1400px] flex-col px-4 py-4 sm:px-6 lg:px-8">
         <div>
         {activeModule ? (
         <div className="mx-auto w-full max-w-[1320px]">
@@ -870,7 +860,7 @@ export function BuildingWorkspace({
           )}
         </div>
         ) : (
-        <div className="mx-auto w-full max-w-[1320px]">
+        <div className="mx-auto w-full max-w-[1360px]">
           {building.spriteKey === 'arena' ? (
             <div className="pm-arena-overview-stack lg:col-span-2">
               <div className="pm-arena-overview-sprite" aria-hidden="true">
@@ -886,106 +876,140 @@ export function BuildingWorkspace({
             </div>
           ) : null}
 
-          <div>
-            {page.summary && (
-              <p className="mt-4 max-w-2xl text-sm font-semibold leading-6 text-white/62">
-                {page.summary}
-              </p>
-            )}
+          <section className="pm-facility-command-hero">
+            <div className="pm-facility-command-copy">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`pm-facility-status pm-facility-status-${facility.status}`}>
+                  {building.status}
+                </span>
+                <span className="pm-facility-kicker">{page.eyebrow}</span>
+              </div>
+              <h1>{page.title}</h1>
+              <p>{page.summary || building.description}</p>
 
-            {building.spriteKey !== 'arena' ? (
-              <BuildingModuleGrid modules={modules} buildingKey={building.spriteKey} onOpen={openModule} />
-            ) : null}
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              {overviewMetrics.map(([label, value]) => (
-                <div key={label} className="rounded-none border border-emerald-300/12 bg-black/38 p-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/38">{label}</p>
-                  <p className="mt-2 text-xl font-black text-white">{value}</p>
-                </div>
-              ))}
+              <div className="pm-facility-live-card">
+                <span className="pm-facility-live-icon">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span>
+                  <b>{facilityEffect.value}</b>
+                  <small>{facilityEffect.description}</small>
+                </span>
+              </div>
             </div>
 
-            {building.spriteKey === 'arena' ? (
-              <div className="pm-facility-progress">
-                <div className="flex items-center justify-between gap-3">
-                  <span>სტადიონი Level {facility.level}</span>
-                  <strong className={manager.level >= facility.level + 1 ? 'text-emerald-400' : 'text-white/50'}>
-                    {manager.level >= facility.level + 1 ? 'Upgrade მზადაა' : `Manager Lv ${facility.level + 1} საჭიროა`}
-                  </strong>
-                </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
-                  <span style={{ width: `${Math.min(100, (manager.level / (facility.level + 1)) * 100)}%` }} className="block h-full rounded-full bg-emerald-400/60" />
-                </div>
-                <p className="mt-2 text-[11px] font-black uppercase tracking-[0.14em] text-white/42">
-                  შენი Level: {manager.level} · upgrade {facility.upgradeCost}
-                </p>
-              </div>
-            ) : (
-              <div className="pm-facility-progress">
-                <div className="flex items-center justify-between gap-3">
-                  <span>Level {facility.level}</span>
-                  <strong>{facility.progress}%</strong>
-                </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
-                  <span style={{ width: `${facility.progress}%` }} />
-                </div>
-                <p className="mt-2 text-[11px] font-black uppercase tracking-[0.14em] text-white/42">
-                  შემდეგი: {facility.nextUnlock} · upgrade {facility.upgradeCost}
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div className="rounded-none border border-white/10 bg-black/50 p-4 shadow-[inset_0_0_34px_rgba(34,197,94,0.06)]">
-            <div className="mb-3 flex items-center gap-2 text-sm font-black text-white">
-              <Activity className="h-4 w-4 text-emerald-200" />
-              შენობის ოპერაციები
-            </div>
-            <div className="space-y-2">
-              {primaryAction ? (
-                <ActionCard
-                  label={page.actions[0] ?? 'Run'}
-                  preview={ACTION_PREVIEW[primaryAction]}
-                  pending={primaryPending}
-                  tone="green"
-                  onClick={() => onRunAction(building.spriteKey, primaryAction)}
+            <div className="pm-facility-command-visual" aria-hidden="true">
+              {building.spriteUrl ? (
+                <Image
+                  src={building.spriteUrl}
+                  alt=""
+                  width={760}
+                  height={608}
+                  priority={building.spriteKey === 'training'}
+                  className="pm-facility-command-sprite"
                 />
-              ) : (
-                <div className="rounded-none border border-white/8 bg-white/[0.03] px-4 py-3">
-                  <p className="text-xs font-black text-white/55">
-                    {manager.level >= facility.level + 1
-                      ? 'Upgrade მზადაა — გამოიყენე ქვემოთ'
-                      : `Upgrade-ისთვის საჭიროა კიდევ ${facility.level + 1 - manager.level} Manager Level`}
-                  </p>
-                </div>
-              )}
-              {building.spriteKey === 'arena' && manager.level < facility.level + 1 ? (
-                <div className="rounded-none border border-white/8 bg-white/[0.03] px-4 py-3">
-                  <p className="text-xs font-black text-white/38">{'Upgrade -> Level '}{facility.level + 1}</p>
-                  <p className="mt-1 text-[11px] font-bold text-white/28">
-                    საჭიროა Manager Level {facility.level + 1} · შენი: {manager.level}
+              ) : null}
+              <div className="pm-facility-level-plate">
+                <span>LEVEL</span>
+                <b>{facility.level}</b>
+              </div>
+            </div>
+          </section>
+
+          <div className="pm-facility-command-body">
+            <div>
+              <div className="pm-section-label">
+                <span>Modules</span>
+                <b>{modules.length}</b>
+              </div>
+
+              {building.spriteKey !== 'arena' ? (
+                <BuildingModuleGrid modules={modules} buildingKey={building.spriteKey} onOpen={openModule} />
+              ) : null}
+
+              <div className="mt-5 grid grid-cols-3 gap-3 sm:grid-cols-3">
+                {overviewMetrics.map(([label, value]) => (
+                  <MiniStat key={label} label={label} value={value} />
+                ))}
+              </div>
+
+              {building.spriteKey === 'arena' ? (
+                <div className="pm-facility-progress">
+                  <div className="flex items-center justify-between gap-3">
+                    <span>სტადიონი Level {facility.level}</span>
+                    <strong className={manager.level >= facility.level + 1 ? 'text-emerald-400' : 'text-white/50'}>
+                      {manager.level >= facility.level + 1 ? 'Upgrade მზადაა' : `Manager Lv ${facility.level + 1} საჭიროა`}
+                    </strong>
+                  </div>
+                  <div className="mt-2 h-2 overflow-hidden bg-white/10">
+                    <span style={{ width: `${Math.min(100, (manager.level / (facility.level + 1)) * 100)}%` }} className="block h-full bg-emerald-400/60" />
+                  </div>
+                  <p className="mt-2 text-[11px] font-black uppercase tracking-[0.14em] text-white/42">
+                    შენი Level: {manager.level} · upgrade {facility.upgradeCost}
                   </p>
                 </div>
               ) : (
-                <ActionCard
-                  label={`Upgrade -> Level ${facility.level + 1}`}
-                  preview={ACTION_PREVIEW['facility_upgrade'] && {
-                    what: `${facility.upgradeCost} · Level ${facility.level} -> ${facility.level + 1}`,
-                    gets: ACTION_PREVIEW['facility_upgrade'].gets,
-                  }}
-                  pending={upgradePending}
-                  tone="gold"
-                  onClick={() => onRunAction(building.spriteKey, 'facility_upgrade')}
-                />
+                <div className="pm-facility-progress">
+                  <div className="flex items-center justify-between gap-3">
+                    <span>Level {facility.level}</span>
+                    <strong>{facility.progress}%</strong>
+                  </div>
+                  <div className="mt-2 h-2 overflow-hidden bg-white/10">
+                    <span style={{ width: `${facility.progress}%` }} />
+                  </div>
+                  <p className="mt-2 text-[11px] font-black uppercase tracking-[0.14em] text-white/42">
+                    შემდეგი: {facility.nextUnlock} · upgrade {facility.upgradeCost}
+                  </p>
+                </div>
               )}
             </div>
-            {actionMessage ? (
-              <div className="mt-3 rounded-none border border-emerald-300/22 bg-emerald-950/60 px-4 py-3">
-                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-400/70">შედეგი</p>
-                <p className="mt-1 text-xs font-black text-emerald-50">{actionMessage}</p>
+
+            <GamePanel title="ოპერაციები" icon={<Activity className="h-4 w-4" />}>
+              <div className="space-y-2">
+                {primaryAction ? (
+                  <ActionCard
+                    label={page.actions[0] ?? 'Run'}
+                    preview={ACTION_PREVIEW[primaryAction]}
+                    pending={primaryPending}
+                    tone="green"
+                    onClick={() => onRunAction(building.spriteKey, primaryAction)}
+                  />
+                ) : (
+                  <div className="pm-facility-empty-card border border-white/8 bg-white/[0.03] px-4 py-3">
+                    <p className="text-xs font-black text-white/55">
+                      {manager.level >= facility.level + 1
+                        ? 'Upgrade მზადაა — გამოიყენე ქვემოთ'
+                        : `Upgrade-ისთვის საჭიროა კიდევ ${facility.level + 1 - manager.level} Manager Level`}
+                    </p>
+                  </div>
+                )}
+                {building.spriteKey === 'arena' && manager.level < facility.level + 1 ? (
+                  <div className="pm-facility-empty-card border border-white/8 bg-white/[0.03] px-4 py-3">
+                    <p className="text-xs font-black text-white/38">{'Upgrade -> Level '}{facility.level + 1}</p>
+                    <p className="mt-1 text-[11px] font-bold text-white/28">
+                      საჭიროა Manager Level {facility.level + 1} · შენი: {manager.level}
+                    </p>
+                  </div>
+                ) : (
+                  <ActionCard
+                    label={`Upgrade -> Level ${facility.level + 1}`}
+                    preview={ACTION_PREVIEW['facility_upgrade'] && {
+                      what: `${facility.upgradeCost} · Level ${facility.level} -> ${facility.level + 1}`,
+                      gets: ACTION_PREVIEW['facility_upgrade'].gets,
+                    }}
+                    pending={upgradePending}
+                    tone="gold"
+                    onClick={() => onRunAction(building.spriteKey, 'facility_upgrade')}
+                  />
+                )}
               </div>
-            ) : null}
+              {actionMessage ? (
+                <div className="pm-facility-result-card mt-3 border border-emerald-300/22 bg-emerald-950/60 px-4 py-3">
+                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-400/70">შედეგი</p>
+                  <p className="mt-1 text-xs font-black text-emerald-50">{actionMessage}</p>
+                </div>
+              ) : null}
+            </GamePanel>
           </div>
         </div>
         )}
@@ -1011,7 +1035,7 @@ export function BuildingWorkspace({
               </p>
             </div>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="mt-6 grid grid-cols-3 gap-3 sm:grid-cols-3">
               {page.metrics.map(([label, value]) => (
                 <div key={label} className="rounded-none border border-emerald-300/12 bg-black/38 p-4">
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/38">{label}</p>
@@ -1106,17 +1130,7 @@ export function BuildingWorkspace({
       </div>
       </div>
 
-      <Dock
-        items={LIGHTWEIGHT_DOCK_NAV.map((item, index) => {
-          const DockIcon = item.icon;
-          return {
-            label: item.label,
-            icon: <DockIcon className="h-5 w-5" />,
-            onClick: () => router.push(item.href),
-            className: index === 0 ? 'bg-emerald-300/16 text-emerald-100' : 'text-white/62',
-          };
-        })}
-      />
+      <PlayManagerBottomNav />
 
       {matchResult ? (
         <MatchResultModal result={matchResult} onClose={onDismissMatchResult ?? (() => {})} />
@@ -1129,6 +1143,11 @@ function LightweightSideNav() {
   return <PlayManagerSidebar />;
 }
 
+function opponentShort(name: string): string {
+  const trimmed = name.trim();
+  return trimmed.length > 14 ? `${trimmed.slice(0, 13)}…` : trimmed;
+}
+
 function MatchResultModal({ result, onClose }: { result: MatchResult; onClose: () => void }) {
   const isWin  = result.result === 'W';
   const isDraw = result.result === 'D';
@@ -1137,6 +1156,15 @@ function MatchResultModal({ result, onClose }: { result: MatchResult; onClose: (
   const resultGlow  = isWin ? 'rgba(16,185,129,0.18)' : isDraw ? 'rgba(234,179,8,0.18)' : 'rgba(239,68,68,0.18)';
   const resultLabel = isWin ? 'გამარჯვება' : isDraw ? 'ფრე' : 'დამარცხება';
   const outcomeLabels: Record<string, string> = { promoted: '⬆️ გადასვლა', relegated: '⬇️ ჩამოსვლა', stayed: '✅ დარჩენა' };
+
+  const engine = result.matchEngine;
+  const homeXg = engine?.homeXg ?? 0;
+  const awayXg = engine?.awayXg ?? 0;
+  const xgTotal = homeXg + awayXg;
+  const momentumPct = xgTotal > 0 ? Math.round((homeXg / xgTotal) * 100) : 50;
+  const goalscorers = engine?.playerEvents?.goalscorers ?? [];
+  const ratings = engine?.playerEvents?.ratings ?? [];
+  const potm = ratings.length ? [...ratings].sort((a, b) => b.rating - a.rating)[0] : null;
 
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md bg-black/70">
@@ -1173,6 +1201,45 @@ function MatchResultModal({ result, onClose }: { result: MatchResult; onClose: (
             </div>
           ))}
         </div>
+
+        {/* Momentum (xG) + Player of the Match + goals */}
+        {engine ? (
+          <div className="border-b border-white/8 px-6 py-4 space-y-3">
+            <div>
+              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-[0.14em] text-white/45">
+                <span>მომენტუმი (xG {homeXg.toFixed(1)})</span>
+                <span>{opponentShort(result.opponent)} (xG {awayXg.toFixed(1)})</span>
+              </div>
+              <div className="mt-1.5 flex h-2 overflow-hidden rounded-full bg-red-500/25">
+                <span className="block h-full bg-emerald-400/80" style={{ width: `${momentumPct}%` }} />
+              </div>
+            </div>
+
+            {potm ? (
+              <div className="flex items-center gap-2.5 rounded-xl border border-amber-300/22 bg-amber-300/[0.07] px-3 py-2">
+                <span className="text-base">⭐</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[9px] font-black uppercase tracking-[0.16em] text-amber-200/70">მატჩის საუკეთესო</p>
+                  <p className="truncate text-xs font-black text-white">{potm.name} · {potm.position}</p>
+                </div>
+                <span className="rounded-lg border border-amber-300/26 bg-amber-300/12 px-2 py-1 text-sm font-black text-amber-100 tabular-nums">
+                  {potm.rating.toFixed(1)}
+                </span>
+              </div>
+            ) : null}
+
+            {goalscorers.length ? (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-sm">⚽</span>
+                {goalscorers.map((g) => (
+                  <span key={g.playerId} className="rounded-full border border-emerald-300/18 bg-emerald-300/10 px-2 py-0.5 text-[11px] font-black text-emerald-100">
+                    {g.name}{g.goals > 1 ? ` ×${g.goals}` : ''}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         {/* Events */}
         <div className="px-6 py-4 space-y-2">
@@ -1429,7 +1496,7 @@ function FacilityModule({
             ? 'აქ ჩანს მხოლოდ შენახული ფეხბურთელები.'
             : 'ფეხბურთელები შეგიძლია იყიდო ან შენახულ სიაში დაამატო.'}
         </p>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {marketItems.map((player) => (
             <div
               key={player.key}
@@ -1599,7 +1666,7 @@ function FacilityModule({
             </div>
 
             {freeAgentsMeta?.scoutHired ? (
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
                 {marketItems.map((player) => (
                   <div
                     key={player.key}
@@ -1677,7 +1744,7 @@ function FacilityModule({
               <div className="mb-4 rounded-[22px] border border-amber-300/20 bg-amber-300/[0.05] p-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-200/72">on the market</p>
                 <p className="mt-1 text-sm font-black text-white">ბაზარზე გამოტანილი</p>
-                <div className="mt-3 grid gap-2 lg:grid-cols-2">
+                <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-2">
                   {snapshot.outgoingListings.map((listing) => (
                     <div key={listing.listingId} className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-black/24 px-3 py-2">
                       <div className="min-w-0">
@@ -1699,7 +1766,7 @@ function FacilityModule({
                 </div>
               </div>
             ) : null}
-            <div className="mt-3 grid gap-2 lg:grid-cols-3">
+            <div className="mt-3 grid grid-cols-3 gap-2 lg:grid-cols-3">
             {snapshot.squad.map((player) => {
               const isListed = snapshot.outgoingListings.some((listing) => listing.playerId === player.id);
               return (
@@ -1791,7 +1858,7 @@ function FacilityModule({
       <GamePanel title="მოთამაშეების განვითარება" icon={<Dumbbell className="h-4 w-4" />}>
         <div className="relative overflow-hidden rounded-none border border-emerald-300/16 bg-black/42 p-5">
           <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(16,185,129,0.14),transparent_42%,rgba(234,179,8,0.08))]" />
-          <div className="relative z-10 grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="relative z-10 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-100/58">Development Lab</p>
               <h3 className="mt-2 text-3xl font-black leading-none text-white sm:text-5xl">
@@ -1801,7 +1868,7 @@ function FacilityModule({
                 მატჩები აგროვებს XP-ს, სავარჯიშო ბაზა ზრდის XP-ის ეფექტს, ხოლო ინდივიდუალური განვითარება
                 ფოკუსდება იმ ფეხბურთელებზე, ვისაც ყველაზე მეტი პოტენციალი დარჩა.
               </p>
-              <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 <MiniStat label="დაგროვებული XP" value={fmtInt(manager.xp)} />
                 <MiniStat label="მატჩებიდან" value={`+${fmtInt(matchXpEarned)}`} />
                 <MiniStat label="Training bonus" value={`+${trainingBonus}%`} />
@@ -1826,8 +1893,8 @@ function FacilityModule({
           </div>
         </div>
 
-        <div className="mt-3 grid gap-3 xl:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="grid gap-2 lg:grid-cols-2">
+        <div className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-2">
             {focusPlayers.length > 0 ? (
               focusPlayers.map(({ player, potential, remainingGrowth, progressPct, xpCost }) => {
                 const trainPending = pendingAction === `train:${player.id}`;
@@ -1951,7 +2018,7 @@ function FacilityModule({
             ხელმოწერა მოთამაშეს პირდაპირ გუნდში 15 წლის ასაკით გადაიყვანს.
           </p>
         </div>
-        <div className="grid gap-2 lg:grid-cols-3">
+        <div className="grid grid-cols-3 gap-2 lg:grid-cols-3">
           {snapshot.academy.map((prospect) => {
             const matured = prospect.ovr >= prospect.potential;
             const devPct = prospect.potential > prospect.ovr
@@ -2016,7 +2083,7 @@ function FacilityModule({
       <GamePanel title="ლიგის ცენტრი" icon={<Landmark className="h-4 w-4" />}>
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/42 mb-3">ყოველდღიური თასები</p>
-          <div className="grid gap-2 lg:grid-cols-2">
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-2">
             {snapshot.cups.map((cup) => (
               <div key={cup.id} className="pm-game-row">
                 <div className="flex items-start justify-between gap-3">
@@ -2064,6 +2131,85 @@ function FacilityModule({
             )}
           </div>
         </div>
+      </GamePanel>
+    );
+  }
+
+  if (spriteKey === 'residence' && moduleKey === 'squad') {
+    const squad = snapshot.squad;
+    const avgOvr = squad.length ? Math.round(squad.reduce((s, p) => s + p.ovrCurrent, 0) / squad.length) : 0;
+    const groups: { key: 'starter' | 'bench' | 'reserve'; label: string; tone: string }[] = [
+      { key: 'starter', label: 'საბაზო XI', tone: 'text-emerald-300' },
+      { key: 'bench', label: 'სათადარიგო', tone: 'text-yellow-300' },
+      { key: 'reserve', label: 'რეზერვი', tone: 'text-white/55' },
+    ];
+    const talentTone = (t: number) =>
+      t >= 10 ? 'border-amber-300/30 bg-amber-300/12 text-amber-100'
+        : t >= 7 ? 'border-violet-300/30 bg-violet-300/12 text-violet-100'
+          : t >= 4 ? 'border-emerald-300/26 bg-emerald-300/10 text-emerald-100'
+            : 'border-white/14 bg-white/[0.05] text-white/60';
+    return (
+      <GamePanel title="მთავარი გუნდი" icon={<UsersRound className="h-4 w-4" />}>
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-3">
+          <MiniStat label="მოთამაშეები" value={String(squad.length)} />
+          <MiniStat label="საშ. OVR" value={String(avgOvr)} />
+          <MiniStat label="საბაზო XI" value={String(squad.filter((p) => p.role === 'starter').length)} />
+        </div>
+        {squad.length === 0 ? (
+          <p className="mt-4 rounded-none border border-white/10 bg-black/30 px-4 py-6 text-center text-sm font-bold text-white/40">
+            გუნდში მოთამაშეები არ არის.
+          </p>
+        ) : (
+          <div className="mt-4 space-y-4">
+            {groups.map((g) => {
+              const rows = squad.filter((p) => p.role === g.key);
+              if (rows.length === 0) return null;
+              return (
+                <div key={g.key}>
+                  <div className="mb-1.5 flex items-center gap-2 px-1">
+                    <span className={`text-[10px] font-black uppercase tracking-[0.18em] ${g.tone}`}>{g.label}</span>
+                    <span className="text-[10px] font-black text-white/30">{rows.length}</span>
+                  </div>
+                  <div className="overflow-hidden rounded-2xl border border-emerald-300/14 bg-black/40">
+                    {rows.map((p) => (
+                      <Link
+                        key={p.id}
+                        href={`/playmanager/players/${p.id}`}
+                        className="group grid grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-white/[0.05] px-3 py-2.5 transition last:border-b-0 hover:bg-white/[0.05]"
+                      >
+                        <PlayerFace url={p.cardImageUrl} fallback={(p.cardDisplayName?.trim() || p.name).charAt(0).toUpperCase()} />
+                        <div className="min-w-0">
+                          <p className="flex items-center gap-1.5 truncate text-sm font-black text-white">
+                            <span className="text-emerald-300/70 tabular-nums">#{p.squadNumber ?? '–'}</span>
+                            <span className="truncate">{p.cardDisplayName?.trim() || p.name}</span>
+                          </p>
+                          <p className="mt-0.5 flex items-center gap-2 text-[11px] font-bold text-white/42">
+                            <span className="rounded border border-white/12 bg-white/[0.05] px-1.5 py-px text-[10px] font-black tracking-wide text-white/65">
+                              {p.position}
+                            </span>
+                            <span className={`rounded border px-1.5 py-px text-[10px] font-black tabular-nums ${talentTone(p.talent)}`}>
+                              T{p.talent}
+                            </span>
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3 pl-1">
+                          <div className="text-right leading-tight">
+                            <p className="text-sm font-black text-white tabular-nums">{p.ovrCurrent}</p>
+                            <p className="text-[10px] font-bold text-white/35">OVR</p>
+                          </div>
+                          <div className="text-right leading-tight">
+                            <p className="text-sm font-black text-white/70 tabular-nums">{p.age}</p>
+                            <p className="text-[10px] font-bold text-white/35">ასაკი</p>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </GamePanel>
     );
   }
@@ -2116,7 +2262,7 @@ function FacilityModule({
       <GamePanel title="კლუბის პერსონალი" icon={<ShieldCheck className="h-4 w-4" />}>
         <div className="relative overflow-hidden rounded-xl border border-white/10 bg-black/30 p-5">
           <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(34,197,94,0.12),transparent_40%,rgba(234,179,8,0.08))]" />
-          <div className="relative z-10 grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="relative z-10 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-100/58">Residence Staff</p>
               <h3 className="mt-2 text-3xl font-black leading-none text-white sm:text-5xl">შტაბი, რომელიც გუნდს მუშაობინებს</h3>
@@ -2124,7 +2270,7 @@ function FacilityModule({
                 Residence-ში უკვე შეგიძლია პერსონალის დაქირავება და მათი ლეველების გაზრდა. Upgrade cap დამოკიდებულია დივიზიონზე,
                 ასე რომ უფრო მაღალ ლიგაში უკეთესი შტაბის აშენება გახდება შესაძლებელი.
               </p>
-              <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 <MiniStat label="დაქირავებული" value={`${activeStaffCount}/${snapshot.staff.members.length}`} />
                 <MiniStat label="დივიზიონი" value={team.divisionLabel} />
                 <MiniStat label="Level cap" value={`LVL ${maxStaffLevel}`} />
@@ -2169,7 +2315,7 @@ function FacilityModule({
                     {meta.badge}
                   </span>
                 </div>
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                   {members.map((member) => {
                     const hirePending = pendingAction === `staff:hire:${member.roleKey}`;
                     const upgradePending = pendingAction === `staff:upgrade:${member.roleKey}`;
@@ -2307,7 +2453,7 @@ function FacilityModule({
                   <span className="mt-1 block text-xl font-black text-white">{fmtInt(stadiumCapacity)}</span>
                 </span>
               </div>
-              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 xl:grid-cols-4">
                 <MiniStat label="ბილეთის ფასი" value={`${fmtInt(ticketPriceDraft)} ₾`} />
                 <MiniStat label="დასწრება" value={fmtInt(projectedAttendance)} />
                 <MiniStat label="შევსება" value={`${occupancyPct}%`} />
@@ -2316,7 +2462,7 @@ function FacilityModule({
             </div>
           </div>
 
-          <div className="mt-3 grid gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
             <div className="rounded-none border border-white/10 bg-black/34 p-5">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
@@ -2359,7 +2505,7 @@ function FacilityModule({
                     style={{ width: `${occupancyPct}%` }}
                   />
                 </div>
-                <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-3">
                   <MiniStat label="ფასი × დასწრება" value={formatGel(projectedIncome)} />
                   <MiniStat label="ერთ გულშემატკივარზე" value={`${fmtInt(incomePerSeat)} ₾`} />
                   <MiniStat label="ფორმა" value={`${snapshot.formPercent}%`} />
@@ -2400,7 +2546,7 @@ function FacilityModule({
 
           <div className="mt-3 rounded-none border border-white/10 bg-black/30 p-5">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/42">როგორ ითვლება</p>
-            <div className="mt-4 grid gap-2 lg:grid-cols-3">
+            <div className="mt-4 grid grid-cols-3 gap-2 lg:grid-cols-3">
               <div className="rounded-none border border-white/8 bg-white/[0.03] p-4">
                 <p className="text-sm font-black text-white">დასწრება</p>
                 <p className="mt-2 text-xs font-bold leading-5 text-white/50">
@@ -2443,7 +2589,7 @@ function FacilityModule({
       };
       return (
         <GamePanel title="ხელფასების უწყისი" icon={<UsersRound className="h-4 w-4" />}>
-          <div className="grid gap-2 lg:grid-cols-3">
+          <div className="grid grid-cols-3 gap-2 lg:grid-cols-3">
             <FinanceCard label="მოთამაშეთა ხელფასი" value={formatGel(playersSubtotal)} tone="red" />
             <FinanceCard label="სრული ხელფასი (+ პერსონალი)" value={formatGel(weeklyOut)} tone="red" />
             <FinanceCard label="NET / კვირა" value={formatGel(net)} tone={net >= 0 ? 'green' : 'red'} />
@@ -2487,7 +2633,7 @@ function FacilityModule({
 
     return (
       <GamePanel title="ეკონომიკის კონტროლი" icon={<Coins className="h-4 w-4" />}>
-        <div className="grid gap-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
           <FinanceCard label="ბალანსი" value={team.balanceLabel} tone="green" />
           <FinanceCard label="სპონსორი" value={snapshot.finance.sponsorWeeklyAmountLabel} tone="green" />
           <FinanceCard label="ხელფასები" value={snapshot.finance.weeklyWagesLabel} tone="red" />
@@ -2531,7 +2677,7 @@ function FacilityModule({
             )}
           </div>
         </div>
-        <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="rounded-none border border-white/10 bg-black/28 p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -2550,7 +2696,7 @@ function FacilityModule({
                 {pendingAction === 'sponsor:negotiate' ? 'მუშავდება...' : 'სპონსორის მოლაპარაკება'}
               </button>
             </div>
-            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-3">
               <MiniStat label="WEEKLY IN" value={snapshot.finance.sponsorWeeklyAmountLabel} />
               <MiniStat label="WEEKLY OUT" value={snapshot.finance.weeklyWagesLabel} />
               <MiniStat
@@ -2607,7 +2753,7 @@ function FacilityModule({
     if (moduleKey === 'announcements') {
       return (
         <GamePanel title="უწყებები" icon={<Megaphone className="h-4 w-4" />}>
-          <div className="grid gap-3 lg:grid-cols-[280px_minmax(0,1fr)]">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[280px_minmax(0,1fr)]">
             <div className="pm-game-row">
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/42">Board</p>
               <p className="mt-2 text-3xl font-black text-white">კლუბის უწყებები</p>
@@ -2640,9 +2786,9 @@ function FacilityModule({
 
     if (moduleKey === 'global_chat') {
       return (
-        <GamePanel title="საერთო ჩატი" icon={<MessageCircle className="h-4 w-4" />}>
+        <div className="pm-facility-module">
           <PlayManagerGlobalChat />
-        </GamePanel>
+        </div>
       );
     }
 
@@ -2678,7 +2824,7 @@ function FacilityModule({
 
     return (
       <GamePanel title="მედია და ფანები" icon={<RadioTower className="h-4 w-4" />}>
-        <div className="grid gap-2 lg:grid-cols-[280px_1fr]">
+        <div className="grid grid-cols-1 gap-2 lg:grid-cols-[280px_1fr]">
           <div className="pm-game-row">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/42">რეპუტაცია</p>
             <p className="mt-2 text-3xl font-black text-white">{snapshot.clock.label}</p>
@@ -2754,9 +2900,9 @@ function FacilityModule({
             </div>
           </div>
 
-          <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.65fr)]">
+          <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.65fr)]">
             <div className="rounded-[24px] border border-white/8 bg-black/28 p-4 shadow-[inset_0_0_24px_rgba(16,185,129,0.05)]">
-              <div className="grid items-center gap-3 md:grid-cols-[1fr_auto_1fr]">
+              <div className="grid grid-cols-1 items-center gap-3 md:grid-cols-[1fr_auto_1fr]">
                 <div className="min-w-0 text-center md:text-right">
                   <p className="text-[11px] font-black uppercase tracking-[0.14em] text-white/38">მასპინძელი</p>
                   <p className="mt-1 truncate text-[22px] font-black text-white">{team.name}</p>
@@ -2781,7 +2927,7 @@ function FacilityModule({
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-2">
                 <Link
                   href="/playmanager/arena/lineup"
                   className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400/18 px-4 text-sm font-black text-emerald-50 transition hover:bg-emerald-400/26"
@@ -2805,7 +2951,7 @@ function FacilityModule({
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 xl:grid-cols-1">
               <div className="rounded-[24px] border border-white/8 bg-white/[0.045] p-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/40">შემადგენლობა</p>
                 <p className="mt-2 text-3xl font-black text-white">{lineupDraft.starters.length}/11</p>
@@ -2829,7 +2975,7 @@ function FacilityModule({
           </div>
         </div>
 
-        <div className="mt-4 grid gap-4 2xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+        <div className="mt-4 grid grid-cols-1 gap-4 2xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
           <ArenaTournaments cups={snapshot.cups} />
           <div className="space-y-4">
             <ArenaLineupCard
@@ -2846,13 +2992,13 @@ function FacilityModule({
 
   return (
     <GamePanel title="Matchday ოპერაციები" icon={<Trophy className="h-4 w-4" />}>
-      <div className="grid gap-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         <FinanceCard label="შემდეგი მატჩი" value={snapshot.nextMatchLabel} tone="green" />
         <FinanceCard label="ფორმა" value={`${snapshot.formPercent}%`} tone="green" />
         <FinanceCard label="ბოლო შემოსავალი" value={snapshot.matchHistory[0]?.incomeLabel ?? '₾0'} tone="gold" />
         <FinanceCard label="ბოლო შედეგი" value={snapshot.matchHistory[0] ? `${snapshot.matchHistory[0].result} ${snapshot.matchHistory[0].score}` : 'Pending'} tone="green" />
       </div>
-      <div className="mt-3 grid gap-2 lg:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="mt-3 grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_280px]">
         <div className="space-y-2">
           {snapshot.matchHistory.length > 0 ? (
             snapshot.matchHistory.map((match) => (
@@ -3127,7 +3273,7 @@ function getCupTheme(templateId: string) {
 
 function ArenaQuickLinks({ recentForm }: { recentForm: Array<'W' | 'D' | 'L'> }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <Link
         href="/playmanager/history"
         className="group/module relative overflow-hidden rounded-[24px] border border-white/10 bg-black/32 p-5 transition hover:border-emerald-300/28"
@@ -3210,14 +3356,32 @@ function ArenaQuickLinks({ recentForm }: { recentForm: Array<'W' | 'D' | 'L'> })
   );
 }
 
-function GamePanel({ title, icon, children }: { title: string; icon: ReactNode; children: ReactNode }) {
+function GamePanel({
+  title,
+  icon,
+  children,
+  tone = 'green',
+}: {
+  title: string;
+  icon: ReactNode;
+  children: ReactNode;
+  tone?: 'green' | 'red' | 'gold';
+}) {
   return (
-    <div className="pm-facility-module">
-      <div className="mb-3 flex items-center gap-2 text-sm font-black text-white">
-        <span className="grid h-8 w-8 place-items-center rounded-full border border-emerald-300/18 bg-emerald-300/10 text-emerald-100">
+    <div className={`pm-facility-module pm-facility-module-tone-${tone}`}>
+      <div className="mb-3 flex items-center gap-2.5 text-sm font-black text-white">
+        <span
+          className={`grid h-9 w-9 place-items-center rounded-xl border text-base ${
+            tone === 'green'
+              ? 'border-emerald-300/22 bg-[linear-gradient(145deg,rgba(52,211,153,0.22),rgba(16,84,60,0.1))] text-emerald-100'
+              : tone === 'red'
+                ? 'border-red-300/22 bg-[linear-gradient(145deg,rgba(248,113,113,0.22),rgba(84,16,16,0.1))] text-red-100'
+                : 'border-amber-300/22 bg-[linear-gradient(145deg,rgba(253,224,71,0.22),rgba(84,68,16,0.1))] text-amber-100'
+          }`}
+        >
           {icon}
         </span>
-        {title}
+        <span className="tracking-[0.01em]">{title}</span>
       </div>
       {children}
     </div>
@@ -3225,11 +3389,44 @@ function GamePanel({ title, icon, children }: { title: string; icon: ReactNode; 
 }
 
 
+function PlayerFace({ url, fallback, size = 40 }: { url?: string | null; fallback: string; size?: number }) {
+  const real = url?.trim();
+  // Generic full-body silhouettes (players without a real face) read as broken
+  // green/white shapes when cropped to a circle — show the initial instead.
+  const isPhoto = real && !/silhouette/i.test(real);
+  if (isPhoto) {
+    return (
+      <span
+        className="block shrink-0 overflow-hidden rounded-full bg-[#0c1a13] ring-1 ring-white/14"
+        style={{ width: size, height: size }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={real}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-cover"
+          style={{ objectPosition: '50% 16%' }}
+        />
+      </span>
+    );
+  }
+  return (
+    <span
+      className="grid shrink-0 place-items-center rounded-full bg-[linear-gradient(135deg,rgba(52,211,153,0.3),rgba(16,84,60,0.24))] text-xs font-black text-emerald-100 ring-1 ring-emerald-300/22"
+      style={{ width: size, height: size }}
+    >
+      {fallback}
+    </span>
+  );
+}
+
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5">
-      <p className="text-[9px] font-black text-white/35">{label}</p>
-      <p className="text-sm font-black text-white">{value}</p>
+    <div className="pm-dashboard-stat">
+      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/40">{label}</p>
+      <p className="mt-1 text-sm font-black text-white">{value}</p>
     </div>
   );
 }

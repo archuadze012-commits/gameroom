@@ -1,0 +1,63 @@
+.rb-glow-card {
+  --x: 50%;
+  --y: 50%;
+  --base: 42;
+  --spread: 90;
+  --radius: 20px;
+  position: relative;
+  border-radius: var(--radius);
+}
+
+.rb-glow-card::before,
+.rb-glow-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.rb-glow-card::before {
+  inset: -1px;
+  border: 1px solid transparent;
+  background:
+    radial-gradient(
+      220px circle at var(--x) var(--y),
+      hsla(var(--base), 95%, 74%, 0.55),
+      hsla(calc(var(--base) + var(--spread)), 90%, 64%, 0.16) 32%,
+      transparent 68%
+    ) border-box;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) padding-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) padding-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+.rb-glow-card::after {
+  background:
+    radial-gradient(
+      180px circle at var(--x) var(--y),
+      hsla(var(--base), 100%, 72%, 0.12),
+      transparent 72%
+    );
+}
+
+.rb-glow-card:hover::before,
+.rb-glow-card:hover::after,
+.rb-glow-card:focus-within::before,
+.rb-glow-card:focus-within::after {
+  opacity: 1;
+}
+
+.rb-glow-inner {
+  position: relative;
+  z-index: 1;
+  border-radius: inherit;
+  height: 100%;
+}

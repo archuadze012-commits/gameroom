@@ -79,14 +79,14 @@ export function CreateTeamForm() {
                   </p>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <Feature icon={Users} label="სტარტერი" value="15 მოთამაშე" tone="emerald" />
                   <Feature icon={Banknote} label="ბიუჯეტი" value={formatGel(STARTING_TEAM_BALANCE_GEL)} tone="amber" />
                   <Feature icon={Swords} label="სტატუსი" value="Daily cups unlocked" tone="sky" />
                 </div>
               </div>
 
-              <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.2fr_0.8fr]">
                 <div className="rounded-[24px] border border-white/10 bg-black/18 p-5">
                   <p className="text-[11px] font-black uppercase tracking-[0.18em] text-white/44">რატომ ეს flow</p>
                   <div className="mt-4 space-y-3">

@@ -1,4 +1,4 @@
-import { useInView, useMotionValue, useSpring } from 'motion/react';
+import { useInView } from 'motion/react';
 import { useCallback, useEffect, useRef } from 'react';
 
 interface CountUpProps {
@@ -27,15 +27,8 @@ export default function CountUp({
   onEnd
 }: CountUpProps) {
   const ref = useRef<HTMLSpanElement>(null);
-  const motionValue = useMotionValue(direction === 'down' ? to : from);
-
-  const damping = 20 + 40 * (1 / duration);
-  const stiffness = 100 * (1 / duration);
-
-  const springValue = useSpring(motionValue, {
-    damping,
-    stiffness
-  });
+  const frameRef = useRef<number | null>(null);
+  const timeoutRef = useRef<number | null>(null);
 
   const isInView = useInView(ref, { once: true, margin: '0px' });
 
@@ -81,35 +74,54 @@ export default function CountUp({
         onStart();
       }
 
-      const timeoutId = setTimeout(() => {
-        motionValue.set(direction === 'down' ? from : to);
-      }, delay * 1000);
+      const startValue = direction === 'down' ? to : from;
+      const endValue = direction === 'down' ? from : to;
+      const totalMs = Math.max(0, duration * 1000);
 
-      const durationTimeoutId = setTimeout(
-        () => {
+      const renderValue = (value: number) => {
+        if (ref.current) {
+          ref.current.textContent = formatValue(value);
+        }
+      };
+
+      const animateFrame = (startTime: number) => {
+        const step = (now: number) => {
+          const elapsed = now - startTime;
+          const progress = totalMs === 0 ? 1 : Math.min(1, elapsed / totalMs);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const current = startValue + (endValue - startValue) * eased;
+          renderValue(progress >= 1 ? endValue : current);
+
+          if (progress < 1) {
+            frameRef.current = window.requestAnimationFrame(step);
+            return;
+          }
+
+          frameRef.current = null;
           if (typeof onEnd === 'function') {
             onEnd();
           }
-        },
-        delay * 1000 + duration * 1000
-      );
+        };
+
+        frameRef.current = window.requestAnimationFrame(step);
+      };
+
+      timeoutRef.current = window.setTimeout(() => {
+        animateFrame(performance.now());
+      }, delay * 1000);
 
       return () => {
-        clearTimeout(timeoutId);
-        clearTimeout(durationTimeoutId);
+        if (timeoutRef.current != null) {
+          window.clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+        if (frameRef.current != null) {
+          window.cancelAnimationFrame(frameRef.current);
+          frameRef.current = null;
+        }
       };
     }
-  }, [isInView, startWhen, motionValue, direction, from, to, delay, onStart, onEnd, duration]);
-
-  useEffect(() => {
-    const unsubscribe = springValue.on('change', (latest: number) => {
-      if (ref.current) {
-        ref.current.textContent = formatValue(latest);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [springValue, formatValue]);
+  }, [isInView, startWhen, direction, from, to, delay, onStart, onEnd, duration, formatValue]);
 
   return <span className={className} ref={ref} />;
 }
