@@ -20,13 +20,12 @@ import { PmCard, PmCardHead, PmPill, PmAction, PmGauge, PmPhotoCard, type PmTone
 import { NestedMiniBox } from '@/components/playmanager/panel-primitives';
 import { TalentClassBadge } from '@/components/playmanager/talent-class-badge';
 import {
-  hirePlayManagerStaff,
   signPlayManagerAcademyProspect,
-  upgradePlayManagerStaff,
   type PlayManagerPlayerActionResult,
 } from '@/app/playmanager/actions';
 import { getFacilityUpgradeCostGel, type CityActionKey } from '@/lib/playmanager/gameplay';
 import { getMaxStaffLevelForDivision, type StaffCategory } from '@/lib/playmanager/staff';
+import { getStaffPhoto } from '@/lib/playmanager/staff-photos';
 import { formatGel } from '@/lib/playmanager/economy';
 import type { PlayManagerCitySnapshot } from '@/lib/playmanager/city-data';
 import type { ClubEffectsSummary, ManagerPerk } from '@/lib/playmanager/progression';
@@ -132,8 +131,6 @@ export function PlayManagerResidence(props: PlayManagerResidenceProps) {
             maxStaffLevel={getMaxStaffLevelForDivision(team.divisionId)}
             totalWeeklyWagesLabel={snapshot.staff.totalWeeklyWagesLabel}
             bonuses={snapshot.staff.bonuses}
-            pendingAction={pendingAction}
-            onRunPlayerAction={onRunPlayerAction}
             onBack={goBack}
           />
         ) : (
@@ -441,8 +438,6 @@ function StaffView({
   maxStaffLevel,
   totalWeeklyWagesLabel,
   bonuses,
-  pendingAction,
-  onRunPlayerAction,
   onBack,
 }: {
   members: PlayManagerCitySnapshot['staff']['members'];
@@ -450,10 +445,9 @@ function StaffView({
   maxStaffLevel: number;
   totalWeeklyWagesLabel: string;
   bonuses: PlayManagerCitySnapshot['staff']['bonuses'];
-  pendingAction: string | null;
-  onRunPlayerAction: (actionId: string, action: () => Promise<PlayManagerPlayerActionResult>) => void;
   onBack: () => void;
 }) {
+  const router = useRouter();
   const categories: StaffCategory[] = ['coaching', 'scouting', 'medical', 'operations'];
   const activeStaffCount = members.filter((member) => member.isHired).length;
 
@@ -487,51 +481,17 @@ function StaffView({
         return (
           <PmCard key={category}>
             <PmCardHead icon={meta.icon} title={meta.label} subtitle={`${categoryMembers.length} როლი`} />
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {categoryMembers.map((member) => {
-                const hirePending = pendingAction === `staff:hire:${member.roleKey}`;
-                const upgradePending = pendingAction === `staff:upgrade:${member.roleKey}`;
-                const canUpgrade = member.isHired && member.level > 0 && member.level < member.maxLevel && Boolean(member.upgradeCost);
-                const capReached = member.isHired && member.level >= member.maxLevel;
-
-                return (
-                  <div key={member.roleKey} className="rounded-2xl border border-white/8 bg-black/24 p-3.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-black text-white">{member.name}</p>
-                        <p className="mt-0.5 text-[10px] font-bold text-white/45">{member.benefitLabel}</p>
-                      </div>
-                      {member.isHired ? <PmPill tone="green">LVL {member.level}</PmPill> : <PmPill>თავისუფალია</PmPill>}
-                    </div>
-                    <p className="mt-2 text-[11px] font-bold leading-5 text-white/48">{member.description}</p>
-                    <div className="mt-3">
-                      {!member.isHired ? (
-                        <PmAction
-                          tone="green"
-                          disabled={hirePending}
-                          onClick={() => onRunPlayerAction(`staff:hire:${member.roleKey}`, () => hirePlayManagerStaff(member.roleKey))}
-                          className="w-full justify-center"
-                        >
-                          {hirePending ? 'მუშავდება...' : `დაქირავება · ${member.hireCostLabel}`}
-                        </PmAction>
-                      ) : canUpgrade ? (
-                        <PmAction
-                          tone="green"
-                          disabled={upgradePending}
-                          onClick={() => onRunPlayerAction(`staff:upgrade:${member.roleKey}`, () => upgradePlayManagerStaff(member.roleKey))}
-                          className="w-full justify-center"
-                        >
-                          {upgradePending ? 'მუშავდება...' : `აფგრეიდი · ${member.upgradeCostLabel}`}
-                        </PmAction>
-                      ) : (
-                        <div className="rounded-full border border-white/8 bg-black/26 px-4 py-2.5 text-center text-xs font-black text-white/44">
-                          {capReached ? 'Division cap reached' : 'დაქირავებულია'}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+            {/* Photo + name only — tap a role to open its page (hire/upgrade lives there). */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {categoryMembers.map((member) => (
+                <PmPhotoCard
+                  key={member.roleKey}
+                  title={member.name}
+                  photo={getStaffPhoto(member.roleKey)}
+                  tone={member.isHired ? 'green' : 'red'}
+                  onClick={() => router.push(`/playmanager/staff/${member.roleKey}`)}
+                />
+              ))}
             </div>
           </PmCard>
         );

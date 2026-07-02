@@ -11,7 +11,6 @@ import {
   Handshake,
   Store,
   Ticket,
-  TrendingUp,
   Trophy,
   UsersRound,
   Wallet,
@@ -95,18 +94,14 @@ function OfficeCard({ children, className = '' }: { children: ReactNode; classNa
 }
 
 function DepartmentCard({
-  icon: Icon,
   title,
   photo,
-  pill,
   tone,
   onClick,
   className = '',
 }: {
-  icon: LucideIcon;
   title: string;
   photo: string;
-  pill: string;
   tone: Tone;
   onClick: () => void;
   className?: string;
@@ -125,20 +120,9 @@ function DepartmentCard({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/28 to-black/10" />
         </div>
-        {/* Content */}
-        <div className="relative z-[1] flex h-full flex-col justify-between p-4">
-          <span className={`pm-office-ava self-start ${tone === 'red' ? 'pm-office-ava--red' : ''}`}>
-            <Icon className="h-5 w-5" />
-          </span>
-          <div>
-            <p className={`pm-office-title text-[15px] leading-tight ${tone === 'red' ? 'pm-office-title--red' : ''}`}>{title}</p>
-            <div className="mt-2.5 flex items-center justify-between gap-2">
-              <StatPill tone={tone}>{pill}</StatPill>
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-white/60 transition-colors group-hover:text-emerald-300">
-                გახსნა <TrendingUp className="h-3.5 w-3.5" />
-              </span>
-            </div>
-          </div>
+        {/* Content — name only */}
+        <div className="relative z-[1] flex h-full flex-col justify-end p-4">
+          <p className={`pm-office-title text-[15px] leading-tight ${tone === 'red' ? 'pm-office-title--red' : ''}`}>{title}</p>
         </div>
       </div>
     </button>
@@ -309,10 +293,8 @@ export function PlayManagerOffice(props: PlayManagerOfficeProps) {
               {departments.map((dep, index) => (
                 <DepartmentCard
                   key={dep.key}
-                  icon={dep.icon}
                   title={dep.title}
                   photo={dep.photo}
-                  pill={dep.pill}
                   tone={dep.tone}
                   onClick={() => openModule(dep.key, dep.href)}
                   className={index === 0 && departments.length % 2 === 1 ? 'col-span-2 lg:col-span-1' : ''}

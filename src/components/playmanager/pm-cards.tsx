@@ -7,7 +7,6 @@
 import Image from 'next/image';
 import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { TrendingUp } from 'lucide-react';
 
 export type PmTone = 'green' | 'red';
 
@@ -112,24 +111,29 @@ export function PmGauge({ percent, className = '' }: { percent: number; classNam
 // ── 4:3 photo card (navigational tile) — photo inset so the neon frame shows ──
 
 export function PmPhotoCard({
-  icon: Icon,
   title,
   photo,
-  pill,
   tone = 'green',
   onClick,
   className = '',
+  pending = false,
 }: {
-  icon: LucideIcon;
+  // icon/pill accepted for backward compat with existing call sites but no
+  // longer rendered — cards show only the photo + name now.
+  icon?: LucideIcon;
   title: string;
   photo: string;
   pill?: string;
   tone?: PmTone;
   onClick: () => void;
   className?: string;
+  // Shows a spinner overlay while an action triggered by this card is in
+  // flight — the resting card is photo+name only, but a bare tap with zero
+  // feedback reads as broken, so this is the one transient exception.
+  pending?: boolean;
 }) {
   return (
-    <button type="button" onClick={onClick} className={`pubg-loadout-link group block w-full text-left ${className}`}>
+    <button type="button" onClick={onClick} disabled={pending} className={`pubg-loadout-link group block w-full text-left ${className}`}>
       <div className="pubg-loadout-card relative aspect-[4/3] overflow-hidden">
         <div className="absolute inset-[5px] overflow-hidden rounded-[12px]">
           <Image
@@ -141,22 +145,14 @@ export function PmPhotoCard({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/28 to-black/10" />
         </div>
-        <div className="relative z-[1] flex h-full flex-col justify-between p-4">
-          <span className={`pm-office-ava self-start ${tone === 'red' ? 'pm-office-ava--red' : ''}`}>
-            <Icon className="h-5 w-5" />
-          </span>
-          <div>
-            <p className={`pm-office-title text-[15px] leading-tight ${tone === 'red' ? 'pm-office-title--red' : ''}`}>{title}</p>
-            {pill ? (
-              <div className="mt-2.5 flex items-center justify-between gap-2">
-                <PmPill tone={tone}>{pill}</PmPill>
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-white/60 transition-colors group-hover:text-emerald-300">
-                  გახსნა <TrendingUp className="h-3.5 w-3.5" />
-                </span>
-              </div>
-            ) : null}
-          </div>
+        <div className="relative z-[1] flex h-full flex-col justify-end p-4">
+          <p className={`pm-office-title text-[15px] leading-tight ${tone === 'red' ? 'pm-office-title--red' : ''}`}>{title}</p>
         </div>
+        {pending ? (
+          <div className="absolute inset-0 z-[2] grid place-items-center bg-black/60">
+            <span className="h-6 w-6 animate-spin rounded-full border-2 border-white/25 border-t-emerald-300" />
+          </div>
+        ) : null}
       </div>
     </button>
   );
