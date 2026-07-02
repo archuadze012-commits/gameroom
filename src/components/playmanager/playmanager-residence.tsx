@@ -157,27 +157,21 @@ export function PlayManagerResidence(props: PlayManagerResidenceProps) {
             {/* Mobile: 2-per-row; odd count (3) → first card spans full width. */}
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
               <PmPhotoCard
-                icon={UsersRound}
                 title="მთავარი გუნდი"
                 photo="/playmanager/city/buildings/tower.webp"
-                pill={`${squad.length} მოთამაშე`}
                 tone="green"
                 onClick={() => openModule('squad')}
                 className="col-span-2 lg:col-span-1"
               />
               <PmPhotoCard
-                icon={GraduationCap}
                 title="აკადემია"
                 photo="/playmanager/city/buildings/academy.webp"
-                pill={`${snapshot.academy.length} ტალანტი`}
                 tone="green"
                 onClick={() => openModule('academy')}
               />
               <PmPhotoCard
-                icon={ShieldCheck}
                 title="პერსონალი"
                 photo="/playmanager/module-cards/staff/head-coach.webp"
-                pill={`${activeStaffCount}/${snapshot.staff.members.length}`}
                 tone="green"
                 onClick={() => openModule('staff')}
               />

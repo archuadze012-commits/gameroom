@@ -118,12 +118,8 @@ export function PmPhotoCard({
   className = '',
   pending = false,
 }: {
-  // icon/pill accepted for backward compat with existing call sites but no
-  // longer rendered — cards show only the photo + name now.
-  icon?: LucideIcon;
   title: string;
   photo: string;
-  pill?: string;
   tone?: PmTone;
   onClick: () => void;
   className?: string;

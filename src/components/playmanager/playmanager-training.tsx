@@ -138,18 +138,14 @@ export function PlayManagerTraining(props: PlayManagerTrainingProps) {
             {/* Mobile: 2-per-row (even count → no full-width first). */}
             <div className="grid grid-cols-2 gap-4">
               <PmPhotoCard
-                icon={Dumbbell}
                 title="სავარჯიშო სესიები"
                 photo="/playmanager/city/buildings/training.webp"
-                pill="Growth"
                 tone="green"
                 onClick={() => openModule('sessions')}
               />
               <PmPhotoCard
-                icon={Activity}
                 title="ტაქტიკის ლაბი"
                 photo="/playmanager/module-cards/arena/lineup-tactics.webp"
-                pill="Coverage"
                 tone="green"
                 onClick={() => openModule('tactics_lab')}
               />
