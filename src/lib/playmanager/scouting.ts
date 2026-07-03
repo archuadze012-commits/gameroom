@@ -2,7 +2,7 @@
 // quality gaps and ageing risk, and turns each into a transfer recommendation.
 // Pure + framework-free so it can be unit-tested and reused by any UI.
 
-import { normalizePlayManagerPosition } from './secondary-positions';
+import { getPositionGroup, type PositionFilterKey } from './secondary-positions';
 
 export type ScoutingPlayer = {
   position: string;
@@ -11,7 +11,8 @@ export type ScoutingPlayer = {
   role?: 'starter' | 'bench' | 'reserve';
 };
 
-export type PositionGroupKey = 'GK' | 'DEF' | 'MID' | 'ATT';
+// Alias of the canonical position-group key — scouting keeps the historical name.
+export type PositionGroupKey = PositionFilterKey;
 
 export type ScoutingNeed = 'critical' | 'thin' | 'aging' | 'ok';
 
@@ -52,11 +53,7 @@ const RECOMMENDED_DEPTH: Record<PositionGroupKey, number> = {
 const AGING_THRESHOLD = 30; // avg age at/above which succession planning matters
 
 function groupOf(position: string): PositionGroupKey {
-  const pos = normalizePlayManagerPosition(position);
-  if (pos === 'GK') return 'GK';
-  if (['CB', 'LB', 'RB', 'LWB', 'RWB'].includes(pos)) return 'DEF';
-  if (['CDM', 'CM', 'CAM', 'LM', 'RM', 'AM'].includes(pos)) return 'MID';
-  return 'ATT'; // ST, CF, LW, RW and any unknown attacking role
+  return getPositionGroup(position);
 }
 
 function round1(n: number): number {

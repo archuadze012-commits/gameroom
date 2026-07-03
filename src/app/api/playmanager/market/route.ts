@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { loadEafc26Dataset, resolveRealPlayerStats, type Eafc26DatasetPlayer } from '@/lib/playmanager/eafc26-dataset';
 import { getTalent11AdjustedTransferValueGel } from '@/lib/playmanager/economy';
 import { getEffectiveRealPlayerTalent, PLAYMANAGER_REAL_PLAYER_RESET_AGE } from '@/lib/playmanager/player-age';
-import { normalizePlayManagerPosition } from '@/lib/playmanager/secondary-positions';
+import { normalizePlayManagerPosition, positionMatchesFilter } from '@/lib/playmanager/secondary-positions';
 import { buildPlayManagerPlayerCardLayout } from '@/lib/playmanager/player-card';
 import { parsePlayerCardStats, type PlayerCardStatsInput } from '@/lib/playmanager/player-card-stats';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -137,12 +137,10 @@ async function loadAvailableMarketRows() {
 }
 
 function matchesFilter(player: Eafc26DatasetPlayer, filter: string) {
-  const position = normalizePlayManagerPosition(player.position);
   if (filter === 'ALL' || filter === 'SHORTLIST') return true;
-  if (filter === 'GK') return position === 'GK';
-  if (filter === 'DEF') return ['CB', 'LB', 'RB'].includes(position);
-  if (filter === 'MID') return ['CDM', 'CM', 'CAM'].includes(position);
-  if (filter === 'ATT') return ['LW', 'RW', 'ST', 'LM', 'RM', 'AM'].includes(position);
+  if (filter === 'GK' || filter === 'DEF' || filter === 'MID' || filter === 'ATT') {
+    return positionMatchesFilter(player.position, filter);
+  }
   return true;
 }
 
