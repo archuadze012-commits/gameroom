@@ -110,12 +110,24 @@ export default async function PlayManagerStaffDetailPage({
       // the "maxed" block must be computed from the PENDING-implied OVR, not the
       // live one, or a fully-trained-but-unconfirmed player still shows an
       // enabled train button that errors with player_maxed on click.
+      //
+      // Note: decoded legacy card_stats can imply an OVR slightly BELOW the
+      // stored ovr_current (a pre-existing seed-data mismatch — see
+      // 20260703e). When pending_card_stats is empty, the baseline falls back
+      // to card_stats, so pendingOvr can start below live OVR even though
+      // training genuinely banked dev XP. Fetch xp too so we can show that
+      // banked progress even before pendingOvr catches up to live OVR —
+      // otherwise a session looks like it did nothing.
       const pendingOvrByPlayerId = new Map<string, number>();
+      const pendingXpByPlayerId = new Map<string, number>();
       if (players.length > 0) {
         const { data: pendingRows } = await db
-          .from<{ id: string; pending_card_stats: Record<string, number> | null }>('pm_players')
-          .select('id, pending_card_stats')
+          .from<{ id: string; xp: number | null; pending_card_stats: Record<string, number> | null }>('pm_players')
+          .select('id, xp, pending_card_stats')
           .in('id', players.map((player) => player.id));
+        for (const row of pendingRows ?? []) {
+          if (row.xp && row.xp > 0) pendingXpByPlayerId.set(row.id, row.xp);
+        }
         const withPending = (pendingRows ?? []).filter((row) => row.pending_card_stats != null);
         await Promise.all(
           withPending.map(async (row) => {
@@ -134,6 +146,7 @@ export default async function PlayManagerStaffDetailPage({
       coachSection = (
         <CoachTrainingList
           players={players}
+          pendingXpByPlayerId={Object.fromEntries(pendingXpByPlayerId)}
           pendingOvrByPlayerId={Object.fromEntries(pendingOvrByPlayerId)}
           coachHired={isHired}
           coachLevel={currentLevel}

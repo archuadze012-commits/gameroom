@@ -14,9 +14,10 @@ import { getPlayerPotentialForTraining } from '@/components/playmanager/playmana
 import { trainPlayManagerPlayer } from '@/app/playmanager/actions';
 import type { PlayManagerCitySnapshot } from '@/lib/playmanager/city-data';
 
-// Real cost of one training session (mirrors pm_train_player): fatigue + a day.
-// (There is no XP cost — the old "XP {n}" pill was fabricated; training XP only
-// ever accrues to the manager, it is never spent here.)
+// Real cost of one training session (mirrors pm_train_player): fatigue + a
+// daily session slot. Training now banks a session's worth of dev XP into the
+// same budget/cost curve match development uses, so a session may or may not
+// buy a stat point outright — the fatigue/session cost is paid either way.
 const TRAIN_FATIGUE_COST = 8;
 
 type CoachPlayer = PlayManagerCitySnapshot['squad'][number];
@@ -24,6 +25,7 @@ type CoachPlayer = PlayManagerCitySnapshot['squad'][number];
 export function CoachTrainingList({
   players,
   pendingOvrByPlayerId,
+  pendingXpByPlayerId,
   coachHired,
   coachLevel,
   trainingBonusPct,
@@ -36,6 +38,12 @@ export function CoachTrainingList({
   // Training banks into pending, not live OVR — headroom must account for it or
   // an already-maxed-via-pending player still shows an enabled train button.
   pendingOvrByPlayerId: Record<string, number>;
+  // playerId -> banked dev XP (pm_players.xp) not yet spent on a stat point.
+  // Decoded legacy card_stats can imply an OVR slightly BELOW the live one (a
+  // pre-existing seed-data quirk), so pendingOvr can start under live OVR even
+  // though a session genuinely banked XP — show that progress directly so
+  // training doesn't look like a no-op.
+  pendingXpByPlayerId: Record<string, number>;
   coachHired: boolean;
   coachLevel: number;
   trainingBonusPct: number;
@@ -70,7 +78,8 @@ export function CoachTrainingList({
       const remainingGrowth = Math.max(0, potential - effectiveOvr);
       const totalGrowth = Math.max(1, potential - player.ovrBase);
       const progressPct = Math.min(100, Math.round(((effectiveOvr - player.ovrBase) / totalGrowth) * 100));
-      return { player, potential, remainingGrowth, progressPct, hasPendingUpgrade, pendingOvr };
+      const bankedXp = pendingXpByPlayerId[player.id] ?? 0;
+      return { player, potential, remainingGrowth, progressPct, hasPendingUpgrade, pendingOvr, bankedXp };
     })
     .sort((left, right) => {
       if (right.remainingGrowth !== left.remainingGrowth) return right.remainingGrowth - left.remainingGrowth;
@@ -121,7 +130,7 @@ export function CoachTrainingList({
       )}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {rows.map(({ player, potential, remainingGrowth, progressPct, hasPendingUpgrade, pendingOvr }) => {
+        {rows.map(({ player, potential, remainingGrowth, progressPct, hasPendingUpgrade, pendingOvr, bankedXp }) => {
           const trainPending = pendingId === player.id;
           const blocked = player.availability === 'injured' || remainingGrowth <= 0 || quotaExhausted;
           return (
@@ -139,7 +148,11 @@ export function CoachTrainingList({
                 <PmPill>Potential {potential}</PmPill>
                 <PmPill tone="green">+{remainingGrowth}</PmPill>
                 <PmPill tone="red">−{TRAIN_FATIGUE_COST} ფიზ. · 1 სესია</PmPill>
-                {hasPendingUpgrade ? <PmPill tone="green">pending OVR {pendingOvr} ✦</PmPill> : null}
+                {hasPendingUpgrade ? (
+                  <PmPill tone="green">pending OVR {pendingOvr} ✦</PmPill>
+                ) : bankedXp > 0 ? (
+                  <PmPill>{bankedXp} dev XP დაგროვილი</PmPill>
+                ) : null}
               </div>
               <div>
                 <div className="flex items-center justify-between text-[10px] font-black text-white/44">
