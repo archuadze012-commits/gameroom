@@ -13,6 +13,9 @@
 # testing
 /coverage
 
+# codebase-memory-mcp indexer binary/data (large, machine-local, not project source)
+/codebase-memory-mcp/
+
 # next.js
 /.next/
 /out/
