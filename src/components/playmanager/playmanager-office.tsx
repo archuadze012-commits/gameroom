@@ -7,17 +7,15 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   Coins,
-  GraduationCap,
   Handshake,
-  Store,
   Ticket,
   Trophy,
-  UsersRound,
   Wallet,
   type LucideIcon,
 } from 'lucide-react';
 import { PlayManagerSidebar } from '@/components/playmanager/playmanager-side-nav';
 import { PlayManagerBottomNav } from '@/components/playmanager/playmanager-bottom-nav';
+import { StaffContextGrid } from '@/components/playmanager/staff-context-grid';
 import {
   negotiatePlayManagerSponsor,
   savePlayManagerTicketPrice,
@@ -179,12 +177,18 @@ export function PlayManagerOffice(props: PlayManagerOfficeProps) {
   const [ticketPriceDraft, setTicketPriceDraft] = useState(snapshot.finance.ticketPrice);
 
   const departments = [
-    { key: 'transfer_market', icon: Store, title: 'სატრანსფერო ბაზარი', photo: '/playmanager/module-cards/market/transfer-market.webp', pill: 'ბაზარი', tone: 'green' as Tone, href: '/playmanager/market?module=transfer_market' },
-    { key: 'free_agents', icon: UsersRound, title: 'თავისუფალი აგენტები', photo: '/playmanager/module-cards/market/free-agents.webp', pill: 'ყოველდღე', tone: 'green' as Tone, href: '/playmanager/market?module=free_agents' },
-    { key: 'academy_intake', icon: GraduationCap, title: 'აკადემია', photo: '/playmanager/city/buildings/academy.webp', pill: 'youth', tone: 'green' as Tone, href: '/playmanager/academy' },
-    { key: 'wages', icon: Coins, title: 'ხელფასების უწყისი', photo: '/playmanager/module-cards/staff/finance-manager.webp', pill: snapshot.finance.weeklyWagesLabel, tone: 'red' as Tone },
-    { key: 'tickets', icon: Trophy, title: 'სტადიონის მენეჯმენტი', photo: '/playmanager/module-cards/arena/stadium-economy.webp', pill: snapshot.finance.stadiumCapacityLabel, tone: 'green' as Tone },
+    { key: 'transfer_market', title: 'სატრანსფერო ბაზარი', photo: '/playmanager/module-cards/market/transfer-market.webp', tone: 'green' as Tone, href: '/playmanager/market?module=transfer_market' },
+    { key: 'free_agents', title: 'თავისუფალი აგენტები', photo: '/playmanager/module-cards/market/free-agents.webp', tone: 'green' as Tone, href: '/playmanager/market?module=free_agents' },
+    { key: 'academy_intake', title: 'აკადემია', photo: '/playmanager/city/buildings/academy.webp', tone: 'green' as Tone, href: '/playmanager/academy' },
+    { key: 'wages', title: 'ხელფასების უწყისი', photo: '/playmanager/module-cards/staff/finance-manager.webp', tone: 'red' as Tone },
+    { key: 'tickets', title: 'სტადიონის მენეჯმენტი', photo: '/playmanager/module-cards/arena/stadium-economy.webp', tone: 'green' as Tone },
   ];
+
+  // Finance manager + scout are managed from the office; coaches live in the
+  // training centre and medics in the medical centre.
+  const officeStaff = snapshot.staff.members.filter(
+    (member) => member.roleKey === 'finance_manager' || member.roleKey === 'scout',
+  );
 
   function openModule(key: string, href?: string) {
     if (href) {
@@ -301,6 +305,15 @@ export function PlayManagerOffice(props: PlayManagerOfficeProps) {
                 />
               ))}
             </div>
+
+            {/* ── OFFICE STAFF (finance + scouting) ── */}
+            <OfficeCard>
+              <CardHead icon={Handshake} title="ოფისის შტაბი" subtitle="Finance & scouting" />
+              <p className="text-[11px] font-bold leading-5 text-white/45">
+                ფინანსური მენეჯერი და სკაუტი — ბარათზე დაჭერით გახსნი დაქირავება/აფგრეიდის გვერდს.
+              </p>
+              <StaffContextGrid members={officeStaff} />
+            </OfficeCard>
 
             {/* ── SPONSOR + REVENUE ── */}
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

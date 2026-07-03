@@ -144,8 +144,13 @@ type TrainPlayerRpcResult = {
   fatigue: number;
   morale: number;
   ovrGain?: number;
+  statGain?: number;
+  pendingOvr?: number;
+  upgradable?: boolean;
   staffTrainingBonusPct?: number;
   positionCoachApplied?: boolean;
+  trainUsed?: number;
+  trainCapacity?: number;
 };
 
 function getPercentBonusAmount(amount: number, pct: number) {
@@ -223,6 +228,9 @@ async function advancePlayManagerTime(teamId: string, days = 1) {
     p_team_id: teamId,
     p_days: days,
   });
+  // Bench/reserve players lose morale while time passes (starters stay content) —
+  // keeps morale a managed lever instead of a number that only ever rises.
+  await db.rpc('pm_apply_squad_morale_drain', { p_team_id: teamId, p_days: days });
   // Academy prospects mature as time passes (scaled by academy facility level).
   await db.rpc('pm_develop_academy_prospects', { p_team_id: teamId, p_days: days });
   // Career-end: notify on final season, auto-resolve players who age out undecided.
@@ -460,9 +468,16 @@ export async function trainPlayManagerPlayer(playerId: string): Promise<PlayMana
     teamId: team.id,
     xpReward,
   });
-  const calendar = await advancePlayManagerTime(team.id, 1);
-  const ovrGain = Math.max(1, data?.ovrGain ?? 1);
+  // Training no longer raises OVR directly — it banks pending mini-stats (like a
+  // match) that are later realised via the fodder-confirm on the assistant page.
+  // It also draws on the daily session quota (enforced in pm_train_player).
+  const statGain = Math.max(0, data?.statGain ?? 0);
+  const pendingOvr = data?.pendingOvr;
+  const upgradable = data?.upgradable === true;
   const trainingBonusPct = Math.max(0, data?.staffTrainingBonusPct ?? 0);
+  const sessionsLabel =
+    data?.trainCapacity != null && data?.trainUsed != null ? ` · სესია ${data.trainUsed}/${data.trainCapacity}` : '';
+  const pendingLabel = pendingOvr != null ? ` · pending OVR ${pendingOvr}${upgradable ? ' ✦' : ''}` : '';
   const coachDetail = data?.positionCoachApplied
     ? ` · positional coach proc +${trainingBonusPct}%`
     : trainingBonusPct > 0
@@ -472,13 +487,15 @@ export async function trainPlayManagerPlayer(playerId: string): Promise<PlayMana
     teamId: team.id,
     category: 'board',
     accent: 'green',
-    title: 'ინდივიდუალური ვარჯიში დასრულდა',
-    detail: `OVR +${ovrGain} · XP +${xpReward}${coachDetail}${calendar ? ` · კვირა ${calendar.weekNo} · დღე ${calendar.dayNo}` : ''}`,
+    title: 'ვარჯიში: მინი-სტატები გაუმჯობესდა',
+    detail: `მინი-სტატი +${statGain} · XP +${xpReward}${coachDetail}${pendingLabel}${sessionsLabel}`,
   });
   revalidatePath('/playmanager');
   return {
     success: true,
-    message: `OVR გაიზარდა +${ovrGain}-ით · XP +${xpReward}${data?.positionCoachApplied ? ' · positional coach hit' : ''}`,
+    message: upgradable
+      ? `მინი-სტატი +${statGain}${pendingLabel} — ასაწევია ასისტენტთან fodder-ით${sessionsLabel}`
+      : `მინი-სტატი +${statGain}${pendingLabel}${sessionsLabel}`,
   };
 }
 
@@ -1055,6 +1072,12 @@ export async function buyPlayManagerXpPack(pack: 'starter' | 'prep' | 'elite'): 
 
 function mapPlayerActionError(message: string): PlayManagerPlayerActionResult {
   if (message.includes('insufficient_funds')) return { success: false, error: 'insufficient_funds' };
+  if (message.includes('training_quota_reached')) {
+    return { success: false, error: 'unavailable', message: 'დღევანდელი სავარჯიშო სესიები ამოიწურა — გაათამაშე მატჩი ან გადადი შემდეგ დღეს.' };
+  }
+  if (message.includes('player_maxed')) {
+    return { success: false, error: 'unavailable', message: 'ფეხბურთელმა პოტენციალის ჭერს მიაღწია.' };
+  }
   if (message.includes('player_unavailable') || message.includes('player_not_found')) {
     return { success: false, error: 'player_unavailable' };
   }

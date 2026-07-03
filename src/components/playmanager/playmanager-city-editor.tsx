@@ -28,6 +28,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { TalentClassBadge } from '@/components/playmanager/talent-class-badge';
+import { StaffContextGrid } from '@/components/playmanager/staff-context-grid';
 
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -177,6 +178,7 @@ const BUILDING_MODULES: Record<string, BuildingModule[]> = {
   ],
   medical: [
     { key: 'risk', title: 'რისკის ანალიზი', eyebrow: 'Risk', description: 'რომელი ფეხბურთელი არ უნდა ათამაშო ზედიზედ მძიმე მატჩებში.', icon: Activity, status: 'ready' },
+    { key: 'staff', title: 'სამედიცინო შტაბი', eyebrow: 'Medical staff', description: 'ექიმი, ფიზიოთერაპევტი და ფსიქოლოგი — დაქირავება და აფგრეიდი.', icon: Stethoscope, status: 'ready' },
   ],
   academy: [
     { key: 'prospects', title: 'ტალანტები', eyebrow: 'Prospects', description: 'ახალგაზრდები, potential, განვითარება და ხელმოწერა — ერთ ადგილას.', icon: UsersRound, status: 'ready' },
@@ -1448,6 +1450,18 @@ function FacilityModule({
     return (
       <GamePanel title="რისკის ანალიზი" icon={<Stethoscope className="h-4 w-4" />}>
         <FitnessReport players={snapshot.squad} />
+      </GamePanel>
+    );
+  }
+
+  if (spriteKey === 'medical' && moduleKey === 'staff') {
+    const medicalStaff = snapshot.staff.members.filter((member) => member.category === 'medical');
+    return (
+      <GamePanel title="სამედიცინო შტაბი" icon={<Stethoscope className="h-4 w-4" />}>
+        <p className="mb-3 text-[11px] font-bold leading-5 text-white/48">
+          ექიმი, ფიზიოთერაპევტი და ფსიქოლოგი — ბარათზე დაჭერით გახსნი დაქირავება/აფგრეიდის გვერდს.
+        </p>
+        <StaffContextGrid members={medicalStaff} />
       </GamePanel>
     );
   }

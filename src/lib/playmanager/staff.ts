@@ -155,6 +155,15 @@ type StaffBonuses = {
   totalWeeklyWages: number;
 };
 
+// Daily training-session capacity. MUST stay in sync with pm_training_capacity
+// in 20260703b_playmanager_training_daily_quota.sql: base + head_coach level +
+// training-facility level.
+export const PM_TRAINING_BASE_SESSIONS = 4;
+
+export function getTrainingDailyCapacity(headCoachLevel: number, trainingFacilityLevel: number) {
+  return PM_TRAINING_BASE_SESSIONS + Math.max(0, headCoachLevel) + Math.max(0, trainingFacilityLevel);
+}
+
 export function getMaxStaffLevelForDivision(divisionId: number) {
   const safeDivision = Math.max(1, Math.min(5, Math.trunc(divisionId || 5)));
   return Math.max(1, Math.min(5, 6 - safeDivision));
