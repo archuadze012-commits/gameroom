@@ -1015,14 +1015,42 @@ export async function getPlayManagerCitySnapshot(
       : 72;
   const injuredCount = squad.filter((player) => player.availability === 'injured').length;
   const availableCount = squad.length - injuredCount;
-  const baseReadiness = Math.max(
+
+  // Match readiness must mirror the LIVE league match engine
+  // (pm_simulate_league_round) exactly — it is the number that actually shifts
+  // xG there, not a cosmetic squad-wide stat like the morale/fatigue pills
+  // above. The engine reads ONLY the starting XI (shirt_number <= 11), includes
+  // an OVR term, and weighs morale/fatigue/injuries differently — this used to
+  // diverge (whole-squad average, no OVR term, morale x0.52 vs x0.42, injured
+  // x4 vs x7), so the manager's preview lied about what a match would actually
+  // do, especially once bench/reserve morale started draining independently.
+  const starterSquad = squad.filter((player) => player.role === 'starter');
+  const starterAvgOvr =
+    starterSquad.length > 0
+      ? starterSquad.reduce((sum, player) => sum + player.ovrCurrent, 0) / starterSquad.length
+      : 68;
+  const starterAvgFatigue =
+    starterSquad.length > 0
+      ? starterSquad.reduce((sum, player) => sum + player.fatigue, 0) / starterSquad.length
+      : 18;
+  const starterAvgMorale =
+    starterSquad.length > 0
+      ? starterSquad.reduce((sum, player) => sum + player.morale, 0) / starterSquad.length
+      : 78;
+  const starterInjuredCount = starterSquad.filter((player) => player.availability === 'injured').length;
+  const readiness = Math.max(
     35,
     Math.min(
       100,
-      Math.round((averageSquadMorale * 0.52) + ((100 - averageSquadFatigue) * 0.38) - (injuredCount * 4)),
+      Math.round(
+        (starterAvgOvr - 55) * 1.2 +
+          starterAvgMorale * 0.42 -
+          starterAvgFatigue * 0.38 -
+          starterInjuredCount * 7 +
+          staffBonuses.readinessFlat,
+      ),
     ),
   );
-  const readiness = Math.max(35, Math.min(100, baseReadiness + staffBonuses.readinessFlat));
   const ticketPrice = financeStateRow?.ticket_price ?? 28;
   const stadiumLevel = (arenaFacilityRow as ArenaFacilityRow | null)?.level ?? 1;
 
