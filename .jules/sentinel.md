@@ -1,0 +1,4 @@
+## 2025-07-03 - [Fix Open Redirect vulnerability in OAuth flow]
+**Vulnerability:** The OAuth flow endpoints (`src/app/auth/callback/route.ts` and `src/app/auth/google/route.ts`) were vulnerable to Open Redirect attacks. They used `.startsWith("/")` to validate the `next` query parameter before redirecting users, which allowed protocol-relative URLs like `//malicious.com` or `/\malicious.com` to bypass the check.
+**Learning:** Checking for a leading slash (`startsWith("/")`) is insufficient for validating relative redirect URLs because browsers may interpret protocol-relative URLs as absolute URLs, leading to unintended external redirections.
+**Prevention:** Explicitly reject protocol-relative URLs by verifying `!next.startsWith("//") && !next.startsWith("/\\")` along with `next.startsWith("/")` to prevent Open Redirect vulnerabilities.
