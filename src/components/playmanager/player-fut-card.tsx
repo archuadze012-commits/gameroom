@@ -406,6 +406,8 @@ function PlayerFutCardImpl({
   positionStatus,
   showSecondaryPositions = false,
   secondaryPositions,
+  flashLabels,
+  flashNonce = 0,
 }: {
   name: string;
   position: string;
@@ -423,6 +425,11 @@ function PlayerFutCardImpl({
   positionStatus?: PositionStatus;
   showSecondaryPositions?: boolean;
   secondaryPositions?: string[];
+  // Stat labels (e.g. ['DIV']) to give a one-shot green glow-pulse — used by
+  // the coach training list to highlight exactly which mini-stat a session
+  // just raised. Bump flashNonce to re-trigger the same label's flash again.
+  flashLabels?: string[];
+  flashNonce?: number;
 }) {
   const rawId = useId().replace(/:/g, '');
   const clipId = `pm-fut-clip-${rawId}`;
@@ -635,16 +642,23 @@ function PlayerFutCardImpl({
             transform: `scale(${layout.statsScale})`,
             transformOrigin: 'top center'
           }}>
-            {resolvedStats.map(({ label, value }) => (
-              <div key={label} className="text-center">
-                <p style={{ fontSize: 11, fontFamily: 'var(--font-orbitron)', fontWeight: 700, color: 'white', lineHeight: 1, letterSpacing: '.02em' }}>
-                  {label}
-                </p>
-                <p style={{ fontSize: 18, fontFamily: 'var(--font-orbitron)', fontWeight: 900, color: 'white', lineHeight: 1.1, textShadow: '0 1px 4px rgba(0,0,0,.6)' }}>
-                  {value}
-                </p>
-              </div>
-            ))}
+            {resolvedStats.map(({ label, value }) => {
+              const isFlashing = flashLabels?.includes(label) ?? false;
+              return (
+                <div key={label} className="text-center">
+                  <p style={{ fontSize: 11, fontFamily: 'var(--font-orbitron)', fontWeight: 700, color: 'white', lineHeight: 1, letterSpacing: '.02em' }}>
+                    {label}
+                  </p>
+                  <p
+                    key={isFlashing ? `${label}-flash-${flashNonce}` : label}
+                    className={isFlashing ? 'pm-stat-flash' : undefined}
+                    style={{ fontSize: 18, fontFamily: 'var(--font-orbitron)', fontWeight: 900, color: 'white', lineHeight: 1.1, textShadow: '0 1px 4px rgba(0,0,0,.6)' }}
+                  >
+                    {value}
+                  </p>
+                </div>
+              );
+            })}
           </div>
 
           <div className="mt-3.5 flex justify-center">

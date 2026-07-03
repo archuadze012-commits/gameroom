@@ -111,7 +111,17 @@ type RpcCityActionFull = {
 };
 
 export type PlayManagerPlayerActionResult =
-  | { success: true; message: string; amount?: number; players?: unknown[] }
+  | {
+      success: true;
+      message: string;
+      amount?: number;
+      players?: unknown[];
+      // Set by trainPlayManagerPlayer only — lets the UI flash the exact stat
+      // that changed, or show a "+N XP" toast when a session banked XP without
+      // buying a stat point yet.
+      improvedStats?: string[];
+      devXpGranted?: number;
+    }
   | {
       success: false;
       error:
@@ -145,13 +155,13 @@ type TrainPlayerRpcResult = {
   morale: number;
   ovrGain?: number;
   statGain?: number;
+  improvedStats?: string[];
   pendingOvr?: number;
   upgradable?: boolean;
   xpGranted?: number;
   xpBanked?: number;
   staffTrainingBonusPct?: number;
-  trainUsed?: number;
-  trainCapacity?: number;
+  matchesPlayed?: number;
 };
 
 function getPercentBonusAmount(amount: number, pct: number) {
@@ -481,8 +491,10 @@ export async function trainPlayManagerPlayer(playerId: string): Promise<PlayMana
   const devXpGranted = data?.xpGranted;
   const devXpBanked = data?.xpBanked;
   const managerXpReward = xpReward; // profiles.xp (manager level) — a separate pool from player dev XP.
-  const sessionsLabel =
-    data?.trainCapacity != null && data?.trainUsed != null ? ` · სესია ${data.trainUsed}/${data.trainCapacity}` : '';
+  // Training is now one session per player per league match, so there is no
+  // team-wide session counter to surface — the next session unlocks after the
+  // next matchday.
+  const sessionsLabel = ' · შემდეგი სესია მატჩის შემდეგ';
   const pendingLabel = pendingOvr != null ? ` · pending OVR ${pendingOvr}${upgradable ? ' ✦' : ''}` : '';
   const devLabel =
     statGain > 0
@@ -503,6 +515,8 @@ export async function trainPlayManagerPlayer(playerId: string): Promise<PlayMana
     message: upgradable
       ? `${devLabel}${pendingLabel} — ასაწევია ასისტენტთან fodder-ით${sessionsLabel}`
       : `${devLabel}${pendingLabel}${sessionsLabel}`,
+    improvedStats: statGain > 0 ? data?.improvedStats : undefined,
+    devXpGranted: statGain === 0 ? devXpGranted : undefined,
   };
 }
 
@@ -1079,8 +1093,8 @@ export async function buyPlayManagerXpPack(pack: 'starter' | 'prep' | 'elite'): 
 
 function mapPlayerActionError(message: string): PlayManagerPlayerActionResult {
   if (message.includes('insufficient_funds')) return { success: false, error: 'insufficient_funds' };
-  if (message.includes('training_quota_reached')) {
-    return { success: false, error: 'unavailable', message: 'დღევანდელი სავარჯიშო სესიები ამოიწურა — გაათამაშე მატჩი ან გადადი შემდეგ დღეს.' };
+  if (message.includes('already_trained_this_match') || message.includes('training_quota_reached')) {
+    return { success: false, error: 'unavailable', message: 'ეს ფეხბურთელი ამ მატჩზე უკვე ივარჯიშა — შემდეგი სესია მატჩის შემდეგ.' };
   }
   if (message.includes('player_maxed')) {
     return { success: false, error: 'unavailable', message: 'ფეხბურთელმა პოტენციალის ჭერს მიაღწია.' };

@@ -23,7 +23,6 @@ import {
   getStaffUpgradeCost,
   getStaffWeeklyWage,
   getStaffBenefitLabel,
-  getTrainingDailyCapacity,
   type StaffCategory,
   type StaffRoleKey,
 } from '@/lib/playmanager/staff';
@@ -92,18 +91,15 @@ export default async function PlayManagerStaffDetailPage({
 
     if (isPositionCoachRole(typedRoleKey)) {
       const players = snapshot.squad.filter((player) => positionMatchesCoach(player.position, typedRoleKey));
-      // Daily training-session quota (see pm_train_player / pm_training_capacity).
-      const headCoachMember = snapshot.staff.members.find((member) => member.roleKey === 'head_coach');
-      const headCoachLevel = headCoachMember?.isHired ? headCoachMember.level : 0;
-      const trainingFacilityLevel = facilities.find((facility) => facility.spriteKey === 'training')?.level ?? 0;
-      const sessionCapacity = getTrainingDailyCapacity(headCoachLevel, trainingFacilityLevel);
-      const { data: cal } = await db
-        .from<{ train_used: number; train_day: number; total_days: number }>('pm_calendar')
-        .select('train_used, train_day, total_days')
-        .eq('team_id', team.id)
-        .maybeSingle();
-      const usedToday = cal && cal.train_day === cal.total_days ? cal.train_used : 0;
-      const sessionsLeft = Math.max(0, sessionCapacity - usedToday);
+      // Training is one session per player per match — league + cup (see
+      // pm_train_player / pm_team_match_count). The "match window" id is the
+      // total matches played so far; a player whose last_train_match equals it
+      // has already trained this match. Read it via the same RPC the gate uses
+      // so client display and server truth can never drift.
+      const { data: matchesPlayed } = await db.rpc<number>('pm_team_match_count', {
+        p_team_id: team.id,
+      });
+      const currentMatchWindow = matchesPlayed ?? 0;
 
       // Training now banks gains into pending_card_stats rather than moving
       // ovr_current directly (see 20260703d) — the growth-headroom display and
@@ -120,13 +116,15 @@ export default async function PlayManagerStaffDetailPage({
       // otherwise a session looks like it did nothing.
       const pendingOvrByPlayerId = new Map<string, number>();
       const pendingXpByPlayerId = new Map<string, number>();
+      const trainedThisMatchIds: string[] = [];
       if (players.length > 0) {
         const { data: pendingRows } = await db
-          .from<{ id: string; xp: number | null; pending_card_stats: Record<string, number> | null }>('pm_players')
-          .select('id, xp, pending_card_stats')
+          .from<{ id: string; xp: number | null; last_train_match: number | null; pending_card_stats: Record<string, number> | null }>('pm_players')
+          .select('id, xp, last_train_match, pending_card_stats')
           .in('id', players.map((player) => player.id));
         for (const row of pendingRows ?? []) {
           if (row.xp && row.xp > 0) pendingXpByPlayerId.set(row.id, row.xp);
+          if ((row.last_train_match ?? -1) === currentMatchWindow) trainedThisMatchIds.push(row.id);
         }
         const withPending = (pendingRows ?? []).filter((row) => row.pending_card_stats != null);
         await Promise.all(
@@ -151,8 +149,7 @@ export default async function PlayManagerStaffDetailPage({
           coachHired={isHired}
           coachLevel={currentLevel}
           trainingBonusPct={trainingBonusPct}
-          sessionsLeft={sessionsLeft}
-          sessionCapacity={sessionCapacity}
+          trainedThisMatchIds={trainedThisMatchIds}
           emptyHint="ამ ჯგუფში მოთამაშე ჯერ არ არის."
         />
       );
