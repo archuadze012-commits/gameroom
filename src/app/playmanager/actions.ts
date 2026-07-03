@@ -147,8 +147,9 @@ type TrainPlayerRpcResult = {
   statGain?: number;
   pendingOvr?: number;
   upgradable?: boolean;
+  xpGranted?: number;
+  xpBanked?: number;
   staffTrainingBonusPct?: number;
-  positionCoachApplied?: boolean;
   trainUsed?: number;
   trainCapacity?: number;
 };
@@ -468,34 +469,40 @@ export async function trainPlayManagerPlayer(playerId: string): Promise<PlayMana
     teamId: team.id,
     xpReward,
   });
-  // Training no longer raises OVR directly — it banks pending mini-stats (like a
-  // match) that are later realised via the fodder-confirm on the assistant page.
-  // It also draws on the daily session quota (enforced in pm_train_player).
+  // Training no longer raises OVR directly, and no longer grants a guaranteed
+  // free stat point — it banks a session's worth of development XP into the
+  // SAME budget/cost curve match development uses (pm_players.xp), so a
+  // session often just accumulates toward the next point rather than buying
+  // one outright. This is deliberate: training used to be far faster than
+  // playing matches for the same pending-stat pipeline.
   const statGain = Math.max(0, data?.statGain ?? 0);
   const pendingOvr = data?.pendingOvr;
   const upgradable = data?.upgradable === true;
-  const trainingBonusPct = Math.max(0, data?.staffTrainingBonusPct ?? 0);
+  const devXpGranted = data?.xpGranted;
+  const devXpBanked = data?.xpBanked;
+  const managerXpReward = xpReward; // profiles.xp (manager level) — a separate pool from player dev XP.
   const sessionsLabel =
     data?.trainCapacity != null && data?.trainUsed != null ? ` · სესია ${data.trainUsed}/${data.trainCapacity}` : '';
   const pendingLabel = pendingOvr != null ? ` · pending OVR ${pendingOvr}${upgradable ? ' ✦' : ''}` : '';
-  const coachDetail = data?.positionCoachApplied
-    ? ` · positional coach proc +${trainingBonusPct}%`
-    : trainingBonusPct > 0
-      ? ` · coach bonus ${trainingBonusPct}%`
-      : '';
+  const devLabel =
+    statGain > 0
+      ? `მინი-სტატი +${statGain}`
+      : devXpGranted != null && devXpBanked != null
+        ? `+${devXpGranted} dev XP (${devXpBanked} დაგროვილი)`
+        : 'ვარჯიში ჩატარდა';
   await logPlayManagerEvent({
     teamId: team.id,
     category: 'board',
     accent: 'green',
-    title: 'ვარჯიში: მინი-სტატები გაუმჯობესდა',
-    detail: `მინი-სტატი +${statGain} · XP +${xpReward}${coachDetail}${pendingLabel}${sessionsLabel}`,
+    title: statGain > 0 ? 'ვარჯიში: მინი-სტატები გაუმჯობესდა' : 'ვარჯიში: XP დაგროვდა',
+    detail: `${devLabel} · მენეჯერის XP +${managerXpReward}${pendingLabel}${sessionsLabel}`,
   });
   revalidatePath('/playmanager');
   return {
     success: true,
     message: upgradable
-      ? `მინი-სტატი +${statGain}${pendingLabel} — ასაწევია ასისტენტთან fodder-ით${sessionsLabel}`
-      : `მინი-სტატი +${statGain}${pendingLabel}${sessionsLabel}`,
+      ? `${devLabel}${pendingLabel} — ასაწევია ასისტენტთან fodder-ით${sessionsLabel}`
+      : `${devLabel}${pendingLabel}${sessionsLabel}`,
   };
 }
 

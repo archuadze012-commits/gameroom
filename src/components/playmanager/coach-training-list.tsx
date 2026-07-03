@@ -172,9 +172,10 @@ export function CoachTrainingList({
       </div>
 
       <p className="text-[11px] font-bold leading-5 text-white/40">
-        ვარჯიში აგროვებს <b className="text-white/70">pending მინი-სტატებს</b> (მატჩების მსგავსად) — OVR პირდაპირ არ
-        იმატებს; ის აიწევა მენეჯერის ასისტენტის გვერდზე, Pro-ბარათების მსხვერპლით. ყოველი ვარჯიში ხარჯავს ერთ დღიურ
-        სესიას და ფიზიკურ ენერგიას; ჭერი ტალანტია. Training bonus +{trainingBonusPct}% ზრდის positional-coach-ის proc-ს.
+        ვარჯიში მატჩების მსგავსად აგროვებს development XP-ს <b className="text-white/70">pending მინი-სტატებზე</b> —
+        ხშირად რამდენიმე სესია სჭირდება ერთ ქულამდე, არა ერთი დაჭერა. OVR პირდაპირ არ იმატებს; ის აიწევა მენეჯერის
+        ასისტენტის გვერდზე, Pro-ბარათების მსხვერპლით. ყოველი სესია ხარჯავს დღიურ ლიმიტს და ფიზიკურ ენერგიას; ჭერი
+        ტალანტია. Training bonus +{trainingBonusPct}% ზრდის მწვრთნელის XP-წვლილს სესიაზე.
       </p>
     </div>
   );
