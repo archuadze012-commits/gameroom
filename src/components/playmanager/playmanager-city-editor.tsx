@@ -10,7 +10,6 @@ import {
   GraduationCap,
   Home,
   Landmark,
-  Megaphone,
   MessageCircle,
   Play,
   RadioTower,
@@ -185,7 +184,6 @@ const BUILDING_MODULES: Record<string, BuildingModule[]> = {
   ],
   media: [
     { key: 'direct_messages', title: 'მესენჯერი', eyebrow: 'Direct messages', description: 'პირადი მესიჯები, პასუხები და მიმდინარე დიალოგები.', icon: Send, status: 'ready' },
-    { key: 'announcements', title: 'უწყებები', eyebrow: 'Announcements', description: 'სისტემური განცხადებები, კლუბის შეტყობინებები და read status.', icon: Megaphone, status: 'ready' },
     { key: 'global_chat', title: 'გლობალური ჩატი', eyebrow: 'Global chat', description: 'საერთო საკომუნიკაციო არხი, სწრაფი საუბარი და აქტივობა.', icon: MessageCircle, status: 'ready' },
     { key: 'daily_reward', title: 'დღიური ჯილდო', eyebrow: 'Streak', description: 'day streak, cash reward და დაბრუნების მოტივაცია.', icon: Sparkles, status: 'ready' },
     { key: 'news', title: 'კლუბის სიახლეები', eyebrow: 'Feed', description: 'event feed, მატჩის შედეგები, ტრავმები და ფანების რეაქცია.', icon: RadioTower, status: 'ready' },
@@ -837,7 +835,7 @@ export function BuildingWorkspace({
   }
 
   return (
-    <main className="pm-hq-home pm-feedskin pm-hq-shell pm-facility-command-page min-h-screen overflow-x-hidden pb-24 text-white xl:pb-0">
+    <main className="pm-hq-home pm-feedskin pm-hq-shell pm-facility-command-page min-h-screen overflow-x-hidden pb-24 text-white xl:pb-0 xl:pl-[116px]">
       <LightweightSideNav />
       <div className="relative mx-auto flex min-h-screen w-full max-w-[1400px] flex-col px-4 py-4 sm:px-6 lg:px-8">
         <div>
@@ -2760,40 +2758,6 @@ function FacilityModule({
       return (
         <GamePanel title="მესენჯერი" icon={<Send className="h-4 w-4" />}>
           <PlayManagerDirectMessages />
-        </GamePanel>
-      );
-    }
-
-    if (moduleKey === 'announcements') {
-      return (
-        <GamePanel title="უწყებები" icon={<Megaphone className="h-4 w-4" />}>
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[280px_minmax(0,1fr)]">
-            <div className="pm-game-row">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/42">Board</p>
-              <p className="mt-2 text-3xl font-black text-white">კლუბის უწყებები</p>
-              <p className="mt-2 text-sm font-bold text-emerald-100/60">
-                განცხადებების სრული გვერდი ისევ ხელმისაწვდომია და აქედანაც იხსნება.
-              </p>
-              <Link
-                href="/announcements"
-                className="mt-4 inline-flex items-center justify-center rounded-xl border border-yellow-300/20 bg-yellow-300/10 px-4 py-3 text-xs font-black text-white transition hover:bg-yellow-300/16"
-              >
-                უწყებების გახსნა
-              </Link>
-            </div>
-            <div className="space-y-2">
-              {snapshot.eventFeed.slice(0, 5).map((event) => (
-                <div key={event.id} className="pm-table-row">
-                  <Megaphone className="h-4 w-4 text-yellow-200" />
-                  <div className="min-w-0 flex-1">
-                    <strong className="block truncate">{event.title}</strong>
-                    {event.detail ? <p className="mt-1 truncate text-[11px] font-bold text-white/48">{event.detail}</p> : null}
-                  </div>
-                  <span className="text-[10px] font-black text-white/38">W{event.weekNo}</span>
-                </div>
-              ))}
-            </div>
-          </div>
         </GamePanel>
       );
     }

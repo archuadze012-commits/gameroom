@@ -838,7 +838,7 @@
 
 @media (orientation: landscape) and (min-width: 1100px) {
   .pm-playmanager-root {
-    --pm-side-nav-space: 102px;
+    --pm-side-nav-space: 116px;
   }
 
   .pm-top-nav {
@@ -874,18 +874,10 @@
   min-height: 100dvh;
 }
 
-/* Lineup & tactics studio: edge-to-edge, no side-nav gutter, but scrollable
-   (unlike the single-screen city home, this editor can exceed the viewport). */
-.pm-playmanager-root:has(.pm-lineup-studio) {
-  --pm-side-nav-space: 0px;
-}
-
-.pm-playmanager-root:has(.pm-lineup-studio) .pm-top-nav {
-  display: none !important;
-}
-
+/* Lineup & tactics studio: keeps the side-nav gutter (rail stays visible),
+   but scrollable (unlike the single-screen city home, this editor can exceed
+   the viewport). */
 .pm-playmanager-pad:has(.pm-lineup-studio) {
-  padding: 0 !important;
   min-height: 100dvh;
 }
 

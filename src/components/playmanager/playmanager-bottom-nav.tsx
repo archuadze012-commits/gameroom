@@ -10,7 +10,6 @@ import {
   Crown,
   Dumbbell,
   Landmark,
-  Megaphone,
   Menu,
   MessageCircle,
   Search,
@@ -43,7 +42,6 @@ const MORE_LINKS: { href: string; label: string; icon: LucideIcon; badgeKey?: 'n
   { href: '/playmanager/notifications', label: 'შეტყობინება', icon: Bell, badgeKey: 'notifications' },
   { href: '/playmanager/search', label: 'ძებნა', icon: Search },
   { href: '/playmanager/messages', label: 'მესენჯერი', icon: MessageCircle },
-  { href: '/playmanager/announcements', label: 'უწყებები', icon: Megaphone },
 ];
 
 export function PlayManagerBottomNav() {

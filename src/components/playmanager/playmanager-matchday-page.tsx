@@ -141,10 +141,10 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
   }
 
   return (
-    <main className="pm-hq-home pm-feedskin relative min-h-screen overflow-x-hidden bg-[#03070c] text-white">
+    <main className="pm-hq-home pm-feedskin relative min-h-screen overflow-x-hidden bg-[#03070c] text-white xl:pl-[116px]">
       <NavRail />
 
-      <div className="mx-auto w-full max-w-[1280px] px-4 pb-28 pt-4 sm:px-6 lg:px-8 xl:pb-10 xl:pl-[96px]">
+      <div className="mx-auto w-full max-w-[1280px] px-4 pb-28 pt-4 sm:px-6 lg:px-8 xl:pb-10">
         <TopStrip
           teamName={teamName}
           divisionLabel={divisionLabel}

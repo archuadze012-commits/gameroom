@@ -11,7 +11,6 @@ import {
   Crown,
   Dumbbell,
   Landmark,
-  Megaphone,
   MessageCircle,
   Search,
   Shield,
@@ -19,7 +18,7 @@ import {
   Trophy,
   UsersRound,
 } from 'lucide-react';
-import { playPlayManagerAnnouncementSound, playPlayManagerMessageSound } from '@/lib/sounds';
+import { playPlayManagerMessageSound } from '@/lib/sounds';
 
 // ── Canonical PlayManager side navigation ─────────────────────────────────────
 // Single source of truth for the left rail. Matches the design on the PlayManager
@@ -44,14 +43,9 @@ const navItems: NavItem[] = [
   { label: 'მიღწევები', icon: Award, href: '/playmanager/achievements' },
   { label: 'შეტყობინება', icon: Bell, href: '/playmanager/notifications' },
   { label: 'მესენჯერი', icon: MessageCircle, href: '/playmanager/messages' },
-  { label: 'უწყებები', icon: Megaphone, href: '/playmanager/announcements' },
 ];
 
 function playNavSound(href: string) {
-  if (href.includes('/playmanager/announcements') || href.includes('module=announcements')) {
-    playPlayManagerAnnouncementSound();
-    return;
-  }
   if (
     href.includes('/playmanager/messages') ||
     href.includes('/playmanager/chat') ||

@@ -12,5 +12,9 @@ export function PlayManagerTopNav() {
     return null;
   }
 
-  return <PlayManagerSidebar />;
+  return (
+    <div className="pm-top-nav">
+      <PlayManagerSidebar />
+    </div>
+  );
 }

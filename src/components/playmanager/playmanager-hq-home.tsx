@@ -8,7 +8,7 @@ export function PlayManagerHqHome() {
   return (
     <main className="pm-hq-home pm-feedskin relative h-[100dvh] overflow-hidden bg-[#050706] text-white">
       <PlayManagerSidebar />
-      <div className="absolute inset-0 pl-0 xl:pl-[92px]">
+      <div className="absolute inset-0 pl-0 xl:pl-[116px]">
         <PlayManagerIsoCity />
       </div>
       <PlayManagerBottomNav />

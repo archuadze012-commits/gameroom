@@ -321,7 +321,7 @@ export function MarketStudio({
   }
 
   return (
-    <main className="pm-hq-home pm-feedskin pm-hq-shell relative min-h-screen overflow-x-hidden bg-[#04100a] pb-24 text-white xl:pb-16 xl:pl-[92px]">
+    <main className="pm-hq-home pm-feedskin pm-hq-shell relative min-h-screen overflow-x-hidden bg-[#04100a] pb-24 text-white xl:pb-16 xl:pl-[116px]">
       <PlayManagerSidebar />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[360px] bg-[radial-gradient(115%_80%_at_50%_-10%,rgba(16,185,129,0.16),transparent_60%)]" />
 

@@ -1,4 +1,4 @@
-type SoundPath = "/sounds/invite.wav" | "/sounds/message.mp3" | "/sounds/announcement.mp3";
+type SoundPath = "/sounds/invite.wav" | "/sounds/message.mp3";
 
 function playSound(path: SoundPath, volume: number) {
   try {
@@ -15,8 +15,4 @@ export function playInviteSound() {
 
 export function playPlayManagerMessageSound() {
   playSound("/sounds/message.mp3", 0.4);
-}
-
-export function playPlayManagerAnnouncementSound() {
-  playSound("/sounds/announcement.mp3", 0.48);
 }
