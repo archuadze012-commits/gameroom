@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Dumbbell, Zap } from 'lucide-react';
+import { Dumbbell, Zap, Sliders } from 'lucide-react';
 import { PlayManagerSidebar } from '@/components/playmanager/playmanager-side-nav';
 import { PlayManagerBottomNav } from '@/components/playmanager/playmanager-bottom-nav';
 import { PmCard, PmCardHead, PmPill, PmAction, PmGauge, PmPhotoCard } from '@/components/playmanager/pm-cards';
@@ -103,6 +103,20 @@ export function PlayManagerTraining(props: PlayManagerTrainingProps) {
               </div>
             </PmCard>
 
+            <div className="pubg-loadout-link group block">
+              <button
+                type="button"
+                onClick={() => router.push('/playmanager/arena/lineup')}
+                className="pubg-loadout-card relative overflow-hidden w-full h-12 !p-0 flex items-center justify-center gap-2.5 text-sm font-black text-emerald-100 transition-all duration-200"
+              >
+                <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+                <span className="relative z-[1] flex items-center gap-2.5">
+                  <Sliders className="h-4 w-4 text-emerald-300" />
+                  შემადგენლობა და ტაქტიკა
+                </span>
+              </button>
+            </div>
+
             {/* ── COACHING STAFF ── player development now lives on each coach's page. */}
             <PmCard>
               <PmCardHead icon={Dumbbell} title="მწვრთნელთა შტაბი" subtitle="Coaching staff" />
@@ -112,16 +126,6 @@ export function PlayManagerTraining(props: PlayManagerTrainingProps) {
               </p>
               <StaffContextGrid members={coachingStaff} />
             </PmCard>
-
-            {/* ── TACTICS ── */}
-            <div className="grid grid-cols-2 gap-4">
-              <PmPhotoCard
-                title="ტაქტიკის ლაბი"
-                photo="/playmanager/module-cards/arena/lineup-tactics.webp"
-                tone="green"
-                onClick={() => router.push('/playmanager/arena/lineup')}
-              />
-            </div>
 
             {/* ── FACILITY PROGRESS + UPGRADE ── */}
             <PmCard>
