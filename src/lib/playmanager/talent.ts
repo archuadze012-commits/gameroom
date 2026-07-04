@@ -54,8 +54,3 @@ export function getTalentClass(talent: number): TalentClass {
   }
   return TALENT_CLASSES[0];
 }
-
-/** All classes, high → low — for legends / pickers. */
-export function getTalentClassLadder(): TalentClass[] {
-  return [...TALENT_CLASSES].reverse();
-}

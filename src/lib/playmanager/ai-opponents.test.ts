@@ -5,7 +5,7 @@ import {
   getPlayManagerFixtureOpponentRowOrder,
   getPlayManagerNextOpponent,
   PLAYMANAGER_AI_CLUBS,
-} from './league.js';
+} from './ai-opponents.js';
 
 test('fixture order rotates through the seven AI clubs', () => {
   assert.deepEqual(

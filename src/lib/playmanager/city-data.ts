@@ -1,10 +1,10 @@
 import 'server-only';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
-import { formatGel, getCurrentTransferValueGel, getProjectedAttendance, getProjectedMatchdayIncome, getProjectedWeeklyWages, getStadiumCapacity, getTalent11AdjustedTransferValueGel } from './economy';
+import { formatGel, getCurrentTransferValueGel, getProjectedAttendance, getProjectedMatchdayIncome, getProjectedWeeklyWages, getStadiumCapacity, getTalentClassAdjustedTransferValueGel } from './economy';
 import { asPlayManagerDb } from './db';
 import { getEafc26PlayerFaceUrl, resolveRealPlayerStats } from './eafc26-dataset';
 import { MARKET_TARGETS } from './gameplay';
-import { getPlayManagerNextOpponent } from './league';
+import { getPlayManagerNextOpponent } from './ai-opponents';
 import { buildPlayManagerPlayerCardLayout, type PlayManagerPlayerCardLayout } from './player-card';
 import { getEffectiveRealPlayerTalent, getPlayManagerDisplayAge } from './player-age';
 import type { PlayerCardStatsInput } from './player-card-stats';
@@ -246,13 +246,6 @@ export type PlayManagerCitySnapshot = {
     isRegistered: boolean;
     status: 'registration' | 'in_progress' | 'completed';
   }[];
-};
-
-export type PlayManagerDashboardSnapshot = {
-  nextMatchLabel: string;
-  upcomingCupMatch: {
-    opponentName: string;
-  } | null;
 };
 
 type PlayManagerCitySnapshotMode = 'full' | 'lineup' | 'light' | 'residence';
@@ -594,57 +587,6 @@ function firstRelation<T>(value: T | T[] | null | undefined): T | null {
   return Array.isArray(value) ? value[0] ?? null : value ?? null;
 }
 
-export async function getPlayManagerDashboardSnapshot(
-  teamId: string,
-): Promise<PlayManagerDashboardSnapshot> {
-  const db = asPlayManagerDb(createSupabaseAdminClient());
-  const admin = createSupabaseAdminClient();
-  const untypedAdmin = admin as unknown as UntypedSupabaseClient;
-  const [{ data: standingRows }, { data: cupMatchRows }] = await Promise.all([
-    db
-      .from<StandingRow>('pm_season_rows')
-      .select('club_name, played, points, form_percent, row_order')
-      .eq('team_id', teamId)
-      .order('row_order', { ascending: true })
-      .limit(8),
-    untypedAdmin
-      .from('pm_cup_matches')
-      .select(`
-        status,
-        team1_id,
-        team2_id,
-        team1:pm_teams!team1_id(name),
-        team2:pm_teams!team2_id(name),
-        pm_cup_instances ( status )
-      `)
-      .or(`team1_id.eq.${teamId},team2_id.eq.${teamId}`)
-      .in('status', ['ready', 'pending'])
-      .order('start_time', { ascending: true }),
-  ]);
-
-  const typedStandingRows = (standingRows ?? []) as StandingRow[];
-  const ownStandingRow = typedStandingRows.find((row) => row.row_order === 1);
-  const nextOpponent = getPlayManagerNextOpponent(typedStandingRows, ownStandingRow?.played ?? 0);
-  const typedCupMatchRows = (cupMatchRows ?? []) as CupMatchRow[];
-  const upcomingCupMatchRow = typedCupMatchRows.find((row) => {
-    const instance = firstRelation(row.pm_cup_instances);
-    return row.status === 'ready' && row.team1_id && row.team2_id && instance?.status === 'in_progress';
-  });
-  const team1 = firstRelation(upcomingCupMatchRow?.team1);
-  const team2 = firstRelation(upcomingCupMatchRow?.team2);
-
-  return {
-    nextMatchLabel: `Round ${(ownStandingRow?.played ?? 0) + 1} · ${nextOpponent}`,
-    upcomingCupMatch: upcomingCupMatchRow
-      ? {
-          opponentName: upcomingCupMatchRow.team1_id === teamId
-            ? team2?.name ?? 'მეტოქე'
-            : team1?.name ?? 'მეტოქე',
-        }
-      : null,
-  };
-}
-
 export async function getPlayManagerCitySnapshot(
   teamId: string,
   options?: { mode?: PlayManagerCitySnapshotMode },
@@ -861,7 +803,7 @@ export async function getPlayManagerCitySnapshot(
         baseOvr: row.player.ovr_base,
         talent: row.player.talent,
       });
-      const effectiveValue = getTalent11AdjustedTransferValueGel(row.player.current_transfer_value_gel, effectiveTalent);
+      const effectiveValue = getTalentClassAdjustedTransferValueGel(row.player.current_transfer_value_gel, effectiveTalent);
       return {
         squadId: row.id,
         id: row.player.id,
@@ -912,7 +854,7 @@ export async function getPlayManagerCitySnapshot(
         baseOvr: row.ea_fc_ovr ?? row.ovr_current,
         talent: row.talent,
       });
-      const effectiveValue = getTalent11AdjustedTransferValueGel(row.current_transfer_value_gel, effectiveTalent);
+      const effectiveValue = getTalentClassAdjustedTransferValueGel(row.current_transfer_value_gel, effectiveTalent);
       return {
         key: row.normalized_name,
         id: row.id,

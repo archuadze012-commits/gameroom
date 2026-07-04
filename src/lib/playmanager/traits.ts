@@ -102,8 +102,3 @@ export const TRAIT_KEYS = Object.keys(TRAITS) as TraitKey[];
 export function getTrait(key: string): Trait | null {
   return (TRAITS as Record<string, Trait>)[key] ?? null;
 }
-
-export function getTraits(keys: string[] | null | undefined): Trait[] {
-  if (!keys || keys.length === 0) return [];
-  return keys.map(getTrait).filter((t): t is Trait => t !== null);
-}

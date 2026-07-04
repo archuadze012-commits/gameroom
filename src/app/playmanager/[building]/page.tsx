@@ -12,10 +12,10 @@ import { BuildingPageClient } from './building-page-client';
 
 export const dynamic = 'force-dynamic';
 
+// arena and academy have dedicated route dirs (src/app/playmanager/arena, .../academy)
+// that win over this [building] catch-all, so they are never served here — no entry needed.
 const BUILDING_META: Record<string, { label: string; description: string; status: string }> = {
-  arena:     { label: 'მთავარი არენა',      description: 'მატჩები, ბილეთები, ფანების ენერგია',             status: 'აქტიური' },
   market:    { label: 'მარკეტი',           description: 'სკაუტინგი, აუქციონი, კონტრაქტები',              status: 'მალე'    },
-  academy:   { label: 'აკადემია',           description: 'ახალგაზრდები და OVR პროგრესი',                  status: 'მალე'    },
   training:  { label: 'საწვრთნელი ბაზა',   description: 'ფორმა, ფიტნესი, ტაქტიკა',                       status: 'მალე'    },
   finance:   { label: 'ოფისი',             description: 'ტრანსფერები, აგენტები, აკადემია, ბალანსი, ხელფასები',  status: 'აქტიური' },
   league:    { label: 'ლიგის ცენტრი',      description: 'ცხრილი, კალენდარი, მეტოქეები',                   status: 'მალე'    },
@@ -25,9 +25,7 @@ const BUILDING_META: Record<string, { label: string; description: string; status
 };
 
 const BUILDING_SCALE: Record<string, { anchorX: number; anchorY: number; scale: number; tone: 'green' | 'red' | 'gold' }> = {
-  arena:     { anchorX: 0.695, anchorY: 0.705, scale: 1.86, tone: 'green' },
   market:    { anchorX: 0.215, anchorY: 0.49,  scale: 1.32, tone: 'red'   },
-  academy:   { anchorX: 0.27,  anchorY: 0.94,  scale: 1.67, tone: 'green' },
   training:  { anchorX: 0.975, anchorY: 0.26,  scale: 1.72, tone: 'green' },
   finance:   { anchorX: 0.6,   anchorY: 0.92,  scale: 1.1,  tone: 'gold'  },
   league:    { anchorX: 0.935, anchorY: 0.595, scale: 1.3,  tone: 'red'   },

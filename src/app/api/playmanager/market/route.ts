@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { loadEafc26Dataset, resolveRealPlayerStats, type Eafc26DatasetPlayer } from '@/lib/playmanager/eafc26-dataset';
-import { getTalent11AdjustedTransferValueGel } from '@/lib/playmanager/economy';
+import { getTalentClassAdjustedTransferValueGel } from '@/lib/playmanager/economy';
 import { getEffectiveRealPlayerTalent, PLAYMANAGER_REAL_PLAYER_RESET_AGE } from '@/lib/playmanager/player-age';
 import { normalizePlayManagerPosition, positionMatchesFilter } from '@/lib/playmanager/secondary-positions';
 import { buildPlayManagerPlayerCardLayout } from '@/lib/playmanager/player-card';
@@ -239,7 +239,7 @@ async function buildMarketPlayerItemFromRow(
         talent: row.talent,
       })
     : row.talent;
-  const effectiveValue = getTalent11AdjustedTransferValueGel(
+  const effectiveValue = getTalentClassAdjustedTransferValueGel(
     row.current_transfer_value_gel ?? datasetPlayer?.value ?? 0,
     effectiveTalent,
   );
@@ -589,7 +589,7 @@ export async function GET(request: Request) {
         baseOvr: baseOverall,
         talent: dbRow.talent,
       });
-      const effectiveValue = getTalent11AdjustedTransferValueGel(dbRow.current_transfer_value_gel ?? player?.value ?? 0, effectiveTalent);
+      const effectiveValue = getTalentClassAdjustedTransferValueGel(dbRow.current_transfer_value_gel ?? player?.value ?? 0, effectiveTalent);
       return {
         key: dbRow.normalized_name,
         id: dbRow.id,

@@ -62,7 +62,7 @@ import { formatGel, getPlayerWeeklyWageGel, getProjectedAttendance, getProjected
 import type { ClubEffectsSummary, ManagerPerk } from '@/lib/playmanager/progression';
 import { getMaxStaffLevelForDivision, type StaffCategory } from '@/lib/playmanager/staff';
 import { DEFAULT_FUT_CARD_EDITOR_CONFIG, PlayerFutCard } from './player-fut-card';
-import { PLAYMANAGER_AI_CLUBS, PLAYMANAGER_FIXTURE_ROW_ORDER } from '@/lib/playmanager/league';
+import { PLAYMANAGER_AI_CLUBS, PLAYMANAGER_FIXTURE_ROW_ORDER } from '@/lib/playmanager/ai-opponents';
 
 // Deterministic number formatter — avoids ka-GE locale mismatch between Node.js and browser ICU
 function fmtInt(n: number): string {

@@ -38,22 +38,9 @@ const STADIUM_CAPACITY: Record<number, number> = {
   5: 100_000,
 };
 
-const STADIUM_UPGRADE_COST: Record<number, number> = {
-  1: 1_500_000,
-  2: 4_000_000,
-  3: 9_000_000,
-  4: 18_000_000,
-};
-
 export function getStadiumCapacity(level: number): number {
   const lvl = clamp(Math.trunc(level), 1, STADIUM_MAX_LEVEL);
   return STADIUM_CAPACITY[lvl] ?? STADIUM_CAPACITY[1];
-}
-
-// Cost to upgrade FROM `level` to `level + 1`; null at max level.
-export function getStadiumUpgradeCost(level: number): number | null {
-  const lvl = clamp(Math.trunc(level), 1, STADIUM_MAX_LEVEL);
-  return STADIUM_UPGRADE_COST[lvl] ?? null;
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -100,11 +87,6 @@ export function getCurrentTransferValueGel(
 // premium ramps up to legend (×1.35). rising_star keeps the historical ×1.202.
 export function getTalentClassAdjustedTransferValueGel(value: number, talent: number): number {
   return normalizeCurrencyValue(value * getTalentClass(talent).valueMultiplier);
-}
-
-/** @deprecated Back-compat alias — now applies the full 6-tier class scaling. */
-export function getTalent11AdjustedTransferValueGel(value: number, talent: number): number {
-  return getTalentClassAdjustedTransferValueGel(value, talent);
 }
 
 export function formatGel(amount: number): string {
