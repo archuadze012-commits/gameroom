@@ -108,7 +108,13 @@ export function PlayManagerDirectMessages() {
       if (cancelled) return;
       const list = Array.isArray(data) ? (data as ConversationItem[]) : [];
       setConversations(list);
-      setActiveId((current) => current ?? list[0]?.id ?? null);
+      // Honor a ?c=<conversationId> deep-link (e.g. "contact seller" from the
+      // transfer market) so the target thread opens directly.
+      const requested = typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('c')
+        : null;
+      const requestedValid = requested && list.some((item) => item.id === requested) ? requested : null;
+      setActiveId((current) => requestedValid ?? current ?? list[0]?.id ?? null);
       setLoadingConversations(false);
     }
     load();

@@ -9,6 +9,9 @@ import {
   ArrowLeft,
   Check,
   ExternalLink,
+  Handshake,
+  Inbox,
+  MessageSquare,
   Radar,
   Search,
   ShoppingCart,
@@ -16,7 +19,13 @@ import {
   X,
 } from 'lucide-react';
 import { PlayerFutCard, DEFAULT_FUT_CARD_EDITOR_CONFIG } from '@/components/playmanager/player-fut-card';
-import { buyPlayManagerMarketPlayer } from '@/app/playmanager/actions';
+import {
+  buyPlayManagerMarketPlayer,
+  buyPlayManagerListedPlayer,
+  makePlayManagerTransferOffer,
+  respondPlayManagerTransferOffer,
+  cancelPlayManagerTransferOffer,
+} from '@/app/playmanager/actions';
 import { SpotlightCard } from '@/components/react-bits/spotlight-card';
 import CountUp from '@/components/CountUp';
 import type { PlayerCardStatsInput } from '@/lib/playmanager/player-card-stats';
@@ -46,6 +55,26 @@ type MarketPlayer = {
   demand: string;
   available: boolean;
   shortlisted: boolean;
+  // Present only for manager↔manager listings (transfer_market module).
+  listingId?: string;
+  sellerUserId?: string | null;
+  sellerTeamName?: string | null;
+  floorPrice?: number;
+};
+
+type TransferOfferItem = {
+  id: string;
+  listingId: string | null;
+  direction: 'incoming' | 'outgoing';
+  awaitingMe: boolean;
+  iAmBuyer: boolean;
+  amount: number;
+  floorPrice: number;
+  counterpartName: string;
+  playerName: string;
+  position: string;
+  ovr: number;
+  updatedAt: string;
 };
 
 type FreeAgentsMeta = {
@@ -98,6 +127,99 @@ export function MarketStudio({
   const [toast, setToast] = useState<{ ok: boolean; message: string } | null>(null);
   const [pending, startTransition] = useTransition();
   const [buyingKey, setBuyingKey] = useState<string | null>(null);
+  const [offerTarget, setOfferTarget] = useState<MarketPlayer | null>(null);
+  const [contactingKey, setContactingKey] = useState<string | null>(null);
+  const [inboxOpen, setInboxOpen] = useState(false);
+  const [offers, setOffers] = useState<TransferOfferItem[]>([]);
+  const [offersLoading, setOffersLoading] = useState(false);
+  const [awaitingMe, setAwaitingMe] = useState(0);
+
+  const loadOffers = useCallback(async () => {
+    setOffersLoading(true);
+    try {
+      const response = await fetch('/api/playmanager/offers', { cache: 'no-store' });
+      if (!response.ok) return;
+      const data = await response.json();
+      setOffers(data.items ?? []);
+      setAwaitingMe(data.awaitingMe ?? 0);
+    } finally {
+      setOffersLoading(false);
+    }
+  }, []);
+
+  // Poll the awaiting-me badge in the transfer market so incoming offers surface
+  // without a manual refresh.
+  useEffect(() => {
+    if (isFreeAgents) return;
+    loadOffers();
+    const id = window.setInterval(loadOffers, 20_000);
+    return () => window.clearInterval(id);
+  }, [isFreeAgents, loadOffers]);
+
+  async function contactSeller(player: MarketPlayer) {
+    if (!player.sellerUserId) {
+      setToast({ ok: false, message: 'გამყიდველთან დაკავშირება ვერ მოხერხდა' });
+      return;
+    }
+    setContactingKey(player.key);
+    try {
+      const response = await fetch('/api/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: player.sellerUserId }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.id) {
+        setToast({ ok: false, message: 'ჩატის გახსნა ვერ მოხერხდა' });
+        return;
+      }
+      router.push(`/playmanager/media?module=direct_messages&c=${data.id}`);
+    } finally {
+      setContactingKey(null);
+    }
+  }
+
+  function submitOffer(player: MarketPlayer, amount: number) {
+    if (!player.listingId) return;
+    setToast(null);
+    startTransition(async () => {
+      const result = await makePlayManagerTransferOffer(player.listingId!, amount);
+      if (!result.success) {
+        setToast({ ok: false, message: result.message ?? 'შეთავაზება ვერ გაიგზავნა' });
+        return;
+      }
+      setOfferTarget(null);
+      setToast({ ok: true, message: result.message ?? 'შეთავაზება გაიგზავნა' });
+      loadOffers();
+    });
+  }
+
+  function respondOffer(offer: TransferOfferItem, action: 'accept' | 'reject' | 'counter', counterAmount?: number) {
+    setToast(null);
+    startTransition(async () => {
+      const result = await respondPlayManagerTransferOffer(offer.id, action, counterAmount);
+      if (!result.success) {
+        setToast({ ok: false, message: result.message ?? 'მოქმედება ვერ შესრულდა' });
+        return;
+      }
+      setToast({ ok: true, message: result.message ?? 'შესრულდა' });
+      loadOffers();
+      if (action === 'accept') router.refresh();
+    });
+  }
+
+  function withdrawOffer(offer: TransferOfferItem) {
+    setToast(null);
+    startTransition(async () => {
+      const result = await cancelPlayManagerTransferOffer(offer.id);
+      if (!result.success) {
+        setToast({ ok: false, message: result.message ?? 'გაუქმება ვერ მოხერხდა' });
+        return;
+      }
+      setToast({ ok: true, message: result.message ?? 'გაუქმდა' });
+      loadOffers();
+    });
+  }
 
   const setQuery = useCallback(
     (updates: { filter?: MarketFilterKey; q?: string; page?: number }) => {
@@ -171,14 +293,20 @@ export function MarketStudio({
     setBuyingKey(player.key);
     setToast(null);
     startTransition(async () => {
-      const result = await buyPlayManagerMarketPlayer(player.key);
+      // Manager↔manager listings settle through pm_buy_listed_player (Buy Now);
+      // the global real-player pool uses the seed-buy path.
+      const result = player.listingId
+        ? await buyPlayManagerListedPlayer(player.listingId)
+        : await buyPlayManagerMarketPlayer(player.key);
       setBuyingKey(null);
       if (!result.success) {
         setToast({ ok: false, message: result.message ?? 'ყიდვა ვერ მოხერხდა' });
         return;
       }
-      setToast({ ok: true, message: result.amount ? `${player.name} შეძენილია · -${result.amount.toLocaleString('ka-GE')} ₾` : `${player.name} შეძენილია` });
+      const spent = result.amount ? Math.abs(result.amount) : 0;
+      setToast({ ok: true, message: spent ? `${player.name} შეძენილია · -${spent.toLocaleString('ka-GE')} ₾` : `${player.name} შეძენილია` });
       setItems((current) => current.filter((entry) => entry.key !== player.key));
+      loadOffers();
       router.refresh();
     });
   }
@@ -189,7 +317,14 @@ export function MarketStudio({
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[360px] bg-[radial-gradient(115%_80%_at_50%_-10%,rgba(16,185,129,0.16),transparent_60%)]" />
 
       <div className="relative mx-auto w-full max-w-[1320px] px-3 py-4 sm:px-5 lg:px-7">
-        <CommandBar team={team} manager={manager} isFreeAgents={isFreeAgents} />
+        <CommandBar
+          team={team}
+          manager={manager}
+          isFreeAgents={isFreeAgents}
+          awaitingMe={awaitingMe}
+          offersCount={offers.length}
+          onOpenInbox={() => { setInboxOpen(true); loadOffers(); }}
+        />
 
         {isFreeAgents ? (
           <FreeAgentsBanner meta={freeAgents} />
@@ -266,7 +401,10 @@ export function MarketStudio({
                     player={player}
                     index={index}
                     buying={buyingKey === player.key && pending}
+                    contacting={contactingKey === player.key}
                     onBuy={() => buy(player)}
+                    onOffer={() => setOfferTarget(player)}
+                    onContact={() => contactSeller(player)}
                   />
                 ))}
               </motion.div>
@@ -297,8 +435,270 @@ export function MarketStudio({
         ) : null}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {offerTarget ? (
+          <OfferModal
+            player={offerTarget}
+            pending={pending}
+            onClose={() => setOfferTarget(null)}
+            onSubmit={(amount) => submitOffer(offerTarget, amount)}
+          />
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {inboxOpen ? (
+          <OffersInbox
+            offers={offers}
+            loading={offersLoading}
+            pending={pending}
+            onClose={() => setInboxOpen(false)}
+            onRespond={respondOffer}
+            onWithdraw={withdrawOffer}
+          />
+        ) : null}
+      </AnimatePresence>
+
       <PlayManagerBottomNav />
     </main>
+  );
+}
+
+function OfferModal({
+  player,
+  pending,
+  onClose,
+  onSubmit,
+}: {
+  player: MarketPlayer;
+  pending: boolean;
+  onClose: () => void;
+  onSubmit: (amount: number) => void;
+}) {
+  const floor = player.floorPrice ?? 1;
+  const [value, setValue] = useState<string>(String(player.value || floor));
+  const amount = Math.floor(Number(value.replace(/\s/g, '')) || 0);
+  const belowFloor = amount > 0 && amount < floor;
+  const valid = amount > 0 && !belowFloor;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[60] grid place-items-center bg-black/70 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 24, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 24, scale: 0.96 }}
+        onClick={(event) => event.stopPropagation()}
+        className="w-full max-w-[380px] rounded-[24px] border border-white/12 bg-[linear-gradient(180deg,rgba(10,20,16,0.98),rgba(4,9,7,0.99))] p-5 shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
+      >
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-200/60">ფასის შეთავაზება</p>
+          <button type="button" onClick={onClose} className="grid h-8 w-8 place-items-center rounded-full text-white/50 transition hover:text-white">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="mt-2 text-lg font-black text-white">{player.name}</p>
+        <p className="text-[11px] font-black text-white/45">
+          {player.position} · OVR {player.ovr}{player.sellerTeamName ? ` · ${player.sellerTeamName}` : ''}
+        </p>
+
+        <div className="mt-4 flex items-center justify-between rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2 text-[11px] font-black">
+          <span className="text-white/45">მოთხოვნილი ფასი</span>
+          <span className="text-emerald-100">{player.valueLabel}</span>
+        </div>
+
+        <label className="mt-3 block text-[10px] font-black uppercase tracking-[0.16em] text-white/40">შენი შეთავაზება (₾)</label>
+        <input
+          value={value}
+          onChange={(event) => setValue(event.target.value.replace(/[^\d\s]/g, ''))}
+          inputMode="numeric"
+          autoFocus
+          className={`mt-1.5 h-12 w-full rounded-xl border bg-black/35 px-4 text-base font-black text-white outline-none transition [font-variant-numeric:tabular-nums] ${
+            belowFloor ? 'border-red-400/50 focus:border-red-400/60' : 'border-white/10 focus:border-emerald-300/40'
+          }`}
+        />
+        <p className={`mt-1.5 text-[10px] font-black ${belowFloor ? 'text-red-300' : 'text-white/40'}`}>
+          მინიმალური ფასი: {floor.toLocaleString('ka-GE')} ₾ (ღირებულების 50%)
+        </p>
+
+        <button
+          type="button"
+          disabled={!valid || pending}
+          onClick={() => onSubmit(amount)}
+          className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-emerald-200/25 bg-[linear-gradient(180deg,#6ee7b7,#34d399)] px-3 py-3 text-sm font-black text-emerald-950 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Handshake className="h-4 w-4" />
+          {pending ? 'იგზავნება…' : 'შეთავაზების გაგზავნა'}
+        </button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function OffersInbox({
+  offers,
+  loading,
+  pending,
+  onClose,
+  onRespond,
+  onWithdraw,
+}: {
+  offers: TransferOfferItem[];
+  loading: boolean;
+  pending: boolean;
+  onClose: () => void;
+  onRespond: (offer: TransferOfferItem, action: 'accept' | 'reject' | 'counter', counterAmount?: number) => void;
+  onWithdraw: (offer: TransferOfferItem) => void;
+}) {
+  const [counterFor, setCounterFor] = useState<string | null>(null);
+  const [counterValue, setCounterValue] = useState('');
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[60] flex justify-end bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.aside
+        initial={{ x: 40, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        exit={{ x: 40, opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 360, damping: 34 }}
+        onClick={(event) => event.stopPropagation()}
+        className="flex h-full w-full max-w-[440px] flex-col border-l border-white/10 bg-[linear-gradient(180deg,rgba(9,17,13,0.98),rgba(4,8,6,0.99))]"
+      >
+        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+          <div className="flex items-center gap-2">
+            <Inbox className="h-5 w-5 text-emerald-200" />
+            <p className="text-sm font-black text-white">სატრანსფერო შეთავაზებები</p>
+          </div>
+          <button type="button" onClick={onClose} className="grid h-8 w-8 place-items-center rounded-full text-white/50 transition hover:text-white">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 py-4">
+          {loading && offers.length === 0 ? (
+            <p className="py-10 text-center text-sm font-bold text-white/40">იტვირთება…</p>
+          ) : offers.length === 0 ? (
+            <p className="py-10 text-center text-sm font-bold text-white/40">აქტიური შეთავაზება არ არის</p>
+          ) : (
+            <div className="flex flex-col gap-2.5">
+              {offers.map((offer) => {
+                const isCountering = counterFor === offer.id;
+                const counterAmount = Math.floor(Number(counterValue.replace(/\s/g, '')) || 0);
+                const counterValid = counterAmount >= offer.floorPrice;
+                return (
+                  <div
+                    key={offer.id}
+                    className={`rounded-2xl border p-3.5 ${
+                      offer.awaitingMe ? 'border-emerald-300/30 bg-emerald-300/[0.06]' : 'border-white/10 bg-white/[0.03]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-black text-white">{offer.playerName}</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.12em] text-white/40">
+                          {offer.position} · OVR {offer.ovr}
+                        </p>
+                      </div>
+                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] ${
+                        offer.direction === 'incoming' ? 'bg-emerald-300/14 text-emerald-100' : 'bg-white/8 text-white/55'
+                      }`}>
+                        {offer.direction === 'incoming' ? 'შემომავალი' : 'გაგზავნილი'}
+                      </span>
+                    </div>
+
+                    <div className="mt-2 flex items-center justify-between text-[11px] font-black">
+                      <span className="text-white/45">{offer.iAmBuyer ? 'გამყიდველი' : 'მყიდველი'}: {offer.counterpartName}</span>
+                      <span className="text-emerald-100 [font-variant-numeric:tabular-nums]">{offer.amount.toLocaleString('ka-GE')} ₾</span>
+                    </div>
+
+                    {offer.awaitingMe ? (
+                      isCountering ? (
+                        <div className="mt-3">
+                          <input
+                            value={counterValue}
+                            onChange={(event) => setCounterValue(event.target.value.replace(/[^\d\s]/g, ''))}
+                            inputMode="numeric"
+                            autoFocus
+                            placeholder={`მინ. ${offer.floorPrice.toLocaleString('ka-GE')} ₾`}
+                            className="h-10 w-full rounded-lg border border-white/10 bg-black/35 px-3 text-sm font-black text-white outline-none focus:border-emerald-300/40 [font-variant-numeric:tabular-nums]"
+                          />
+                          <div className="mt-2 flex gap-2">
+                            <button
+                              type="button"
+                              disabled={!counterValid || pending}
+                              onClick={() => { onRespond(offer, 'counter', counterAmount); setCounterFor(null); setCounterValue(''); }}
+                              className="flex-1 rounded-lg border border-emerald-200/25 bg-emerald-300/15 px-3 py-2 text-xs font-black text-emerald-50 transition hover:bg-emerald-300/22 disabled:opacity-50"
+                            >
+                              გაგზავნა
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setCounterFor(null); setCounterValue(''); }}
+                              className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-black text-white/60 transition hover:text-white"
+                            >
+                              გაუქმება
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-3 grid grid-cols-3 gap-2">
+                          <button
+                            type="button"
+                            disabled={pending}
+                            onClick={() => onRespond(offer, 'accept')}
+                            className="rounded-lg border border-emerald-200/25 bg-[linear-gradient(180deg,#6ee7b7,#34d399)] px-2 py-2 text-xs font-black text-emerald-950 transition hover:brightness-105 disabled:opacity-50"
+                          >
+                            მიღება
+                          </button>
+                          <button
+                            type="button"
+                            disabled={pending}
+                            onClick={() => { setCounterFor(offer.id); setCounterValue(String(offer.amount)); }}
+                            className="rounded-lg border border-white/12 bg-white/[0.05] px-2 py-2 text-xs font-black text-white/80 transition hover:text-white disabled:opacity-50"
+                          >
+                            საპასუხო
+                          </button>
+                          <button
+                            type="button"
+                            disabled={pending}
+                            onClick={() => onRespond(offer, 'reject')}
+                            className="rounded-lg border border-red-400/25 bg-red-500/10 px-2 py-2 text-xs font-black text-red-100 transition hover:bg-red-500/16 disabled:opacity-50"
+                          >
+                            უარი
+                          </button>
+                        </div>
+                      )
+                    ) : (
+                      <div className="mt-3 flex items-center justify-between">
+                        <span className="text-[10px] font-black text-white/35">მეორე მხარის პასუხის მოლოდინში</span>
+                        <button
+                          type="button"
+                          disabled={pending}
+                          onClick={() => onWithdraw(offer)}
+                          className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-black text-white/55 transition hover:text-white disabled:opacity-50"
+                        >
+                          გაუქმება
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </motion.aside>
+    </motion.div>
   );
 }
 
@@ -306,10 +706,16 @@ function CommandBar({
   team,
   manager,
   isFreeAgents,
+  awaitingMe,
+  offersCount,
+  onOpenInbox,
 }: {
   team: { name: string; balanceLabel: string; divisionLabel: string };
   manager: { name: string; avatarUrl: string | null };
   isFreeAgents: boolean;
+  awaitingMe: number;
+  offersCount: number;
+  onOpenInbox: () => void;
 }) {
   return (
     <header className="flex flex-wrap items-center gap-3 rounded-[22px] border border-white/10 bg-white/[0.04] p-3 backdrop-blur-xl">
@@ -330,6 +736,23 @@ function CommandBar({
         </h1>
       </div>
       <div className="flex items-center gap-2.5">
+        {!isFreeAgents ? (
+          <button
+            type="button"
+            onClick={onOpenInbox}
+            className="relative grid h-11 w-11 flex-none place-items-center rounded-2xl border border-white/10 bg-white/[0.05] text-white/70 transition hover:border-emerald-300/30 hover:bg-emerald-300/10 hover:text-white"
+            aria-label="სატრანსფერო შეთავაზებები"
+          >
+            <Inbox className="h-5 w-5" />
+            {awaitingMe > 0 ? (
+              <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-[linear-gradient(180deg,#6ee7b7,#34d399)] px-1 text-[10px] font-black text-emerald-950">
+                {awaitingMe}
+              </span>
+            ) : offersCount > 0 ? (
+              <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0a140f] bg-amber-300" />
+            ) : null}
+          </button>
+        ) : null}
         <div className="hidden flex-col items-end rounded-2xl border border-emerald-300/20 bg-emerald-300/8 px-3 py-1.5 sm:flex">
           <span className="text-[8px] font-black uppercase tracking-[0.16em] text-emerald-200/60">ბალანსი</span>
           <span className="text-sm font-black text-emerald-100">{team.balanceLabel}</span>
@@ -356,13 +779,20 @@ function PlayerCard({
   player,
   index,
   buying,
+  contacting,
   onBuy,
+  onOffer,
+  onContact,
 }: {
   player: MarketPlayer;
   index: number;
   buying: boolean;
+  contacting: boolean;
   onBuy: () => void;
+  onOffer: () => void;
+  onContact: () => void;
 }) {
+  const isListing = Boolean(player.listingId);
   return (
     <motion.div
       layout
@@ -416,7 +846,7 @@ function PlayerCard({
           className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-emerald-200/25 bg-[linear-gradient(180deg,#6ee7b7,#34d399)] px-3 py-2.5 text-xs font-black text-emerald-950 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <ShoppingCart className="h-3.5 w-3.5" />
-          {buying ? 'მუშავდება…' : 'ყიდვა'}
+          {buying ? 'მუშავდება…' : isListing ? 'ახლავე ყიდვა' : 'ყიდვა'}
         </button>
         {player.id ? (
           <Link
@@ -428,6 +858,29 @@ function PlayerCard({
           </Link>
         ) : null}
       </div>
+
+      {isListing ? (
+        <div className="mt-2 flex gap-2">
+          <button
+            type="button"
+            onClick={onOffer}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-white/12 bg-white/[0.05] px-3 py-2 text-xs font-black text-white/80 transition hover:border-emerald-300/25 hover:text-white"
+          >
+            <Handshake className="h-3.5 w-3.5" />
+            შესთავაზე ფასი
+          </button>
+          <button
+            type="button"
+            disabled={contacting || !player.sellerUserId}
+            onClick={onContact}
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-white/12 bg-white/[0.05] px-3 py-2 text-xs font-black text-white/80 transition hover:border-emerald-300/25 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label="დაუკავშირდი გამყიდველს"
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+            {contacting ? '…' : 'ჩატი'}
+          </button>
+        </div>
+      ) : null}
     </motion.div>
   );
 }

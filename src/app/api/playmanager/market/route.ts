@@ -410,16 +410,19 @@ export async function GET(request: Request) {
 
   if (moduleKey === 'transfer_market') {
     // Manager-to-manager listings (pm_transfer_listings), excluding your own.
+    type SellerTeam = { user_id: string | null; name: string | null };
     type ListingRow = {
       id: string;
       asking_price: number;
       seller_team_id: string;
+      seller: SellerTeam | SellerTeam[] | null;
       player: MarketDbRow | MarketDbRow[] | null;
     };
     const { data: listingData, error: listingError } = await db
       .from('pm_transfer_listings')
       .select(`
         id, asking_price, seller_team_id,
+        seller:pm_teams!seller_team_id ( user_id, name ),
         player:pm_players (
           id, normalized_name, display_name, card_display_name, primary_position,
           card_image_url, nationality_code, is_real, ea_fc_ovr,
@@ -429,7 +432,7 @@ export async function GET(request: Request) {
           owner_id, status, available_via_career, pending_repack
         )
       `)
-      .eq('status', 'listed')
+      .eq('status', 'active')
       .neq('seller_team_id', team.id)
       .order('created_at', { ascending: false });
     if (listingError) return NextResponse.json({ error: listingError.message }, { status: 500 });
@@ -462,9 +465,17 @@ export async function GET(request: Request) {
       listings.slice(start, start + pageSize).map(async ({ listing, player }) => {
         const base = await buildMarketPlayerItemFromRow(player, shortlistSet, datasetByName);
         const askingPrice = Math.max(0, Number(listing.asking_price ?? base.value));
+        const seller = Array.isArray(listing.seller) ? listing.seller[0] : listing.seller;
+        // Floor mirrors pm_transfer_floor: 50% of the raw stored value. Client
+        // hint only — the RPC is the source of truth and re-checks on submit.
+        const floorPrice = Math.max(1, Math.floor(Number(player.current_transfer_value_gel ?? base.value) / 2));
         return {
           ...base,
           listingId: listing.id,
+          sellerTeamId: listing.seller_team_id,
+          sellerUserId: seller?.user_id ?? null,
+          sellerTeamName: seller?.name ?? null,
+          floorPrice,
           value: askingPrice,
           valueLabel: formatGel(askingPrice),
           demand: 'ბაზარზე გამოტანილი',
