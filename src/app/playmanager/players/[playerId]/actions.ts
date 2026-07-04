@@ -2,7 +2,6 @@
 
 import { revalidatePath, updateTag } from 'next/cache';
 import { logAdminAction, requirePermission } from '@/lib/admin';
-import { asPlayManagerDb } from '@/lib/playmanager/db';
 import { getBaseTransferValueGel, getCurrentTransferValueGel } from '@/lib/playmanager/economy';
 import { createInitialPlayerStats, normalizePlayerStats, type PlayerCardStatsInput } from '@/lib/playmanager/player-card-stats';
 import { TRAIT_KEYS } from '@/lib/playmanager/traits';
@@ -124,9 +123,9 @@ export async function updatePlayManagerPlayerAdmin(
     card_stats_scale: clamp(draft.cardStatsScale, 0.5, 1.5),
   };
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const db = createSupabaseAdminClient();
   const { error } = await db
-    .from<Record<string, unknown>>('pm_players')
+    .from('pm_players')
     .update(payload)
     .eq('id', playerId);
 

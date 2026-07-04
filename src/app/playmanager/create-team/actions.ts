@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { hasTeam } from '@/lib/playmanager/team';
-import { asPlayManagerDb } from '@/lib/playmanager/db';
 
 export type CreateTeamResult =
   | { success: true }
@@ -29,7 +28,7 @@ export async function createTeamAction(
 
   // Real-players-only: the team is drafted from the existing pool of unowned real
   // (EAFC) players inside the RPC — no virtual generation here anymore.
-  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const db = createSupabaseAdminClient();
   const { error } = await db.rpc('pm_create_team_v2', {
     p_user_id: user.id,
     p_team_name: teamName,
