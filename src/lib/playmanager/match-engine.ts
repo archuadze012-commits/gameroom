@@ -19,6 +19,7 @@ type PlayerRow = {
     skill_moves: number | null;
     behavioral: Record<string, number | string> | null;
     traits: string[] | null;
+    weak_foot: number | null;
   } | null;
 };
 
@@ -112,13 +113,16 @@ function playerLane(row: PlayerRow) {
   const gk = effective(avg(['DIV', 'HAN', 'REF', 'POS'].map((key) => stat(player, key)), player.ovr_current ?? 60), player);
   // Skill moves (1–5) add dribble/attack flair: ±1.5% per star off the 3-star baseline.
   const skillMult = 1 + (clamp(player.skill_moves ?? 3, 1, 5) - 3) * 0.015;
+  // Weak foot (1–5) narrows finishing off the strong foot: ±0.8% per star,
+  // attack lane only (it's a shooting/composure trait, not general flair).
+  const weakFootMult = 1 + (clamp(player.weak_foot ?? 3, 1, 5) - 3) * 0.008;
 
   return {
     pos,
     ovr: effective(player.ovr_current ?? 60, player),
     attack: (pos === 'ST' || pos === 'CF'
       ? sho * 0.42 + pac * 0.18 + dri * 0.24 + phy * 0.16
-      : sho * 0.22 + pac * 0.22 + dri * 0.28 + pas * 0.28) * skillMult,
+      : sho * 0.22 + pac * 0.22 + dri * 0.28 + pas * 0.28) * skillMult * weakFootMult,
     wing: (['LW', 'RW', 'LM', 'RM', 'LB', 'RB'].includes(pos)
       ? pac * 0.36 + dri * 0.3 + pas * 0.18 + def * 0.16
       : pac * 0.2 + dri * 0.25 + pas * 0.25 + sho * 0.3) * skillMult,

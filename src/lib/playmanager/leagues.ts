@@ -393,7 +393,7 @@ async function loadTeamRows(teamId: string) {
   const db = createSupabaseAdminClient() as any;
   const { data } = await db
     .from('pm_squads')
-    .select('shirt_number, position, player:pm_players(primary_position, ovr_current, fatigue, morale, injury_matches, status, card_stats, skill_moves, behavioral, traits)')
+    .select('shirt_number, position, player:pm_players(primary_position, ovr_current, fatigue, morale, injury_matches, status, card_stats, skill_moves, behavioral, traits, weak_foot)')
     .eq('team_id', teamId)
     .order('shirt_number', { ascending: true });
   return data || [];
