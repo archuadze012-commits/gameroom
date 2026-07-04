@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
-import { asPlayManagerDb } from '@/lib/playmanager/db';
 import { processDueCupMatches } from '@/lib/playmanager/cups';
 import { processDueLeagueMatches } from '@/lib/playmanager/leagues';
 import { getTeam } from '@/lib/playmanager/team';
@@ -14,7 +13,7 @@ export async function POST() {
   const team = await getTeam(user.id);
   if (!team) return NextResponse.json({ ok: false }, { status: 404 });
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const db = createSupabaseAdminClient();
 
   await Promise.all([
     processDueCupMatches(),

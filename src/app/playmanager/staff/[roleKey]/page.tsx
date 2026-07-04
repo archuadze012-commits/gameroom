@@ -13,7 +13,6 @@ import { getTeam } from '@/lib/playmanager/team';
 import { getTeamFacilities } from '@/lib/playmanager/facilities';
 import { getCombinedClubEffects, getManagerProgression } from '@/lib/playmanager/progression';
 import { getPlayManagerCitySnapshot } from '@/lib/playmanager/city-data';
-import { asPlayManagerDb } from '@/lib/playmanager/db';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { getStaffPhoto } from '@/lib/playmanager/staff-photos';
 import {
@@ -39,8 +38,6 @@ const CATEGORY_LABEL: Record<StaffCategory, string> = {
   operations: 'Operations',
 };
 
-type StaffRow = { level: number };
-
 export default async function PlayManagerStaffDetailPage({
   params,
 }: {
@@ -57,9 +54,9 @@ export default async function PlayManagerStaffDetailPage({
   const team = await getTeam(user.id);
   if (!team) redirect('/playmanager/create-team');
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const db = createSupabaseAdminClient();
   const { data: staffRow } = await db
-    .from<StaffRow>('pm_staff')
+    .from('pm_staff')
     .select('level')
     .eq('team_id', team.id)
     .eq('role_key', roleKey)
@@ -84,7 +81,7 @@ export default async function PlayManagerStaffDetailPage({
     const [snapshot, facilities, profileRow] = await Promise.all([
       getPlayManagerCitySnapshot(team.id, { mode: 'light' }),
       getTeamFacilities(team.id),
-      db.from<{ xp: number }>('profiles').select('xp').eq('id', team.user_id).maybeSingle(),
+      db.from('profiles').select('xp').eq('id', user.id).maybeSingle(),
     ]);
     const managerXp = profileRow.data?.xp ?? 0;
     const trainingBonusPct = getCombinedClubEffects(getManagerProgression(managerXp), facilities).bonuses.trainingXpPct;
@@ -96,7 +93,7 @@ export default async function PlayManagerStaffDetailPage({
       // total matches played so far; a player whose last_train_match equals it
       // has already trained this match. Read it via the same RPC the gate uses
       // so client display and server truth can never drift.
-      const { data: matchesPlayed } = await db.rpc<number>('pm_team_match_count', {
+      const { data: matchesPlayed } = await db.rpc('pm_team_match_count', {
         p_team_id: team.id,
       });
       const currentMatchWindow = matchesPlayed ?? 0;
@@ -119,19 +116,19 @@ export default async function PlayManagerStaffDetailPage({
       const trainedThisMatchIds: string[] = [];
       if (players.length > 0) {
         const { data: pendingRows } = await db
-          .from<{ id: string; xp: number | null; last_train_match: number | null; pending_card_stats: Record<string, number> | null }>('pm_players')
+          .from('pm_players')
           .select('id, xp, last_train_match, pending_card_stats')
           .in('id', players.map((player) => player.id));
         for (const row of pendingRows ?? []) {
           if (row.xp && row.xp > 0) pendingXpByPlayerId.set(row.id, row.xp);
           if ((row.last_train_match ?? -1) === currentMatchWindow) trainedThisMatchIds.push(row.id);
         }
-        const withPending = (pendingRows ?? []).filter((row) => row.pending_card_stats != null);
         await Promise.all(
-          withPending.map(async (row) => {
+          (pendingRows ?? []).map(async (row) => {
+            if (row.pending_card_stats == null) return;
             const player = players.find((candidate) => candidate.id === row.id);
             if (!player) return;
-            const { data: pendingOvr } = await db.rpc<number>('pm_player_overall_from_stats', {
+            const { data: pendingOvr } = await db.rpc('pm_player_overall_from_stats', {
               p_position: player.position,
               p_card_stats: row.pending_card_stats,
               p_fallback: player.ovrCurrent,
@@ -155,7 +152,7 @@ export default async function PlayManagerStaffDetailPage({
       );
     } else if (typedRoleKey === 'head_coach') {
       const { data: pendingRows } = await db
-        .from<{ id: string; display_name: string; ovr_current: number; pending_card_stats: unknown }>('pm_players')
+        .from('pm_players')
         .select('id, display_name, ovr_current, pending_card_stats')
         .eq('owner_id', team.id);
       const pendingPlayers: PendingOvrPlayer[] = (pendingRows ?? [])
