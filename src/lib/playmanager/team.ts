@@ -31,6 +31,10 @@ export async function getTeam(
 }
 
 export async function getDevelopmentFallbackTeam(): Promise<(PmTeam & { balance: number }) | null> {
+  // Defense-in-depth: this returns the oldest team with NO auth, purely a local
+  // dev convenience. Callers already gate it behind a login redirect in prod,
+  // but hard-fail here too so a future caller can never leak the first team.
+  if (process.env.NODE_ENV === 'production') return null;
   const db = asPlayManagerDb(createSupabaseAdminClient());
   const { data: team } = await db
     .from<PmTeam>('pm_teams')

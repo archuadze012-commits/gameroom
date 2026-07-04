@@ -21,7 +21,9 @@ const ALLOWED_HOSTS = new Set([
 function isAllowedRemoteUrl(raw: string) {
   try {
     const url = new URL(raw);
-    return (url.protocol === 'https:' || url.protocol === 'http:') && ALLOWED_HOSTS.has(url.hostname);
+    // https only — every allowlisted host serves https, and browsers block
+    // mixed content anyway, so the http downgrade path is dead weight + risk.
+    return url.protocol === 'https:' && ALLOWED_HOSTS.has(url.hostname);
   } catch {
     return false;
   }
