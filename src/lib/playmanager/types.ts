@@ -6,15 +6,6 @@ export type Position = 'GK' | 'CB' | 'LB' | 'RB' | 'CDM' | 'CM' | 'CAM' | 'LW' |
 // hand-rolled interface that can silently drift from the real columns.
 export type PmTeam = Database['public']['Tables']['pm_teams']['Row'];
 
-export interface PmFacility {
-  team_id: string;
-  sprite_key: string;
-  level: number;
-  progress: number;
-  status: 'active' | 'attention' | 'upgradeable' | 'locked' | 'completed';
-  updated_at: string;
-}
-
 export interface GeneratedPlayer {
   normalized_name: string;
   display_name: string;
