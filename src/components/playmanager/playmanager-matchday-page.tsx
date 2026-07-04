@@ -319,7 +319,11 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
 
       <AnimatePresence>
         {matchResult ? (
-          <MatchResultModal result={matchResult} onClose={() => { setMatchResult(null); router.refresh(); }} />
+          <MatchResultModal
+            result={matchResult}
+            onClose={() => { setMatchResult(null); router.refresh(); }}
+            onAction={(href) => { setMatchResult(null); router.push(href); }}
+          />
         ) : null}
         {fixtureResult ? (
           <FixtureResultModal
@@ -714,7 +718,21 @@ function buildMatchCommentary(result: MatchResult): string[] {
   return lines.slice(0, 3);
 }
 
-function MatchResultModal({ result, onClose }: { result: MatchResult; onClose: () => void }) {
+const SEASON_OUTCOME: Record<string, string> = {
+  promoted: '⬆️ გადასვლა',
+  relegated: '⬇️ ჩამოსვლა',
+  stayed: '✅ დარჩენა',
+};
+
+function MatchResultModal({
+  result,
+  onClose,
+  onAction,
+}: {
+  result: MatchResult;
+  onClose: () => void;
+  onAction: (href: string) => void;
+}) {
   const isWin = result.result === 'W';
   const isDraw = result.result === 'D';
   const resultColor = isWin ? 'text-emerald-400' : isDraw ? 'text-zinc-300' : 'text-red-400';
@@ -723,6 +741,8 @@ function MatchResultModal({ result, onClose }: { result: MatchResult; onClose: (
   const ratings = result.matchEngine?.playerEvents?.ratings ?? [];
   const potm = ratings.length ? [...ratings].sort((a, b) => b.rating - a.rating)[0] : null;
   const commentary = buildMatchCommentary(result);
+  const injury = result.injuryUpdate ?? null;
+  const recovered = result.recoveredCount ?? 0;
 
   return (
     <motion.div
@@ -748,6 +768,24 @@ function MatchResultModal({ result, onClose }: { result: MatchResult; onClose: (
             <p className="mt-1.5 text-sm font-bold text-white/60">vs {result.opponent}</p>
           </div>
         </div>
+        {/* Season finale — promotion / relegation / stay + prize */}
+        {result.seasonSummary && (
+          <div className="mt-4 flex items-center gap-3 rounded-[18px] border border-yellow-300/28 bg-yellow-300/[0.08] p-3.5">
+            <span className="text-2xl">🏆</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-yellow-200/70">სეზონი დასრულდა</p>
+              <p className="truncate text-sm font-black text-white">
+                #{result.seasonSummary.rank} ადგილი · {SEASON_OUTCOME[result.seasonSummary.outcome] ?? result.seasonSummary.outcome}
+              </p>
+            </div>
+            {result.seasonSummary.reward > 0 && (
+              <span className="shrink-0 rounded-xl border border-yellow-300/28 bg-yellow-300/14 px-3 py-1.5 text-sm font-black tabular-nums text-yellow-100">
+                +{result.seasonSummary.reward.toLocaleString('en-US')} ₾
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Commentary highlights */}
         {commentary.length > 0 && (
           <div className="mt-4 space-y-1.5 rounded-[18px] border border-white/8 bg-white/[0.03] p-3.5">
@@ -777,14 +815,49 @@ function MatchResultModal({ result, onClose }: { result: MatchResult; onClose: (
 
         <div className="mt-4 grid grid-cols-3 gap-2">
           <ModalStat label="დასწრება" value={result.attendance} caption="სტადიონი" />
-          <ModalStat label="შემოსავალი" value={result.income} caption="მატჩის დღე" />
+          <ModalStat label="შემოსავალი" value={result.income} suffix=" ₾" caption="მატჩის დღე" />
           <ModalStat label="ფორმა" value={result.formPercent} suffix="%" caption="განახლდა" />
         </div>
+
+        {/* Injuries + returns from this match */}
+        {(injury || recovered > 0) && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {injury && (
+              <span className="inline-flex items-center gap-1.5 rounded-xl border border-red-400/26 bg-red-400/[0.08] px-3 py-2 text-[12px] font-black text-red-200">
+                🚑 {injury.playerName} · {injury.matches} მატჩი გამოტოვებს
+              </span>
+            )}
+            {recovered > 0 && (
+              <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-400/26 bg-emerald-400/[0.08] px-3 py-2 text-[12px] font-black text-emerald-200">
+                💚 {recovered} მოთამაშე დაბრუნდა
+              </span>
+            )}
+          </div>
+        )}
+
         {result.matchEngine && <MatchEngineBadge me={result.matchEngine} />}
+
+        {/* Next action — keep the daily loop moving */}
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => onAction('/playmanager/training')}
+            className="rounded-xl border border-emerald-300/30 bg-emerald-300/15 py-3 text-sm font-black text-emerald-50 transition hover:bg-emerald-300/25"
+          >
+            ვარჯიში
+          </button>
+          <button
+            type="button"
+            onClick={() => onAction(injury ? '/playmanager/residence' : '/playmanager/market')}
+            className="rounded-xl border border-white/14 bg-white/[0.06] py-3 text-sm font-black text-white transition hover:bg-white/12"
+          >
+            {injury ? 'გუნდი' : 'მარკეტი'}
+          </button>
+        </div>
         <button
           type="button"
           onClick={onClose}
-          className="mt-5 w-full rounded-xl border border-white/12 bg-white/[0.05] py-3 text-sm font-black text-white transition hover:bg-white/10"
+          className="mt-2 w-full rounded-xl border border-white/12 bg-white/[0.05] py-3 text-sm font-black text-white transition hover:bg-white/10"
         >
           დახურვა
         </button>
