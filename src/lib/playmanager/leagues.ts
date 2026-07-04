@@ -1,10 +1,30 @@
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { formatGel } from '@/lib/playmanager/economy';
-import { buildMatchProfile, simulateMatch } from '@/lib/playmanager/match-engine';
+import { buildMatchProfile, simulateMatch, type MatchSettings, type PlayerRow } from '@/lib/playmanager/match-engine';
 import { getStaffBonuses, type StaffRoleKey } from '@/lib/playmanager/staff';
 import { generateSingleElimBracket } from '@/lib/tournament/generate-bracket';
 
 export type LeagueFormat = 'round_robin' | 'knockout';
+
+type Db = ReturnType<typeof createSupabaseAdminClient>;
+
+type LeagueRegistrationRow = { id: string; status: string; max_teams: number };
+type LeagueFormatRow = { id: string; status: string; format: string };
+
+type DueLeagueFixtureRow = {
+  id: string;
+  league_id: string;
+  round: number;
+  position: number | null;
+  home_team_id: string | null;
+  away_team_id: string | null;
+};
+
+type LeagueInstanceSummary = { id: string; format: string; prize_pool: number; name: string };
+
+type FinalizingLeagueRow = { id: string; status: string; prize_pool: number; name: string };
+
+type TeamStanding = { team_id: string; points: number; goals_for: number; goals_against: number };
 
 // Minutes between league rounds (each round's fixtures unlock progressively).
 const ROUND_INTERVAL_MIN = 10;
@@ -19,7 +39,7 @@ export async function createLeague(input: {
   prizePool: number;
   format?: LeagueFormat;
 }) {
-  const db = createSupabaseAdminClient() as any;
+  const db = createSupabaseAdminClient();
   const { data, error } = await db
     .from('pm_league_instances')
     .insert({
@@ -33,25 +53,26 @@ export async function createLeague(input: {
     .select('id')
     .single();
   if (error) return { success: false as const, error: error.message };
-  return { success: true as const, leagueId: (data as { id: string }).id };
+  return { success: true as const, leagueId: data.id };
 }
 
 export async function joinLeague(teamId: string, leagueId: string) {
-  const db = createSupabaseAdminClient() as any;
+  const db = createSupabaseAdminClient();
 
   const { data: league } = await db
     .from('pm_league_instances')
     .select('id, status, max_teams')
     .eq('id', leagueId)
-    .maybeSingle();
+    .maybeSingle()
+    .returns<LeagueRegistrationRow>();
   if (!league) return { success: false as const, error: 'league_not_found' };
-  if ((league as any).status !== 'registration') return { success: false as const, error: 'registration_closed' };
+  if (league.status !== 'registration') return { success: false as const, error: 'registration_closed' };
 
   const { count } = await db
     .from('pm_league_participants')
     .select('id', { count: 'exact', head: true })
     .eq('league_id', leagueId);
-  if ((count ?? 0) >= (league as any).max_teams) return { success: false as const, error: 'league_full' };
+  if ((count ?? 0) >= league.max_teams) return { success: false as const, error: 'league_full' };
 
   const { error } = await db
     .from('pm_league_participants')
@@ -93,21 +114,22 @@ function buildRoundRobin(teamIds: string[]): Array<{ round: number; home: string
 }
 
 export async function startLeague(leagueId: string) {
-  const db = createSupabaseAdminClient() as any;
+  const db = createSupabaseAdminClient();
 
   const { data: league } = await db
     .from('pm_league_instances')
     .select('id, status, format')
     .eq('id', leagueId)
-    .maybeSingle();
+    .maybeSingle()
+    .returns<LeagueFormatRow>();
   if (!league) return { success: false as const, error: 'league_not_found' };
-  if ((league as any).status !== 'registration') return { success: false as const, error: 'already_started' };
+  if (league.status !== 'registration') return { success: false as const, error: 'already_started' };
 
   const { data: participants } = await db
     .from('pm_league_participants')
     .select('team_id')
     .eq('league_id', leagueId);
-  const teamIds = ((participants ?? []) as { team_id: string }[]).map((p) => p.team_id);
+  const teamIds = (participants ?? []).map((p) => p.team_id);
   if (teamIds.length < 2) return { success: false as const, error: 'not_enough_teams' };
 
   // Optimistic lock: only the caller that flips registration→in_progress builds fixtures.
@@ -117,14 +139,23 @@ export async function startLeague(leagueId: string) {
     .eq('id', leagueId)
     .eq('status', 'registration')
     .select('id');
-  if (!locked || (locked as unknown[]).length === 0) return { success: false as const, error: 'already_started' };
+  if (!locked || locked.length === 0) return { success: false as const, error: 'already_started' };
 
   const now = Date.now();
-  let rows: Record<string, unknown>[];
+  let rows: Array<{
+    league_id: string;
+    round: number;
+    position?: number;
+    home_team_id: string | null;
+    away_team_id: string | null;
+    winner_id?: string | null;
+    status: string;
+    start_time: string;
+  }>;
 
-  if ((league as any).format === 'knockout') {
+  if (league.format === 'knockout') {
     const { data: teamRows } = await db.from('pm_teams').select('id, name').in('id', teamIds);
-    const nameById = new Map<string, string>(((teamRows ?? []) as { id: string; name: string }[]).map((t) => [t.id, t.name]));
+    const nameById = new Map<string, string>((teamRows ?? []).map((t) => [t.id, t.name]));
     const seeded = [...teamIds]
       .map((id, i) => ({ id, sort: ((i * 2654435761) % 1000) + Math.floor((now / (i + 1)) % 1000) }))
       .sort((a, b) => a.sort - b.sort)
@@ -162,7 +193,7 @@ export async function startLeague(leagueId: string) {
 const STALE_CLAIM_MS = 2 * 60 * 1000;
 
 export async function processDueLeagueMatches() {
-  const db = createSupabaseAdminClient() as any;
+  const db = createSupabaseAdminClient();
 
   // Recover fixtures stranded in 'processing' (crashed mid-simulate) so they get
   // retried. The completion write is atomic, so a stranded row has no partial
@@ -176,24 +207,26 @@ export async function processDueLeagueMatches() {
 
   const { data: dueMatches } = await db
     .from('pm_league_fixtures')
-    .select('*')
+    .select('id, league_id, round, position, home_team_id, away_team_id')
     .eq('status', 'ready')
     .lte('start_time', new Date().toISOString())
-    .order('round', { ascending: true });
-  if (!dueMatches || (dueMatches as unknown[]).length === 0) return;
+    .order('round', { ascending: true })
+    .returns<DueLeagueFixtureRow[]>();
+  if (!dueMatches || dueMatches.length === 0) return;
 
-  const leagueIds = Array.from(new Set((dueMatches as any[]).map((m) => m.league_id as string)));
+  const leagueIds = Array.from(new Set(dueMatches.map((m) => m.league_id)));
   const { data: instances } = await db
     .from('pm_league_instances')
     .select('id, format, prize_pool, name')
-    .in('id', leagueIds);
-  const instanceById = new Map<string, any>(((instances ?? []) as any[]).map((i) => [i.id, i]));
+    .in('id', leagueIds)
+    .returns<LeagueInstanceSummary[]>();
+  const instanceById = new Map((instances ?? []).map((i) => [i.id, i]));
 
   const roundRobinAffected = new Set<string>();
 
-  for (const match of dueMatches as any[]) {
-    const homeId = match.home_team_id as string | null;
-    const awayId = match.away_team_id as string | null;
+  for (const match of dueMatches) {
+    const homeId = match.home_team_id;
+    const awayId = match.away_team_id;
     if (!homeId || !awayId) continue; // bracket slot not filled yet
 
     // Atomically claim the fixture (ready → processing). A racing processor gets
@@ -204,7 +237,7 @@ export async function processDueLeagueMatches() {
       .eq('id', match.id)
       .eq('status', 'ready')
       .select('id');
-    if (!claimed || (claimed as unknown[]).length === 0) continue;
+    if (!claimed || claimed.length === 0) continue;
 
     const instance = instanceById.get(match.league_id);
     const isKnockout = instance?.format === 'knockout';
@@ -243,13 +276,13 @@ export async function processDueLeagueMatches() {
     ]);
 
     if (isKnockout) {
-      await propagateKnockout(db, instance, match, winnerId as string);
+      await propagateKnockout(db, instance ?? null, match, winnerId as string);
     } else {
       await Promise.all([
         applyStanding(db, match.league_id, homeId, homeGoals, awayGoals),
         applyStanding(db, match.league_id, awayId, awayGoals, homeGoals),
       ]);
-      roundRobinAffected.add(match.league_id as string);
+      roundRobinAffected.add(match.league_id);
     }
   }
 
@@ -260,10 +293,15 @@ export async function processDueLeagueMatches() {
 
 // Knockout: advance the winner into the next round's slot; if there is no next
 // match this was the final → complete the tournament and pay the champion.
-async function propagateKnockout(db: any, instance: any, match: any, winnerId: string) {
-  const nextRound = (match.round as number) + 1;
-  const nextPosition = Math.ceil((match.position as number) / 2);
-  const isHomeSlot = (match.position as number) % 2 !== 0;
+async function propagateKnockout(
+  db: Db,
+  instance: LeagueInstanceSummary | null,
+  match: DueLeagueFixtureRow,
+  winnerId: string,
+) {
+  const nextRound = match.round + 1;
+  const nextPosition = Math.ceil((match.position ?? 1) / 2);
+  const isHomeSlot = (match.position ?? 1) % 2 !== 0;
 
   const { data: nextMatch } = await db
     .from('pm_league_fixtures')
@@ -293,16 +331,16 @@ async function propagateKnockout(db: any, instance: any, match: any, winnerId: s
     return;
   }
 
-  const update: Record<string, unknown> = isHomeSlot
+  const update: { home_team_id?: string; away_team_id?: string; status?: string } = isHomeSlot
     ? { home_team_id: winnerId }
     : { away_team_id: winnerId };
-  const otherSlot = isHomeSlot ? (nextMatch as any).away_team_id : (nextMatch as any).home_team_id;
+  const otherSlot = isHomeSlot ? nextMatch.away_team_id : nextMatch.home_team_id;
   if (otherSlot) update.status = 'ready';
-  await db.from('pm_league_fixtures').update(update).eq('id', (nextMatch as any).id);
+  await db.from('pm_league_fixtures').update(update).eq('id', nextMatch.id);
 }
 
 async function applyStanding(
-  db: any,
+  db: Db,
   leagueId: string,
   teamId: string,
   goalsFor: number,
@@ -318,17 +356,17 @@ async function applyStanding(
   const win = goalsFor > goalsAgainst;
   const draw = goalsFor === goalsAgainst;
   await db.from('pm_league_participants').update({
-    played: (row as any).played + 1,
-    won: (row as any).won + (win ? 1 : 0),
-    drawn: (row as any).drawn + (draw ? 1 : 0),
-    lost: (row as any).lost + (!win && !draw ? 1 : 0),
-    goals_for: (row as any).goals_for + goalsFor,
-    goals_against: (row as any).goals_against + goalsAgainst,
-    points: (row as any).points + (win ? 3 : draw ? 1 : 0),
-  }).eq('id', (row as any).id);
+    played: row.played + 1,
+    won: row.won + (win ? 1 : 0),
+    drawn: row.drawn + (draw ? 1 : 0),
+    lost: row.lost + (!win && !draw ? 1 : 0),
+    goals_for: row.goals_for + goalsFor,
+    goals_against: row.goals_against + goalsAgainst,
+    points: row.points + (win ? 3 : draw ? 1 : 0),
+  }).eq('id', row.id);
 }
 
-async function maybeFinalizeLeague(db: any, leagueId: string) {
+async function maybeFinalizeLeague(db: Db, leagueId: string) {
   const { count: remaining } = await db
     .from('pm_league_fixtures')
     .select('id', { count: 'exact', head: true })
@@ -340,8 +378,9 @@ async function maybeFinalizeLeague(db: any, leagueId: string) {
     .from('pm_league_instances')
     .select('id, status, prize_pool, name')
     .eq('id', leagueId)
-    .maybeSingle();
-  if (!league || (league as any).status === 'completed') return;
+    .maybeSingle()
+    .returns<FinalizingLeagueRow>();
+  if (!league || league.status === 'completed') return;
 
   // Lock completion (optimistic) before paying out.
   const { data: locked } = await db
@@ -350,25 +389,26 @@ async function maybeFinalizeLeague(db: any, leagueId: string) {
     .eq('id', leagueId)
     .eq('status', 'in_progress')
     .select('id');
-  if (!locked || (locked as unknown[]).length === 0) return;
+  if (!locked || locked.length === 0) return;
 
   const { data: standings } = await db
     .from('pm_league_participants')
     .select('team_id, points, goals_for, goals_against')
-    .eq('league_id', leagueId);
-  const sorted = ((standings ?? []) as any[]).sort((a, b) =>
+    .eq('league_id', leagueId)
+    .returns<TeamStanding[]>();
+  const sorted = (standings ?? []).sort((a, b) =>
     b.points - a.points
     || (b.goals_for - b.goals_against) - (a.goals_for - a.goals_against)
     || b.goals_for - a.goals_for,
   );
   const champion = sorted[0];
-  const prize = Number((league as any).prize_pool ?? 0);
+  const prize = Number(league.prize_pool ?? 0);
   if (champion && prize > 0) {
     await db.rpc('pm_credit', { p_team_id: champion.team_id, p_amount: prize, p_reason: 'league_winner' });
     await db.rpc('pm_log_event', {
       p_team_id: champion.team_id,
       p_category: 'finance',
-      p_title: `${(league as any).name} მოიგე!`,
+      p_title: `${league.name} მოიგე!`,
       p_detail: `+${formatGel(prize)}`,
       p_accent: 'gold',
     });
@@ -379,15 +419,15 @@ async function maybeFinalizeLeague(db: any, leagueId: string) {
   // (this fn isn't called for knockout euro tournaments).
   if (sorted.length >= 2) {
     const last = sorted[sorted.length - 1];
-    await movePromotion(db, champion.team_id, 'promote', (league as any).name);
-    await movePromotion(db, last.team_id, 'relegate', (league as any).name);
+    await movePromotion(db, champion.team_id, 'promote', league.name);
+    await movePromotion(db, last.team_id, 'relegate', league.name);
   }
 }
 
-async function movePromotion(db: any, teamId: string, dir: 'promote' | 'relegate', leagueName: string) {
+async function movePromotion(db: Db, teamId: string, dir: 'promote' | 'relegate', leagueName: string) {
   const { data: team } = await db.from('pm_teams').select('division_id').eq('id', teamId).maybeSingle();
   if (!team) return;
-  const current = Number((team as any).division_id ?? 4);
+  const current = team.division_id;
   const next = dir === 'promote' ? Math.max(1, current - 1) : Math.min(4, current + 1);
   if (next === current) return; // already at the boundary (A can't promote, D can't relegate)
   await db.from('pm_teams').update({ division_id: next }).eq('id', teamId);
@@ -403,23 +443,25 @@ async function movePromotion(db: any, teamId: string, dir: 'promote' | 'relegate
 
 // ── Loaders (mirror cups.ts) ─────────────────────────────────────────────────
 
-async function loadTeamRows(teamId: string) {
-  const db = createSupabaseAdminClient() as any;
+async function loadTeamRows(teamId: string): Promise<PlayerRow[]> {
+  const db = createSupabaseAdminClient();
   const { data } = await db
     .from('pm_squads')
     .select('shirt_number, position, player:pm_players(primary_position, ovr_current, fatigue, morale, injury_matches, status, card_stats, skill_moves, behavioral, traits, weak_foot)')
     .eq('team_id', teamId)
-    .order('shirt_number', { ascending: true });
+    .order('shirt_number', { ascending: true })
+    .returns<PlayerRow[]>();
   return data || [];
 }
 
 async function loadStaffBonuses(teamId: string) {
-  const db = createSupabaseAdminClient() as any;
+  const db = createSupabaseAdminClient();
   const { data } = await db
     .from('pm_staff')
     .select('role_key, level')
-    .eq('team_id', teamId);
-  const rows: Array<{ role_key: StaffRoleKey; level: number }> = data ?? [];
+    .eq('team_id', teamId)
+    .returns<Array<{ role_key: StaffRoleKey; level: number }>>();
+  const rows = data ?? [];
   const bonuses = getStaffBonuses(rows.map((row) => ({ roleKey: row.role_key, level: row.level })));
   const assistantLevel = rows
     .filter((row) => row.role_key === 'head_coach')
@@ -427,17 +469,17 @@ async function loadStaffBonuses(teamId: string) {
   return { setPiecePct: bonuses.setPiecePct, readinessFlat: bonuses.readinessFlat, assistantLevel };
 }
 
-async function loadSettings(teamId: string) {
-  const db = createSupabaseAdminClient() as any;
+async function loadSettings(teamId: string): Promise<MatchSettings> {
+  const db = createSupabaseAdminClient();
   const { data } = await db
     .from('pm_match_settings')
     .select('tactical_style, defensive_line, tempo, focus_side')
     .eq('team_id', teamId)
     .maybeSingle();
   return {
-    tacticalStyle: data?.tactical_style ?? 'balanced',
-    defensiveLine: data?.defensive_line ?? 'mid',
-    tempo: data?.tempo ?? 'balanced',
-    focusSide: data?.focus_side ?? 'center',
+    tacticalStyle: (data?.tactical_style ?? 'balanced') as MatchSettings['tacticalStyle'],
+    defensiveLine: (data?.defensive_line ?? 'mid') as MatchSettings['defensiveLine'],
+    tempo: (data?.tempo ?? 'balanced') as MatchSettings['tempo'],
+    focusSide: (data?.focus_side ?? 'center') as MatchSettings['focusSide'],
   };
 }
