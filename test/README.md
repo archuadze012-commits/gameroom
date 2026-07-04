@@ -36,12 +36,18 @@ before(async () => {
 });
 ```
 
-Prefer testing the **guard / rejection paths** first — they raise early, so they
-need a small table closure and directly validate the security model. Happy paths
-that credit wallets or transfer squads pull in more helper functions
-(`pm_credit`, `pm_settle_transfer`, `pm_player_overall_from_stats`, …); load those
-with additional `loadRpc()` calls as you cover them.
+Guard / rejection paths raise early, so they need a small table closure and
+directly validate the security model. Happy paths pull in the full helper
+closure — load each with its own `loadRpc()` call and create every table it
+touches. Example: `offer-accept.itest.ts` loads six functions
+(`pm_credit`, `pm_debit`, `pm_transfer_floor`, `pm_pair_transfers_this_season`,
+`pm_settle_transfer`, `pm_respond_transfer_offer`) over eight tables and asserts
+the full settlement plus the atomic rollback on insufficient funds.
 
-Current coverage: `pm_cancel_transfer_offer` (participant guards), `pm_sell_player`
-(ownership guard). Extend to pack opening, offer accept/settle, training quota,
+Current coverage:
+- `pm_cancel_transfer_offer` — participant guards
+- `pm_sell_player` — ownership guard
+- `pm_respond_transfer_offer` (accept) — full settlement, turn guard, insufficient-funds rollback
+
+Extend next to pack opening, offer counter/reject edge cases, training quota,
 cup/league processing.
