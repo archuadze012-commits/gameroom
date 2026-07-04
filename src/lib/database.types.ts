@@ -1,7 +1,3 @@
-// AUTO-GENERATED from the live Supabase schema (rpmzlkjqyncusbptzics).
-// Do not edit by hand. Regenerate with the Supabase MCP generate_typescript_types
-// tool (or: supabase gen types typescript) after schema changes.
-
 export type Json =
   | string
   | number
@@ -611,37 +607,37 @@ export type Database = {
       }
       daily_challenges: {
         Row: {
-          id: string
-          title: string
-          description: string | null
-          challenge_type: string
-          xp_reward: number
-          target_count: number
           active_date: string
-          is_active: boolean
+          challenge_type: string
           created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          target_count: number
+          title: string
+          xp_reward: number
         }
         Insert: {
-          id?: string
-          title: string
-          description?: string | null
-          challenge_type?: string
-          xp_reward?: number
-          target_count?: number
           active_date: string
-          is_active?: boolean
+          challenge_type?: string
           created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          target_count?: number
+          title: string
+          xp_reward?: number
         }
         Update: {
-          id?: string
-          title?: string
-          description?: string | null
-          challenge_type?: string
-          xp_reward?: number
-          target_count?: number
           active_date?: string
-          is_active?: boolean
+          challenge_type?: string
           created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          target_count?: number
+          title?: string
+          xp_reward?: number
         }
         Relationships: []
       }
@@ -1325,6 +1321,375 @@ export type Database = {
           },
         ]
       }
+      mafia_action_logs: {
+        Row: {
+          action_type: Database["public"]["Enums"]["mafia_action_type"]
+          actor_id: string
+          amount: number | null
+          created_at: string
+          id: string
+          metadata: Json
+          target_user_id: string | null
+        }
+        Insert: {
+          action_type: Database["public"]["Enums"]["mafia_action_type"]
+          actor_id: string
+          amount?: number | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          target_user_id?: string | null
+        }
+        Update: {
+          action_type?: Database["public"]["Enums"]["mafia_action_type"]
+          actor_id?: string
+          amount?: number | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          target_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mafia_action_logs_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mafia_action_logs_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mafia_battle_logs: {
+        Row: {
+          attacker_id: string
+          attacker_roll: number
+          created_at: string
+          defender_id: string
+          defender_roll: number
+          id: string
+          money_transferred: number
+          winner_id: string | null
+        }
+        Insert: {
+          attacker_id: string
+          attacker_roll: number
+          created_at?: string
+          defender_id: string
+          defender_roll: number
+          id?: string
+          money_transferred?: number
+          winner_id?: string | null
+        }
+        Update: {
+          attacker_id?: string
+          attacker_roll?: number
+          created_at?: string
+          defender_id?: string
+          defender_roll?: number
+          id?: string
+          money_transferred?: number
+          winner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mafia_battle_logs_attacker_id_fkey"
+            columns: ["attacker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mafia_battle_logs_defender_id_fkey"
+            columns: ["defender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mafia_battle_logs_winner_id_fkey"
+            columns: ["winner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mafia_businesses: {
+        Row: {
+          city: string
+          created_at: string
+          district: string
+          id: string
+          income_per_hour: number
+          last_collected_at: string
+          level: number
+          name: string
+          owner_id: string
+          type: Database["public"]["Enums"]["mafia_business_type"]
+          updated_at: string
+        }
+        Insert: {
+          city?: string
+          created_at?: string
+          district?: string
+          id?: string
+          income_per_hour?: number
+          last_collected_at?: string
+          level?: number
+          name: string
+          owner_id: string
+          type?: Database["public"]["Enums"]["mafia_business_type"]
+          updated_at?: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          district?: string
+          id?: string
+          income_per_hour?: number
+          last_collected_at?: string
+          level?: number
+          name?: string
+          owner_id?: string
+          type?: Database["public"]["Enums"]["mafia_business_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mafia_businesses_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mafia_districts: {
+        Row: {
+          bonus: string
+          clan_id: string | null
+          id: string
+          level: number
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          bonus: string
+          clan_id?: string | null
+          id: string
+          level?: number
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          bonus?: string
+          clan_id?: string | null
+          id?: string
+          level?: number
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mafia_districts_clan_id_clans_id_fk"
+            columns: ["clan_id"]
+            isOneToOne: false
+            referencedRelation: "clans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mafia_districts_clan_id_fkey"
+            columns: ["clan_id"]
+            isOneToOne: false
+            referencedRelation: "clans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mafia_feed_events: {
+        Row: {
+          actor_id: string | null
+          city: string
+          created_at: string
+          district: string | null
+          id: string
+          message: string
+          metadata: Json
+          target_user_id: string | null
+          type: Database["public"]["Enums"]["mafia_feed_type"]
+        }
+        Insert: {
+          actor_id?: string | null
+          city?: string
+          created_at?: string
+          district?: string | null
+          id?: string
+          message: string
+          metadata?: Json
+          target_user_id?: string | null
+          type: Database["public"]["Enums"]["mafia_feed_type"]
+        }
+        Update: {
+          actor_id?: string | null
+          city?: string
+          created_at?: string
+          district?: string | null
+          id?: string
+          message?: string
+          metadata?: Json
+          target_user_id?: string | null
+          type?: Database["public"]["Enums"]["mafia_feed_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mafia_feed_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mafia_feed_events_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mafia_players: {
+        Row: {
+          authority: number
+          city: string
+          class: Database["public"]["Enums"]["mafia_class"]
+          created_at: string
+          defense: number
+          district: string
+          heat: number
+          hospital_until: string | null
+          influence: number
+          last_action_at: string | null
+          money: number
+          speed: number
+          strength: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          authority?: number
+          city?: string
+          class?: Database["public"]["Enums"]["mafia_class"]
+          created_at?: string
+          defense?: number
+          district?: string
+          heat?: number
+          hospital_until?: string | null
+          influence?: number
+          last_action_at?: string | null
+          money?: number
+          speed?: number
+          strength?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          authority?: number
+          city?: string
+          class?: Database["public"]["Enums"]["mafia_class"]
+          created_at?: string
+          defense?: number
+          district?: string
+          heat?: number
+          hospital_until?: string | null
+          influence?: number
+          last_action_at?: string | null
+          money?: number
+          speed?: number
+          strength?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mafia_players_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mafia_plots: {
+        Row: {
+          building_type: string | null
+          cash_stored: number
+          district_id: string
+          id: string
+          last_collected_at: string
+          level: number
+          muscle: number
+          owner_clan_id: string | null
+          tile_col: number
+          tile_row: number
+          updated_at: string
+        }
+        Insert: {
+          building_type?: string | null
+          cash_stored?: number
+          district_id: string
+          id?: string
+          last_collected_at?: string
+          level?: number
+          muscle?: number
+          owner_clan_id?: string | null
+          tile_col: number
+          tile_row: number
+          updated_at?: string
+        }
+        Update: {
+          building_type?: string | null
+          cash_stored?: number
+          district_id?: string
+          id?: string
+          last_collected_at?: string
+          level?: number
+          muscle?: number
+          owner_clan_id?: string | null
+          tile_col?: number
+          tile_row?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mafia_plots_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "mafia_districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mafia_plots_district_id_mafia_districts_id_fk"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "mafia_districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mafia_plots_owner_clan_id_clans_id_fk"
+            columns: ["owner_clan_id"]
+            isOneToOne: false
+            referencedRelation: "clans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       moderation_queue: {
         Row: {
           ai_reason: string | null
@@ -1550,6 +1915,1532 @@ export type Database = {
             columns: ["pinned_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_academy_prospects: {
+        Row: {
+          age: number
+          created_at: string
+          display_name: string
+          id: string
+          normalized_name: string
+          ovr_base: number
+          player_id: string | null
+          position: string
+          potential_ovr: number
+          signing_cost: number
+          status: string
+          talent: number
+          team_id: string
+        }
+        Insert: {
+          age: number
+          created_at?: string
+          display_name: string
+          id?: string
+          normalized_name: string
+          ovr_base: number
+          player_id?: string | null
+          position: string
+          potential_ovr: number
+          signing_cost?: number
+          status?: string
+          talent: number
+          team_id: string
+        }
+        Update: {
+          age?: number
+          created_at?: string
+          display_name?: string
+          id?: string
+          normalized_name?: string
+          ovr_base?: number
+          player_id?: string | null
+          position?: string
+          potential_ovr?: number
+          signing_cost?: number
+          status?: string
+          talent?: number
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_academy_prospects_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "pm_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_academy_prospects_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_calendar: {
+        Row: {
+          day_no: number
+          team_id: string
+          total_days: number
+          train_day: number
+          train_used: number
+          updated_at: string
+          week_no: number
+        }
+        Insert: {
+          day_no?: number
+          team_id: string
+          total_days?: number
+          train_day?: number
+          train_used?: number
+          updated_at?: string
+          week_no?: number
+        }
+        Update: {
+          day_no?: number
+          team_id?: string
+          total_days?: number
+          train_day?: number
+          train_used?: number
+          updated_at?: string
+          week_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_calendar_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: true
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_cup_instances: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          started_at: string | null
+          status: string
+          template_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          template_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_cup_instances_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "pm_cup_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_cup_matches: {
+        Row: {
+          claimed_at: string | null
+          cup_instance_id: string | null
+          id: string
+          position: number
+          round: number
+          score1: number | null
+          score2: number | null
+          start_time: string | null
+          status: string
+          team1_id: string | null
+          team2_id: string | null
+          winner_id: string | null
+        }
+        Insert: {
+          claimed_at?: string | null
+          cup_instance_id?: string | null
+          id?: string
+          position: number
+          round: number
+          score1?: number | null
+          score2?: number | null
+          start_time?: string | null
+          status?: string
+          team1_id?: string | null
+          team2_id?: string | null
+          winner_id?: string | null
+        }
+        Update: {
+          claimed_at?: string | null
+          cup_instance_id?: string | null
+          id?: string
+          position?: number
+          round?: number
+          score1?: number | null
+          score2?: number | null
+          start_time?: string | null
+          status?: string
+          team1_id?: string | null
+          team2_id?: string | null
+          winner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_cup_matches_cup_instance_id_fkey"
+            columns: ["cup_instance_id"]
+            isOneToOne: false
+            referencedRelation: "pm_cup_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_cup_matches_team1_id_fkey"
+            columns: ["team1_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_cup_matches_team2_id_fkey"
+            columns: ["team2_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_cup_matches_winner_id_fkey"
+            columns: ["winner_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_cup_participants: {
+        Row: {
+          cup_instance_id: string
+          registered_at: string | null
+          team_id: string
+        }
+        Insert: {
+          cup_instance_id: string
+          registered_at?: string | null
+          team_id: string
+        }
+        Update: {
+          cup_instance_id?: string
+          registered_at?: string | null
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_cup_participants_cup_instance_id_fkey"
+            columns: ["cup_instance_id"]
+            isOneToOne: false
+            referencedRelation: "pm_cup_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_cup_participants_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_cup_templates: {
+        Row: {
+          entry_fee: number
+          id: string
+          max_teams: number
+          name: string
+          prize_pool: number
+          schedule_type: string
+        }
+        Insert: {
+          entry_fee?: number
+          id: string
+          max_teams?: number
+          name: string
+          prize_pool: number
+          schedule_type: string
+        }
+        Update: {
+          entry_fee?: number
+          id?: string
+          max_teams?: number
+          name?: string
+          prize_pool?: number
+          schedule_type?: string
+        }
+        Relationships: []
+      }
+      pm_divisions: {
+        Row: {
+          id: number
+          level: number
+          name: string
+          registration_open: boolean
+        }
+        Insert: {
+          id?: number
+          level?: number
+          name: string
+          registration_open?: boolean
+        }
+        Update: {
+          id?: number
+          level?: number
+          name?: string
+          registration_open?: boolean
+        }
+        Relationships: []
+      }
+      pm_engagement: {
+        Row: {
+          last_claim_day: number
+          streak: number
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          last_claim_day?: number
+          streak?: number
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          last_claim_day?: number
+          streak?: number
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_engagement_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: true
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_event_feed: {
+        Row: {
+          accent: string
+          category: string
+          created_at: string
+          day_no: number
+          detail: string | null
+          href: string | null
+          id: number
+          team_id: string
+          title: string
+          week_no: number
+        }
+        Insert: {
+          accent?: string
+          category: string
+          created_at?: string
+          day_no?: number
+          detail?: string | null
+          href?: string | null
+          id?: never
+          team_id: string
+          title: string
+          week_no?: number
+        }
+        Update: {
+          accent?: string
+          category?: string
+          created_at?: string
+          day_no?: number
+          detail?: string | null
+          href?: string | null
+          id?: never
+          team_id?: string
+          title?: string
+          week_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_event_feed_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_facilities: {
+        Row: {
+          last_action_day: number
+          last_action_week: number
+          level: number
+          progress: number
+          sprite_key: string
+          status: string
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          last_action_day?: number
+          last_action_week?: number
+          level?: number
+          progress?: number
+          sprite_key: string
+          status?: string
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          last_action_day?: number
+          last_action_week?: number
+          level?: number
+          progress?: number
+          sprite_key?: string
+          status?: string
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_facilities_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_finance_state: {
+        Row: {
+          last_settled_week: number
+          sponsor_tier: string
+          sponsor_weekly_amount: number
+          team_id: string
+          ticket_price: number
+          updated_at: string
+        }
+        Insert: {
+          last_settled_week?: number
+          sponsor_tier?: string
+          sponsor_weekly_amount?: number
+          team_id: string
+          ticket_price?: number
+          updated_at?: string
+        }
+        Update: {
+          last_settled_week?: number
+          sponsor_tier?: string
+          sponsor_weekly_amount?: number
+          team_id?: string
+          ticket_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_finance_state_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: true
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_free_agent_cycles: {
+        Row: {
+          generated_at: string
+          offer_player_ids: string[]
+          refresh_at: string
+          scout_level: number
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          generated_at?: string
+          offer_player_ids?: string[]
+          refresh_at?: string
+          scout_level?: number
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          generated_at?: string
+          offer_player_ids?: string[]
+          refresh_at?: string
+          scout_level?: number
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_free_agent_cycles_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: true
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_league_fixtures: {
+        Row: {
+          away_goals: number | null
+          away_team_id: string | null
+          claimed_at: string | null
+          home_goals: number | null
+          home_team_id: string | null
+          id: string
+          league_id: string
+          played_at: string | null
+          position: number | null
+          round: number
+          start_time: string
+          status: string
+          winner_id: string | null
+        }
+        Insert: {
+          away_goals?: number | null
+          away_team_id?: string | null
+          claimed_at?: string | null
+          home_goals?: number | null
+          home_team_id?: string | null
+          id?: string
+          league_id: string
+          played_at?: string | null
+          position?: number | null
+          round: number
+          start_time?: string
+          status?: string
+          winner_id?: string | null
+        }
+        Update: {
+          away_goals?: number | null
+          away_team_id?: string | null
+          claimed_at?: string | null
+          home_goals?: number | null
+          home_team_id?: string | null
+          id?: string
+          league_id?: string
+          played_at?: string | null
+          position?: number | null
+          round?: number
+          start_time?: string
+          status?: string
+          winner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_league_fixtures_away_team_id_fkey"
+            columns: ["away_team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_league_fixtures_home_team_id_fkey"
+            columns: ["home_team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_league_fixtures_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "pm_league_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_league_fixtures_winner_id_fkey"
+            columns: ["winner_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_league_instances: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          division_level: number
+          format: string
+          id: string
+          max_teams: number
+          name: string
+          prize_pool: number
+          season_no: number
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          division_level?: number
+          format?: string
+          id?: string
+          max_teams?: number
+          name: string
+          prize_pool?: number
+          season_no?: number
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          division_level?: number
+          format?: string
+          id?: string
+          max_teams?: number
+          name?: string
+          prize_pool?: number
+          season_no?: number
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      pm_league_participants: {
+        Row: {
+          drawn: number
+          goals_against: number
+          goals_for: number
+          id: string
+          joined_at: string
+          league_id: string
+          lost: number
+          played: number
+          points: number
+          team_id: string
+          won: number
+        }
+        Insert: {
+          drawn?: number
+          goals_against?: number
+          goals_for?: number
+          id?: string
+          joined_at?: string
+          league_id: string
+          lost?: number
+          played?: number
+          points?: number
+          team_id: string
+          won?: number
+        }
+        Update: {
+          drawn?: number
+          goals_against?: number
+          goals_for?: number
+          id?: string
+          joined_at?: string
+          league_id?: string
+          lost?: number
+          played?: number
+          points?: number
+          team_id?: string
+          won?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_league_participants_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "pm_league_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_league_participants_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_market_shortlist: {
+        Row: {
+          created_at: string
+          player_key: string
+          team_id: string
+        }
+        Insert: {
+          created_at?: string
+          player_key: string
+          team_id: string
+        }
+        Update: {
+          created_at?: string
+          player_key?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_market_shortlist_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_match_history: {
+        Row: {
+          attendance: number
+          conceded: number
+          created_at: string
+          fan_mood: number
+          id: number
+          income: number
+          opponent_name: string
+          result: string
+          round_no: number
+          scored: number
+          team_id: string
+          venue: string
+        }
+        Insert: {
+          attendance?: number
+          conceded?: number
+          created_at?: string
+          fan_mood?: number
+          id?: never
+          income?: number
+          opponent_name: string
+          result: string
+          round_no: number
+          scored?: number
+          team_id: string
+          venue?: string
+        }
+        Update: {
+          attendance?: number
+          conceded?: number
+          created_at?: string
+          fan_mood?: number
+          id?: never
+          income?: number
+          opponent_name?: string
+          result?: string
+          round_no?: number
+          scored?: number
+          team_id?: string
+          venue?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_match_history_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_match_settings: {
+        Row: {
+          defensive_line: string
+          focus_side: string
+          formation: string
+          tactical_style: string
+          team_id: string
+          tempo: string
+          updated_at: string
+        }
+        Insert: {
+          defensive_line?: string
+          focus_side?: string
+          formation?: string
+          tactical_style?: string
+          team_id: string
+          tempo?: string
+          updated_at?: string
+        }
+        Update: {
+          defensive_line?: string
+          focus_side?: string
+          formation?: string
+          tactical_style?: string
+          team_id?: string
+          tempo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_match_settings_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: true
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_pack_openings: {
+        Row: {
+          id: number
+          opened_at: string
+          pack_id: number
+          players_received: string[]
+          team_id: string
+        }
+        Insert: {
+          id?: number
+          opened_at?: string
+          pack_id: number
+          players_received: string[]
+          team_id: string
+        }
+        Update: {
+          id?: number
+          opened_at?: string
+          pack_id?: number
+          players_received?: string[]
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_pack_openings_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: false
+            referencedRelation: "pm_packs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_pack_openings_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_packs: {
+        Row: {
+          cost_coins: number | null
+          cost_pm: number
+          description: string | null
+          id: number
+          name: string
+          player_count: number
+          rarity_weights: Json
+        }
+        Insert: {
+          cost_coins?: number | null
+          cost_pm?: number
+          description?: string | null
+          id?: number
+          name: string
+          player_count?: number
+          rarity_weights: Json
+        }
+        Update: {
+          cost_coins?: number | null
+          cost_pm?: number
+          description?: string | null
+          id?: number
+          name?: string
+          player_count?: number
+          rarity_weights?: Json
+        }
+        Relationships: []
+      }
+      pm_player_position_unlocks: {
+        Row: {
+          created_at: string
+          player_id: string
+          team_id: string
+          unlocked_position: string
+        }
+        Insert: {
+          created_at?: string
+          player_id: string
+          team_id: string
+          unlocked_position: string
+        }
+        Update: {
+          created_at?: string
+          player_id?: string
+          team_id?: string
+          unlocked_position?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_player_position_unlocks_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "pm_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_player_position_unlocks_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_player_real_age_stage: {
+        Row: {
+          normalized_name: string
+          real_age: number
+        }
+        Insert: {
+          normalized_name: string
+          real_age: number
+        }
+        Update: {
+          normalized_name?: string
+          real_age?: number
+        }
+        Relationships: []
+      }
+      pm_players: {
+        Row: {
+          age: number
+          age_started_total_days: number | null
+          available_via_career: boolean
+          base_card_stats: Json | null
+          base_transfer_value_gel: number
+          behavioral: Json
+          card_content_y: number | null
+          card_display_name: string | null
+          card_image_url: string | null
+          card_name_size: number | null
+          card_sil_height: number | null
+          card_sil_opacity: number | null
+          card_sil_width: number | null
+          card_sil_x: number | null
+          card_sil_y: number | null
+          card_stats: Json | null
+          card_stats_scale: number | null
+          career_end_age: number | null
+          career_notified: boolean
+          created_at: string
+          current_transfer_value_gel: number
+          display_name: string
+          ea_fc_ovr: number | null
+          fatigue: number
+          first_name: string | null
+          id: string
+          injury_matches: number
+          is_real: boolean
+          last_name: string | null
+          last_train_match: number
+          morale: number
+          nationality_code: string | null
+          normalized_name: string
+          ovr_base: number
+          ovr_current: number
+          ovr_source: string
+          owner_id: string | null
+          pending_card_stats: Json | null
+          pending_repack: boolean
+          primary_position: string | null
+          real_age: number | null
+          retired_at: string | null
+          skill_dev_pct: number
+          skill_moves: number
+          skill_moves_cap: number | null
+          status: string
+          tac: number | null
+          talent: number
+          traits: string[]
+          weak_foot: number
+          xp: number
+        }
+        Insert: {
+          age?: number
+          age_started_total_days?: number | null
+          available_via_career?: boolean
+          base_card_stats?: Json | null
+          base_transfer_value_gel?: number
+          behavioral?: Json
+          card_content_y?: number | null
+          card_display_name?: string | null
+          card_image_url?: string | null
+          card_name_size?: number | null
+          card_sil_height?: number | null
+          card_sil_opacity?: number | null
+          card_sil_width?: number | null
+          card_sil_x?: number | null
+          card_sil_y?: number | null
+          card_stats?: Json | null
+          card_stats_scale?: number | null
+          career_end_age?: number | null
+          career_notified?: boolean
+          created_at?: string
+          current_transfer_value_gel?: number
+          display_name: string
+          ea_fc_ovr?: number | null
+          fatigue?: number
+          first_name?: string | null
+          id?: string
+          injury_matches?: number
+          is_real?: boolean
+          last_name?: string | null
+          last_train_match?: number
+          morale?: number
+          nationality_code?: string | null
+          normalized_name: string
+          ovr_base: number
+          ovr_current: number
+          ovr_source?: string
+          owner_id?: string | null
+          pending_card_stats?: Json | null
+          pending_repack?: boolean
+          primary_position?: string | null
+          real_age?: number | null
+          retired_at?: string | null
+          skill_dev_pct?: number
+          skill_moves?: number
+          skill_moves_cap?: number | null
+          status?: string
+          tac?: number | null
+          talent: number
+          traits?: string[]
+          weak_foot?: number
+          xp?: number
+        }
+        Update: {
+          age?: number
+          age_started_total_days?: number | null
+          available_via_career?: boolean
+          base_card_stats?: Json | null
+          base_transfer_value_gel?: number
+          behavioral?: Json
+          card_content_y?: number | null
+          card_display_name?: string | null
+          card_image_url?: string | null
+          card_name_size?: number | null
+          card_sil_height?: number | null
+          card_sil_opacity?: number | null
+          card_sil_width?: number | null
+          card_sil_x?: number | null
+          card_sil_y?: number | null
+          card_stats?: Json | null
+          card_stats_scale?: number | null
+          career_end_age?: number | null
+          career_notified?: boolean
+          created_at?: string
+          current_transfer_value_gel?: number
+          display_name?: string
+          ea_fc_ovr?: number | null
+          fatigue?: number
+          first_name?: string | null
+          id?: string
+          injury_matches?: number
+          is_real?: boolean
+          last_name?: string | null
+          last_train_match?: number
+          morale?: number
+          nationality_code?: string | null
+          normalized_name?: string
+          ovr_base?: number
+          ovr_current?: number
+          ovr_source?: string
+          owner_id?: string | null
+          pending_card_stats?: Json | null
+          pending_repack?: boolean
+          primary_position?: string | null
+          real_age?: number | null
+          retired_at?: string | null
+          skill_dev_pct?: number
+          skill_moves?: number
+          skill_moves_cap?: number | null
+          status?: string
+          tac?: number | null
+          talent?: number
+          traits?: string[]
+          weak_foot?: number
+          xp?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_players_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_season_rows: {
+        Row: {
+          club_name: string
+          drawn: number
+          form_percent: number
+          goals_against: number
+          goals_for: number
+          lost: number
+          played: number
+          points: number
+          row_order: number
+          team_id: string
+          updated_at: string
+          won: number
+        }
+        Insert: {
+          club_name: string
+          drawn?: number
+          form_percent?: number
+          goals_against?: number
+          goals_for?: number
+          lost?: number
+          played?: number
+          points?: number
+          row_order?: number
+          team_id: string
+          updated_at?: string
+          won?: number
+        }
+        Update: {
+          club_name?: string
+          drawn?: number
+          form_percent?: number
+          goals_against?: number
+          goals_for?: number
+          lost?: number
+          played?: number
+          points?: number
+          row_order?: number
+          team_id?: string
+          updated_at?: string
+          won?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_season_rows_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_season_state: {
+        Row: {
+          is_completed: boolean
+          last_finish: number | null
+          last_outcome: string | null
+          last_reward: number
+          season_no: number
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          is_completed?: boolean
+          last_finish?: number | null
+          last_outcome?: string | null
+          last_reward?: number
+          season_no?: number
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          is_completed?: boolean
+          last_finish?: number | null
+          last_outcome?: string | null
+          last_reward?: number
+          season_no?: number
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_season_state_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: true
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_squads: {
+        Row: {
+          id: number
+          player_id: string
+          position: string
+          shirt_number: number | null
+          squad_number: number | null
+          team_id: string
+        }
+        Insert: {
+          id?: number
+          player_id: string
+          position: string
+          shirt_number?: number | null
+          squad_number?: number | null
+          team_id: string
+        }
+        Update: {
+          id?: number
+          player_id?: string
+          position?: string
+          shirt_number?: number | null
+          squad_number?: number | null
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_squads_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "pm_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_squads_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_staff: {
+        Row: {
+          hired_at: string
+          level: number
+          role_key: string
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          hired_at?: string
+          level?: number
+          role_key: string
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          hired_at?: string
+          level?: number
+          role_key?: string
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_staff_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_team_assets: {
+        Row: {
+          asset_key: string
+          quantity: number
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          asset_key: string
+          quantity?: number
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          asset_key?: string
+          quantity?: number
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_team_assets_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_teams: {
+        Row: {
+          created_at: string
+          division_id: number
+          id: string
+          is_bot: boolean
+          name: string
+          notifications_seen_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          division_id?: number
+          id?: string
+          is_bot?: boolean
+          name: string
+          notifications_seen_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          division_id?: number
+          id?: string
+          is_bot?: boolean
+          name?: string
+          notifications_seen_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_teams_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "pm_divisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: number
+          reason: string
+          team_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: number
+          reason: string
+          team_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: number
+          reason?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_transactions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_transfer_ledger: {
+        Row: {
+          buyer_team_id: string
+          created_at: string
+          id: string
+          player_id: string
+          price: number
+          season_no: number
+          seller_team_id: string
+          via: string
+        }
+        Insert: {
+          buyer_team_id: string
+          created_at?: string
+          id?: string
+          player_id: string
+          price: number
+          season_no: number
+          seller_team_id: string
+          via: string
+        }
+        Update: {
+          buyer_team_id?: string
+          created_at?: string
+          id?: string
+          player_id?: string
+          price?: number
+          season_no?: number
+          seller_team_id?: string
+          via?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_transfer_ledger_buyer_team_id_fkey"
+            columns: ["buyer_team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_transfer_ledger_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "pm_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_transfer_ledger_seller_team_id_fkey"
+            columns: ["seller_team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_transfer_listings: {
+        Row: {
+          asking_price: number
+          created_at: string
+          id: string
+          player_id: string
+          seller_team_id: string
+          sold_at: string | null
+          status: string
+        }
+        Insert: {
+          asking_price: number
+          created_at?: string
+          id?: string
+          player_id: string
+          seller_team_id: string
+          sold_at?: string | null
+          status?: string
+        }
+        Update: {
+          asking_price?: number
+          created_at?: string
+          id?: string
+          player_id?: string
+          seller_team_id?: string
+          sold_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_transfer_listings_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "pm_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_transfer_listings_seller_team_id_fkey"
+            columns: ["seller_team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_transfer_offers: {
+        Row: {
+          amount_gel: number
+          awaiting_team_id: string | null
+          created_at: string
+          from_team_id: string
+          id: string
+          listing_id: string | null
+          offer_type: string
+          player_id: string
+          status: string
+          to_team_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_gel: number
+          awaiting_team_id?: string | null
+          created_at?: string
+          from_team_id: string
+          id?: string
+          listing_id?: string | null
+          offer_type: string
+          player_id: string
+          status?: string
+          to_team_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_gel?: number
+          awaiting_team_id?: string | null
+          created_at?: string
+          from_team_id?: string
+          id?: string
+          listing_id?: string | null
+          offer_type?: string
+          player_id?: string
+          status?: string
+          to_team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_transfer_offers_awaiting_team_id_fkey"
+            columns: ["awaiting_team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_transfer_offers_from_team_id_fkey"
+            columns: ["from_team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_transfer_offers_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "pm_transfer_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_transfer_offers_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "pm_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pm_transfer_offers_to_team_id_fkey"
+            columns: ["to_team_id"]
+            isOneToOne: false
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pm_wallets: {
+        Row: {
+          balance: number
+          team_id: string
+        }
+        Insert: {
+          balance?: number
+          team_id: string
+        }
+        Update: {
+          balance?: number
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_wallets_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: true
+            referencedRelation: "pm_teams"
             referencedColumns: ["id"]
           },
         ]
@@ -2279,48 +4170,48 @@ export type Database = {
       }
       user_challenge_progress: {
         Row: {
-          id: string
-          user_id: string
           challenge_id: string
-          progress: number
-          completed: boolean
           claimed: boolean
           claimed_at: string | null
+          completed: boolean
           created_at: string | null
+          id: string
+          progress: number
+          user_id: string
         }
         Insert: {
-          id?: string
-          user_id: string
           challenge_id: string
-          progress?: number
-          completed?: boolean
           claimed?: boolean
           claimed_at?: string | null
+          completed?: boolean
           created_at?: string | null
+          id?: string
+          progress?: number
+          user_id: string
         }
         Update: {
-          id?: string
-          user_id?: string
           challenge_id?: string
-          progress?: number
-          completed?: boolean
           claimed?: boolean
           claimed_at?: string | null
+          completed?: boolean
           created_at?: string | null
+          id?: string
+          progress?: number
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "user_challenge_progress_user_id_profiles_id_fk"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_challenge_progress_challenge_id_daily_challenges_id_fk"
+            foreignKeyName: "user_challenge_progress_challenge_id_fkey"
             columns: ["challenge_id"]
             isOneToOne: false
             referencedRelation: "daily_challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_challenge_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2657,6 +4548,7 @@ export type Database = {
         Args: { p_amount: number; p_user_id: string }
         Returns: number
       }
+      can_manage_shop_products: { Args: never; Returns: boolean }
       claim_daily_bonus: { Args: never; Returns: undefined }
       claim_daily_bonus_as: { Args: { p_user_id: string }; Returns: Json }
       equip_item: { Args: { p_id: string }; Returns: undefined }
@@ -2688,6 +4580,344 @@ export type Database = {
         }
         Returns: Json
       }
+      pm_advance_time: {
+        Args: { p_days?: number; p_team_id: string }
+        Returns: Json
+      }
+      pm_apply_age_threshold_decay: {
+        Args: { p_position: string; p_stats: Json; p_threshold: number }
+        Returns: Json
+      }
+      pm_apply_squad_morale_drain: {
+        Args: { p_days?: number; p_team_id: string }
+        Returns: undefined
+      }
+      pm_apply_stat_drop: {
+        Args: { p_drop: number; p_label: string; p_stats: Json }
+        Returns: Json
+      }
+      pm_apply_weekly_finance: {
+        Args: { p_team_id: string; p_week_no: number }
+        Returns: Json
+      }
+      pm_buy_listed_player: {
+        Args: { p_buyer_team_id: string; p_listing_id: string }
+        Returns: Json
+      }
+      pm_buy_market_player: {
+        Args: { p_player: Json; p_team_id: string }
+        Returns: Json
+      }
+      pm_buy_position_shift_token: {
+        Args: { p_team_id: string }
+        Returns: Json
+      }
+      pm_buy_xp_pack: {
+        Args: { p_pack: string; p_team_id: string }
+        Returns: Json
+      }
+      pm_calculate_weekly_wages: {
+        Args: { p_team_id: string }
+        Returns: number
+      }
+      pm_cancel_transfer_offer: {
+        Args: { p_offer_id: string; p_team_id: string }
+        Returns: undefined
+      }
+      pm_career_release: {
+        Args: { p_player_id: string; p_team_id: string }
+        Returns: Json
+      }
+      pm_career_renew: {
+        Args: { p_player_id: string; p_team_id: string }
+        Returns: Json
+      }
+      pm_claim_daily_reward: { Args: { p_team_id: string }; Returns: Json }
+      pm_confirm_ovr_upgrade: {
+        Args: { p_fodder_ids: string[]; p_player_id: string; p_team_id: string }
+        Returns: Json
+      }
+      pm_create_team: {
+        Args: { p_players: Json; p_team_name: string; p_user_id: string }
+        Returns: string
+      }
+      pm_create_team_v2: {
+        Args: { p_team_name: string; p_user_id: string }
+        Returns: string
+      }
+      pm_credit: {
+        Args: { p_amount: number; p_reason: string; p_team_id: string }
+        Returns: undefined
+      }
+      pm_debit: {
+        Args: { p_amount: number; p_reason: string; p_team_id: string }
+        Returns: undefined
+      }
+      pm_develop_academy_prospects: {
+        Args: { p_days?: number; p_team_id: string }
+        Returns: Json
+      }
+      pm_draft_squad: {
+        Args: { p_max_ovr?: number; p_min_ovr?: number; p_team_id: string }
+        Returns: number
+      }
+      pm_ensure_academy_prospects: {
+        Args: { p_prospects: Json; p_team_id: string }
+        Returns: undefined
+      }
+      pm_ensure_academy_youth: {
+        Args: { p_team_id: string }
+        Returns: undefined
+      }
+      pm_ensure_calendar: { Args: { p_team_id: string }; Returns: undefined }
+      pm_ensure_facilities: { Args: { p_team_id: string }; Returns: undefined }
+      pm_ensure_finance_state: {
+        Args: { p_team_id: string }
+        Returns: undefined
+      }
+      pm_ensure_match_settings: {
+        Args: { p_team_id: string }
+        Returns: undefined
+      }
+      pm_ensure_season_rows: { Args: { p_team_id: string }; Returns: undefined }
+      pm_ensure_season_state: {
+        Args: { p_team_id: string }
+        Returns: undefined
+      }
+      pm_facility_upgrade_cost: {
+        Args: { p_level: number; p_sprite_key: string }
+        Returns: number
+      }
+      pm_finalize_season: { Args: { p_team_id: string }; Returns: Json }
+      pm_grant_match_development: {
+        Args: { p_team_id: string }
+        Returns: undefined
+      }
+      pm_grant_skill_development: {
+        Args: { p_days: number; p_team_id: string }
+        Returns: undefined
+      }
+      pm_hire_staff: {
+        Args: { p_role_key: string; p_team_id: string }
+        Returns: {
+          level: number
+          role_key: string
+        }[]
+      }
+      pm_join_cup: {
+        Args: { p_cup_instance_id: string; p_team_id: string }
+        Returns: Json
+      }
+      pm_list_player: {
+        Args: { p_player_id: string; p_price: number; p_team_id: string }
+        Returns: string
+      }
+      pm_log_event: {
+        Args: {
+          p_accent?: string
+          p_category: string
+          p_detail?: string
+          p_href?: string
+          p_team_id: string
+          p_title: string
+        }
+        Returns: undefined
+      }
+      pm_make_transfer_offer: {
+        Args: { p_amount: number; p_from_team_id: string; p_listing_id: string }
+        Returns: string
+      }
+      pm_mark_notifications_seen: {
+        Args: { p_team_id: string }
+        Returns: undefined
+      }
+      pm_match_player_events: {
+        Args: { p_home_goals: number; p_result: string; p_team_id: string }
+        Returns: Json
+      }
+      pm_negotiate_sponsor: { Args: { p_team_id: string }; Returns: Json }
+      pm_normalize_position: { Args: { p_pos: string }; Returns: string }
+      pm_open_pack: {
+        Args: { p_pack_id: number; p_team_id: string }
+        Returns: Json
+      }
+      pm_ovr_upgrade_cost: { Args: { p_from_ovr: number }; Returns: number }
+      pm_ovr_upgrade_total_cost: {
+        Args: { p_from_ovr: number; p_to_ovr: number }
+        Returns: number
+      }
+      pm_pair_transfers_this_season: {
+        Args: { p_a: string; p_b: string; p_season_no: number }
+        Returns: number
+      }
+      pm_player_base_transfer_value_gel: {
+        Args: { p_ovr: number }
+        Returns: number
+      }
+      pm_player_career_end_age: { Args: { p_talent: number }; Returns: number }
+      pm_player_compute_tac: {
+        Args: {
+          p_card_stats: Json
+          p_normalized_name: string
+          p_ovr: number
+          p_position: string
+        }
+        Returns: number
+      }
+      pm_player_current_transfer_value_gel: {
+        Args: { p_ovr_base: number; p_ovr_current: number }
+        Returns: number
+      }
+      pm_player_dev_completion_age: {
+        Args: { p_position: string; p_team_id: string }
+        Returns: number
+      }
+      pm_player_overall_from_stats: {
+        Args: { p_card_stats: Json; p_fallback?: number; p_position: string }
+        Returns: number
+      }
+      pm_player_ovr_growth_cap: { Args: { p_talent: number }; Returns: number }
+      pm_player_seed_card_stats: {
+        Args: { p_position: string; p_target_ovr: number }
+        Returns: Json
+      }
+      pm_player_stat_labels: { Args: { p_position: string }; Returns: string[] }
+      pm_player_talent_class: { Args: { p_talent: number }; Returns: string }
+      pm_player_talent_class_age_offset: {
+        Args: { p_talent: number }
+        Returns: number
+      }
+      pm_player_training_focus: {
+        Args: { p_position: string }
+        Returns: string[]
+      }
+      pm_position_fit: {
+        Args: { p_natural: string; p_slot: string }
+        Returns: number
+      }
+      pm_process_career_ends: {
+        Args: { p_days?: number; p_team_id: string }
+        Returns: Json
+      }
+      pm_reset_season_rows: {
+        Args: { p_season_no: number; p_team_id: string }
+        Returns: undefined
+      }
+      pm_respond_transfer_offer: {
+        Args: {
+          p_action: string
+          p_counter_amount?: number
+          p_offer_id: string
+          p_team_id: string
+        }
+        Returns: Json
+      }
+      pm_retire_legacy_market_players: { Args: never; Returns: number }
+      pm_run_city_action: {
+        Args: { p_action: string; p_sprite_key: string; p_team_id: string }
+        Returns: Json
+      }
+      pm_run_city_action_full: {
+        Args: {
+          p_action: string
+          p_action_reward_bonus_pct: number
+          p_advance_days: number
+          p_season_reward_bonus_pct: number
+          p_sprite_key: string
+          p_team_id: string
+          p_training_affected: boolean
+          p_training_xp_pct: number
+          p_user_id: string
+          p_xp_base: number
+        }
+        Returns: Json
+      }
+      pm_save_lineup_formation: {
+        Args: { p_formation: string; p_slots: Json; p_team_id: string }
+        Returns: Json
+      }
+      pm_save_lineup_order: {
+        Args: { p_lineup: Json; p_team_id: string }
+        Returns: Json
+      }
+      pm_save_match_settings: {
+        Args: {
+          p_defensive_line: string
+          p_focus_side: string
+          p_tactical_style: string
+          p_team_id: string
+          p_tempo: string
+        }
+        Returns: Json
+      }
+      pm_save_ticket_price: {
+        Args: { p_team_id: string; p_ticket_price: number }
+        Returns: Json
+      }
+      pm_secondary_positions: { Args: { p_pos: string }; Returns: string[] }
+      pm_sell_player: {
+        Args: { p_player_id: string; p_team_id: string }
+        Returns: Json
+      }
+      pm_settle_transfer: {
+        Args: {
+          p_buyer_team_id: string
+          p_listing_id: string
+          p_price: number
+          p_via: string
+        }
+        Returns: Json
+      }
+      pm_sign_academy_player: {
+        Args: { p_cost: number; p_player: Json; p_team_id: string }
+        Returns: Json
+      }
+      pm_sign_academy_prospect: {
+        Args: { p_prospect_id: string; p_team_id: string }
+        Returns: Json
+      }
+      pm_simulate_league_round: { Args: { p_team_id: string }; Returns: Json }
+      pm_stadium_capacity: { Args: { p_level: number }; Returns: number }
+      pm_staff_hire_cost: { Args: { p_role_key: string }; Returns: number }
+      pm_staff_max_level_for_division: {
+        Args: { p_division_id: number }
+        Returns: number
+      }
+      pm_staff_upgrade_cost: {
+        Args: { p_current_level: number; p_role_key: string }
+        Returns: number
+      }
+      pm_team_match_count: { Args: { p_team_id: string }; Returns: number }
+      pm_team_match_profile: { Args: { p_team_id: string }; Returns: Json }
+      pm_toggle_market_shortlist: {
+        Args: { p_player_key: string; p_team_id: string }
+        Returns: Json
+      }
+      pm_train_player: {
+        Args: { p_player_id: string; p_team_id: string }
+        Returns: Json
+      }
+      pm_training_capacity: { Args: { p_team_id: string }; Returns: number }
+      pm_transfer_floor: { Args: { p_player_id: string }; Returns: number }
+      pm_unlist_player: {
+        Args: { p_listing_id: string; p_team_id: string }
+        Returns: undefined
+      }
+      pm_unlock_secondary_position: {
+        Args: {
+          p_player_id: string
+          p_target_position: string
+          p_team_id: string
+        }
+        Returns: Json
+      }
+      pm_upgrade_staff: {
+        Args: { p_role_key: string; p_team_id: string }
+        Returns: {
+          level: number
+          role_key: string
+        }[]
+      }
       purchase_shop_item: { Args: { p_id: string }; Returns: undefined }
       purchase_shop_item_as: {
         Args: { p_item_id: string; p_user_id: string }
@@ -2715,6 +4945,32 @@ export type Database = {
       clan_status: "open" | "invite_only" | "closed"
       lfg_response_status: "pending" | "accepted" | "rejected"
       lfg_status: "open" | "filled" | "closed"
+      mafia_action_type:
+        | "collect"
+        | "train_strength"
+        | "train_defense"
+        | "train_speed"
+        | "attack"
+        | "claim_plot"
+        | "build_plot"
+        | "upgrade_plot"
+        | "collect_plot"
+        | "hire_muscle"
+        | "raid_plot"
+      mafia_business_type:
+        | "workshop"
+        | "market_kiosk"
+        | "garage"
+        | "bar"
+        | "casino"
+      mafia_class: "bandit" | "thief" | "ex_spec"
+      mafia_feed_type:
+        | "system"
+        | "economy"
+        | "training"
+        | "combat"
+        | "gang"
+        | "territory"
       match_status:
         | "pending"
         | "ready"
@@ -2885,6 +5141,35 @@ export const Constants = {
       clan_status: ["open", "invite_only", "closed"],
       lfg_response_status: ["pending", "accepted", "rejected"],
       lfg_status: ["open", "filled", "closed"],
+      mafia_action_type: [
+        "collect",
+        "train_strength",
+        "train_defense",
+        "train_speed",
+        "attack",
+        "claim_plot",
+        "build_plot",
+        "upgrade_plot",
+        "collect_plot",
+        "hire_muscle",
+        "raid_plot",
+      ],
+      mafia_business_type: [
+        "workshop",
+        "market_kiosk",
+        "garage",
+        "bar",
+        "casino",
+      ],
+      mafia_class: ["bandit", "thief", "ex_spec"],
+      mafia_feed_type: [
+        "system",
+        "economy",
+        "training",
+        "combat",
+        "gang",
+        "territory",
+      ],
       match_status: [
         "pending",
         "ready",
