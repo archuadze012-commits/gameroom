@@ -64,16 +64,22 @@ async function BuildingData({ params }: { params: Promise<{ building: string }> 
 
   const team = user ? await getTeam(user.id) : await getDevelopmentFallbackTeam();
   if (!team) redirect('/playmanager/create-team');
+  // team.user_id is nullable in the schema (bot teams have none); prefer the
+  // actual authenticated id when we have one, since that's always the same
+  // value for a real manager anyway.
+  const managerId = user?.id ?? team.user_id;
 
   // The transfer market is its own dedicated, paginated experience — it does NOT
   // need the (heavy) city snapshot, so we render it directly and skip that fetch.
   if (resolvedKey === 'market') {
     const profileClient = user ? await createSupabaseServerClient() : createSupabaseAdminClient();
-    const { data: marketProfile } = await profileClient
-      .from('profiles')
-      .select('username, display_name, avatar_url')
-      .eq('id', team.user_id)
-      .maybeSingle();
+    const { data: marketProfile } = managerId
+      ? await profileClient
+          .from('profiles')
+          .select('username, display_name, avatar_url')
+          .eq('id', managerId)
+          .maybeSingle()
+      : { data: null };
     const marketManagerName =
       marketProfile?.display_name ||
       marketProfile?.username ||
@@ -101,11 +107,12 @@ async function BuildingData({ params }: { params: Promise<{ building: string }> 
     getTeamFacilities(team.id),
     getPlayManagerCitySnapshot(team.id, snapshotMode ? { mode: snapshotMode } : undefined),
     (async () => {
+      if (!managerId) return { data: null };
       const profileClient = user ? await createSupabaseServerClient() : createSupabaseAdminClient();
       return profileClient
         .from('profiles')
         .select('username, display_name, avatar_url, xp')
-        .eq('id', team.user_id)
+        .eq('id', managerId)
         .maybeSingle();
     })(),
   ]);

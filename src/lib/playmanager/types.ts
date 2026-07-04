@@ -1,12 +1,10 @@
+import type { Database } from '@/lib/database.types';
+
 export type Position = 'GK' | 'CB' | 'LB' | 'RB' | 'CDM' | 'CM' | 'CAM' | 'LW' | 'RW' | 'ST' | 'LM' | 'RM' | 'AM';
 
-export interface PmTeam {
-  id: string;
-  user_id: string;
-  name: string;
-  division_id: number;
-  created_at: string;
-}
+// Sourced from the generated schema (single source of truth) instead of a
+// hand-rolled interface that can silently drift from the real columns.
+export type PmTeam = Database['public']['Tables']['pm_teams']['Row'];
 
 export interface PmFacility {
   team_id: string;
