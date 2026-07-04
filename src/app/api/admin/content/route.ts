@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { readJsonObject } from "@/lib/api/json";
 import { requirePermission, logAdminAction } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { SITE_CONTENT_CACHE_TAG } from "@/lib/site-content";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("api:admin-content");
@@ -79,6 +81,13 @@ export async function POST(request: NextRequest) {
     logger.error("failed to upsert site content", { key, error });
     return NextResponse.json({ error: error.message, code: error.code }, { status: 500 });
   }
+
+  // Invalidate the persistent unstable_cache entries so the edit is visible
+  // on the next request instead of waiting out the 5-minute revalidate window.
+  // { expire: 0 } forces immediate expiry (this is a Route Handler, not a
+  // Server Action, so the recommended `profile: 'max'` stale-while-revalidate
+  // path would still serve one more stale read before refreshing).
+  revalidateTag(SITE_CONTENT_CACHE_TAG, { expire: 0 });
 
   await logAdminAction({
     actorId: auth.userId,

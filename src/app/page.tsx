@@ -52,22 +52,22 @@ export default async function HomePage() {
     getSession().catch(() => null),
     getIsAdmin().catch(() => false),
   ]);
-  const guestHero = await getSiteContentValue("home.guest.hero", {
-    headline: "ყველაფერი, რის გამოც თამაშები გიყვარს",
-    logoUrl: "/playgame-logo.png",
-  });
-  const userCta = await getSiteContentValue("home.user.cta", {
-    heading: "იპოვე გუნდი ან მოწინააღმდეგე წამებში",
-    description: "შექმენი ან იპოვე გუნდი და ითამაშე შენი საყვარელი თამაშები ქართველებთან ერთად",
-    buttonLabel: "დაწყება",
-    buttonHref: "/lfg",
-  });
-  const sectionGames = await getSiteContentValue("home.section.games", {
-    title: "თამაშები",
-  });
-  const sectionFreeGames = await getSiteContentValue("home.section.free_games", {
-    title: "PC თამაშები უფასოდ",
-  });
+  // Site-content lookups are independent per-key Supabase reads — run them in
+  // one round-trip instead of four sequential awaits.
+  const [guestHero, userCta, sectionGames, sectionFreeGames] = await Promise.all([
+    getSiteContentValue("home.guest.hero", {
+      headline: "ყველაფერი, რის გამოც თამაშები გიყვარს",
+      logoUrl: "/playgame-logo.png",
+    }),
+    getSiteContentValue("home.user.cta", {
+      heading: "იპოვე გუნდი ან მოწინააღმდეგე წამებში",
+      description: "შექმენი ან იპოვე გუნდი და ითამაშე შენი საყვარელი თამაშები ქართველებთან ერთად",
+      buttonLabel: "დაწყება",
+      buttonHref: "/lfg",
+    }),
+    getSiteContentValue("home.section.games", { title: "თამაშები" }),
+    getSiteContentValue("home.section.free_games", { title: "PC თამაშები უფასოდ" }),
+  ]);
 
   type ArticleItem = { kind: "article"; slug: string; title: string; excerpt: string | null; cover_url: string | null; game_name: string | null; author_username: string; published_at: string; date: number };
   type PostItem = { kind: "post"; post: HomePost; date: number };
