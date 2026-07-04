@@ -89,9 +89,9 @@ type PlayerRow = {
 };
 
 type SquadRow = {
-  id: string;
+  id: number;
   team_id: string;
-  shirt_number: number;
+  shirt_number: number | null;
   position: string;
 };
 
@@ -107,24 +107,6 @@ type ProfileRow = {
   display_name: string | null;
   username: string | null;
   avatar_url: string | null;
-};
-
-type LooseQuery = {
-  select: (columns: string) => LooseQuery;
-  eq: (column: string, value: unknown) => LooseQuery;
-  order: (column: string, options?: { ascending?: boolean }) => LooseQuery;
-  limit: (count: number) => LooseQuery;
-  single: <T = unknown>() => Promise<{ data: T | null; error?: unknown }>;
-  maybeSingle: <T = unknown>() => Promise<{ data: T | null; error?: unknown }>;
-  returns: <T = unknown>() => Promise<{ data: T | null; error?: unknown }>;
-};
-
-type PlayManagerLooseDb = {
-  auth: {
-    getUser: () => Promise<{ data: { user: { id: string } | null } }>;
-  };
-  from: (table: string) => LooseQuery;
-  rpc: <T = unknown>(fn: string, args: Record<string, unknown>) => Promise<{ data: T | null; error?: unknown }>;
 };
 
 const STAT_LABELS: Record<string, string> = {
@@ -162,6 +144,9 @@ function inferPosition(player: PlayerRow, squad: SquadRow | null): string {
 
 function playerRole(squad: SquadRow | null): string {
   if (!squad) return 'თავისუფალი აგენტი';
+  // No lineup slot assigned yet — reserve, not an accidental "starter" (null <=
+  // 11 would otherwise coerce true).
+  if (squad.shirt_number == null) return 'რეზერვი';
   if (squad.shirt_number <= 11) return 'სასტარტო XI';
   if (squad.shirt_number <= 15) return 'სათადარიგო';
   return 'რეზერვი';
@@ -169,6 +154,7 @@ function playerRole(squad: SquadRow | null): string {
 
 function playerCardRole(squad: SquadRow | null): 'starter' | 'bench' | 'reserve' | undefined {
   if (!squad) return undefined;
+  if (squad.shirt_number == null) return 'reserve';
   if (squad.shirt_number <= 11) return 'starter';
   if (squad.shirt_number <= 15) return 'bench';
   return 'reserve';
@@ -240,14 +226,14 @@ export default async function PlayManagerPlayerPage(
   props: { params: Promise<{ playerId: string }> },
 ) {
   const { playerId } = await props.params;
-  const db = (await createSupabaseServerClient()) as unknown as PlayManagerLooseDb;
+  const db = await createSupabaseServerClient();
 
   const { data: userData } = await db.auth.getUser();
   if (!userData.user) {
     redirect(`/auth/login?next=/playmanager/players/${playerId}`);
   }
 
-  const { data: player } = await db
+  const { data: rawPlayer } = await db
     .from('pm_players')
     .select(
       [
@@ -298,7 +284,9 @@ export default async function PlayManagerPlayerPage(
       ].join(','),
     )
     .eq('id', playerId)
-    .maybeSingle<PlayerRow>();
+    .maybeSingle();
+  // card_stats/pending_card_stats are jsonb — narrow to the app's own shape.
+  const player = rawPlayer as unknown as PlayerRow | null;
 
   if (!player) {
     return <PlayerEmptyState />;
@@ -318,25 +306,25 @@ export default async function PlayManagerPlayerPage(
       .from('pm_teams')
       .select('id,name,user_id,is_bot')
       .eq('id', squad.team_id)
-      .maybeSingle<TeamRow>()
+      .maybeSingle()
     : { data: null };
-  const team = teamResult.data;
+  const team = teamResult.data as TeamRow | null;
 
   const profileResult = team?.user_id
     ? await db
       .from('profiles')
       .select('id,display_name,username,avatar_url')
       .eq('id', team.user_id)
-      .maybeSingle<ProfileRow>()
+      .maybeSingle()
     : { data: null };
-  const manager = profileResult.data;
+  const manager = profileResult.data as ProfileRow | null;
 
   const { data: activeListing } = await db
     .from('pm_transfer_listings')
     .select('id, asking_price')
     .eq('player_id', player.id)
     .eq('status', 'active')
-    .maybeSingle<{ id: string; asking_price: number }>();
+    .maybeSingle();
 
   // Scout gate: a player's hidden identity (behavioural profile + traits) is only
   // visible on your own players, or on others' if your club employs a scout.
@@ -347,7 +335,7 @@ export default async function PlayManagerPlayerPage(
       .from('pm_teams')
       .select('id')
       .eq('user_id', userData.user.id)
-      .maybeSingle<{ id: string }>();
+      .maybeSingle();
     const viewerTeamId = viewerTeamResult.data?.id ?? null;
     if (viewerTeamId) {
       const scoutResult = await db
@@ -403,13 +391,13 @@ export default async function PlayManagerPlayerPage(
     pendingDeltas.sort((a, b) => b.delta - a.delta);
 
     if (isOwnedByViewer && team) {
-      const { data: newOvr } = await db.rpc<number>('pm_player_overall_from_stats', {
+      const { data: newOvr } = await db.rpc('pm_player_overall_from_stats', {
         p_position: position,
         p_card_stats: pendingStats,
         p_fallback: player.ovr_current,
       });
       if (typeof newOvr === 'number' && newOvr > player.ovr_current) {
-        const { data: fodderCost } = await db.rpc<number>('pm_ovr_upgrade_total_cost', {
+        const { data: fodderCost } = await db.rpc('pm_ovr_upgrade_total_cost', {
           p_from_ovr: player.ovr_current,
           p_to_ovr: newOvr,
         });

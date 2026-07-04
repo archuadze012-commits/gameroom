@@ -23,50 +23,38 @@ type TeamRow = {
   id: string;
   name: string;
   division_id: number;
-  user_id: string;
+  user_id: string | null;
   created_at: string;
-};
-
-type LooseQuery = {
-  select: (columns: string, options?: { count?: 'exact'; head?: boolean }) => LooseQuery;
-  eq: (column: string, value: unknown) => LooseQuery;
-  single: <T = unknown>() => Promise<{ data: T | null; error?: unknown }>;
-  maybeSingle: <T = unknown>() => Promise<{ data: T | null; error?: unknown }>;
-};
-
-type PlayManagerLooseDb = {
-  auth: {
-    getUser: () => Promise<{ data: { user: { id: string } | null } }>;
-  };
-  from: (table: string) => LooseQuery;
 };
 
 export default async function PlayManagerManagerPage(
   props: { params: Promise<{ id: string }> },
 ) {
   const { id: managerId } = await props.params;
-  const db = (await createSupabaseServerClient()) as unknown as PlayManagerLooseDb;
+  const db = await createSupabaseServerClient();
 
   const { data: userData } = await db.auth.getUser();
   if (!userData.user) {
     redirect(`/auth/login?next=/playmanager/managers/${managerId}`);
   }
 
-  const { data: profile } = await db
+  const { data: profileRow } = await db
     .from('profiles')
     .select('id,display_name,username,avatar_url')
     .eq('id', managerId)
-    .maybeSingle<ProfileRow>();
+    .maybeSingle();
+  const profile = profileRow as ProfileRow | null;
 
   if (!profile) {
     return <ManagerEmptyState />;
   }
 
-  const { data: team } = await db
+  const { data: teamRow } = await db
     .from('pm_teams')
     .select('id,name,division_id,user_id,created_at')
     .eq('user_id', managerId)
-    .maybeSingle<TeamRow>();
+    .maybeSingle();
+  const team = teamRow as TeamRow | null;
 
   const isMe = managerId === userData.user.id;
 

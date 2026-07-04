@@ -20,23 +20,8 @@ type TeamRow = {
   id: string;
   name: string;
   division_id: number;
-  user_id: string;
+  user_id: string | null;
   created_at: string;
-};
-
-type LooseQuery = {
-  select: (columns: string, options?: { count?: 'exact'; head?: boolean }) => LooseQuery;
-  eq: (column: string, value: unknown) => LooseQuery;
-  in: (column: string, values: unknown[]) => LooseQuery;
-  order: (column: string, options?: { ascending?: boolean }) => LooseQuery;
-  maybeSingle: <T = unknown>() => Promise<{ data: T | null; error?: unknown }>;
-};
-
-type PlayManagerLooseDb = {
-  auth: {
-    getUser: () => Promise<{ data: { user: { id: string } | null } }>;
-  };
-  from: (table: string) => LooseQuery;
 };
 
 type SquadPlayerRow = {
@@ -53,48 +38,52 @@ export default async function PlayManagerTeamPage(
   props: { params: Promise<{ id: string }> },
 ) {
   const { id: teamId } = await props.params;
-  const db = (await createSupabaseServerClient()) as unknown as PlayManagerLooseDb;
+  const db = await createSupabaseServerClient();
 
   const { data: userData } = await db.auth.getUser();
   if (!userData.user) {
     redirect(`/auth/login?next=/playmanager/teams/${teamId}`);
   }
 
-  const { data: team } = await db
+  const { data: teamRow } = await db
     .from('pm_teams')
     .select('id,name,division_id,user_id,created_at')
     .eq('id', teamId)
-    .maybeSingle<TeamRow>();
+    .maybeSingle();
+  const team = teamRow as TeamRow | null;
 
   if (!team) {
     return <TeamEmptyState />;
   }
 
-  const { data: profile } = await db
-    .from('profiles')
-    .select('id,display_name,username,avatar_url')
-    .eq('id', team.user_id)
-    .maybeSingle<ProfileRow>();
+  const profileResult = team.user_id
+    ? await db
+      .from('profiles')
+      .select('id,display_name,username,avatar_url')
+      .eq('id', team.user_id)
+      .maybeSingle()
+    : { data: null };
+  const profile = profileResult.data as ProfileRow | null;
 
-  const { data: squadRefs } = await (db
+  const { data: squadRefs } = await db
     .from('pm_squads')
     .select('player_id')
-    .eq('team_id', team.id) as unknown as Promise<{ data: Array<{ player_id: string }> | null }>);
+    .eq('team_id', team.id);
 
   let squadPlayers: SquadPlayerRow[] = [];
   if (squadRefs && squadRefs.length > 0) {
-    const playerIds = (squadRefs as Array<{ player_id: string }>).map((s: { player_id: string }) => s.player_id);
-    const { data: players } = await (db
+    const playerIds = squadRefs.map((s) => s.player_id);
+    const { data: players } = await db
       .from('pm_players')
       .select('id,display_name,primary_position,ovr_current,age,real_age,current_transfer_value_gel')
       .in('id', playerIds)
-      .order('ovr_current', { ascending: false }) as unknown as Promise<{ data: SquadPlayerRow[] | null }>);
+      .order('ovr_current', { ascending: false });
     if (players) {
       squadPlayers = players;
     }
   }
 
-  const isMe = team.user_id === userData.user.id;
+  const isMe = team.user_id !== null && team.user_id === userData.user.id;
 
   const avgOvr = squadPlayers.length
     ? Math.round(squadPlayers.reduce((sum, p) => sum + p.ovr_current, 0) / squadPlayers.length)
@@ -134,18 +123,32 @@ export default async function PlayManagerTeamPage(
               </div>
             </div>
 
-            <Link
-              href={`/playmanager/managers/${team.user_id}`}
-              className="flex items-center gap-3 rounded-2xl border border-white/8 bg-black/24 p-3 transition hover:border-emerald-300/24 hover:bg-white/[0.04]"
-            >
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-emerald-300/18 bg-emerald-300/10 text-emerald-100">
-                <UsersRound className="h-5 w-5" />
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-[10px] font-black uppercase tracking-[0.14em] text-white/40">მენეჯერი</p>
-                <p className="truncate text-sm font-black text-emerald-200">{profile?.display_name ?? profile?.username ?? 'მენეჯერი'}</p>
+            {/* Bot teams have no user_id — render a plain (non-clickable) tile instead of
+                a broken /playmanager/managers/null link. */}
+            {team.user_id ? (
+              <Link
+                href={`/playmanager/managers/${team.user_id}`}
+                className="flex items-center gap-3 rounded-2xl border border-white/8 bg-black/24 p-3 transition hover:border-emerald-300/24 hover:bg-white/[0.04]"
+              >
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-emerald-300/18 bg-emerald-300/10 text-emerald-100">
+                  <UsersRound className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-[10px] font-black uppercase tracking-[0.14em] text-white/40">მენეჯერი</p>
+                  <p className="truncate text-sm font-black text-emerald-200">{profile?.display_name ?? profile?.username ?? 'მენეჯერი'}</p>
+                </div>
+              </Link>
+            ) : (
+              <div className="flex items-center gap-3 rounded-2xl border border-white/8 bg-black/24 p-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/12 bg-white/[0.05] text-white/60">
+                  <UsersRound className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-[10px] font-black uppercase tracking-[0.14em] text-white/40">მენეჯერი</p>
+                  <p className="truncate text-sm font-black text-white/70">AI Manager</p>
+                </div>
               </div>
-            </Link>
+            )}
 
             <div className="flex items-center gap-3 rounded-2xl border border-white/8 bg-black/24 p-3">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-emerald-300/18 bg-emerald-300/10 text-emerald-100">

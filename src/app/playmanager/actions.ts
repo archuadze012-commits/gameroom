@@ -3,7 +3,6 @@
 import { revalidatePath } from 'next/cache';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { asPlayManagerDb } from '@/lib/playmanager/db';
 import { clampTicketPriceGel, getCurrentTransferValueGel } from '@/lib/playmanager/economy';
 import { normalizePlayManagerPosition } from '@/lib/playmanager/secondary-positions';
 import type { TeamFacilityState } from '@/lib/playmanager/facilities';
@@ -177,19 +176,20 @@ function getXpRewardWithTrainingBonus(baseXp: number, trainingBonusPct: number, 
 }
 
 async function getActionContext(userId: string, teamId: string): Promise<ActionContext> {
-  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const db = createSupabaseAdminClient();
   const [{ data: profile }, { data: facilityRows }] = await Promise.all([
-    db.from<{ xp: number | null }>('profiles').select('xp').eq('id', userId).single(),
-    db.from<{ sprite_key: TeamFacilityState['spriteKey']; level: number; progress: number; status: TeamFacilityState['status'] }>('pm_facilities')
+    db.from('profiles').select('xp').eq('id', userId).single(),
+    db.from('pm_facilities')
       .select('sprite_key, level, progress, status')
       .eq('team_id', teamId),
   ]);
 
+  // sprite_key/status are DB CHECK-constrained text; narrow to the app unions.
   const facilities: TeamFacilityState[] = (facilityRows ?? []).map((row) => ({
-    spriteKey: row.sprite_key,
+    spriteKey: row.sprite_key as TeamFacilityState['spriteKey'],
     level: row.level,
     progress: row.progress,
-    status: row.status,
+    status: row.status as TeamFacilityState['status'],
   }));
   const manager = getManagerProgression(profile?.xp ?? 0);
   return {
@@ -204,8 +204,11 @@ async function applyPostActionRewards(input: {
   extraCredit?: number;
   creditReason?: string;
 }) {
-  const db = asPlayManagerDb(createSupabaseAdminClient());
-  const jobs: { label: string; run: Promise<{ error: { message: string } | null }> }[] = [];
+  const db = createSupabaseAdminClient();
+  // The real client's .rpc() returns a thenable query builder, not a nominal
+  // Promise (it's missing .catch/.finally) — PromiseLike is the correct, looser
+  // structural type here, and Promise.allSettled accepts it just as well.
+  const jobs: { label: string; run: PromiseLike<{ error: { message: string } | null }> }[] = [];
   if (input.xpReward && input.xpReward > 0) {
     jobs.push({ label: 'award_xp', run: db.rpc('award_xp', { p_user_id: input.userId, p_amount: input.xpReward }) });
   }
@@ -235,14 +238,16 @@ async function applyPostActionRewards(input: {
 }
 
 async function advancePlayManagerTime(teamId: string, days = 1) {
-  const db = asPlayManagerDb(createSupabaseAdminClient());
-  const { data, error: advanceError } = await db.rpc<CalendarAdvance>('pm_advance_time', {
+  const db = createSupabaseAdminClient();
+  const { data: rawData, error: advanceError } = await db.rpc('pm_advance_time', {
     p_team_id: teamId,
     p_days: days,
   });
   if (advanceError) {
     console.error('[playmanager] pm_advance_time failed', { teamId, error: advanceError.message });
   }
+  // jsonb return — narrow to the RPC's known result contract.
+  const data = rawData as unknown as CalendarAdvance | null;
   // Downstream lifecycle jobs — each is best-effort, but never silent: a failure
   // in morale drain / academy maturation / career-end / skill development is a
   // lost world-tick, so surface it in logs/monitoring instead of vanishing.
@@ -276,14 +281,14 @@ async function logPlayManagerEvent(input: {
   // Optional deep-link the notifications page renders as a clickable target.
   href?: string | null;
 }) {
-  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const db = createSupabaseAdminClient();
   await db.rpc('pm_log_event', {
     p_team_id: input.teamId,
     p_category: input.category,
     p_title: input.title,
-    p_detail: input.detail ?? null,
+    p_detail: input.detail ?? undefined,
     p_accent: input.accent,
-    p_href: input.href ?? null,
+    p_href: input.href ?? undefined,
   });
 }
 
@@ -299,13 +304,13 @@ export async function runPlayManagerCityAction(input: {
   const team = await getTeam(user.id);
   if (!team) return { success: false, error: 'team_missing' };
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const db = createSupabaseAdminClient();
   const actionContext = await getActionContext(user.id, team.id);
 
   // One atomic RPC: core action + (optional) league sim + XP + bonus credit + time
   // advance, all in a single transaction. The bonus engine stays in TS — only the
   // resulting percentages cross into SQL, where they are applied as plain arithmetic.
-  const { data, error } = await db.rpc<RpcCityActionFull>('pm_run_city_action_full', {
+  const { data: rpcData, error } = await db.rpc('pm_run_city_action_full', {
     p_team_id: team.id,
     p_sprite_key: input.spriteKey,
     p_action: input.action,
@@ -318,7 +323,7 @@ export async function runPlayManagerCityAction(input: {
     p_advance_days: input.action === 'league_sim' ? 2 : 1,
   });
 
-  if (error || !data) {
+  if (error || !rpcData) {
     const message = error?.message ?? 'unavailable';
     if (message.includes('insufficient_funds')) return { success: false, error: 'insufficient_funds' };
     if (message.includes('facility_locked')) return { success: false, error: 'facility_locked' };
@@ -326,6 +331,9 @@ export async function runPlayManagerCityAction(input: {
     if (message.includes('invalid_facility')) return { success: false, error: 'invalid_facility' };
     return { success: false, error: 'unavailable' };
   }
+  // pm_run_city_action_full returns jsonb — the generator can't see its shape,
+  // so narrow to the RPC's known result contract.
+  const data = rpcData as unknown as RpcCityActionFull;
 
   const facilityResult = data.action;
   const extraCredit = data.extraCredit ?? 0;
@@ -424,18 +432,14 @@ export async function buyPlayManagerMarketPlayer(playerKey: string): Promise<Pla
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const db = createSupabaseAdminClient();
 
   // The market shows thousands of real DB free agents (keyed by normalized_name),
   // not just the four static seed targets — so resolve the buy against the actual
   // unowned pool. pm_buy_market_player claims the existing row by normalized_name;
   // MARKET_TARGETS stays as a fallback for the seed players.
   const { data: dbRows } = await db
-    .from<{
-      normalized_name: string; display_name: string | null; primary_position: string | null;
-      is_real: boolean | null; talent: number | null; ea_fc_ovr: number | null;
-      ovr_base: number | null; ovr_current: number; age: number | null; current_transfer_value_gel: number | null;
-    }>('pm_players')
+    .from('pm_players')
     .select('normalized_name, display_name, primary_position, is_real, talent, ea_fc_ovr, ovr_base, ovr_current, age, current_transfer_value_gel')
     .eq('normalized_name', playerKey)
     .is('owner_id', null)
@@ -523,12 +527,14 @@ export async function trainPlayManagerPlayer(playerId: string): Promise<PlayMana
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const db = createSupabaseAdminClient();
   const actionContext = await getActionContext(user.id, team.id);
-  const { data, error } = await db.rpc<TrainPlayerRpcResult>('pm_train_player', {
+  const { data: rawData, error } = await db.rpc('pm_train_player', {
     p_team_id: team.id,
     p_player_id: playerId,
   });
+  // jsonb return — narrow to the RPC's known result contract.
+  const data = rawData as unknown as TrainPlayerRpcResult | null;
 
   if (error) return mapPlayerActionError(error.message);
   const xpReward = getXpRewardWithTrainingBonus(18, actionContext.bonuses.trainingXpPct, true);
@@ -583,26 +589,20 @@ export async function openPlayManagerPack(packId: number): Promise<PlayManagerPl
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
-  const { data, error } = await db.rpc<{ count: number; cost: number; received: string[] }>('pm_open_pack', {
+  const db = createSupabaseAdminClient();
+  const { data: rawData, error } = await db.rpc('pm_open_pack', {
     p_team_id: team.id,
     p_pack_id: packId,
   });
+  // jsonb return — narrow to the RPC's known result contract.
+  const data = rawData as unknown as { count: number; cost: number; received: string[] } | null;
   if (error) return mapPlayerActionError(error.message);
 
   const receivedIds = Array.isArray(data?.received) ? data.received : [];
   let players: unknown[] = [];
   if (receivedIds.length > 0) {
     const { data: cards } = await db
-      .from<{
-        id: string;
-        display_name: string;
-        ovr_current: number;
-        talent: number;
-        primary_position: string | null;
-        nationality_code: string | null;
-        card_image_url: string | null;
-      }>('pm_players')
+      .from('pm_players')
       .select('id,display_name,ovr_current,talent,primary_position,nationality_code,card_image_url')
       .in('id', receivedIds);
     // Preserve draw order from the RPC's received array.
@@ -634,11 +634,13 @@ export async function confirmPlayManagerOvrUpgrade(
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
-  const { data, error } = await db.rpc<{ oldOvr: number; newOvr: number; fodderConsumed: number }>(
+  const db = createSupabaseAdminClient();
+  const { data: rawData, error } = await db.rpc(
     'pm_confirm_ovr_upgrade',
     { p_team_id: team.id, p_player_id: playerId, p_fodder_ids: fodderIds },
   );
+  // jsonb return — narrow to the RPC's known result contract.
+  const data = rawData as unknown as { oldOvr: number; newOvr: number; fodderConsumed: number } | null;
   if (error) return mapPlayerActionError(error.message);
 
   await logPlayManagerEvent({
@@ -660,12 +662,14 @@ export async function signPlayManagerAcademyProspect(prospectId: string): Promis
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const db = createSupabaseAdminClient();
   const actionContext = await getActionContext(user.id, team.id);
-  const { data, error } = await db.rpc<{ cost: number }>('pm_sign_academy_prospect', {
+  const { data: rawData, error } = await db.rpc('pm_sign_academy_prospect', {
     p_team_id: team.id,
     p_prospect_id: prospectId,
   });
+  // jsonb return — narrow to the RPC's known result contract.
+  const data = rawData as unknown as { cost: number } | null;
 
   if (error) return mapPlayerActionError(error.message);
   const refund = getPercentBonusAmount(data?.cost ?? 0, actionContext.bonuses.transferDiscountPct);
@@ -698,11 +702,13 @@ export async function sellPlayManagerPlayer(playerId: string): Promise<PlayManag
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
-  const { data, error } = await db.rpc<{ amount: number }>('pm_sell_player', {
+  const db = createSupabaseAdminClient();
+  const { data: rawData, error } = await db.rpc('pm_sell_player', {
     p_team_id: team.id,
     p_player_id: playerId,
   });
+  // jsonb return — narrow to the RPC's known result contract.
+  const data = rawData as unknown as { amount: number } | null;
 
   if (error) return mapPlayerActionError(error.message);
   const xpReward = 12;
@@ -738,7 +744,7 @@ export async function listPlayManagerPlayer(
     return { success: false, error: 'invalid_player', message: 'ფასი არასწორია' };
   }
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const db = createSupabaseAdminClient();
   const { error } = await db.rpc('pm_list_player', {
     p_team_id: team.id,
     p_player_id: playerId,
@@ -774,7 +780,7 @@ export async function unlistPlayManagerPlayer(
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const db = createSupabaseAdminClient();
   const { error } = await db.rpc('pm_unlist_player', {
     p_team_id: team.id,
     p_listing_id: listingId,
@@ -792,11 +798,13 @@ export async function buyPlayManagerListedPlayer(
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
-  const { data, error } = await db.rpc<{ price: number; playerId?: string }>('pm_buy_listed_player', {
+  const db = createSupabaseAdminClient();
+  const { data: rawData, error } = await db.rpc('pm_buy_listed_player', {
     p_buyer_team_id: team.id,
     p_listing_id: listingId,
   });
+  // jsonb return — narrow to the RPC's known result contract.
+  const data = rawData as unknown as { price: number; playerId?: string } | null;
 
   if (error) {
     if (error.message.includes('own_listing')) {
@@ -868,7 +876,7 @@ export async function makePlayManagerTransferOffer(
     return { success: false, error: 'invalid_player', message: 'ფასი არასწორია' };
   }
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const db = createSupabaseAdminClient();
   const { error } = await db.rpc('pm_make_transfer_offer', {
     p_from_team_id: team.id,
     p_listing_id: listingId,
@@ -878,7 +886,7 @@ export async function makePlayManagerTransferOffer(
 
   // Notify the seller (event feed on their team).
   const { data: listing } = await db
-    .from<{ seller_team_id: string; player: { display_name: string | null } | { display_name: string | null }[] | null }>('pm_transfer_listings')
+    .from('pm_transfer_listings')
     .select('seller_team_id, player:pm_players(display_name)')
     .eq('id', listingId)
     .maybeSingle();
@@ -915,16 +923,18 @@ export async function respondPlayManagerTransferOffer(
     }
   }
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
-  const { data, error } = await db.rpc<{ action: string; playerName?: string; price?: number; sellerTeamId?: string; buyerTeamId?: string; awaiting?: string }>(
+  const db = createSupabaseAdminClient();
+  const { data: rawData, error } = await db.rpc(
     'pm_respond_transfer_offer',
-    { p_team_id: team.id, p_offer_id: offerId, p_action: action, p_counter_amount: counter },
+    { p_team_id: team.id, p_offer_id: offerId, p_action: action, p_counter_amount: counter ?? undefined },
   );
+  // jsonb return — narrow to the RPC's known result contract.
+  const data = rawData as unknown as { action: string; playerName?: string; price?: number; sellerTeamId?: string; buyerTeamId?: string; awaiting?: string } | null;
   if (error) return mapTransferOfferError(error.message);
 
   // Notify the counterpart. Fetch the offer to know both sides.
   const { data: offer } = await db
-    .from<{ from_team_id: string; to_team_id: string; amount_gel: number; player: { display_name: string | null } | { display_name: string | null }[] | null }>('pm_transfer_offers')
+    .from('pm_transfer_offers')
     .select('from_team_id, to_team_id, amount_gel, player:pm_players(display_name)')
     .eq('id', offerId)
     .maybeSingle();
@@ -978,7 +988,7 @@ export async function cancelPlayManagerTransferOffer(
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const db = createSupabaseAdminClient();
   const { error } = await db.rpc('pm_cancel_transfer_offer', {
     p_team_id: team.id,
     p_offer_id: offerId,
@@ -988,11 +998,6 @@ export async function cancelPlayManagerTransferOffer(
   return { success: true, message: 'შეთავაზება გაუქმდა' };
 }
 
-type StaffMutationRow = {
-  role_key: StaffRoleKey;
-  level: number;
-};
-
 export async function hirePlayManagerStaff(roleKey: string): Promise<PlayManagerPlayerActionResult> {
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
@@ -1001,9 +1006,11 @@ export async function hirePlayManagerStaff(roleKey: string): Promise<PlayManager
     return { success: false, error: 'invalid_player', message: 'პერსონალის როლი ვერ მოიძებნა' };
   }
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const db = createSupabaseAdminClient();
   const typedRoleKey = roleKey as StaffRoleKey;
-  const { data, error } = await db.rpc<StaffMutationRow[]>('pm_hire_staff', {
+  // pm_hire_staff is a real Postgres TABLE-returning function, so the generated
+  // client already infers { level, role_key }[] precisely — no cast needed.
+  const { data, error } = await db.rpc('pm_hire_staff', {
     p_team_id: team.id,
     p_role_key: typedRoleKey,
   });
@@ -1037,9 +1044,10 @@ export async function upgradePlayManagerStaff(roleKey: string): Promise<PlayMana
     return { success: false, error: 'invalid_player', message: 'პერსონალის როლი ვერ მოიძებნა' };
   }
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const db = createSupabaseAdminClient();
   const typedRoleKey = roleKey as StaffRoleKey;
-  const { data, error } = await db.rpc<StaffMutationRow[]>('pm_upgrade_staff', {
+  // Same TABLE-returning shape as pm_hire_staff — inferred, no cast needed.
+  const { data, error } = await db.rpc('pm_upgrade_staff', {
     p_team_id: team.id,
     p_role_key: typedRoleKey,
   });
@@ -1077,7 +1085,7 @@ export async function savePlayManagerLineup(playerIds: string[]): Promise<PlayMa
   if (!team) return { success: false, error: 'team_missing' };
   if (playerIds.length === 0) return { success: false, error: 'invalid_player' };
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const db = createSupabaseAdminClient();
   const { error } = await db.rpc('pm_save_lineup_order', {
     p_team_id: team.id,
     p_lineup: playerIds,
@@ -1100,10 +1108,12 @@ export async function claimPlayManagerDailyReward(): Promise<PlayManagerPlayerAc
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
-  const { data, error } = await db.rpc<{ streak: number; reward: number }>('pm_claim_daily_reward', {
+  const db = createSupabaseAdminClient();
+  const { data: rawData, error } = await db.rpc('pm_claim_daily_reward', {
     p_team_id: team.id,
   });
+  // jsonb return — narrow to the RPC's known result contract.
+  const data = rawData as unknown as { streak: number; reward: number } | null;
 
   if (error) {
     if (error.message.includes('already_claimed')) return { success: false, error: 'unavailable' };
@@ -1125,11 +1135,13 @@ export async function renewPlayManagerCareer(playerId: string): Promise<PlayMana
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
-  const { data, error } = await db.rpc<{ careerEndAge: number; cost: number }>('pm_career_renew', {
+  const db = createSupabaseAdminClient();
+  const { data: rawData, error } = await db.rpc('pm_career_renew', {
     p_team_id: team.id,
     p_player_id: playerId,
   });
+  // jsonb return — narrow to the RPC's known result contract.
+  const data = rawData as unknown as { careerEndAge: number; cost: number } | null;
 
   if (error) {
     if (error.message.includes('not_in_career_window')) return { success: false, error: 'unavailable' };
@@ -1151,11 +1163,13 @@ export async function releasePlayManagerCareer(playerId: string): Promise<PlayMa
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
-  const { data, error } = await db.rpc<{ comp: number; destination: string }>('pm_career_release', {
+  const db = createSupabaseAdminClient();
+  const { data: rawData, error } = await db.rpc('pm_career_release', {
     p_team_id: team.id,
     p_player_id: playerId,
   });
+  // jsonb return — narrow to the RPC's known result contract.
+  const data = rawData as unknown as { comp: number; destination: string } | null;
 
   if (error) {
     if (error.message.includes('not_in_career_window')) return { success: false, error: 'unavailable' };
@@ -1181,7 +1195,7 @@ export async function savePlayManagerLineupFormation(
   if (!team) return { success: false, error: 'team_missing' };
   if (slots.length === 0) return { success: false, error: 'invalid_player' };
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const db = createSupabaseAdminClient();
   const { error } = await db.rpc('pm_save_lineup_formation', {
     p_team_id: team.id,
     p_formation: formation,
@@ -1210,7 +1224,7 @@ export async function savePlayManagerMatchSettings(input: {
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const db = createSupabaseAdminClient();
   const { error } = await db.rpc('pm_save_match_settings', {
     p_team_id: team.id,
     p_tactical_style: input.tacticalStyle,
@@ -1240,7 +1254,7 @@ export async function savePlayManagerTicketPrice(ticketPrice: number): Promise<P
   // can never send an out-of-range value to the RPC. (DB also enforces 10–80.)
   const safeTicketPrice = clampTicketPriceGel(ticketPrice);
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
+  const db = createSupabaseAdminClient();
   const { error } = await db.rpc('pm_save_ticket_price', {
     p_team_id: team.id,
     p_ticket_price: safeTicketPrice,
@@ -1263,10 +1277,12 @@ export async function negotiatePlayManagerSponsor(): Promise<PlayManagerPlayerAc
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
-  const { data, error } = await db.rpc<{ sponsorTier: string; sponsorWeeklyAmount: number }>('pm_negotiate_sponsor', {
+  const db = createSupabaseAdminClient();
+  const { data: rawData, error } = await db.rpc('pm_negotiate_sponsor', {
     p_team_id: team.id,
   });
+  // jsonb return — narrow to the RPC's known result contract.
+  const data = rawData as unknown as { sponsorTier: string; sponsorWeeklyAmount: number } | null;
 
   if (error) return mapPlayerActionError(error.message);
   const calendar = await advancePlayManagerTime(team.id, 1);
@@ -1289,11 +1305,13 @@ export async function buyPlayManagerXpPack(pack: 'starter' | 'prep' | 'elite'): 
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
 
-  const db = asPlayManagerDb(createSupabaseAdminClient());
-  const { data, error } = await db.rpc<{ xp: number; price: number; newXp: number }>('pm_buy_xp_pack', {
+  const db = createSupabaseAdminClient();
+  const { data: rawData, error } = await db.rpc('pm_buy_xp_pack', {
     p_team_id: team.id,
     p_pack: pack,
   });
+  // jsonb return — narrow to the RPC's known result contract.
+  const data = rawData as unknown as { xp: number; price: number; newXp: number } | null;
 
   if (error) {
     if (error.message.includes('invalid_pack')) return { success: false, error: 'unavailable' };

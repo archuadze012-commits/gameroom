@@ -132,22 +132,6 @@ type MatchSettingsRow = DbMatchSettings & {
   team_id: string;
 };
 
-type LooseQuery = {
-  select: (columns: string) => LooseQuery;
-  eq: (column: string, value: unknown) => LooseQuery;
-  in: (column: string, values: readonly unknown[]) => LooseQuery;
-  order: (column: string, options?: { ascending?: boolean }) => LooseQuery;
-  single: <T = unknown>() => Promise<{ data: T | null; error?: unknown }>;
-  returns: <T = unknown>() => Promise<{ data: T | null; error?: unknown }>;
-};
-
-type PlayManagerLooseDb = {
-  auth: {
-    getUser: () => Promise<{ data: { user: { id: string } | null } }>;
-  };
-  from: (table: string) => LooseQuery;
-};
-
 const DEFAULT_SETTINGS: CupWorkbenchSettings = {
   tacticalStyle: 'balanced',
   defensiveLine: 'mid',
@@ -161,7 +145,7 @@ export default async function CupMatchPage(
   const params = await props.params;
   await processDueCupMatches();
 
-  const db = (await createSupabaseServerClient()) as unknown as PlayManagerLooseDb;
+  const db = await createSupabaseServerClient();
 
   const { data: userData } = await db.auth.getUser();
   if (!userData.user) {
@@ -173,7 +157,7 @@ export default async function CupMatchPage(
     redirect('/playmanager');
   }
 
-  const { data: match } = await db
+  const { data: matchRow } = await db
     .from('pm_cup_matches')
     .select(`
       id,
@@ -197,7 +181,8 @@ export default async function CupMatchPage(
       )
     `)
     .eq('id', params.matchId)
-    .single<CupMatchRow>();
+    .single();
+  const match = matchRow as unknown as CupMatchRow | null;
 
   const cupInstance = firstRelation(match?.pm_cup_instances);
   const cupTemplate = firstRelation(cupInstance?.pm_cup_templates);

@@ -64,29 +64,12 @@ type CupMatchListRow = {
   team2: TeamRef | TeamRef[];
 };
 
-type LooseQuery = {
-  select: (columns: string) => LooseQuery;
-  eq: (column: string, value: unknown) => LooseQuery;
-  order: (column: string, options?: { ascending?: boolean }) => LooseQuery;
-  limit: (count: number) => LooseQuery;
-  single: <T = unknown>() => Promise<{ data: T | null; error?: unknown }>;
-  then: Promise<{ data: unknown; error?: unknown }>['then'];
-  returns: <T = unknown>() => Promise<{ data: T | null; error?: unknown }>;
-};
-
-type PlayManagerLooseDb = {
-  auth: {
-    getUser: () => Promise<{ data: { user: { id: string } | null } }>;
-  };
-  from: (table: string) => LooseQuery;
-};
-
 export default async function CupPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const cupId = params.id;
   await processDueCupMatches();
 
-  const db = (await createSupabaseServerClient()) as unknown as PlayManagerLooseDb;
+  const db = await createSupabaseServerClient();
 
   const { data: userData } = await db.auth.getUser();
   if (!userData.user) {
@@ -99,11 +82,12 @@ export default async function CupPage(props: { params: Promise<{ id: string }> }
   }
 
   // Fetch the cup template
-  const { data: template } = await db
+  const { data: templateRow } = await db
     .from('pm_cup_templates')
     .select('*')
     .eq('id', cupId)
-    .single<CupTemplateRow>();
+    .single();
+  const template = templateRow as CupTemplateRow | null;
 
   if (!template) {
     return (
