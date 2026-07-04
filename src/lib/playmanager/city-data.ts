@@ -1101,7 +1101,10 @@ export async function getPlayManagerCitySnapshot(
         .from('pm_transfer_listings')
         .select('id, asking_price, player:pm_players(id, display_name, primary_position, ovr_current)')
         .eq('seller_team_id', teamId)
-        .eq('status', 'listed')
+        // Live listings only. The status enum is 'active' | 'sold' | 'cancelled'
+        // (see 20260626 migration) — the old 'listed' value never existed, so
+        // this query always returned empty and sellers saw none of their listings.
+        .eq('status', 'active')
         .order('created_at', { ascending: false });
   const outgoingListings: CityOutgoingListing[] = ((outgoingListingRows ?? []) as OutgoingListingRow[])
     .map((row) => {
