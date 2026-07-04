@@ -51,6 +51,7 @@ Current coverage:
 - `pm_respond_transfer_offer` (reject / counter) — turn guard, price floor, invalid price/action, awaiting-party flip
 - `pm_open_pack` — draw + assign + squad + charge, unknown pack, insufficient-funds rollback, pool exhaustion
 - `pm_train_player` — training-quota guards: ownership, availability, per-cycle capacity (scales with head coach + training facility)
+- `pm_train_player` (stat gain) — XP-budget model: bank-on-poor-budget, buy focus-stat points + lift pending OVR, never overshoot the growth cap
 - cup/league processDue — the guarded status transitions (claim ready→processing,
   payout in_progress→completed) that make the lazy processing model safe from
   double-simulation / double-prize
