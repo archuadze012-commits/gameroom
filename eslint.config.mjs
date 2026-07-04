@@ -20,6 +20,11 @@ const eslintConfig = defineConfig([
     "artifacts/**",
     "out/**",
     "build/**",
+    // Vendored/generated static assets and one-off authoring/seed/test scripts
+    // are not application source — keep them out of the lint scope.
+    "public/**",
+    "scripts/**",
+    "*.mjs",
     "*.log",
     "devserver*.log",
     "dev*.log",

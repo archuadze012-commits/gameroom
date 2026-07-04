@@ -131,7 +131,9 @@ export function MarketStudio({
   const [buyingKey, setBuyingKey] = useState<string | null>(null);
   const [offerTarget, setOfferTarget] = useState<MarketPlayer | null>(null);
   const [contactingKey, setContactingKey] = useState<string | null>(null);
-  const [inboxOpen, setInboxOpen] = useState(false);
+  // Deep-link: ?offers=1 (e.g. from an offer-received notification) opens the
+  // inbox drawer on first render — derived as initial state, no mount effect.
+  const [inboxOpen, setInboxOpen] = useState(() => searchParams.get('offers') === '1');
   const [offers, setOffers] = useState<TransferOfferItem[]>([]);
   const [offersLoading, setOffersLoading] = useState(false);
   const [awaitingMe, setAwaitingMe] = useState(0);
@@ -153,17 +155,14 @@ export function MarketStudio({
   // without a manual refresh.
   useEffect(() => {
     if (isFreeAgents) return;
+    // Fetch-on-mount + 20s poll for incoming offers. loadOffers flips a loading
+    // flag synchronously; that's the intended spinner behaviour here, not a
+    // cascading-render bug.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadOffers();
     const id = window.setInterval(loadOffers, 20_000);
     return () => window.clearInterval(id);
   }, [isFreeAgents, loadOffers]);
-
-  // Notification deep-link target: ?offers=1 opens the inbox drawer directly
-  // (e.g. from an offer-received event in the notifications feed).
-  useEffect(() => {
-    if (searchParams.get('offers') === '1') setInboxOpen(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   async function contactSeller(player: MarketPlayer) {
     if (!player.sellerUserId) {

@@ -14,14 +14,17 @@ export const dynamic = 'force-dynamic';
 
 // arena and academy have dedicated route dirs (src/app/playmanager/arena, .../academy)
 // that win over this [building] catch-all, so they are never served here — no entry needed.
+// Every building below renders real, working modules (see the spriteKey branches
+// in playmanager-city-editor), so all are marked აქტიური — the old "მალე" badges
+// mislabelled functional pages as coming-soon.
 const BUILDING_META: Record<string, { label: string; description: string; status: string }> = {
-  market:    { label: 'მარკეტი',           description: 'სკაუტინგი, აუქციონი, კონტრაქტები',              status: 'მალე'    },
-  training:  { label: 'საწვრთნელი ბაზა',   description: 'ფორმა, ფიტნესი, ტაქტიკა',                       status: 'მალე'    },
+  market:    { label: 'მარკეტი',           description: 'სკაუტინგი, აუქციონი, კონტრაქტები',              status: 'აქტიური' },
+  training:  { label: 'საწვრთნელი ბაზა',   description: 'ფორმა, ფიტნესი, ტაქტიკა',                       status: 'აქტიური' },
   finance:   { label: 'ოფისი',             description: 'ტრანსფერები, აგენტები, აკადემია, ბალანსი, ხელფასები',  status: 'აქტიური' },
-  league:    { label: 'ლიგის ცენტრი',      description: 'ცხრილი, კალენდარი, მეტოქეები',                   status: 'მალე'    },
-  media:     { label: 'კომუნიკაციები',       description: 'ჩატი, მესენჯერი, განცხადებები და მოლაპარაკებები', status: 'მალე'    },
-  medical:   { label: 'სამედიცინო ცენტრი', description: 'მოთამაშეების გამოჯანმრთელება, ტრავმების შემცირება', status: 'მალე' },
-  residence: { label: 'საცხოვრებელი ბაზა', description: 'გუნდი, აკადემია და მოთამაშეების განთავსება',     status: 'მალე'    },
+  league:    { label: 'ლიგის ცენტრი',      description: 'ცხრილი, კალენდარი, მეტოქეები',                   status: 'აქტიური' },
+  media:     { label: 'კომუნიკაციები',       description: 'ჩატი, მესენჯერი, განცხადებები და მოლაპარაკებები', status: 'აქტიური' },
+  medical:   { label: 'სამედიცინო ცენტრი', description: 'მოთამაშეების გამოჯანმრთელება, ტრავმების შემცირება', status: 'აქტიური' },
+  residence: { label: 'საცხოვრებელი ბაზა', description: 'გუნდი, აკადემია და მოთამაშეების განთავსება',     status: 'აქტიური' },
 };
 
 const BUILDING_SCALE: Record<string, { anchorX: number; anchorY: number; scale: number; tone: 'green' | 'red' | 'gold' }> = {

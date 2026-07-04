@@ -370,12 +370,11 @@ export function PlayManagerIsoCity() {
   return (
     <div
       ref={viewportRef}
-      className="relative h-full w-full overflow-hidden bg-[#050b08] touch-none select-none"
+      className="relative h-full w-full cursor-grab overflow-hidden bg-[#050b08] touch-none select-none active:cursor-grabbing"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onWheel={onWheel}
-      style={{ cursor: drag.current.active ? 'grabbing' : 'grab' }}
     >
       <div
         className="absolute left-0 top-0 origin-top-left"

@@ -106,7 +106,11 @@ export function CityClouds({ scaleX, scaleY }: { scaleX: number; scaleY: number 
   const cloudsRef = useRef<Cloud[]>([]);
   const [ready, setReady] = useState(false);
   const scaleRef = useRef({ scaleX, scaleY });
-  scaleRef.current = { scaleX, scaleY };
+  // Keep the latest scale in a ref (read by the rAF loop) without touching the
+  // ref during render.
+  useEffect(() => {
+    scaleRef.current = { scaleX, scaleY };
+  }, [scaleX, scaleY]);
 
   useEffect(() => {
     // Defer cloud creation (and their image loads) until the browser is idle so
@@ -199,6 +203,7 @@ export function CityClouds({ scaleX, scaleY }: { scaleX: number; scaleY: number 
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      {/* eslint-disable-next-line react-hooks/refs -- cloudsRef holds the rAF-mutated cloud array: built once in an effect, read here only to render the <img> shells, then positioned imperatively per-frame via elRefs. State would re-render every frame. */}
       {cloudsRef.current.map((c, i) => (
         // eslint-disable-next-line @next/next/no-img-element
         <img
