@@ -18,6 +18,7 @@ type PlayerRow = {
     card_stats: Record<string, number | string> | null;
     skill_moves: number | null;
     behavioral: Record<string, number | string> | null;
+    traits: string[] | null;
   } | null;
 };
 
@@ -78,6 +79,17 @@ function behavioralAvg(rows: PlayerRow[], key: string) {
     if (Number.isFinite(numeric)) values.push(numeric);
   }
   return values.length > 0 ? values.reduce((sum, value) => sum + value, 0) / values.length : 60;
+}
+
+// How many of the fielded XI carry a given trait. Mirrors the per-trait sums in
+// pm_team_match_profile's trait_bonus CTE so both engines reward traits equally.
+function traitCount(rows: PlayerRow[], key: string) {
+  let count = 0;
+  for (const row of rows) {
+    const traits = row.player?.traits;
+    if (Array.isArray(traits) && traits.includes(key)) count += 1;
+  }
+  return count;
 }
 
 function effective(value: number, player: NonNullable<PlayerRow['player']>) {
@@ -326,6 +338,16 @@ export function buildMatchProfile(
       + keeperRating * 0.2,
   };
 
+  // Trait lane bonuses — mirror pm_team_match_profile's trait_bonus CTE exactly
+  // (per-trait flat sums over the fielded XI, capped per lane). This keeps
+  // championship/cup TS sims in sync with the SQL season engine.
+  const attackTB = Math.min(7, traitCount(fielded, 'poacher') * 2.5 + traitCount(fielded, 'magician') * 1.0);
+  const wingTB = Math.min(6, traitCount(fielded, 'speedster') * 2.0 + traitCount(fielded, 'magician') * 1.0);
+  const centralTB = Math.min(6, traitCount(fielded, 'playmaker') * 2.0 + traitCount(fielded, 'magician') * 1.5);
+  const midfieldTB = Math.min(6, traitCount(fielded, 'playmaker') * 2.0 + traitCount(fielded, 'engine') * 1.5 + traitCount(fielded, 'rock') * 0.5);
+  const defenseTB = Math.min(7, traitCount(fielded, 'wall') * 2.5 + traitCount(fielded, 'rock') * 1.5);
+  const readinessTB = Math.min(5, traitCount(fielded, 'leader') * 2.0 + traitCount(fielded, 'engine') * 0.5);
+
   // Behavioural attributes → lane bonuses (mirror pm_team_match_profile /
   // 20260705_playmanager_behavioral_match_effects.sql). XI average centered at
   // 60; consistency stays out (it only affects post-match ratings, not score).
@@ -335,11 +357,13 @@ export function buildMatchProfile(
   const aggressionMidB = clamp((behavioralAvg(fielded, 'aggression') - 60) * 0.1, -5, 5);
   const aggressionDefPen = clamp((behavioralAvg(fielded, 'aggression') - 60) * 0.03, -2, 2);
   const staminaB = clamp((behavioralAvg(fielded, 'stamina') - 60) * 0.08, -4, 4);
-  raw.attack += composureB;            // composure → calm finishing
-  raw.central += visionB;              // vision → final-third creativity
-  raw.midfield += aggressionMidB;      // aggression → pressing / ball recovery
-  raw.defense += positioningB - aggressionDefPen; // positioning helps; aggression leaves gaps
-  raw.readiness = clamp(raw.readiness + staminaB, 35, 100); // stamina → holds level late
+
+  raw.attack += attackTB + composureB;              // composure → calm finishing
+  raw.wing += wingTB;
+  raw.central += centralTB + visionB;               // vision → final-third creativity
+  raw.midfield += midfieldTB + aggressionMidB;      // aggression → pressing / ball recovery
+  raw.defense += defenseTB + positioningB - aggressionDefPen; // positioning helps; aggression leaves gaps
+  raw.readiness = clamp(raw.readiness + readinessTB + staminaB, 35, 100); // stamina/leadership → holds level late
 
   return tacticalProfile(raw, { ...DEFAULT_SETTINGS, ...settings });
 }
