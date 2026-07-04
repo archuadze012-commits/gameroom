@@ -17,6 +17,7 @@ type PlayerRow = {
     status: string | null;
     card_stats: Record<string, number | string> | null;
     skill_moves: number | null;
+    behavioral: Record<string, number | string> | null;
   } | null;
 };
 
@@ -64,6 +65,19 @@ function stat(player: NonNullable<PlayerRow['player']>, label: string) {
 function avg(values: number[], fallback: number) {
   if (values.length === 0) return fallback;
   return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+// Team-XI average of a behavioural attribute (composure/vision/…); 60 = neutral
+// fallback when a player has no stored value. Mirrors the SQL avg in
+// pm_team_match_profile so both engines score behaviour identically.
+function behavioralAvg(rows: PlayerRow[], key: string) {
+  const values: number[] = [];
+  for (const row of rows) {
+    const raw = row.player?.behavioral?.[key];
+    const numeric = typeof raw === 'number' ? raw : typeof raw === 'string' ? Number(raw) : NaN;
+    if (Number.isFinite(numeric)) values.push(numeric);
+  }
+  return values.length > 0 ? values.reduce((sum, value) => sum + value, 0) / values.length : 60;
 }
 
 function effective(value: number, player: NonNullable<PlayerRow['player']>) {
@@ -278,7 +292,8 @@ export function buildMatchProfile(
   // The manager assistant repairs the XI before kickoff (auto-substitutes
   // injured/unavailable starters); level scales repair quality + fatigue rotation.
   const assistantLevel = bonuses.assistantLevel ?? 0;
-  const starters = repairLineup(rows, assistantLevel)
+  const fielded = repairLineup(rows, assistantLevel);
+  const starters = fielded
     .map(playerLane)
     .filter((row): row is NonNullable<ReturnType<typeof playerLane>> => row !== null);
 
@@ -310,6 +325,21 @@ export function buildMatchProfile(
       avg(defenders.map((player) => player.setPieceDefense), avg(outfield.map((player) => player.setPieceDefense), 60)) * 0.8
       + keeperRating * 0.2,
   };
+
+  // Behavioural attributes → lane bonuses (mirror pm_team_match_profile /
+  // 20260705_playmanager_behavioral_match_effects.sql). XI average centered at
+  // 60; consistency stays out (it only affects post-match ratings, not score).
+  const composureB = clamp((behavioralAvg(fielded, 'composure') - 60) * 0.1, -5, 5);
+  const visionB = clamp((behavioralAvg(fielded, 'vision') - 60) * 0.1, -5, 5);
+  const positioningB = clamp((behavioralAvg(fielded, 'positioning') - 60) * 0.1, -5, 5);
+  const aggressionMidB = clamp((behavioralAvg(fielded, 'aggression') - 60) * 0.1, -5, 5);
+  const aggressionDefPen = clamp((behavioralAvg(fielded, 'aggression') - 60) * 0.03, -2, 2);
+  const staminaB = clamp((behavioralAvg(fielded, 'stamina') - 60) * 0.08, -4, 4);
+  raw.attack += composureB;            // composure → calm finishing
+  raw.central += visionB;              // vision → final-third creativity
+  raw.midfield += aggressionMidB;      // aggression → pressing / ball recovery
+  raw.defense += positioningB - aggressionDefPen; // positioning helps; aggression leaves gaps
+  raw.readiness = clamp(raw.readiness + staminaB, 35, 100); // stamina → holds level late
 
   return tacticalProfile(raw, { ...DEFAULT_SETTINGS, ...settings });
 }

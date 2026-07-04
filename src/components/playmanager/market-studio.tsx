@@ -14,6 +14,7 @@ import {
   MessageSquare,
   Radar,
   Search,
+  Settings,
   ShoppingCart,
   Store,
   X,
@@ -57,6 +58,7 @@ type MarketPlayer = {
   shortlisted: boolean;
   // Present only for manager↔manager listings (transfer_market module).
   listingId?: string;
+  sellerTeamId?: string | null;
   sellerUserId?: string | null;
   sellerTeamName?: string | null;
   floorPrice?: number;
@@ -102,7 +104,7 @@ export function MarketStudio({
   team,
   manager,
 }: {
-  team: { name: string; balanceLabel: string; divisionLabel: string };
+  team: { id: string; name: string; balanceLabel: string; divisionLabel: string };
   manager: { name: string; avatarUrl: string | null };
 }) {
   const router = useRouter();
@@ -409,6 +411,7 @@ export function MarketStudio({
                     index={index}
                     buying={buyingKey === player.key && pending}
                     contacting={contactingKey === player.key}
+                    currentTeamId={team.id}
                     onBuy={() => buy(player)}
                     onOffer={() => setOfferTarget(player)}
                     onContact={() => contactSeller(player)}
@@ -787,6 +790,7 @@ function PlayerCard({
   index,
   buying,
   contacting,
+  currentTeamId,
   onBuy,
   onOffer,
   onContact,
@@ -795,11 +799,13 @@ function PlayerCard({
   index: number;
   buying: boolean;
   contacting: boolean;
+  currentTeamId?: string;
   onBuy: () => void;
   onOffer: () => void;
   onContact: () => void;
 }) {
   const isListing = Boolean(player.listingId);
+  const isOwnedByMe = player.sellerTeamId === currentTeamId;
   return (
     <motion.div
       layout
@@ -846,27 +852,39 @@ function PlayerCard({
       </div>
 
       <div className="mt-3 flex gap-2">
-        <button
-          type="button"
-          disabled={buying}
-          onClick={onBuy}
-          className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-emerald-200/25 bg-[linear-gradient(180deg,#6ee7b7,#34d399)] px-3 py-2.5 text-xs font-black text-emerald-950 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <ShoppingCart className="h-3.5 w-3.5" />
-          {buying ? 'მუშავდება…' : isListing ? 'ახლავე ყიდვა' : 'ყიდვა'}
-        </button>
-        {player.id ? (
+        {isOwnedByMe ? (
           <Link
             href={`/playmanager/players/${player.id}`}
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs font-black text-white/70 transition hover:border-emerald-300/20 hover:text-white"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-300/24 bg-amber-300/12 px-3 py-2.5 text-xs font-black text-amber-50 transition hover:bg-amber-300/18"
           >
-            <ExternalLink className="h-3.5 w-3.5" />
-            ნახვა
+            <Settings className="h-3.5 w-3.5" />
+            მართვა (შენი მოთამაშე)
           </Link>
-        ) : null}
+        ) : (
+          <>
+            <button
+              type="button"
+              disabled={buying}
+              onClick={onBuy}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-emerald-200/25 bg-[linear-gradient(180deg,#6ee7b7,#34d399)] px-3 py-2.5 text-xs font-black text-emerald-950 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <ShoppingCart className="h-3.5 w-3.5" />
+              {buying ? 'მუშავდება…' : isListing ? 'ახლავე ყიდვა' : 'ყიდვა'}
+            </button>
+            {player.id ? (
+              <Link
+                href={`/playmanager/players/${player.id}`}
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs font-black text-white/70 transition hover:border-emerald-300/20 hover:text-white"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                ნახვა
+              </Link>
+            ) : null}
+          </>
+        )}
       </div>
 
-      {isListing ? (
+      {isListing && !isOwnedByMe ? (
         <div className="mt-2 flex gap-2">
           <button
             type="button"
