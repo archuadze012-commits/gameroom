@@ -49,5 +49,7 @@ Current coverage:
 - `pm_sell_player` — ownership guard
 - `pm_respond_transfer_offer` (accept) — full settlement, turn guard, insufficient-funds rollback
 - `pm_open_pack` — draw + assign + squad + charge, unknown pack, insufficient-funds rollback, pool exhaustion
+- `pm_train_player` — training-quota guards: ownership, availability, per-cycle capacity (scales with head coach + training facility)
 
-Extend next to offer counter/reject edge cases, training quota, cup/league processing.
+Extend next to offer counter/reject edge cases, the training stat-gain happy path
+(loads the XP-budget helpers), and cup/league processing.
