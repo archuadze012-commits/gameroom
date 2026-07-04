@@ -16,6 +16,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/db/seed.ts",
+    "gen:types": "node --env-file=.env.local -e \"const {execSync}=require('child_process');execSync('npx --yes supabase gen types typescript --db-url '+JSON.stringify(process.env.DATABASE_URL)+' --schema public > src/lib/database.types.ts',{stdio:'inherit'})\"",
     "pm:seed:eafc26": "EAFC26_IMPORT_LIMIT=1000 node --env-file=.env.local scripts/seed-eafc26-all-players.mjs",
     "pm:seed:eafc26:all": "node --env-file=.env.local scripts/seed-eafc26-all-players.mjs"
   },
