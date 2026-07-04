@@ -1,7 +1,6 @@
 import 'server-only';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { formatGel, getCurrentTransferValueGel, getProjectedAttendance, getProjectedMatchdayIncome, getProjectedWeeklyWages, getStadiumCapacity, getTalentClassAdjustedTransferValueGel } from './economy';
-import { asPlayManagerDb } from './db';
 import { getEafc26PlayerFaceUrl, resolveRealPlayerStats } from './eafc26-dataset';
 import { MARKET_TARGETS } from './gameplay';
 import { getPlayManagerNextOpponent } from './ai-opponents';
@@ -290,15 +289,6 @@ type SquadRow = {
     status: 'active' | 'injured' | 'retired';
     talent: number;
   } | null;
-};
-
-type TeamMetaRow = {
-  division_id: number;
-};
-
-type StaffRow = {
-  role_key: StaffRoleKey;
-  level: number;
 };
 
 const FORMATION_433_TARGETS = ['GK', 'LB', 'CB', 'CB', 'RB', 'CDM', 'CM', 'CM', 'LW', 'ST', 'RW'] as const;
@@ -602,17 +592,20 @@ export async function getPlayManagerCitySnapshot(
   // 'residence' is like 'light' but keeps academy — the residence page renders
   // squad + academy + staff and nothing else, so it can skip everything else.
   const includeAcademy = !isReduced || mode === 'residence';
-  const db = asPlayManagerDb(createSupabaseAdminClient());
-  const admin = createSupabaseAdminClient();
-  const untypedAdmin = admin as unknown as UntypedSupabaseClient;
+  const db = createSupabaseAdminClient();
+  // The two cup queries below embed multi-level, FK-disambiguated relations
+  // (team1:pm_teams!team1_id(...), nested pm_cup_instances -> pm_cup_templates)
+  // that the generated client's embed-type inference doesn't cleanly resolve;
+  // kept as an explicit untyped escape hatch rather than fighting the inference.
+  const untypedAdmin = db as unknown as UntypedSupabaseClient;
   const [{ data: teamMetaRow }, { data: staffRows }] = await Promise.all([
     db
-      .from<TeamMetaRow>('pm_teams')
+      .from('pm_teams')
       .select('division_id')
       .eq('id', teamId)
       .single(),
     db
-      .from<StaffRow>('pm_staff')
+      .from('pm_staff')
       .select('role_key, level')
       .eq('team_id', teamId),
   ]);
@@ -621,7 +614,9 @@ export async function getPlayManagerCitySnapshot(
   const maxStaffLevelByDivision = getMaxStaffLevelForDivision(divisionId);
   const staffBonuses = getStaffBonuses(
     (staffRows ?? []).map((row) => ({
-      roleKey: row.role_key,
+      // role_key is app-enum-constrained in gameplay, but the DB column is a
+      // plain CHECK-constrained text the generator can't narrow.
+      roleKey: row.role_key as StaffRoleKey,
       level: row.level,
     })),
   );
@@ -630,7 +625,7 @@ export async function getPlayManagerCitySnapshot(
 
   const [{ data: squadRows }, { data: marketRows }, { data: transactionRows }, { data: standingRows }, { data: matchHistoryRows }, { data: seasonStateRow }, { data: academyRows }, { data: shortlistRows }, { data: matchSettingsRow }, { data: calendarRow }, { data: eventFeedRows }, { data: financeStateRow }, { data: cupRows }, { data: cupMatchRows }, { data: arenaFacilityRow }, { data: engagementRow }] = await Promise.all([
     db
-      .from<SquadRow>('pm_squads')
+      .from('pm_squads')
       .select('id, shirt_number, squad_number, position, player:pm_players(id, normalized_name, display_name, card_display_name, primary_position, card_image_url, nationality_code, card_sil_width, card_sil_height, card_sil_x, card_sil_y, card_sil_opacity, card_content_y, card_name_size, card_stats_scale, card_stats, is_real, real_age, age, age_started_total_days, ovr_base, ovr_current, current_transfer_value_gel, fatigue, morale, injury_matches, status, talent)')
       .eq('team_id', teamId)
       .order('id', { ascending: true })
@@ -638,7 +633,7 @@ export async function getPlayManagerCitySnapshot(
     isReduced
       ? Promise.resolve({ data: [] as MarketRow[] })
       : db
-          .from<MarketRow>('pm_players')
+          .from('pm_players')
           .select('id, normalized_name, display_name, card_display_name, primary_position, card_image_url, nationality_code, card_sil_width, card_sil_height, card_sil_x, card_sil_y, card_sil_opacity, card_content_y, card_name_size, card_stats_scale, card_stats, is_real, talent, ea_fc_ovr, real_age, age, age_started_total_days, ovr_current, current_transfer_value_gel, owner_id')
           .is('owner_id', null)
           .eq('status', 'active')
@@ -653,13 +648,13 @@ export async function getPlayManagerCitySnapshot(
     isReduced
       ? Promise.resolve({ data: [] as TransactionRow[] })
       : db
-          .from<TransactionRow>('pm_transactions')
+          .from('pm_transactions')
           .select('amount, reason, created_at')
           .eq('team_id', teamId)
           .order('created_at', { ascending: false })
           .limit(8),
     db
-      .from<StandingRow>('pm_season_rows')
+      .from('pm_season_rows')
       .select('club_name, played, points, form_percent, row_order')
       .eq('team_id', teamId)
       .order('row_order', { ascending: true })
@@ -667,20 +662,20 @@ export async function getPlayManagerCitySnapshot(
     isReduced
       ? Promise.resolve({ data: [] as MatchHistoryRow[] })
       : db
-          .from<MatchHistoryRow>('pm_match_history')
+          .from('pm_match_history')
           .select('round_no, opponent_name, venue, scored, conceded, result, attendance, income, fan_mood, created_at')
           .eq('team_id', teamId)
           .order('round_no', { ascending: false })
           .limit(6),
       db
-        .from<SeasonStateRow>('pm_season_state')
+        .from('pm_season_state')
         .select('season_no, is_completed, last_finish, last_reward, last_outcome')
         .eq('team_id', teamId)
         .single(),
       !includeAcademy
         ? Promise.resolve({ data: [] as AcademyProspectRow[] })
         : db
-            .from<AcademyProspectRow>('pm_academy_prospects')
+            .from('pm_academy_prospects')
             .select('id, player_id, normalized_name, display_name, position, age, talent, ovr_base, potential_ovr, signing_cost')
             .eq('team_id', teamId)
             .eq('status', 'active')
@@ -689,29 +684,29 @@ export async function getPlayManagerCitySnapshot(
       isReduced
         ? Promise.resolve({ data: [] as MarketShortlistRow[] })
         : db
-            .from<MarketShortlistRow>('pm_market_shortlist')
+            .from('pm_market_shortlist')
             .select('player_key')
             .eq('team_id', teamId),
       db
-        .from<MatchSettingsRow>('pm_match_settings')
+        .from('pm_match_settings')
         .select('tactical_style, defensive_line, tempo, focus_side')
         .eq('team_id', teamId)
         .single(),
       db
-        .from<CalendarRow>('pm_calendar')
+        .from('pm_calendar')
         .select('week_no, day_no, total_days')
         .eq('team_id', teamId)
         .single(),
       isLineupOnly
         ? Promise.resolve({ data: [] as EventFeedRow[] })
         : db
-            .from<EventFeedRow>('pm_event_feed')
+            .from('pm_event_feed')
             .select('id, category, accent, title, detail, week_no, day_no, created_at')
             .eq('team_id', teamId)
             .order('created_at', { ascending: false })
             .limit(8),
       db
-        .from<FinanceStateRow>('pm_finance_state')
+        .from('pm_finance_state')
         .select('ticket_price, sponsor_tier, sponsor_weekly_amount')
         .eq('team_id', teamId)
         .single(),
@@ -753,13 +748,13 @@ export async function getPlayManagerCitySnapshot(
             .in('status', ['ready', 'pending'])
             .order('start_time', { ascending: true })),
       db
-        .from<ArenaFacilityRow>('pm_facilities')
+        .from('pm_facilities')
         .select('level')
         .eq('team_id', teamId)
         .eq('sprite_key', 'arena')
         .maybeSingle(),
       db
-        .from<EngagementRow>('pm_engagement')
+        .from('pm_engagement')
         .select('streak, last_claim_day')
         .eq('team_id', teamId)
         .maybeSingle(),
@@ -1153,7 +1148,9 @@ export async function getPlayManagerCitySnapshot(
       lastFinish: seasonStateRow?.last_finish ?? null,
       lastReward: seasonStateRow?.last_reward ?? 0,
       lastRewardLabel: formatGel(seasonStateRow?.last_reward ?? 0),
-      lastOutcome: seasonStateRow?.last_outcome ?? null,
+      // last_outcome is CHECK-constrained in the DB but comes back as plain
+      // text from the generator; narrow to the app's own union.
+      lastOutcome: (seasonStateRow?.last_outcome as SeasonStateRow['last_outcome']) ?? null,
     },
     clock: {
       weekNo: calendarRow?.week_no ?? 1,
@@ -1173,7 +1170,7 @@ export async function getPlayManagerCitySnapshot(
     })),
     finance: {
       ticketPrice,
-      sponsorTier: financeStateRow?.sponsor_tier ?? 'local',
+      sponsorTier: (financeStateRow?.sponsor_tier as FinanceStateRow['sponsor_tier']) ?? 'local',
       sponsorWeeklyAmount: financeStateRow?.sponsor_weekly_amount ?? 85_000,
       sponsorWeeklyAmountLabel: formatGel(financeStateRow?.sponsor_weekly_amount ?? 85_000),
       weeklyWages,
@@ -1201,10 +1198,11 @@ export async function getPlayManagerCitySnapshot(
       bonuses: staffBonuses,
     },
     matchSettings: {
-      tacticalStyle: matchSettingsRow?.tactical_style ?? 'balanced',
-      defensiveLine: matchSettingsRow?.defensive_line ?? 'mid',
-      tempo: matchSettingsRow?.tempo ?? 'balanced',
-      focusSide: matchSettingsRow?.focus_side ?? 'center',
+      // All four columns are CHECK-constrained text; narrow to the app unions.
+      tacticalStyle: (matchSettingsRow?.tactical_style as MatchSettingsRow['tactical_style']) ?? 'balanced',
+      defensiveLine: (matchSettingsRow?.defensive_line as MatchSettingsRow['defensive_line']) ?? 'mid',
+      tempo: (matchSettingsRow?.tempo as MatchSettingsRow['tempo']) ?? 'balanced',
+      focusSide: (matchSettingsRow?.focus_side as MatchSettingsRow['focus_side']) ?? 'center',
       readiness,
       injuredCount,
       availableCount,
