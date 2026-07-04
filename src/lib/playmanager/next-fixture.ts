@@ -1,6 +1,7 @@
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { processDueCupMatches } from '@/lib/playmanager/cups';
 import { processDueLeagueMatches } from '@/lib/playmanager/leagues';
+import { MATCH_STATUS } from '@/lib/playmanager/status';
 
 export type NextFixture = {
   kind: 'cup' | 'league';
@@ -32,14 +33,14 @@ export async function getNextFixtureForTeam(
     .from('pm_cup_matches')
     .select('id, round, team1_id, team2_id, start_time, status, cup_instance_id, pm_cup_instances(pm_cup_templates(name))')
     .or(`team1_id.eq.${teamId},team2_id.eq.${teamId}`)
-    .in('status', ['ready', 'pending'])
+    .in('status', [MATCH_STATUS.ready, MATCH_STATUS.pending])
     .order('start_time', { ascending: true });
 
   const { data: leagueRows } = await db
     .from('pm_league_fixtures')
     .select('id, round, home_team_id, away_team_id, start_time, status, pm_league_instances(name)')
     .or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`)
-    .in('status', ['ready', 'pending'])
+    .in('status', [MATCH_STATUS.ready, MATCH_STATUS.pending])
     .order('start_time', { ascending: true });
 
   const candidates: NextFixture[] = [];
@@ -57,7 +58,7 @@ export async function getNextFixtureForTeam(
       isHome,
       round: row.round,
       startTime: row.start_time,
-      ready: row.status === 'ready' && Boolean(opponentId),
+      ready: row.status === MATCH_STATUS.ready && Boolean(opponentId),
     });
   }
   for (const row of (leagueRows ?? []) as any[]) {
@@ -72,7 +73,7 @@ export async function getNextFixtureForTeam(
       isHome,
       round: row.round,
       startTime: row.start_time,
-      ready: row.status === 'ready' && Boolean(opponentId),
+      ready: row.status === MATCH_STATUS.ready && Boolean(opponentId),
     });
   }
 
@@ -112,7 +113,7 @@ export async function playNextFixtureForTeam(teamId: string): Promise<PlayedFixt
       .eq('id', next.fixtureId)
       .maybeSingle();
     const row = data as any;
-    if (!row || row.status !== 'completed') return null;
+    if (!row || row.status !== MATCH_STATUS.completed) return null;
     const isHome = row.team1_id === teamId;
     const scored = isHome ? row.score1 : row.score2;
     const conceded = isHome ? row.score2 : row.score1;
@@ -127,7 +128,7 @@ export async function playNextFixtureForTeam(teamId: string): Promise<PlayedFixt
     .eq('id', next.fixtureId)
     .maybeSingle();
   const row = data as any;
-  if (!row || row.status !== 'completed') return null;
+  if (!row || row.status !== MATCH_STATUS.completed) return null;
   const isHome = row.home_team_id === teamId;
   const scored = isHome ? row.home_goals : row.away_goals;
   const conceded = isHome ? row.away_goals : row.home_goals;

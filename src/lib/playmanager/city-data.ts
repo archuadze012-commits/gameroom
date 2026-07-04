@@ -5,6 +5,7 @@ import { asPlayManagerDb } from './db';
 import { getEafc26PlayerFaceUrl, resolveRealPlayerStats } from './eafc26-dataset';
 import { MARKET_TARGETS } from './gameplay';
 import { getPlayManagerNextOpponent } from './ai-opponents';
+import { LISTING_STATUS } from './status';
 import { buildPlayManagerPlayerCardLayout, type PlayManagerPlayerCardLayout } from './player-card';
 import { getEffectiveRealPlayerTalent, getPlayManagerDisplayAge } from './player-age';
 import type { PlayerCardStatsInput } from './player-card-stats';
@@ -1101,10 +1102,10 @@ export async function getPlayManagerCitySnapshot(
         .from('pm_transfer_listings')
         .select('id, asking_price, player:pm_players(id, display_name, primary_position, ovr_current)')
         .eq('seller_team_id', teamId)
-        // Live listings only. The status enum is 'active' | 'sold' | 'cancelled'
-        // (see 20260626 migration) — the old 'listed' value never existed, so
-        // this query always returned empty and sellers saw none of their listings.
-        .eq('status', 'active')
+        // Live listings only — LISTING_STATUS is the single source of truth for
+        // the 'active' | 'sold' | 'cancelled' enum. The old hand-typed 'listed'
+        // never existed, so this query returned empty and sellers saw no listings.
+        .eq('status', LISTING_STATUS.active)
         .order('created_at', { ascending: false });
   const outgoingListings: CityOutgoingListing[] = ((outgoingListingRows ?? []) as OutgoingListingRow[])
     .map((row) => {

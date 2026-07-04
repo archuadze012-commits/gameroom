@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getTeam } from '@/lib/playmanager/team';
+import { OFFER_STATUS } from '@/lib/playmanager/status';
 
 // Active transfer negotiations involving the current manager's team, split into
 // incoming (waiting on ME to respond) and outgoing (waiting on the other side).
@@ -42,7 +43,7 @@ export async function GET() {
       from_team:pm_teams!from_team_id ( name ),
       to_team:pm_teams!to_team_id ( name )
     `)
-    .eq('status', 'pending')
+    .eq('status', OFFER_STATUS.pending)
     .or(`from_team_id.eq.${team.id},to_team_id.eq.${team.id}`)
     .order('updated_at', { ascending: false });
 

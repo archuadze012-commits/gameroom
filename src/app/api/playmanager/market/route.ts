@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { loadEafc26Dataset, resolveRealPlayerStats, type Eafc26DatasetPlayer } from '@/lib/playmanager/eafc26-dataset';
 import { getTalentClassAdjustedTransferValueGel } from '@/lib/playmanager/economy';
+import { LISTING_STATUS } from '@/lib/playmanager/status';
 import { getEffectiveRealPlayerTalent, PLAYMANAGER_REAL_PLAYER_RESET_AGE } from '@/lib/playmanager/player-age';
 import { normalizePlayManagerPosition, positionMatchesFilter } from '@/lib/playmanager/secondary-positions';
 import { buildPlayManagerPlayerCardLayout } from '@/lib/playmanager/player-card';
@@ -459,7 +460,7 @@ export async function GET(request: Request) {
           owner_id, status, available_via_career, pending_repack
         )
       `)
-      .eq('status', 'active')
+      .eq('status', LISTING_STATUS.active)
       .order('created_at', { ascending: false });
     if (listingError) return NextResponse.json({ error: listingError.message }, { status: 500 });
 
