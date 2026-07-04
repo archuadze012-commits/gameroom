@@ -43,17 +43,46 @@ function isoDate(value: unknown): string {
   return typeof value === 'string' ? value.slice(0, 10) : '';
 }
 
+type LeagueHistoryRow = {
+  id: number;
+  round_no: number;
+  opponent_name: string;
+  venue: 'Home' | 'Away' | null;
+  scored: number;
+  conceded: number;
+  result: 'W' | 'D' | 'L';
+  attendance: number;
+  income: number;
+  created_at: string;
+};
+
+type NameRel = { name: string } | { name: string }[] | null;
+
+type CupHistoryRow = {
+  id: string;
+  round: number;
+  score1: number | null;
+  score2: number | null;
+  winner_id: string | null;
+  status: string;
+  completed_at: string | null;
+  team1_id: string | null;
+  team2_id: string | null;
+  pm_cup_instances: { pm_cup_templates: NameRel } | { pm_cup_templates: NameRel }[];
+  team1: NameRel;
+  team2: NameRel;
+};
+
 export async function getPlayManagerMatchArchive(teamId: string): Promise<ArchiveMatch[]> {
-  const db = createSupabaseAdminClient() as unknown as {
-    from: (table: string) => any;
-  };
+  const db = createSupabaseAdminClient();
 
   const [leagueRes, cupRes] = await Promise.all([
     db
       .from('pm_match_history')
       .select('id, round_no, opponent_name, venue, scored, conceded, result, attendance, income, created_at')
       .eq('team_id', teamId)
-      .order('round_no', { ascending: false }),
+      .order('round_no', { ascending: false })
+      .returns<LeagueHistoryRow[]>(),
     db
       .from('pm_cup_matches')
       .select(
@@ -63,10 +92,11 @@ export async function getPlayManagerMatchArchive(teamId: string): Promise<Archiv
       )
       .eq('status', 'completed')
       .or(`team1_id.eq.${teamId},team2_id.eq.${teamId}`)
-      .order('completed_at', { ascending: false }),
+      .order('completed_at', { ascending: false })
+      .returns<CupHistoryRow[]>(),
   ]);
 
-  const leagueMatches: ArchiveMatch[] = (leagueRes.data || []).map((m: Record<string, any>) => ({
+  const leagueMatches: ArchiveMatch[] = (leagueRes.data || []).map((m) => ({
     id: `league-${m.id}`,
     competition: 'league',
     competitionName: 'ლიგა',
@@ -80,7 +110,7 @@ export async function getPlayManagerMatchArchive(teamId: string): Promise<Archiv
     date: isoDate(m.created_at),
   }));
 
-  const cupMatches: ArchiveMatch[] = (cupRes.data || []).map((m: Record<string, any>) => {
+  const cupMatches: ArchiveMatch[] = (cupRes.data || []).map((m) => {
     const isTeam1 = m.team1_id === teamId;
     const myScore = (isTeam1 ? m.score1 : m.score2) ?? 0;
     const oppScore = (isTeam1 ? m.score2 : m.score1) ?? 0;
@@ -107,10 +137,22 @@ export async function getPlayManagerMatchArchive(teamId: string): Promise<Archiv
   );
 }
 
+type TemplateRel = { name: string; prize_pool: number } | { name: string; prize_pool: number }[] | null;
+
+type WonCupRow = {
+  cup_instance_id: string | null;
+  round: number;
+  completed_at: string | null;
+  pm_cup_instances: { pm_cup_templates: TemplateRel } | { pm_cup_templates: TemplateRel }[];
+};
+
+type CupRoundRow = {
+  cup_instance_id: string | null;
+  round: number;
+};
+
 export async function getPlayManagerTrophyRoom(teamId: string): Promise<Trophy[]> {
-  const db = createSupabaseAdminClient() as unknown as {
-    from: (table: string) => any;
-  };
+  const db = createSupabaseAdminClient();
 
   const { data: won } = await db
     .from('pm_cup_matches')
@@ -119,20 +161,22 @@ export async function getPlayManagerTrophyRoom(teamId: string): Promise<Trophy[]
         'pm_cup_instances!inner(status, template_id, pm_cup_templates(name, prize_pool))',
     )
     .eq('winner_id', teamId)
-    .eq('pm_cup_instances.status', 'completed');
+    .eq('pm_cup_instances.status', 'completed')
+    .returns<WonCupRow[]>();
 
-  const wonRows: Record<string, any>[] = won || [];
-  const instanceIds = [...new Set(wonRows.map((r) => r.cup_instance_id as string))];
+  const wonRows = won ?? [];
+  const instanceIds = [...new Set(wonRows.map((r) => r.cup_instance_id).filter((id): id is string => id !== null))];
 
   const maxRoundByInstance: Record<string, number> = {};
   if (instanceIds.length > 0) {
     const { data: allRounds } = await db
       .from('pm_cup_matches')
       .select('cup_instance_id, round')
-      .in('cup_instance_id', instanceIds);
-    for (const r of (allRounds || []) as Record<string, any>[]) {
-      const id = r.cup_instance_id as string;
-      maxRoundByInstance[id] = Math.max(maxRoundByInstance[id] ?? 0, r.round as number);
+      .in('cup_instance_id', instanceIds)
+      .returns<CupRoundRow[]>();
+    for (const r of allRounds ?? []) {
+      if (!r.cup_instance_id) continue;
+      maxRoundByInstance[r.cup_instance_id] = Math.max(maxRoundByInstance[r.cup_instance_id] ?? 0, r.round);
     }
   }
 
