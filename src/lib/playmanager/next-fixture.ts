@@ -23,9 +23,11 @@ async function teamName(db: Db, teamId: string | null): Promise<string> {
 
 // The team's soonest upcoming real fixture (cup or championship), ready or pending.
 // Prefers a 'ready' fixture (playable now) over a still-pending bracket slot.
-export async function getNextFixtureForTeam(teamId: string): Promise<NextFixture | null> {
-  const db = createSupabaseAdminClient() as unknown as Db;
-
+// `db` is injectable for tests; production callers use the default admin client.
+export async function getNextFixtureForTeam(
+  teamId: string,
+  db: Db = createSupabaseAdminClient() as unknown as Db,
+): Promise<NextFixture | null> {
   const { data: cupRows } = await db
     .from('pm_cup_matches')
     .select('id, round, team1_id, team2_id, start_time, status, cup_instance_id, pm_cup_instances(pm_cup_templates(name))')
