@@ -1,11 +1,11 @@
-type MatchSettings = {
+export type MatchSettings = {
   tacticalStyle: 'balanced' | 'pressing' | 'possession' | 'counter';
   defensiveLine: 'low' | 'mid' | 'high';
   tempo: 'controlled' | 'balanced' | 'direct';
   focusSide: 'left' | 'center' | 'right';
 };
 
-type PlayerRow = {
+export type PlayerRow = {
   shirt_number: number | null;
   position: string | null;
   player: {

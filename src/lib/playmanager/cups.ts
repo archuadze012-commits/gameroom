@@ -1,12 +1,44 @@
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { generateSingleElimBracket } from '@/lib/tournament/generate-bracket';
 import { formatGel } from '@/lib/playmanager/economy';
-import { buildMatchProfile, simulateMatch } from '@/lib/playmanager/match-engine';
+import { buildMatchProfile, simulateMatch, type MatchSettings, type PlayerRow } from '@/lib/playmanager/match-engine';
 import { getStaffBonuses, type StaffRoleKey } from '@/lib/playmanager/staff';
 
+type ParticipantWithTeamRow = {
+  team_id: string;
+  pm_teams: { name: string } | { name: string }[] | null;
+};
+
+type StaleCupRow = {
+  id: string;
+  created_at: string | null;
+  pm_cup_templates: { id: string; schedule_type: string; max_teams: number } | { id: string; schedule_type: string; max_teams: number }[] | null;
+  pm_cup_participants: { team_id: string }[] | null;
+};
+
+type DueCupMatchRow = {
+  id: string;
+  cup_instance_id: string | null;
+  round: number;
+  position: number;
+  team1_id: string | null;
+  team2_id: string | null;
+};
+
+type CupTemplateRel = { id: string; name: string; prize_pool: number } | { id: string; name: string; prize_pool: number }[] | null;
+
+type CupInstanceWithTemplateRow = {
+  template_id: string | null;
+  pm_cup_templates: CupTemplateRel;
+};
+
+function firstRel<T>(rel: T | T[] | null): T | null {
+  return Array.isArray(rel) ? rel[0] ?? null : rel;
+}
+
 export async function joinPlayManagerCup(teamId: string, cupInstanceId: string) {
-  const db = createSupabaseAdminClient() as any;
-  const { data, error } = await db.rpc('pm_join_cup', {
+  const db = createSupabaseAdminClient();
+  const { data: rawData, error } = await db.rpc('pm_join_cup', {
     p_team_id: teamId,
     p_cup_instance_id: cupInstanceId,
   });
@@ -15,7 +47,8 @@ export async function joinPlayManagerCup(teamId: string, cupInstanceId: string) 
     return { success: false, error: error.message };
   }
 
-  const result = data as { success: boolean; error?: string; cup_started?: boolean };
+  // jsonb return — narrow to the RPC's known result contract.
+  const result = rawData as unknown as { success: boolean; error?: string; cup_started?: boolean };
   if (!result.success) {
     return result;
   }
@@ -29,25 +62,26 @@ export async function joinPlayManagerCup(teamId: string, cupInstanceId: string) 
 }
 
 export async function generateCupBracket(cupInstanceId: string) {
-  const db = createSupabaseAdminClient() as any;
-  
+  const db = createSupabaseAdminClient();
+
   // 1. Get all participants
   const { data: participants } = await db
     .from('pm_cup_participants')
     .select('team_id, pm_teams(name)')
-    .eq('cup_instance_id', cupInstanceId);
+    .eq('cup_instance_id', cupInstanceId)
+    .returns<ParticipantWithTeamRow[]>();
 
   if (!participants || participants.length === 0) return;
 
   // We assign random seeds for the bracket
   const shuffled = participants
-    .map((value: any) => ({ value, sort: Math.random() }))
-    .sort((a: any, b: any) => a.sort - b.sort)
-    .map(({ value }: any) => value);
+    .map((value) => ({ value, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value);
 
-  const bracketParticipants = shuffled.map((p: any, index: number) => ({
-    id: p.team_id!,
-    name: p.pm_teams?.name || 'Unknown',
+  const bracketParticipants = shuffled.map((p, index) => ({
+    id: p.team_id,
+    name: firstRel(p.pm_teams)?.name || 'Unknown',
     seed: index + 1,
   }));
 
@@ -78,19 +112,20 @@ export async function generateCupBracket(cupInstanceId: string) {
 // fresh registration instance so the cup type stays open. Cups with < 2 real
 // teams keep waiting.
 export async function checkAndStartStaleCups() {
-  const db = createSupabaseAdminClient() as any;
+  const db = createSupabaseAdminClient();
   const cutoff = new Date(Date.now() - 20 * 60 * 1000).toISOString();
 
   const { data: staleCups } = await db
     .from('pm_cup_instances')
     .select('*, pm_cup_templates(id, schedule_type, max_teams), pm_cup_participants(team_id)')
     .eq('status', 'registration')
-    .lt('created_at', cutoff);
+    .lt('created_at', cutoff)
+    .returns<StaleCupRow[]>();
 
   if (!staleCups || staleCups.length === 0) return;
 
   for (const cup of staleCups) {
-    const template = cup.pm_cup_templates;
+    const template = firstRel(cup.pm_cup_templates);
     if (!template || template.schedule_type !== 'auto_fill') continue;
 
     const participants = cup.pm_cup_participants || [];
@@ -124,7 +159,7 @@ export async function checkAndStartStaleCups() {
 const STALE_CLAIM_MS = 2 * 60 * 1000;
 
 export async function processDueCupMatches() {
-  const db = createSupabaseAdminClient() as any;
+  const db = createSupabaseAdminClient();
 
   // Auto-start stale cups with real teams only (no bots)
   await checkAndStartStaleCups();
@@ -140,12 +175,13 @@ export async function processDueCupMatches() {
     .or(`claimed_at.lt.${staleBefore},claimed_at.is.null`);
 
   // Find matches that are 'ready' and past their start_time
-  const { data: dueMatches } = await (createSupabaseAdminClient() as any)
+  const { data: dueMatches } = await db
     .from('pm_cup_matches')
-    .select('*, pm_cup_instances(template_id, pm_cup_templates(prize_pool))')
+    .select('id, cup_instance_id, round, position, team1_id, team2_id')
     .eq('status', 'ready')
     .lte('start_time', new Date().toISOString())
-    .order('round', { ascending: true }) as any;
+    .order('round', { ascending: true })
+    .returns<DueCupMatchRow[]>();
 
   if (!dueMatches || dueMatches.length === 0) return;
 
@@ -204,27 +240,27 @@ export async function processDueCupMatches() {
     
     const { data: nextMatchData } = await db
       .from('pm_cup_matches')
-      .select('*')
+      .select('id, team1_id, team2_id')
       .eq('cup_instance_id', match.cup_instance_id!)
       .eq('round', nextRound)
       .eq('position', nextPosition)
       .single();
 
     if (nextMatchData) {
-      const updateData: any = {};
+      const updateData: { team1_id?: string; team2_id?: string; status?: string } = {};
       if (isPlayer1InNext) {
         updateData.team1_id = winnerId;
       } else {
         updateData.team2_id = winnerId;
       }
-      
+
       // If both slots are now filled, status becomes ready
-      const otherTeamId = isPlayer1InNext ? (nextMatchData as any).team2_id : (nextMatchData as any).team1_id;
+      const otherTeamId = isPlayer1InNext ? nextMatchData.team2_id : nextMatchData.team1_id;
       if (otherTeamId) {
         updateData.status = 'ready';
       }
 
-      await db.from('pm_cup_matches').update(updateData).eq('id', (nextMatchData as any).id);
+      await db.from('pm_cup_matches').update(updateData).eq('id', nextMatchData.id);
     } else {
       // No next match means this was the final!
       await distributeCupPrizes(match.cup_instance_id!, winnerId, isTeam1Winner ? team2Id : team1Id);
@@ -232,13 +268,14 @@ export async function processDueCupMatches() {
   }
 }
 
-async function loadCupTeamRows(teamId: string) {
-  const db = createSupabaseAdminClient() as any;
+async function loadCupTeamRows(teamId: string): Promise<PlayerRow[]> {
+  const db = createSupabaseAdminClient();
   const { data } = await db
     .from('pm_squads')
     .select('shirt_number, position, player:pm_players(primary_position, ovr_current, fatigue, morale, injury_matches, status, card_stats, skill_moves, behavioral, traits, weak_foot)')
     .eq('team_id', teamId)
-    .order('shirt_number', { ascending: true });
+    .order('shirt_number', { ascending: true })
+    .returns<PlayerRow[]>();
 
   return data || [];
 }
@@ -247,13 +284,14 @@ async function loadCupTeamRows(teamId: string) {
 // (set_piece_coach amplifies set-piece threat, head_coach lifts readiness and
 // drives auto-lineup repair).
 async function loadCupStaffBonuses(teamId: string) {
-  const db = createSupabaseAdminClient() as any;
+  const db = createSupabaseAdminClient();
   const { data } = await db
     .from('pm_staff')
     .select('role_key, level')
-    .eq('team_id', teamId);
+    .eq('team_id', teamId)
+    .returns<Array<{ role_key: StaffRoleKey; level: number }>>();
 
-  const rows: Array<{ role_key: StaffRoleKey; level: number }> = data ?? [];
+  const rows = data ?? [];
   const bonuses = getStaffBonuses(rows.map((row) => ({ roleKey: row.role_key, level: row.level })));
   const assistantLevel = rows
     .filter((row) => row.role_key === 'head_coach')
@@ -261,8 +299,8 @@ async function loadCupStaffBonuses(teamId: string) {
   return { setPiecePct: bonuses.setPiecePct, readinessFlat: bonuses.readinessFlat, assistantLevel };
 }
 
-async function loadCupSettings(teamId: string) {
-  const db = createSupabaseAdminClient() as any;
+async function loadCupSettings(teamId: string): Promise<MatchSettings> {
+  const db = createSupabaseAdminClient();
   const { data } = await db
     .from('pm_match_settings')
     .select('tactical_style, defensive_line, tempo, focus_side')
@@ -270,15 +308,15 @@ async function loadCupSettings(teamId: string) {
     .maybeSingle();
 
   return {
-    tacticalStyle: data?.tactical_style ?? 'balanced',
-    defensiveLine: data?.defensive_line ?? 'mid',
-    tempo: data?.tempo ?? 'balanced',
-    focusSide: data?.focus_side ?? 'center',
+    tacticalStyle: (data?.tactical_style ?? 'balanced') as MatchSettings['tacticalStyle'],
+    defensiveLine: (data?.defensive_line ?? 'mid') as MatchSettings['defensiveLine'],
+    tempo: (data?.tempo ?? 'balanced') as MatchSettings['tempo'],
+    focusSide: (data?.focus_side ?? 'center') as MatchSettings['focusSide'],
   };
 }
 
 async function distributeCupPrizes(cupInstanceId: string, winnerId: string, runnerUpId: string) {
-  const db = createSupabaseAdminClient() as any;
+  const db = createSupabaseAdminClient();
 
   // Optimistic lock: only the first caller to flip in_progress → completed pays
   // the prize. A racing processor gets no rows back and returns without paying.
@@ -288,18 +326,19 @@ async function distributeCupPrizes(cupInstanceId: string, winnerId: string, runn
     .eq('id', cupInstanceId)
     .eq('status', 'in_progress')
     .select('id');
-  if (!lockedInstance || (lockedInstance as unknown[]).length === 0) return;
+  if (!lockedInstance || lockedInstance.length === 0) return;
 
   // Get template info for prizes
   const { data: instance } = await db
     .from('pm_cup_instances')
     .select('template_id, pm_cup_templates(*)')
     .eq('id', cupInstanceId)
-    .single();
+    .single()
+    .returns<CupInstanceWithTemplateRow>();
 
-  if (!instance || !(instance as any).pm_cup_templates) return;
+  const template = instance ? firstRel(instance.pm_cup_templates) : null;
+  if (!template) return;
 
-  const template = (instance as any).pm_cup_templates;
   const prizePool = Number(template.prize_pool ?? 0);
   if (prizePool <= 0) return;
 
