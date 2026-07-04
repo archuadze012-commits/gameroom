@@ -54,10 +54,21 @@ Current coverage:
   payout in_progress→completed) that make the lazy processing model safe from
   double-simulation / double-prize
 
-The processDue functions themselves are TypeScript orchestrators (supabase-js +
-a TS match engine), so only their SQL safety invariant is covered here. Running
-the full orchestration would need a supabase-js→pglite adapter — the natural next
-infra step, which would also unlock testing the server actions and API routes.
+## supabase-js → pglite adapter (`test/harness/pglite-supabase.ts`)
+
+`asSupabase(db)` wraps a pglite instance as a supabase-js-like client, so real
+`db`-taking TypeScript code (lib functions, server actions) can run against the
+real engine in tests. Supports the flat query surface — `from().select()`,
+`eq/neq/in/is/lt/lte/gt/gte`, `or('a.eq.1,b.eq.2')`, `order/limit/range`,
+`single/maybeSingle`, `insert/update/upsert/delete` (with `.select()` returning),
+`count/head`, and `rpc()`. Nested foreign-table embeds (`player:pm_players(...)`)
+are **dropped** to their flat columns — code that reads the embed gets undefined
+and falls back to its default, so the surrounding logic still runs.
+
+Proven end-to-end by `next-fixture.itest.ts`, which runs the unmodified
+`getNextFixtureForTeam` through the adapter (`supabase-adapter.itest.ts` covers
+each operation directly). This is the seam for testing embed-light server actions
+and lib orchestration next.
 
 Extend next to offer counter/reject edge cases and the training stat-gain happy
 path (loads the XP-budget helpers).
