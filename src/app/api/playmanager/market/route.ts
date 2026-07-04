@@ -71,6 +71,19 @@ function isLegacyEafcRow(row: Pick<MarketDbRow, 'is_real' | 'ovr_source' | 'real
 const MARKET_DB_FETCH_CHUNK = 1000;
 const FREE_AGENT_OFFER_COUNT = 5;
 
+const MARKET_PLAYER_COLUMNS =
+  'id, normalized_name, display_name, card_display_name, primary_position, card_image_url, nationality_code, is_real, ea_fc_ovr, card_sil_width, card_sil_height, card_sil_x, card_sil_y, card_sil_opacity, card_content_y, card_name_size, card_stats_scale, card_stats, talent, ovr_source, real_age, age, ovr_current, current_transfer_value_gel, owner_id, status, available_via_career, pending_repack';
+
+// GK/DEF/MID position groups for DB-side filtering. MUST stay in sync with
+// DEFENCE_POSITIONS / MIDFIELD_POSITIONS in secondary-positions.ts (ATT is
+// "everything else", expressed as NOT IN this combined list).
+const FILTER_POSITION_SETS: Record<'GK' | 'DEF' | 'MID', string[]> = {
+  GK: ['GK'],
+  DEF: ['CB', 'LB', 'RB'],
+  MID: ['CDM', 'CM', 'CAM', 'AM', 'LM', 'RM'],
+};
+const NON_ATT_POSITIONS = [...FILTER_POSITION_SETS.GK, ...FILTER_POSITION_SETS.DEF, ...FILTER_POSITION_SETS.MID];
+
 type GlobalWithCache = typeof globalThis & {
   __pmMarketRowsCache?: { data: MarketDbRow[]; timestamp: number };
 };
@@ -108,7 +121,7 @@ async function fetchAvailableMarketRows(): Promise<MarketDbRow[]> {
     promises.push(
       db
         .from('pm_players')
-        .select('id, normalized_name, display_name, card_display_name, primary_position, card_image_url, nationality_code, is_real, ea_fc_ovr, card_sil_width, card_sil_height, card_sil_x, card_sil_y, card_sil_opacity, card_content_y, card_name_size, card_stats_scale, card_stats, talent, ovr_source, real_age, age, ovr_current, current_transfer_value_gel, owner_id, status, available_via_career, pending_repack')
+        .select(MARKET_PLAYER_COLUMNS)
         .is('owner_id', null)
         .eq('status', 'active')
         .order('id', { ascending: true })
@@ -280,10 +293,6 @@ export async function GET(request: Request) {
     .eq('team_id', team.id);
   if (shortlistError) return NextResponse.json({ error: shortlistError.message }, { status: 500 });
   const shortlistSet = new Set<string>((shortlistRows ?? []).map((row: { player_key: string }) => row.player_key));
-  const { data: dbRows, error: dbError } = await loadAvailableMarketRows();
-  if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
-  // Legend players pending admin repack are reserved — never shown on any market.
-  const availableRows = (dbRows ?? []).filter((row) => !isLegacyEafcRow(row) && !row.pending_repack);
 
   if (moduleKey === 'free_agents') {
     const { data: scoutData, error: scoutError } = await db
@@ -335,10 +344,28 @@ export async function GET(request: Request) {
       || previousOfferIds.size < FREE_AGENT_OFFER_COUNT
       || new Date(cycle.refresh_at).getTime() <= Date.now();
 
-    let offerRows = availableRows.filter((row) => previousOfferIds.has(row.id));
+    let offerRows: MarketDbRow[] = [];
     let nextRefreshAt = cycle?.refresh_at ?? null;
 
-    if (shouldRefreshOffers) {
+    if (!shouldRefreshOffers) {
+      // Steady state (most requests): fetch ONLY the 5 stored offer rows by id
+      // instead of pulling the entire ~16k unowned pool into memory.
+      const ids = [...previousOfferIds];
+      const { data: idRows, error: idError } = await db
+        .from('pm_players')
+        .select(MARKET_PLAYER_COLUMNS)
+        .in('id', ids)
+        .is('owner_id', null)
+        .eq('status', 'active');
+      if (idError) return NextResponse.json({ error: idError.message }, { status: 500 });
+      offerRows = ((idRows ?? []) as MarketDbRow[]).filter((row) => !isLegacyEafcRow(row) && !row.pending_repack);
+    } else {
+      // Refresh path (≤ once per 24h per team): weighted sampling genuinely
+      // needs the whole eligible pool, so only HERE do we load the cached
+      // full unowned-player snapshot.
+      const { data: dbRows, error: dbError } = await loadAvailableMarketRows();
+      if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
+      const availableRows = (dbRows ?? []).filter((row) => !isLegacyEafcRow(row) && !row.pending_repack);
       // Class + division gating: D→pro, C→pro+star, A/B→≤elite. world_class/
       // rising_star only via career-end (available_via_career). Legend never
       // (pending_repack → admin pack) — excluded everywhere.
@@ -488,78 +515,101 @@ export async function GET(request: Request) {
     });
   }
 
-  const rowByName = new Map<string, MarketDbRow>(availableRows.map((row: MarketDbRow) => [row.normalized_name, row]));
+  // Default module (the seed real-player market): filter, sort and paginate in
+  // Postgres instead of pulling the whole ~16k-row (~14MB) unowned pool into
+  // memory on every request. Only the current page (≤ pageSize rows) crosses
+  // the wire; the expensive per-player work below stays page-scoped.
+  const buildAllMarketQuery = (headOnly = false) => {
+    let query = db
+      .from('pm_players')
+      .select(MARKET_PLAYER_COLUMNS, headOnly ? { count: 'exact', head: true } : { count: 'exact' })
+      .is('owner_id', null)
+      .eq('status', 'active')
+      // The seed market is real players only (dataset-backed); customs never
+      // appear here. Mirrors the old dataset-intersection gate.
+      .eq('is_real', true)
+      // Legend players pending admin repack are reserved — never shown.
+      .not('pending_repack', 'is', true)
+      // Exclude legacy EAFC rows (is_real && ovr_source='ea_fc' && real_age null),
+      // i.e. keep rows where ANY of the inverse conditions holds.
+      .or('ovr_source.is.null,ovr_source.neq.ea_fc,real_age.not.is.null');
 
-  // Cheap pass: filter + sort using only fields we already have in memory. The
-  // expensive per-player work (resolveRealPlayerStats, card layout) is deferred
-  // to AFTER pagination so we build at most `pageSize` (10) items per request —
-  // not the whole dataset. This is what made the market slow.
-  const candidates = dataset
-    .filter((player) => {
-      const dbRow = rowByName.get(player.normalized_name);
-      if (!dbRow) return false;
-      if (!matchesFilter({ ...player, position: dbRow.primary_position ?? player.position }, filter)) return false;
-      if (filter === 'SHORTLIST' && !shortlistSet.has(player.normalized_name)) return false;
-      if (!q) return true;
+    if (filter === 'GK' || filter === 'DEF' || filter === 'MID') {
+      query = query.in('primary_position', FILTER_POSITION_SETS[filter]);
+    } else if (filter === 'ATT') {
+      // ATT is "everything that isn't GK/DEF/MID", including unset positions.
+      query = query.or(`primary_position.is.null,primary_position.not.in.(${NON_ATT_POSITIONS.join(',')})`);
+    } else if (filter === 'SHORTLIST') {
+      query = query.in('normalized_name', [...shortlistSet]);
+    }
 
-      const searchableName = (dbRow.display_name || player.display_name).toLowerCase();
-      return searchableName.includes(q) || player.normalized_name.includes(q);
-    })
-    .map((player) => {
-      const dbRow = rowByName.get(player.normalized_name) as MarketDbRow;
-      return {
-        player,
-        dbRow,
-        sortOvr: dbRow.ovr_current ?? player.overall,
-        sortPosition: normalizePlayManagerPosition(dbRow.primary_position ?? player.position),
-        sortName: dbRow.display_name || player.display_name,
-      };
-    });
+    // ilike is metacharacter-sensitive; strip PostgREST/LIKE specials from the
+    // user's search term rather than trying to escape them.
+    const sanitizedQ = q.replace(/[,()%\\_]/g, ' ').trim();
+    if (sanitizedQ) {
+      query = query.or(`display_name.ilike.%${sanitizedQ}%,normalized_name.ilike.%${sanitizedQ}%`);
+    }
 
-  candidates.sort((left, right) => {
-    if (right.sortOvr !== left.sortOvr) return right.sortOvr - left.sortOvr;
-    if (left.sortPosition !== right.sortPosition) return left.sortPosition.localeCompare(right.sortPosition);
-    return left.sortName.localeCompare(right.sortName);
-  });
+    return query
+      .order('ovr_current', { ascending: false })
+      .order('primary_position', { ascending: true })
+      .order('display_name', { ascending: true });
+  };
 
-  const total = candidates.length;
+  if (filter === 'SHORTLIST' && shortlistSet.size === 0) {
+    return NextResponse.json({ items: [], pagination: { total: 0, page: 1, pageSize, totalPages: 1 } });
+  }
+
+  // Count first, then fetch the (clamped) page — an out-of-range .range() makes
+  // PostgREST throw "Requested range not satisfiable" rather than return empty.
+  const { count, error: countError } = await buildAllMarketQuery(true);
+  if (countError) return NextResponse.json({ error: countError.message }, { status: 500 });
+
+  const total = count ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const resolvedPage = Math.min(page, totalPages);
   const start = (resolvedPage - 1) * pageSize;
 
+  const { data: pageRows, error: pageError } = total > 0
+    ? await buildAllMarketQuery().range(start, start + pageSize - 1)
+    : { data: [], error: null };
+  if (pageError) return NextResponse.json({ error: pageError.message }, { status: 500 });
+
   // Expensive pass: only for the players actually shown on this page.
   const items = await Promise.all(
-    candidates.slice(start, start + pageSize).map(async ({ player, dbRow }) => {
+    ((pageRows ?? []) as MarketDbRow[]).map(async (dbRow) => {
+      const player = datasetByName.get(dbRow.normalized_name);
       const dbStats = parsePlayerCardStats(dbRow.card_stats);
-      const resolvedStats = await resolveRealPlayerStats(player.normalized_name, dbRow.card_stats);
+      const resolvedStats = await resolveRealPlayerStats(dbRow.normalized_name, dbRow.card_stats);
+      const baseOverall = dbRow.ea_fc_ovr ?? player?.overall ?? dbRow.ovr_current;
       const effectiveTalent = getEffectiveRealPlayerTalent({
         isReal: true,
-        storedAge: dbRow.age ?? player.age,
-        realAge: dbRow.real_age ?? player.age,
-        baseOvr: player.overall,
+        storedAge: dbRow.age ?? player?.age ?? PLAYMANAGER_REAL_PLAYER_RESET_AGE,
+        realAge: dbRow.real_age ?? player?.age ?? dbRow.age,
+        baseOvr: baseOverall,
         talent: dbRow.talent,
       });
-      const effectiveValue = getTalent11AdjustedTransferValueGel(dbRow.current_transfer_value_gel ?? player.value, effectiveTalent);
+      const effectiveValue = getTalent11AdjustedTransferValueGel(dbRow.current_transfer_value_gel ?? player?.value ?? 0, effectiveTalent);
       return {
-        key: player.normalized_name,
+        key: dbRow.normalized_name,
         id: dbRow.id,
-        name: dbRow.display_name || player.display_name,
+        name: dbRow.display_name || player?.display_name || dbRow.normalized_name,
         cardDisplayName: dbRow.card_display_name,
-        cardImageUrl: dbRow.card_image_url || player.player_face_url || null,
+        cardImageUrl: dbRow.card_image_url || player?.player_face_url || null,
         nationalityCode: dbRow.nationality_code,
         cardEditorConfig: buildPlayManagerPlayerCardLayout(dbRow),
         // EA's official six card stats are canonical for real-market players.
         // Keep OVR separate: it may change through game progression.
-        stats: resolvedStats ?? dbStats ?? player.stats,
-        position: normalizePlayManagerPosition(dbRow.primary_position ?? player.position),
+        stats: resolvedStats ?? dbStats ?? player?.stats,
+        position: normalizePlayManagerPosition(dbRow.primary_position ?? player?.position ?? 'CM'),
         age: PLAYMANAGER_REAL_PLAYER_RESET_AGE,
-        ovr: dbRow.ovr_current ?? player.overall,
+        ovr: dbRow.ovr_current ?? baseOverall,
         talent: effectiveTalent,
         value: effectiveValue,
         valueLabel: `${effectiveValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} ₾`,
         demand: 'ბაზარზეა',
         available: true,
-        shortlisted: shortlistSet.has(player.normalized_name),
+        shortlisted: shortlistSet.has(dbRow.normalized_name),
       };
     }),
   );
