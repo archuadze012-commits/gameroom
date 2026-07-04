@@ -67,10 +67,30 @@ real engine in tests. Supports the flat query surface — `from().select()`,
 are **dropped** to their flat columns — code that reads the embed gets undefined
 and falls back to its default, so the surrounding logic still runs.
 
-Proven end-to-end by `next-fixture.itest.ts`, which runs the unmodified
-`getNextFixtureForTeam` through the adapter (`supabase-adapter.itest.ts` covers
-each operation directly). This is the seam for testing embed-light server actions
-and lib orchestration next.
+Proven end-to-end by `next-fixture.itest.ts` (unmodified `getNextFixtureForTeam`)
+and `server-action-ticket.itest.ts` (the unmodified `savePlayManagerTicketPrice`
+server action — mocking server-only, next/cache, and the admin/server client
+seams so getAuthenticatedTeam + the real RPC + pm_log_event all run against
+pglite). `supabase-adapter.itest.ts` covers each operation directly.
+
+### Testing a server action
+
+Server actions build their own clients, so mock the module seams and dynamic-
+import the action after:
+
+```ts
+mock.module('server-only', { namedExports: {} });
+mock.module('next/cache', { namedExports: { revalidatePath: () => {} } });
+mock.module('@/lib/supabase/admin', { namedExports: { createSupabaseAdminClient: () => asSupabase(db) } });
+mock.module('@/lib/supabase/server', { namedExports: {
+  createSupabaseServerClient: async () => ({ auth: { getUser: async () => ({ data: { user: { id: USER } } }) } }),
+}});
+const { theAction } = await import('../../src/app/playmanager/actions.js');
+```
+
+Run with `--experimental-test-module-mocks` (already in the test:integration
+script). Best for embed-light actions; heavy post-action chains (advancePlayManagerTime,
+award_xp) need their RPCs loaded or stubbed.
 
 Extend next to offer counter/reject edge cases and the training stat-gain happy
 path (loads the XP-budget helpers).
