@@ -303,12 +303,30 @@ export function PlayManagerDirectMessages() {
   );
 }
 
+// Maps a rejected chat POST into a Georgian, user-facing reason. Mirrors the
+// error codes returned by /api/playmanager/chat (mute, moderation, rate limit).
+function chatRejectionNotice(data: { error?: string; reason?: string } | null): string {
+  switch (data?.error) {
+    case "user_muted":
+      return "თქვენ დროებით დადუმებული ხართ და ვერ წერთ.";
+    case "content_blocked":
+      return data?.reason ? `შეტყობინება დაიბლოკა: ${data.reason}` : "შეტყობინება დაიბლოკა მოდერაციამ.";
+    case "rate_limited":
+      return "ძალიან სწრაფად წერ — დაელოდე წამით.";
+    case "message_too_long":
+      return "შეტყობინება ძალიან გრძელია (მაქს. 500 სიმბოლო).";
+    default:
+      return "შეტყობინება ვერ გაიგზავნა. სცადე თავიდან.";
+  }
+}
+
 export function PlayManagerGlobalChat() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -364,6 +382,7 @@ export function PlayManagerGlobalChat() {
     const body = draft.trim();
     if (!body || sending) return;
     setSending(true);
+    setNotice(null);
     const response = await fetch("/api/playmanager/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -373,6 +392,9 @@ export function PlayManagerGlobalChat() {
     if (response.ok && data) {
       setMessages((current) => (current.some((item) => item.id === data.id) ? current : [...current, data as ChatMessage]));
       setDraft("");
+    } else {
+      // Surface why the message was rejected — mute, moderation, rate limit, etc.
+      setNotice(chatRejectionNotice(data));
     }
     setSending(false);
   }
@@ -478,10 +500,19 @@ export function PlayManagerGlobalChat() {
 
       {/* Composer */}
       <div className="border-t border-white/10 bg-[linear-gradient(0deg,rgba(8,18,13,0.7),rgba(0,0,0,0.1))] p-3.5">
+        {notice ? (
+          <div className="mb-2 flex items-center gap-2 rounded-xl border border-red-400/26 bg-red-400/[0.08] px-3 py-2 text-[12px] font-bold text-red-200">
+            <span aria-hidden>⚠️</span>
+            <span>{notice}</span>
+          </div>
+        ) : null}
         <div className="flex items-center gap-2.5 rounded-2xl border border-white/10 bg-white/[0.04] py-1.5 pl-4 pr-1.5 transition focus-within:border-emerald-300/40 focus-within:bg-white/[0.06]">
           <input
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
+            onChange={(event) => {
+              setDraft(event.target.value);
+              if (notice) setNotice(null);
+            }}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
                 event.preventDefault();
