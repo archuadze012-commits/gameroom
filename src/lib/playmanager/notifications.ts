@@ -13,6 +13,7 @@ export type PlayManagerNotification = {
   accent: 'green' | 'red' | 'gold';
   title: string;
   detail: string | null;
+  href: string | null;
   weekNo: number;
   dayNo: number;
   createdAt: string;
@@ -30,6 +31,7 @@ type EventRow = {
   accent: 'green' | 'red' | 'gold';
   title: string;
   detail: string | null;
+  href: string | null;
   week_no: number;
   day_no: number;
   created_at: string;
@@ -45,7 +47,7 @@ export async function getPlayManagerNotifications(teamId: string, limit = 40): P
     admin.from('pm_teams').select('notifications_seen_at').eq('id', teamId).maybeSingle(),
     admin
       .from('pm_event_feed')
-      .select('id,category,accent,title,detail,week_no,day_no,created_at')
+      .select('id,category,accent,title,detail,href,week_no,day_no,created_at')
       .eq('team_id', teamId)
       .order('created_at', { ascending: false })
       .limit(limit),
@@ -58,6 +60,7 @@ export async function getPlayManagerNotifications(teamId: string, limit = 40): P
     accent: row.accent,
     title: row.title,
     detail: row.detail,
+    href: row.href,
     weekNo: row.week_no,
     dayNo: row.day_no,
     createdAt: row.created_at,

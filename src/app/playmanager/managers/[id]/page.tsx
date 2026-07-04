@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Shield, Swords, UsersRound, CalendarDays, Award, User } from 'lucide-react';
+import { ArrowLeft, ArrowRightLeft, Shield, Swords, UsersRound, CalendarDays, Award, User } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { PlayManagerLightShell } from '@/components/playmanager/playmanager-light-shell';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { PmCard, PmCardHead, PmPill } from '@/components/playmanager/pm-cards';
 import { getTeam } from '@/lib/playmanager/team';
 import { getPlayManagerAchievements, type AchievementMetrics } from '@/lib/playmanager/achievements';
+import { getManagerMatchupHistory, type MatchupHistory } from '@/lib/playmanager/matchup';
 import { formatGel } from '@/lib/playmanager/economy';
 
 export const dynamic = 'force-dynamic';
@@ -75,6 +76,7 @@ export default async function PlayManagerManagerPage(
   const myTeam = !isMe ? await getTeam(userData.user.id) : null;
   const myMetrics = myTeam ? (await getPlayManagerAchievements(myTeam.id)).metrics : null;
   const squadCount = theirMetrics?.squadSize ?? 0;
+  const matchup = myTeam && team ? await getManagerMatchupHistory(myTeam.id, team.id) : null;
 
   return (
     <PlayManagerLightShell>
@@ -153,8 +155,89 @@ export default async function PlayManagerManagerPage(
         {!isMe && team && theirMetrics && myMetrics ? (
           <HeadToHead theirName={profile.display_name ?? profile.username ?? 'მეტოქე'} mine={myMetrics} theirs={theirMetrics} />
         ) : null}
+
+        {!isMe && matchup ? (
+          <MatchupMemory theirName={profile.display_name ?? profile.username ?? 'მეტოქე'} matchup={matchup} />
+        ) : null}
       </div>
     </PlayManagerLightShell>
+  );
+}
+
+const RESULT_STYLE: Record<'W' | 'D' | 'L', string> = {
+  W: 'border-emerald-300/30 bg-emerald-300/10 text-emerald-100',
+  D: 'border-white/12 bg-white/[0.05] text-white/60',
+  L: 'border-red-300/30 bg-red-300/10 text-red-100',
+};
+
+function MatchupMemory({ theirName, matchup }: { theirName: string; matchup: MatchupHistory }) {
+  const { record, meetings, transfers } = matchup;
+  const hasHistory = meetings.length > 0 || transfers.length > 0;
+
+  return (
+    <PmCard>
+      <PmCardHead
+        icon={ArrowRightLeft}
+        title="მატჩების და ტრანსფერების ისტორია"
+        subtitle={`შენ vs ${theirName}`}
+        right={
+          record.wins + record.draws + record.losses > 0 ? (
+            <PmPill tone={record.wins >= record.losses ? 'green' : 'red'}>
+              {record.wins}გ {record.draws}ფ {record.losses}წ
+            </PmPill>
+          ) : undefined
+        }
+      />
+
+      {!hasHistory ? (
+        <p className="py-6 text-center text-sm font-bold text-white/40">ჯერ არ შეგხვედრიხართ მატჩში ან ტრანსფერზე.</p>
+      ) : (
+        <div className="space-y-4">
+          {meetings.length > 0 ? (
+            <div>
+              <p className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-white/38">ბოლო შეხვედრები</p>
+              <div className="space-y-1.5">
+                {meetings.map((meeting) => (
+                  <div key={meeting.id} className="flex items-center justify-between gap-3 rounded-2xl border border-white/8 bg-black/24 px-3 py-2">
+                    <div className="flex items-center gap-2.5">
+                      <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg border text-[11px] font-black ${RESULT_STYLE[meeting.result]}`}>
+                        {meeting.result}
+                      </span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/40">
+                        {meeting.competition === 'league' ? 'ლიგა' : 'თასი'}
+                      </span>
+                    </div>
+                    <span className="text-sm font-black tabular-nums text-white/80">
+                      {meeting.goalsFor} : {meeting.goalsAgainst}
+                    </span>
+                    <span className="shrink-0 text-[10px] font-bold text-white/35">
+                      {meeting.date ? new Date(meeting.date).toLocaleDateString('ka-GE') : '—'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {transfers.length > 0 ? (
+            <div>
+              <p className="mb-2 text-[10px] font-black uppercase tracking-[0.16em] text-white/38">ტრანსფერები</p>
+              <div className="space-y-1.5">
+                {transfers.map((transfer) => (
+                  <div key={transfer.id} className="flex items-center justify-between gap-3 rounded-2xl border border-white/8 bg-black/24 px-3 py-2">
+                    <span className="min-w-0 truncate text-sm font-black text-white">{transfer.playerName}</span>
+                    <span className={`shrink-0 text-[10px] font-black uppercase tracking-[0.1em] ${transfer.direction === 'bought' ? 'text-emerald-300' : 'text-red-300'}`}>
+                      {transfer.direction === 'bought' ? 'შენ იყიდე' : 'შენ გაყიდე'}
+                    </span>
+                    <span className="shrink-0 text-sm font-black tabular-nums text-emerald-100">{formatGel(transfer.price)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      )}
+    </PmCard>
   );
 }
 

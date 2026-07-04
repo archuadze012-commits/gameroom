@@ -82,7 +82,7 @@ async function BuildingData({ params }: { params: Promise<{ building: string }> 
       'Manager';
     return (
       <MarketStudio
-        team={{ name: team.name, balanceLabel: formatGel(team.balance), divisionLabel: `D${team.division_id}` }}
+        team={{ id: team.id, name: team.name, balanceLabel: formatGel(team.balance), divisionLabel: `D${team.division_id}` }}
         manager={{
           name: marketManagerName,
           avatarUrl: marketProfile?.avatar_url || (user?.user_metadata?.avatar_url as string | undefined) || null,

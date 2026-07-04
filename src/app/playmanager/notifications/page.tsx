@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import {
   Activity,
@@ -72,13 +73,11 @@ export default async function PlayManagerNotificationsPage() {
             <div className="space-y-1.5">
               {items.map((n) => {
                 const Icon = CATEGORY_ICON[n.category] ?? Activity;
-                return (
-                  <div
-                    key={n.id}
-                    className={`flex items-start gap-3 rounded-2xl border px-3 py-2.5 transition ${
-                      n.unread ? 'border-emerald-300/28 bg-emerald-300/[0.06]' : 'border-white/8 bg-black/24'
-                    }`}
-                  >
+                const className = `flex items-start gap-3 rounded-2xl border px-3 py-2.5 transition ${
+                  n.unread ? 'border-emerald-300/28 bg-emerald-300/[0.06]' : 'border-white/8 bg-black/24'
+                } ${n.href ? 'hover:border-emerald-300/40 hover:bg-emerald-300/[0.09]' : ''}`;
+                const content = (
+                  <>
                     <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border ${ACCENT_STYLE[n.accent] ?? ACCENT_STYLE.green}`}>
                       <Icon className="h-4 w-4" />
                     </span>
@@ -92,6 +91,15 @@ export default async function PlayManagerNotificationsPage() {
                     <span className="shrink-0 text-[10px] font-black uppercase tracking-[0.12em] text-white/35">
                       კვ {n.weekNo} · დღე {n.dayNo}
                     </span>
+                  </>
+                );
+                return n.href ? (
+                  <Link key={n.id} href={n.href} className={className}>
+                    {content}
+                  </Link>
+                ) : (
+                  <div key={n.id} className={className}>
+                    {content}
                   </div>
                 );
               })}

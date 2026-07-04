@@ -156,6 +156,13 @@ export function MarketStudio({
     return () => window.clearInterval(id);
   }, [isFreeAgents, loadOffers]);
 
+  // Notification deep-link target: ?offers=1 opens the inbox drawer directly
+  // (e.g. from an offer-received event in the notifications feed).
+  useEffect(() => {
+    if (searchParams.get('offers') === '1') setInboxOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function contactSeller(player: MarketPlayer) {
     if (!player.sellerUserId) {
       setToast({ ok: false, message: 'გამყიდველთან დაკავშირება ვერ მოხერხდა' });

@@ -460,7 +460,7 @@ export default async function PlayManagerPlayerPage(
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[340px_minmax(0,1fr)] xl:items-start">
           <div className="space-y-4 xl:sticky xl:top-4 xl:self-start">
             <PmCard>
-                <div className="mx-auto h-[497px] w-[360px] max-w-full overflow-hidden">
+                <div className="mx-auto h-[360px] w-[260px] max-w-full overflow-hidden">
                   <div style={{ transform: 'scale(1.04)', transformOrigin: 'top left' }}>
                     <PlayerFutCard
                       name={player.display_name}
@@ -483,6 +483,16 @@ export default async function PlayManagerPlayerPage(
                   <CompactBadge label="ასაკი" value={`${displayAge}`} />
                   <CompactBadge label="პოზიცია" value={position} />
                 </div>
+
+                {isOwnedByViewer ? (
+                  <div className="mt-4 border-t border-white/5 pt-4">
+                    <PlayerTransferActions
+                      playerId={player.id}
+                      marketValue={marketValue}
+                      activeListing={activeListing}
+                    />
+                  </div>
+                ) : null}
               </PmCard>
 
               <PmCard>
@@ -699,13 +709,7 @@ export default async function PlayManagerPlayerPage(
                     })()}
                   </PmCard>
 
-                  {isOwnedByViewer ? (
-                    <PlayerTransferActions
-                      playerId={player.id}
-                      marketValue={marketValue}
-                      activeListing={activeListing}
-                    />
-                  ) : null}
+
 
                   <PmCard>
                     <PmCardHead icon={TrendingUp} title="ფორმის მონიტორინგი" subtitle="development" />

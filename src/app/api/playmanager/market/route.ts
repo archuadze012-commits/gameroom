@@ -433,7 +433,6 @@ export async function GET(request: Request) {
         )
       `)
       .eq('status', 'active')
-      .neq('seller_team_id', team.id)
       .order('created_at', { ascending: false });
     if (listingError) return NextResponse.json({ error: listingError.message }, { status: 500 });
 

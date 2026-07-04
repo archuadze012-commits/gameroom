@@ -257,6 +257,8 @@ async function logPlayManagerEvent(input: {
   accent: 'green' | 'red' | 'gold';
   title: string;
   detail?: string | null;
+  // Optional deep-link the notifications page renders as a clickable target.
+  href?: string | null;
 }) {
   const db = asPlayManagerDb(createSupabaseAdminClient());
   await db.rpc('pm_log_event', {
@@ -265,6 +267,7 @@ async function logPlayManagerEvent(input: {
     p_title: input.title,
     p_detail: input.detail ?? null,
     p_accent: input.accent,
+    p_href: input.href ?? null,
   });
 }
 
@@ -703,6 +706,7 @@ export async function listPlayManagerPlayer(
     accent: 'gold',
     title: 'ფეხბურთელი გაყიდვაში გამოვიდა',
     detail: `მოთხოვნილი ფასი ${price.toLocaleString('ka-GE')} ₾`,
+    href: `/playmanager/players/${playerId}`,
   });
   revalidatePath('/playmanager');
   return { success: true, message: `გამოტანილია სატრანსფერო ბაზარზე · ${price.toLocaleString('ka-GE')} ₾` };
@@ -734,7 +738,7 @@ export async function buyPlayManagerListedPlayer(
   if (!team) return { success: false, error: 'team_missing' };
 
   const db = asPlayManagerDb(createSupabaseAdminClient());
-  const { data, error } = await db.rpc<{ price: number }>('pm_buy_listed_player', {
+  const { data, error } = await db.rpc<{ price: number; playerId?: string }>('pm_buy_listed_player', {
     p_buyer_team_id: team.id,
     p_listing_id: listingId,
   });
@@ -759,6 +763,7 @@ export async function buyPlayManagerListedPlayer(
     accent: 'gold',
     title: 'ფეხბურთელი შეძენილია სატრანსფერო ბაზრიდან',
     detail: `${price.toLocaleString('ka-GE')} ₾ deal${calendar ? ` · კვირა ${calendar.weekNo} · დღე ${calendar.dayNo}` : ''}`,
+    href: data?.playerId ? `/playmanager/players/${data.playerId}` : undefined,
   });
   revalidatePath('/playmanager');
   return { success: true, message: `ფეხბურთელი დაემატა გუნდს · XP +${xpReward}`, amount: -price };
@@ -830,6 +835,7 @@ export async function makePlayManagerTransferOffer(
       accent: 'gold',
       title: 'ახალი სატრანსფერო შეთავაზება',
       detail: `${team.name} გთავაზობს ${price.toLocaleString('ka-GE')} ₾${player?.display_name ? ` · ${player.display_name}` : ''}`,
+      href: '/playmanager/market?module=transfer_market&offers=1',
     });
   }
   revalidatePath('/playmanager');
@@ -881,6 +887,7 @@ export async function respondPlayManagerTransferOffer(
         accent: 'gold',
         title: 'სატრანსფერო შეთავაზება მიღებულია',
         detail: `${playerName ? `${playerName} · ` : ''}${price.toLocaleString('ka-GE')} ₾`,
+        href: '/playmanager/market?module=transfer_market&offers=1',
       });
     } else if (action === 'reject') {
       await logPlayManagerEvent({
@@ -889,6 +896,7 @@ export async function respondPlayManagerTransferOffer(
         accent: 'red',
         title: 'შეთავაზება უარყოფილია',
         detail: playerName || undefined,
+        href: '/playmanager/market?module=transfer_market&offers=1',
       });
     } else {
       await logPlayManagerEvent({
@@ -897,6 +905,7 @@ export async function respondPlayManagerTransferOffer(
         accent: 'gold',
         title: 'საპასუხო ფასი მიიღე',
         detail: `${playerName ? `${playerName} · ` : ''}${(counter ?? 0).toLocaleString('ka-GE')} ₾`,
+        href: '/playmanager/market?module=transfer_market&offers=1',
       });
     }
   }
