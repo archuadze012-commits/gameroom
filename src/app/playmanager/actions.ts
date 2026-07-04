@@ -235,19 +235,34 @@ async function applyPostActionRewards(input: {
 
 async function advancePlayManagerTime(teamId: string, days = 1) {
   const db = asPlayManagerDb(createSupabaseAdminClient());
-  const { data } = await db.rpc<CalendarAdvance>('pm_advance_time', {
+  const { data, error: advanceError } = await db.rpc<CalendarAdvance>('pm_advance_time', {
     p_team_id: teamId,
     p_days: days,
   });
-  // Bench/reserve players lose morale while time passes (starters stay content) —
-  // keeps morale a managed lever instead of a number that only ever rises.
-  await db.rpc('pm_apply_squad_morale_drain', { p_team_id: teamId, p_days: days });
-  // Academy prospects mature as time passes (scaled by academy facility level).
-  await db.rpc('pm_develop_academy_prospects', { p_team_id: teamId, p_days: days });
-  // Career-end: notify on final season, auto-resolve players who age out undecided.
-  await db.rpc('pm_process_career_ends', { p_team_id: teamId, p_days: days });
-  // Manager assistant passively develops squad skill-moves toward each player's cap.
-  await db.rpc('pm_grant_skill_development', { p_team_id: teamId, p_days: days });
+  if (advanceError) {
+    console.error('[playmanager] pm_advance_time failed', { teamId, error: advanceError.message });
+  }
+  // Downstream lifecycle jobs — each is best-effort, but never silent: a failure
+  // in morale drain / academy maturation / career-end / skill development is a
+  // lost world-tick, so surface it in logs/monitoring instead of vanishing.
+  //  - morale drain: bench/reserve lose morale while time passes (starters stay).
+  //  - academy: prospects mature (scaled by academy facility level).
+  //  - career-end: notify on final season, auto-resolve players who age out.
+  //  - skill development: the assistant grows squad skill-moves toward each cap.
+  const jobs = [
+    { label: 'pm_apply_squad_morale_drain', run: db.rpc('pm_apply_squad_morale_drain', { p_team_id: teamId, p_days: days }) },
+    { label: 'pm_develop_academy_prospects', run: db.rpc('pm_develop_academy_prospects', { p_team_id: teamId, p_days: days }) },
+    { label: 'pm_process_career_ends', run: db.rpc('pm_process_career_ends', { p_team_id: teamId, p_days: days }) },
+    { label: 'pm_grant_skill_development', run: db.rpc('pm_grant_skill_development', { p_team_id: teamId, p_days: days }) },
+  ];
+  const settled = await Promise.allSettled(jobs.map((job) => job.run));
+  settled.forEach((result, i) => {
+    if (result.status === 'rejected') {
+      console.error(`[playmanager] time-advance job "${jobs[i].label}" threw`, { teamId, error: result.reason });
+    } else if (result.value?.error) {
+      console.error(`[playmanager] time-advance job "${jobs[i].label}" failed`, { teamId, error: result.value.error.message });
+    }
+  });
   return data ?? null;
 }
 

@@ -642,6 +642,12 @@ export async function getPlayManagerCitySnapshot(
           .select('id, normalized_name, display_name, card_display_name, primary_position, card_image_url, nationality_code, card_sil_width, card_sil_height, card_sil_x, card_sil_y, card_sil_opacity, card_content_y, card_name_size, card_stats_scale, card_stats, is_real, talent, ea_fc_ovr, real_age, age, age_started_total_days, ovr_current, current_transfer_value_gel, owner_id')
           .is('owner_id', null)
           .eq('status', 'active')
+          // Match the full market route's pool exactly, so a player shown in the
+          // city preview never vanishes in the market: real players only, no
+          // admin-repack legends, and exclude legacy EAFC rows.
+          .eq('is_real', true)
+          .not('pending_repack', 'is', true)
+          .or('ovr_source.is.null,ovr_source.neq.ea_fc,real_age.not.is.null')
           .order('ovr_current', { ascending: false })
           .limit(marketLimit),
     isReduced
