@@ -119,12 +119,26 @@ export async function checkAndStartStaleCups() {
 }
 
 // Lazy evaluation: call this whenever someone opens the league center
+// A cup match claimed but not completed within this window is treated as
+// stranded (its processor died) and reset to 'ready' so the next run retries it.
+const STALE_CLAIM_MS = 2 * 60 * 1000;
+
 export async function processDueCupMatches() {
   const db = createSupabaseAdminClient() as any;
-  
+
   // Auto-start stale cups with real teams only (no bots)
   await checkAndStartStaleCups();
-  
+
+  // Recover matches stranded in 'processing' (crashed mid-simulate). The
+  // completion write is atomic, so a stranded row has no partial result —
+  // 'ready' is a clean state to return it to.
+  const staleBefore = new Date(Date.now() - STALE_CLAIM_MS).toISOString();
+  await db
+    .from('pm_cup_matches')
+    .update({ status: 'ready', claimed_at: null })
+    .eq('status', 'processing')
+    .or(`claimed_at.lt.${staleBefore},claimed_at.is.null`);
+
   // Find matches that are 'ready' and past their start_time
   const { data: dueMatches } = await (createSupabaseAdminClient() as any)
     .from('pm_cup_matches')
@@ -141,7 +155,7 @@ export async function processDueCupMatches() {
     // skip — prevents double-simulation, double XP, and double prize payout.
     const { data: claimed } = await db
       .from('pm_cup_matches')
-      .update({ status: 'processing' })
+      .update({ status: 'processing', claimed_at: new Date().toISOString() })
       .eq('id', match.id)
       .eq('status', 'ready')
       .select('id');

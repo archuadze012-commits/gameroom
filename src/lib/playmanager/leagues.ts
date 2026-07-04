@@ -157,8 +157,22 @@ export async function startLeague(leagueId: string) {
 
 // ── Simulation (lazy, mirrors processDueCupMatches) ──────────────────────────
 
+// A fixture claimed but not completed within this window is treated as stranded
+// (its processor died) and reset to 'ready' so the next run retries it.
+const STALE_CLAIM_MS = 2 * 60 * 1000;
+
 export async function processDueLeagueMatches() {
   const db = createSupabaseAdminClient() as any;
+
+  // Recover fixtures stranded in 'processing' (crashed mid-simulate) so they get
+  // retried. The completion write is atomic, so a stranded row has no partial
+  // result — 'ready' is a clean state to return it to.
+  const staleBefore = new Date(Date.now() - STALE_CLAIM_MS).toISOString();
+  await db
+    .from('pm_league_fixtures')
+    .update({ status: 'ready', claimed_at: null })
+    .eq('status', 'processing')
+    .or(`claimed_at.lt.${staleBefore},claimed_at.is.null`);
 
   const { data: dueMatches } = await db
     .from('pm_league_fixtures')
@@ -186,7 +200,7 @@ export async function processDueLeagueMatches() {
     // no rows and skips — prevents double standings, double XP, double prize.
     const { data: claimed } = await db
       .from('pm_league_fixtures')
-      .update({ status: 'processing' })
+      .update({ status: 'processing', claimed_at: new Date().toISOString() })
       .eq('id', match.id)
       .eq('status', 'ready')
       .select('id');
