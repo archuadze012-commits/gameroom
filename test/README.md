@@ -48,6 +48,7 @@ Current coverage:
 - `pm_cancel_transfer_offer` — participant guards
 - `pm_sell_player` — ownership guard
 - `pm_respond_transfer_offer` (accept) — full settlement, turn guard, insufficient-funds rollback
+- `pm_respond_transfer_offer` (reject / counter) — turn guard, price floor, invalid price/action, awaiting-party flip
 - `pm_open_pack` — draw + assign + squad + charge, unknown pack, insufficient-funds rollback, pool exhaustion
 - `pm_train_player` — training-quota guards: ownership, availability, per-cycle capacity (scales with head coach + training facility)
 - cup/league processDue — the guarded status transitions (claim ready→processing,
