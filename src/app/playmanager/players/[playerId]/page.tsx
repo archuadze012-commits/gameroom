@@ -18,6 +18,7 @@ import { PmCard, PmCardHead, PmPill, PmGauge } from '@/components/playmanager/pm
 import { hasPermission } from '@/lib/admin';
 import { PlayManagerPlayerAdminEditor } from './player-admin-editor';
 import { CareerDecisionButtons } from './contract-renew-button';
+import { PlayerTransferActions } from './player-transfer-actions';
 import { OvrUpgradePanel, type FodderOption } from './ovr-upgrade-panel';
 import type { PlayManagerPlayerAdminDraft } from './actions';
 import {
@@ -330,6 +331,13 @@ export default async function PlayManagerPlayerPage(
     : { data: null };
   const manager = profileResult.data;
 
+  const { data: activeListing } = await db
+    .from('pm_transfer_listings')
+    .select('id, asking_price')
+    .eq('player_id', player.id)
+    .eq('status', 'active')
+    .maybeSingle<{ id: string; asking_price: number }>();
+
   // Scout gate: a player's hidden identity (behavioural profile + traits) is only
   // visible on your own players, or on others' if your club employs a scout.
   const isOwnedByViewer = Boolean(team?.user_id && team.user_id === userData.user.id);
@@ -435,24 +443,23 @@ export default async function PlayManagerPlayerPage(
   return (
     <PlayManagerLightShell>
       <div className="mx-auto w-full max-w-[1280px] space-y-4">
-        <PmCard>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <Link
-              href="/playmanager"
-              className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-4 text-sm font-black text-white/88 transition hover:bg-white/[0.08]"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              უკან
-            </Link>
-            <div className="flex flex-wrap items-center gap-2">
-              <PmPill tone="green">{player.is_real ? 'EA FC' : 'Custom'}</PmPill>
-              <PmPill tone={status.tone}>{status.label}</PmPill>
-            </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+          <Link
+            href="/playmanager"
+            className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-4 text-sm font-black text-white/88 transition hover:bg-white/[0.08]"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            უკან
+          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <PmPill tone="green">{player.is_real ? 'EA FC' : 'Custom'}</PmPill>
+            <PmPill tone={status.tone}>{status.label}</PmPill>
           </div>
+        </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[340px_minmax(0,1fr)]">
-            <div className="space-y-4 xl:sticky xl:top-4 xl:self-start">
-              <PmCard>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[340px_minmax(0,1fr)] xl:items-start">
+          <div className="space-y-4 xl:sticky xl:top-4 xl:self-start">
+            <PmCard>
                 <div className="mx-auto h-[497px] w-[360px] max-w-full overflow-hidden">
                   <div style={{ transform: 'scale(1.04)', transformOrigin: 'top left' }}>
                     <PlayerFutCard
@@ -692,6 +699,14 @@ export default async function PlayManagerPlayerPage(
                     })()}
                   </PmCard>
 
+                  {isOwnedByViewer ? (
+                    <PlayerTransferActions
+                      playerId={player.id}
+                      marketValue={marketValue}
+                      activeListing={activeListing}
+                    />
+                  ) : null}
+
                   <PmCard>
                     <PmCardHead icon={TrendingUp} title="ფორმის მონიტორინგი" subtitle="development" />
                     <div className="flex items-center justify-between text-sm font-black text-white/72">
@@ -758,7 +773,6 @@ export default async function PlayManagerPlayerPage(
               </div>
             </div>
           </div>
-        </PmCard>
 
         {adminDraft ? <PlayManagerPlayerAdminEditor key={`${player.id}:${JSON.stringify(adminDraft)}`} playerId={player.id} draft={adminDraft} /> : null}
       </div>
