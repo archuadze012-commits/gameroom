@@ -48,6 +48,6 @@ Current coverage:
 - `pm_cancel_transfer_offer` — participant guards
 - `pm_sell_player` — ownership guard
 - `pm_respond_transfer_offer` (accept) — full settlement, turn guard, insufficient-funds rollback
+- `pm_open_pack` — draw + assign + squad + charge, unknown pack, insufficient-funds rollback, pool exhaustion
 
-Extend next to pack opening, offer counter/reject edge cases, training quota,
-cup/league processing.
+Extend next to offer counter/reject edge cases, training quota, cup/league processing.
