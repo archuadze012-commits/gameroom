@@ -50,6 +50,14 @@ Current coverage:
 - `pm_respond_transfer_offer` (accept) — full settlement, turn guard, insufficient-funds rollback
 - `pm_open_pack` — draw + assign + squad + charge, unknown pack, insufficient-funds rollback, pool exhaustion
 - `pm_train_player` — training-quota guards: ownership, availability, per-cycle capacity (scales with head coach + training facility)
+- cup/league processDue — the guarded status transitions (claim ready→processing,
+  payout in_progress→completed) that make the lazy processing model safe from
+  double-simulation / double-prize
 
-Extend next to offer counter/reject edge cases, the training stat-gain happy path
-(loads the XP-budget helpers), and cup/league processing.
+The processDue functions themselves are TypeScript orchestrators (supabase-js +
+a TS match engine), so only their SQL safety invariant is covered here. Running
+the full orchestration would need a supabase-js→pglite adapter — the natural next
+infra step, which would also unlock testing the server actions and API routes.
+
+Extend next to offer counter/reject edge cases and the training stat-gain happy
+path (loads the XP-budget helpers).
