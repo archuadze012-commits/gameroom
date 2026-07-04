@@ -13,6 +13,12 @@ import {
   Zap,
 } from 'lucide-react';
 import {
+  DEFENSIVE_LINE_OPTIONS,
+  FOCUS_SIDE_OPTIONS,
+  TACTICAL_STYLE_OPTIONS,
+  TEMPO_OPTIONS,
+} from '@/lib/playmanager/formations';
+import {
   DEFAULT_FUT_CARD_EDITOR_CONFIG,
   PlayerFutCard,
 } from '@/components/playmanager/player-fut-card';
@@ -71,29 +77,6 @@ const PITCH_SLOTS = [
   { label: 'RW', top: 18, left: 82 },
 ];
 
-const TACTIC_OPTIONS = {
-  tacticalStyle: [
-    ['balanced', 'Balanced'],
-    ['pressing', 'Pressing'],
-    ['possession', 'Possession'],
-    ['counter', 'Counter'],
-  ],
-  defensiveLine: [
-    ['low', 'Low line'],
-    ['mid', 'Mid line'],
-    ['high', 'High line'],
-  ],
-  tempo: [
-    ['controlled', 'Controlled'],
-    ['balanced', 'Balanced'],
-    ['direct', 'Direct'],
-  ],
-  focusSide: [
-    ['left', 'Left'],
-    ['center', 'Center'],
-    ['right', 'Right'],
-  ],
-} as const;
 
 export function CupMatchLineupWorkbench({
   own,
@@ -370,28 +353,28 @@ export function CupMatchLineupWorkbench({
               <TacticSelect
                 label="სტილი"
                 value={settings.tacticalStyle}
-                options={TACTIC_OPTIONS.tacticalStyle}
+                options={TACTICAL_STYLE_OPTIONS}
                 onChange={(value) => setSettings((current) => ({ ...current, tacticalStyle: value }))}
                 disabled={!canEdit}
               />
               <TacticSelect
                 label="დაცვის ხაზი"
                 value={settings.defensiveLine}
-                options={TACTIC_OPTIONS.defensiveLine}
+                options={DEFENSIVE_LINE_OPTIONS}
                 onChange={(value) => setSettings((current) => ({ ...current, defensiveLine: value }))}
                 disabled={!canEdit}
               />
               <TacticSelect
                 label="ტემპი"
                 value={settings.tempo}
-                options={TACTIC_OPTIONS.tempo}
+                options={TEMPO_OPTIONS}
                 onChange={(value) => setSettings((current) => ({ ...current, tempo: value }))}
                 disabled={!canEdit}
               />
               <TacticSelect
                 label="ფოკუსი"
                 value={settings.focusSide}
-                options={TACTIC_OPTIONS.focusSide}
+                options={FOCUS_SIDE_OPTIONS}
                 onChange={(value) => setSettings((current) => ({ ...current, focusSide: value }))}
                 disabled={!canEdit}
               />

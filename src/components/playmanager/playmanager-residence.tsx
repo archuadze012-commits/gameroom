@@ -14,8 +14,7 @@ import {
   UsersRound,
   type LucideIcon,
 } from 'lucide-react';
-import { PlayManagerSidebar } from '@/components/playmanager/playmanager-side-nav';
-import { PlayManagerBottomNav } from '@/components/playmanager/playmanager-bottom-nav';
+import { PlayManagerBuildingShell } from '@/components/playmanager/playmanager-building-shell';
 import { PmCard, PmCardHead, PmPill, PmAction, PmGauge, PmPhotoCard, type PmTone } from '@/components/playmanager/pm-cards';
 import { NestedMiniBox } from '@/components/playmanager/panel-primitives';
 import { TalentClassBadge } from '@/components/playmanager/talent-class-badge';
@@ -104,15 +103,7 @@ export function PlayManagerResidence(props: PlayManagerResidenceProps) {
   }
 
   return (
-    <main className="pm-office pm-feedskin pm-hq-shell min-h-screen overflow-x-hidden bg-[#05070a] pb-24 text-white xl:pb-0 xl:pl-[116px]">
-      <PlayManagerSidebar />
-      <div className="relative mx-auto flex min-h-screen w-full max-w-[1160px] flex-col px-4 py-4 sm:px-6 lg:px-8">
-        {actionMessage ? (
-          <div className="mb-3 rounded-2xl border border-emerald-300/22 bg-emerald-300/[0.08] px-4 py-2.5 text-xs font-black text-emerald-100">
-            {actionMessage}
-          </div>
-        ) : null}
-
+    <PlayManagerBuildingShell actionMessage={actionMessage}>
         {moduleKey === 'squad' ? (
           <SquadView squad={squad} onBack={goBack} />
         ) : moduleKey === 'academy' ? (
@@ -208,10 +199,7 @@ export function PlayManagerResidence(props: PlayManagerResidenceProps) {
             </PmCard>
           </div>
         )}
-      </div>
-
-      <PlayManagerBottomNav />
-    </main>
+    </PlayManagerBuildingShell>
   );
 }
 

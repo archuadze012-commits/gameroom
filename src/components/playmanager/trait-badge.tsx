@@ -1,4 +1,5 @@
 import { getTrait } from '@/lib/playmanager/traits';
+import { PmChip } from '@/components/playmanager/pm-chip';
 
 export function TraitBadge({
   traitKey,
@@ -12,17 +13,12 @@ export function TraitBadge({
   const trait = getTrait(traitKey);
   if (!trait) return null;
 
-  const pad = size === 'sm' ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-[11px]';
-
   return (
-    <span
-      title={trait.blurb}
-      className={`inline-flex items-center gap-1 rounded-full border font-black ${pad} ${trait.bg} ${trait.border} ${trait.color}`}
-    >
+    <PmChip size={size} title={trait.blurb} className={`gap-1 ${trait.bg} ${trait.border} ${trait.color}`}>
       <span aria-hidden>{trait.icon}</span>
       <span>{trait.label}</span>
       {showBlurb && <span className="font-bold text-white/45">· {trait.blurb}</span>}
-    </span>
+    </PmChip>
   );
 }
 

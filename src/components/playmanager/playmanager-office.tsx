@@ -13,8 +13,7 @@ import {
   Wallet,
   type LucideIcon,
 } from 'lucide-react';
-import { PlayManagerSidebar } from '@/components/playmanager/playmanager-side-nav';
-import { PlayManagerBottomNav } from '@/components/playmanager/playmanager-bottom-nav';
+import { PlayManagerBuildingShell } from '@/components/playmanager/playmanager-building-shell';
 import { StaffContextGrid } from '@/components/playmanager/staff-context-grid';
 import {
   negotiatePlayManagerSponsor,
@@ -229,15 +228,7 @@ export function PlayManagerOffice(props: PlayManagerOfficeProps) {
   const sponsorPending = pendingAction === 'sponsor:negotiate';
 
   return (
-    <main className="pm-office pm-feedskin pm-hq-shell min-h-screen overflow-x-hidden bg-[#05070a] pb-24 text-white xl:pb-0 xl:pl-[116px]">
-      <PlayManagerSidebar />
-      <div className="relative mx-auto flex min-h-screen w-full max-w-[1160px] flex-col px-4 py-4 sm:px-6 lg:px-8">
-        {actionMessage ? (
-          <div className="mb-3 rounded-2xl border border-emerald-300/22 bg-emerald-300/[0.08] px-4 py-2.5 text-xs font-black text-emerald-100">
-            {actionMessage}
-          </div>
-        ) : null}
-
+    <PlayManagerBuildingShell actionMessage={actionMessage}>
         {moduleKey === 'wages' ? (
           <WagesView snapshot={snapshot} onBack={() => router.push('/playmanager/office', { scroll: false })} />
         ) : moduleKey === 'tickets' ? (
@@ -415,10 +406,7 @@ export function PlayManagerOffice(props: PlayManagerOfficeProps) {
             </OfficeCard>
           </div>
         )}
-      </div>
-
-      <PlayManagerBottomNav />
-    </main>
+    </PlayManagerBuildingShell>
   );
 }
 

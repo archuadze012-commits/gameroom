@@ -2,8 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { Dumbbell, Zap, Sliders } from 'lucide-react';
-import { PlayManagerSidebar } from '@/components/playmanager/playmanager-side-nav';
-import { PlayManagerBottomNav } from '@/components/playmanager/playmanager-bottom-nav';
+import { PlayManagerBuildingShell } from '@/components/playmanager/playmanager-building-shell';
 import { PmCard, PmCardHead, PmPill, PmAction, PmGauge, PmPhotoCard } from '@/components/playmanager/pm-cards';
 import { StaffContextGrid } from '@/components/playmanager/staff-context-grid';
 import { type EditableCityBuilding } from '@/components/playmanager/playmanager-city-editor';
@@ -75,15 +74,7 @@ export function PlayManagerTraining(props: PlayManagerTrainingProps) {
   const coachingStaff = snapshot.staff.members.filter((member) => member.category === 'coaching');
 
   return (
-    <main className="pm-office pm-feedskin pm-hq-shell min-h-screen overflow-x-hidden bg-[#05070a] pb-24 text-white xl:pb-0 xl:pl-[116px]">
-      <PlayManagerSidebar />
-      <div className="relative mx-auto flex min-h-screen w-full max-w-[1160px] flex-col px-4 py-4 sm:px-6 lg:px-8">
-        {actionMessage ? (
-          <div className="mb-3 rounded-2xl border border-emerald-300/22 bg-emerald-300/[0.08] px-4 py-2.5 text-xs font-black text-emerald-100">
-            {actionMessage}
-          </div>
-        ) : null}
-
+    <PlayManagerBuildingShell actionMessage={actionMessage}>
         <div className="space-y-4">
             {/* ── CLUB CARD (pinned post) ── */}
             <PmCard>
@@ -157,9 +148,6 @@ export function PlayManagerTraining(props: PlayManagerTrainingProps) {
               </div>
             </PmCard>
           </div>
-      </div>
-
-      <PlayManagerBottomNav />
-    </main>
+    </PlayManagerBuildingShell>
   );
 }
