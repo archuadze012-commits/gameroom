@@ -227,6 +227,7 @@ export type PlayManagerCitySnapshot = {
     isRegistered: boolean;
     status: 'registration' | 'in_progress' | 'completed';
   }[];
+  unassigned: CitySquadPlayer[];
 };
 
 export type PlayManagerCitySnapshotMode = 'full' | 'lineup' | 'light' | 'residence';

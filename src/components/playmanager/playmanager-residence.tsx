@@ -19,6 +19,7 @@ import { PmCard, PmCardHead, PmPill, PmAction, PmGauge, PmPhotoCard, type PmTone
 import { NestedMiniBox } from '@/components/playmanager/panel-primitives';
 import { TalentClassBadge } from '@/components/playmanager/talent-class-badge';
 import { signPlayManagerAcademyProspect } from '@/app/playmanager/actions/market-actions';
+import { swapPlayManagerSquadPlayers } from '@/app/playmanager/actions/squad-settings-actions';
 import type { PlayManagerPlayerActionResult } from '@/app/playmanager/actions/action-helpers';
 import { getFacilityUpgradeCostGel, type CityActionKey } from '@/lib/playmanager/gameplay';
 import { getMaxStaffLevelForDivision, type StaffCategory } from '@/lib/playmanager/staff';
@@ -104,6 +105,14 @@ export function PlayManagerResidence(props: PlayManagerResidenceProps) {
     <PlayManagerBuildingShell actionMessage={actionMessage}>
         {moduleKey === 'squad' ? (
           <SquadView squad={squad} onBack={goBack} />
+        ) : moduleKey === 'unassigned' ? (
+          <UnassignedView
+            unassigned={snapshot.unassigned || []}
+            squad={squad}
+            pendingAction={pendingAction}
+            onRunPlayerAction={onRunPlayerAction}
+            onBack={goBack}
+          />
         ) : moduleKey === 'academy' ? (
           <AcademyView
             academy={snapshot.academy}
@@ -143,14 +152,18 @@ export function PlayManagerResidence(props: PlayManagerResidenceProps) {
             </PmCard>
 
             {/* ── DEPARTMENTS (photo feed cards) ── */}
-            {/* Mobile: 2-per-row; odd count (3) → first card spans full width. */}
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
               <PmPhotoCard
                 title="მთავარი გუნდი"
                 photo="/playmanager/city/buildings/tower.webp"
                 tone="green"
                 onClick={() => openModule('squad')}
-                className="col-span-2 lg:col-span-1"
+              />
+              <PmPhotoCard
+                title={`დროებითი განთავსება (${snapshot.unassigned?.length ?? 0})`}
+                photo="/playmanager/city/buildings/market.webp"
+                tone="gold"
+                onClick={() => openModule('unassigned')}
               />
               <PmPhotoCard
                 title="აკადემია"
@@ -281,6 +294,97 @@ function SquadView({ squad, onBack }: { squad: PlayManagerCitySnapshot['squad'];
     </div>
   );
 }
+
+function UnassignedView({
+  unassigned,
+  squad,
+  pendingAction,
+  onRunPlayerAction,
+  onBack,
+}: {
+  unassigned: PlayManagerCitySnapshot['unassigned'];
+  squad: PlayManagerCitySnapshot['squad'];
+  pendingAction: string | null;
+  onRunPlayerAction: (actionId: string, action: () => Promise<PlayManagerPlayerActionResult>) => void;
+  onBack: () => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <BackBar title="დროებითი განთავსება" onBack={onBack} />
+
+      <div className="grid grid-cols-2 gap-3">
+        <PmCard className="items-center text-center">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45">დროებითი მოთამაშეები</p>
+          <p className="pm-office-title mt-1 text-2xl">{unassigned.length}</p>
+        </PmCard>
+        <PmCard className="items-center text-center">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45">აქტიური შემადგენლობა</p>
+          <p className="pm-office-title mt-1 text-2xl">{squad.length}/18</p>
+        </PmCard>
+      </div>
+
+      {unassigned.length === 0 ? (
+        <PmCard>
+          <p className="py-6 text-center text-sm font-bold text-white/40">დროებით განთავსებაში მოთამაშეები არ არის.</p>
+        </PmCard>
+      ) : (
+        <PmCard>
+          <PmCardHead icon={UsersRound} title="გასააქტიურებელი მოთამაშეები" subtitle="აირჩიე აქტიური მოთამაშე გასაცვლელად" tone="gold" />
+          <div className="space-y-2">
+            {unassigned.map((player) => {
+              const busy = pendingAction === `swap:${player.squadId}`;
+              return (
+                <div
+                  key={player.squadId}
+                  className="rounded-2xl border border-white/8 bg-black/24 p-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between transition hover:border-emerald-300/24"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <PlayerAvatar url={player.cardImageUrl} fallback={(player.cardDisplayName?.trim() || player.name).charAt(0).toUpperCase()} />
+                    <div className="min-w-0">
+                      <p className="flex items-center gap-1.5 truncate text-sm font-black text-white">
+                        <span className="truncate">{player.cardDisplayName?.trim() || player.name}</span>
+                      </p>
+                      <p className="mt-0.5 flex items-center gap-2 text-[11px] font-bold text-white/42">
+                        <span className="rounded border border-white/12 bg-white/[0.05] px-1.5 py-px text-[10px] font-black tracking-wide text-white/65">
+                          {player.position}
+                        </span>
+                        <span>Talent {player.talent}</span>
+                        <span>OVR {player.ovrCurrent}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <select
+                      onChange={(e) => {
+                        const activeSquadId = Number(e.target.value);
+                        if (!activeSquadId) return;
+                        onRunPlayerAction(`swap:${player.squadId}`, () =>
+                          swapPlayManagerSquadPlayers(activeSquadId, player.squadId)
+                        );
+                      }}
+                      disabled={pendingAction !== null}
+                      className="h-9 rounded-xl border border-white/12 bg-black px-3 text-xs font-black text-white/80 focus:border-emerald-400 focus:outline-none"
+                      defaultValue=""
+                    >
+                      <option value="" disabled>{busy ? 'ბრუნავს...' : 'აქტიურში გაცვლა...'}</option>
+                      {squad.map((activePlayer) => (
+                        <option key={activePlayer.squadId} value={activePlayer.squadId}>
+                          {activePlayer.cardDisplayName?.trim() || activePlayer.name} (OVR {activePlayer.ovrCurrent} · {activePlayer.position})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </PmCard>
+      )}
+    </div>
+  );
+}
+
 
 function PlayerAvatar({ url, fallback, size = 40 }: { url?: string | null; fallback: string; size?: number }) {
   const real = url?.trim();

@@ -91,3 +91,32 @@ export async function savePlayManagerMatchSettings(input: {
   revalidatePath('/playmanager');
   return { success: true, message: 'Matchday ტაქტიკა შენახულია' };
 }
+
+export async function swapPlayManagerSquadPlayers(
+  activeId: number,
+  unassignedId: number,
+): Promise<PlayManagerPlayerActionResult> {
+  const { user, team } = await getAuthenticatedTeam();
+  if (!user) return { success: false, error: 'unauthenticated' };
+  if (!team) return { success: false, error: 'team_missing' };
+
+  const db = createSupabaseAdminClient();
+  const { error } = await db.rpc('pm_swap_squad_players', {
+    p_team_id: team.id,
+    p_active_id: activeId,
+    p_unassigned_id: unassignedId,
+  });
+
+  if (error) return mapPlayerActionError(error.message);
+
+  await logPlayManagerEvent({
+    teamId: team.id,
+    category: 'board',
+    accent: 'green',
+    title: 'შემადგენლობის როტაცია',
+    detail: 'მოთამაშე დროებითი განთავსებიდან დაემატა აქტიურ შემადგენლობაში',
+  });
+
+  revalidatePath('/playmanager');
+  return { success: true, message: 'მოთამაშეები წარმატებით გაცვალეს' };
+}

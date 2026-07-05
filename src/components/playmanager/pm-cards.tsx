@@ -8,7 +8,7 @@ import Image from 'next/image';
 import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 
-export type PmTone = 'green' | 'red';
+export type PmTone = 'green' | 'red' | 'gold';
 
 // ── Card shell (feed post-card) ───────────────────────────────────────────────
 
@@ -41,12 +41,12 @@ export function PmCardHead({
   return (
     <div className="flex items-center gap-3.5">
       {Icon ? (
-        <span className={`pm-office-ava ${tone === 'red' ? 'pm-office-ava--red' : ''}`}>
+        <span className={`pm-office-ava ${tone === 'red' ? 'pm-office-ava--red' : tone === 'gold' ? 'pm-office-ava--gold' : ''}`}>
           <Icon className="h-5 w-5" />
         </span>
       ) : null}
       <div className="min-w-0 flex-1">
-        <p className={`pm-office-title truncate text-[15px] leading-tight ${tone === 'red' ? 'pm-office-title--red' : ''}`}>
+        <p className={`pm-office-title truncate text-[15px] leading-tight ${tone === 'red' ? 'pm-office-title--red' : tone === 'gold' ? 'pm-office-title--gold' : ''}`}>
           {title}
         </p>
         {subtitle ? (
@@ -62,7 +62,7 @@ export function PmCardHead({
 
 export function PmPill({ children, tone, className = '' }: { children: ReactNode; tone?: PmTone; className?: string }) {
   return (
-    <span className={`pm-office-pill ${tone === 'green' ? 'pm-office-pill--green' : tone === 'red' ? 'pm-office-pill--red' : ''} ${className}`}>
+    <span className={`pm-office-pill ${tone === 'green' ? 'pm-office-pill--green' : tone === 'red' ? 'pm-office-pill--red' : tone === 'gold' ? 'pm-office-pill--gold' : ''} ${className}`}>
       {children}
     </span>
   );
@@ -90,7 +90,7 @@ export function PmAction({
       type={type}
       disabled={disabled}
       onClick={onClick}
-      className={`pm-office-act ${tone === 'red' ? 'pm-office-act--red' : 'pm-office-act--green'} ${className}`}
+      className={`pm-office-act ${tone === 'red' ? 'pm-office-act--red' : tone === 'gold' ? 'pm-office-act--gold' : 'pm-office-act--green'} ${className}`}
     >
       {children}
     </button>
@@ -142,7 +142,7 @@ export function PmPhotoCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/28 to-black/10" />
         </div>
         <div className="relative z-[1] flex h-full flex-col justify-end p-4">
-          <p className={`pm-office-title text-[15px] leading-tight ${tone === 'red' ? 'pm-office-title--red' : ''}`}>{title}</p>
+          <p className={`pm-office-title text-[15px] leading-tight ${tone === 'red' ? 'pm-office-title--red' : tone === 'gold' ? 'pm-office-title--gold' : ''}`}>{title}</p>
         </div>
         {pending ? (
           <div className="absolute inset-0 z-[2] grid place-items-center bg-black/60">

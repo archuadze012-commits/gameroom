@@ -2332,6 +2332,13 @@ main:has(.pm-playmanager-root) {
 }
 .pm-office-pill--green { border-color: rgba(34, 197, 94, 0.32); background: rgba(34, 197, 94, 0.1); color: #86efac; }
 .pm-office-pill--red   { border-color: rgba(239, 68, 68, 0.32); background: rgba(239, 68, 68, 0.1); color: #fca5a5; }
+.pm-office-pill--gold  { border-color: rgba(245, 158, 11, 0.34); background: rgba(245, 158, 11, 0.12); color: #fcd34d; }
+
+/* Gold tone (used for the "unassigned players" holding area accent). */
+.pm-office-title--gold { color: #fde68a; text-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
+.pm-office-ava--gold { box-shadow: 0 0 18px rgba(245, 158, 11, 0.16); color: #fcd34d; }
+.pm-office-act--gold { border-color: rgba(245, 158, 11, 0.34); background: rgba(245, 158, 11, 0.12); color: #fde68a; }
+.pm-office-act--gold:not(:disabled):hover { background: rgba(245, 158, 11, 0.2); color: #fff; }
 
 /* Footer action button (like the post's like / delete buttons). */
 .pm-office-act {

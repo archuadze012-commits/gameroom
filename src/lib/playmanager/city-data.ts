@@ -23,6 +23,7 @@ import type {
   ArenaFacilityRow,
   BaseSquadPlayer,
   CalendarRow,
+  CitySquadPlayer,
   CityOutgoingListing,
   CupInstanceRow,
   CupMatchRow,
@@ -112,8 +113,7 @@ export async function getPlayManagerCitySnapshot(
       .from('pm_squads')
       .select('id, shirt_number, squad_number, position, player:pm_players(id, normalized_name, display_name, card_display_name, primary_position, card_image_url, nationality_code, card_sil_width, card_sil_height, card_sil_x, card_sil_y, card_sil_opacity, card_content_y, card_name_size, card_stats_scale, card_stats, is_real, real_age, age, age_started_total_days, ovr_base, ovr_current, current_transfer_value_gel, fatigue, morale, injury_matches, status, talent)')
       .eq('team_id', teamId)
-      .order('id', { ascending: true })
-      .limit(18),
+      .order('id', { ascending: true }),
     isReduced
       ? Promise.resolve({ data: [] as MarketRow[] })
       : db
@@ -279,7 +279,10 @@ export async function getPlayManagerCitySnapshot(
       }),
     ),
   );
-  const baseSquad: BaseSquadPlayer[] = typedSquadRows
+  const activeSquadRows = typedSquadRows.slice(0, 18);
+  const unassignedRows = typedSquadRows.slice(18);
+
+  const baseSquad: BaseSquadPlayer[] = activeSquadRows
     .filter((row): row is SquadRow & { player: NonNullable<SquadRow['player']> } => Boolean(row.player))
     .map((row) => {
       const effectiveTalent = getEffectiveRealPlayerTalent({
@@ -316,6 +319,48 @@ export async function getPlayManagerCitySnapshot(
         injuryMatches: row.player.injury_matches,
         availability: row.player.status === 'injured' || row.player.injury_matches > 0 ? 'injured' : 'ready',
         lineupSlot: row.shirt_number,
+        talent: effectiveTalent,
+        squadNumber: row.squad_number,
+      };
+    });
+
+  const unassigned: CitySquadPlayer[] = unassignedRows
+    .filter((row): row is SquadRow & { player: NonNullable<SquadRow['player']> } => Boolean(row.player))
+    .map((row) => {
+      const effectiveTalent = getEffectiveRealPlayerTalent({
+        isReal: row.player.is_real,
+        storedAge: row.player.age,
+        realAge: row.player.real_age,
+        baseOvr: row.player.ovr_base,
+        talent: row.player.talent,
+      });
+      const effectiveValue = getTalentClassAdjustedTransferValueGel(row.player.current_transfer_value_gel, effectiveTalent);
+      return {
+        squadId: row.id,
+        id: row.player.id,
+        name: row.player.display_name,
+        cardDisplayName: row.player.card_display_name,
+        cardImageUrl: row.player.card_image_url || fallbackFaceByName.get(row.player.normalized_name) || null,
+        nationalityCode: row.player.nationality_code,
+        cardEditorConfig: buildPlayManagerPlayerCardLayout(row.player),
+        stats: (row.player.is_real ? resolvedStatsByName.get(row.player.normalized_name) : null) ?? row.player.card_stats,
+        position: row.player.primary_position?.trim() || row.position,
+        age: getPlayManagerDisplayAge({
+          storedAge: row.player.age,
+          isReal: row.player.is_real,
+          ageStartedTotalDays: row.player.age_started_total_days,
+          currentTotalDays,
+        }),
+        ovrBase: row.player.ovr_base,
+        ovrCurrent: row.player.ovr_current,
+        value: effectiveValue,
+        valueLabel: formatGel(effectiveValue),
+        fatigue: row.player.fatigue,
+        morale: row.player.morale,
+        injuryMatches: row.player.injury_matches,
+        availability: row.player.status === 'injured' || row.player.injury_matches > 0 ? 'injured' : 'ready',
+        role: 'reserve' as const,
+        lineupSlot: null,
         talent: effectiveTalent,
         squadNumber: row.squad_number,
       };
@@ -719,7 +764,7 @@ export async function getPlayManagerCitySnapshot(
         };
       }).filter((value): value is NonNullable<typeof value> => value !== null);
 
-            return mapped.sort((a, b) => {
+      return mapped.sort((a, b) => {
         if (a.templateId === 'champions_cup' && b.templateId !== 'champions_cup') return -1;
         if (b.templateId === 'champions_cup' && a.templateId !== 'champions_cup') return 1;
 
@@ -731,5 +776,6 @@ export async function getPlayManagerCitySnapshot(
         return (weights[a.status] ?? 4) - (weights[b.status] ?? 4);
       });
     })(),
+    unassigned,
   };
 }

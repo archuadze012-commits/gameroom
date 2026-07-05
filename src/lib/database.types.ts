@@ -4889,6 +4889,10 @@ export type Database = {
       }
       pm_team_match_count: { Args: { p_team_id: string }; Returns: number }
       pm_team_match_profile: { Args: { p_team_id: string }; Returns: Json }
+      pm_swap_squad_players: {
+        Args: { p_active_id: number; p_team_id: string; p_unassigned_id: number }
+        Returns: Json
+      }
       pm_toggle_market_shortlist: {
         Args: { p_player_key: string; p_team_id: string }
         Returns: Json
