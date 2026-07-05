@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { orderUsers } from "@/lib/dm";
 import { rateLimit } from "@/lib/rate-limit";
+import { isBlocked, canReceiveDmFrom } from "@/lib/blocks";
 
 export async function GET() {
   const user = await getSession().catch(() => null);
@@ -71,6 +72,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
 
+  // A block (either direction) is a hard stop — no opening or reopening a thread.
+  if (await isBlocked(user.id, otherUserId)) {
+    return NextResponse.json({ error: "blocked" }, { status: 403 });
+  }
+
   const ordered = orderUsers(user.id, otherUserId);
   const supabase = await createSupabaseServerClient();
 
@@ -83,6 +89,11 @@ export async function POST(request: NextRequest) {
     .maybeSingle();
 
   if (existing) return NextResponse.json({ id: existing.id });
+
+  // Opening a NEW thread — respect the recipient's "who can message me" setting.
+  if (!(await canReceiveDmFrom(otherUserId, user.id))) {
+    return NextResponse.json({ error: "dm_not_allowed" }, { status: 403 });
+  }
 
   const { data, error } = await supabase
     .from("conversations")

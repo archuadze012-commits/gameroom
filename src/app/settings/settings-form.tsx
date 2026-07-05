@@ -19,6 +19,7 @@ type Profile = {
   displayName: string;
   bio: string;
   voice: boolean;
+  dmPrivacy: "everyone" | "followers" | "nobody";
   youtubeHandle: string;
   tiktokHandle: string;
   tiktokFollowers: string;
@@ -33,6 +34,7 @@ const defaults: Profile = {
   displayName: "",
   bio: "",
   voice: true,
+  dmPrivacy: "everyone",
   youtubeHandle: "",
   tiktokHandle: "",
   tiktokFollowers: "",
@@ -83,6 +85,7 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
         favorite_game_slugs?: string[] | null;
         bio?: string | null;
         voice_chat?: boolean | null;
+        dm_privacy?: string | null;
         youtube_handle?: string | null;
         tiktok_handle?: string | null;
         tiktok_followers?: string | null;
@@ -94,7 +97,7 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
       if (user) {
         const { data } = await supabase
           .from("profiles")
-          .select("favorite_game_slugs, bio, voice_chat, youtube_handle, tiktok_handle, tiktok_followers, display_name, in_game_name, game_id, main_game_slug")
+          .select("favorite_game_slugs, bio, voice_chat, dm_privacy, youtube_handle, tiktok_handle, tiktok_followers, display_name, in_game_name, game_id, main_game_slug")
           .eq("id", user.id)
           .single();
         dbProfile = data;
@@ -107,6 +110,7 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
         displayName: dbProfile?.display_name || (user?.user_metadata?.display_name as string | undefined) || stored.displayName || "",
         bio: dbProfile?.bio ?? stored.bio ?? "",
         voice: dbProfile?.voice_chat ?? stored.voice ?? true,
+        dmPrivacy: (dbProfile?.dm_privacy as Profile["dmPrivacy"]) ?? stored.dmPrivacy ?? "everyone",
         youtubeHandle: dbProfile?.youtube_handle ?? stored.youtubeHandle ?? "",
         tiktokHandle: dbProfile?.tiktok_handle ?? stored.tiktokHandle ?? "",
         tiktokFollowers: dbProfile?.tiktok_followers ?? stored.tiktokFollowers ?? "",
@@ -167,6 +171,7 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
           displayName: profile.displayName,
           bio: profile.bio,
           voiceChat: profile.voice,
+          dmPrivacy: profile.dmPrivacy,
           favoriteGameSlugs: profile.favoriteGameSlugs,
           youtubeHandle: profile.youtubeHandle,
           tiktokHandle: profile.tiktokHandle,
@@ -340,6 +345,25 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
         <Label htmlFor="voice" className="font-normal">
           🎙 voice chat-ით კომფორტულად ვამთამაშებ
         </Label>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="dm-privacy" className="font-normal">
+          💬 ვის შეუძლია მომწეროს
+        </Label>
+        <select
+          id="dm-privacy"
+          value={profile.dmPrivacy}
+          onChange={(e) => setProfile((p) => ({ ...p, dmPrivacy: e.target.value as Profile["dmPrivacy"] }))}
+          className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+        >
+          <option value="everyone">ყველას</option>
+          <option value="followers">მხოლოდ ჩემს followers-ს</option>
+          <option value="nobody">არავის</option>
+        </select>
+        <p className="text-xs text-muted-foreground">
+          არსებული საუბრები ამით არ იზღუდება — მხოლოდ ახალი მესიჯების დაწყებას ეხება.
+        </p>
       </div>
 
       <div className="flex justify-end gap-2 pt-2">

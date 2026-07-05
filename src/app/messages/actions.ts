@@ -6,6 +6,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
+import { isBlocked } from "@/lib/blocks";
 
 const sendMessageSchema = z.object({
   conversationId: z.string().uuid(),
@@ -73,6 +74,11 @@ export async function sendMessageAction(
   }
 
   const recipientId = conv.user_a === user.id ? conv.user_b : conv.user_a;
+
+  // A block (either direction) stops sends even in an existing thread.
+  if (await isBlocked(user.id, recipientId)) {
+    return { success: false, message: "ამ მომხმარებელს ვეღარ მისწერ." };
+  }
 
   const { data, error } = await supabase
     .from("conversation_messages")

@@ -36,6 +36,8 @@ export async function POST(request: NextRequest) {
     update.region = body.region.trim() || null;
   if (typeof body.voiceChat === "boolean")
     update.voice_chat = body.voiceChat;
+  if (typeof body.dmPrivacy === "string" && ["everyone", "followers", "nobody"].includes(body.dmPrivacy))
+    update.dm_privacy = body.dmPrivacy;
   if (Array.isArray(body.favoriteGameSlugs)) {
     const favoriteSlugs = (body.favoriteGameSlugs as unknown[]).filter((s): s is string => typeof s === "string");
     const mainGameSlug = typeof body.mainGameSlug === "string" ? body.mainGameSlug.trim() : "";

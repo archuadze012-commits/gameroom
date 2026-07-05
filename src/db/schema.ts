@@ -109,6 +109,8 @@ export const profiles = pgTable(
     inGameName: varchar("in_game_name", { length: 64 }),
     isVerified: boolean("is_verified").default(false).notNull(),
     emoji: varchar("emoji", { length: 8 }),
+    // "Who can start a DM with me": everyone | followers | nobody.
+    dmPrivacy: text("dm_privacy").default("everyone").notNull(),
     // --- Gamification ---
     xp: integer("xp").default(0).notNull(),
     level: integer("level").default(1).notNull(),
@@ -214,6 +216,27 @@ export const follows = pgTable(
     primaryKey({ columns: [t.followerId, t.followingId] }),
     index("follows_follower_idx").on(t.followerId),
     index("follows_following_idx").on(t.followingId),
+  ]
+);
+
+// User-to-user block graph (blocker has blocked blocked). Consulted by the DM
+// and message gates; RLS lets a user manage only their own blocks.
+export const userBlocks = pgTable(
+  "user_blocks",
+  {
+    blockerId: uuid("blocker_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    blockedId: uuid("blocked_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.blockerId, t.blockedId] }),
+    index("user_blocks_blocked_idx").on(t.blockedId),
   ]
 );
 

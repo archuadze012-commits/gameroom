@@ -3610,6 +3610,7 @@ export type Database = {
           created_at: string
           daily_streak_count: number
           display_name: string | null
+          dm_privacy: string
           email: string | null
           emoji: string | null
           favorite_game_slugs: string[] | null
@@ -3643,6 +3644,7 @@ export type Database = {
           created_at?: string
           daily_streak_count?: number
           display_name?: string | null
+          dm_privacy?: string
           email?: string | null
           emoji?: string | null
           favorite_game_slugs?: string[] | null
@@ -3676,6 +3678,7 @@ export type Database = {
           created_at?: string
           daily_streak_count?: number
           display_name?: string | null
+          dm_privacy?: string
           email?: string | null
           emoji?: string | null
           favorite_game_slugs?: string[] | null
@@ -4366,6 +4369,39 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_blocks_blocked_id_fkey"
+            columns: ["blocked_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_blocks_blocker_id_fkey"
+            columns: ["blocker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_mutes: {
         Row: {
