@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { awardBonusXp } from "@/lib/gamification";
+import { awardBonusXpOnce } from "@/lib/gamification";
 
 export async function POST(
   _request: NextRequest,
@@ -20,7 +20,8 @@ export async function POST(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // If they just liked (data === true), award +1 XP to the post author
+  // If they just liked (data === true), award +1 XP to the post author — but only
+  // ONCE per (liker, post), so like→unlike→like can't farm XP.
   if (data === true) {
     try {
       const { data: post } = await supabase
@@ -29,7 +30,7 @@ export async function POST(
         .eq("id", id)
         .maybeSingle();
       if (post?.author_id && post.author_id !== user.id) {
-        await awardBonusXp(post.author_id, 1, "post:liked");
+        await awardBonusXpOnce(post.author_id, 1, "post_like", `${user.id}:${id}`);
       }
     } catch {}
   }

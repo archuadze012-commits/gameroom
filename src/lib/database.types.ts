@@ -4616,6 +4616,10 @@ export type Database = {
         Args: { p_amount: number; p_user_id: string }
         Returns: number
       }
+      award_xp_once: {
+        Args: { p_amount: number; p_source_id: string; p_source_type: string; p_user_id: string }
+        Returns: boolean
+      }
       can_manage_shop_products: { Args: never; Returns: boolean }
       claim_daily_bonus: { Args: never; Returns: undefined }
       claim_daily_bonus_as: { Args: { p_user_id: string }; Returns: Json }

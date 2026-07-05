@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { awardBonusXp } from "@/lib/gamification";
+import { awardBonusXpOnce } from "@/lib/gamification";
 
 type ResolveResult =
   | { ok: true; followerId: string; followingId: string }
@@ -56,8 +56,9 @@ export async function POST(
         tag: `follow-${ids.followerId}`,
       });
 
-      // Award XP to the followed user
-      await awardBonusXp(ids.followingId, 5, "follow:received");
+      // Award XP to the followed user — only ONCE per (follower, following) pair,
+      // so follow→unfollow→follow can't farm XP.
+      await awardBonusXpOnce(ids.followingId, 5, "follow", `${ids.followerId}:${ids.followingId}`);
     }
   } catch {}
 
