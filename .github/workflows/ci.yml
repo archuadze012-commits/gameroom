@@ -1,0 +1,67 @@
+name: ci
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  types-lint:
+    name: types + lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: TypeScript
+        run: npx tsc --noEmit -p .
+      - name: ESLint
+        run: npm run lint
+
+  test:
+    name: unit + integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: Unit tests
+        run: npm run test:unit
+      # Integration tests run against @electric-sql/pglite (in-process Postgres),
+      # so no external database or service is required.
+      - name: Integration tests
+        run: npm run test:integration
+
+  build:
+    name: next build
+    runs-on: ubuntu-latest
+    # Build-time public env only — placeholders so module-level reads don't throw.
+    # No real secrets: every DB-touching page is `force-dynamic` (runtime-only).
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+      NEXT_PUBLIC_SITE_URL: https://playgame.ge
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: placeholder-vapid-key
+      SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: Build
+        run: npm run build
