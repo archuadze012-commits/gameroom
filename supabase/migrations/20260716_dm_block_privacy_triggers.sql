@@ -84,3 +84,9 @@ drop trigger if exists trg_enforce_dm_privacy_conversation on public.conversatio
 create trigger trg_enforce_dm_privacy_conversation
   before insert on public.conversations
   for each row execute function public.enforce_dm_privacy_on_conversation();
+
+-- These are trigger-only (Postgres rejects direct invocation), but Supabase grants
+-- EXECUTE to anon/authenticated by default — revoke it to keep them off the exposed
+-- RPC surface (advisor 0028). Trigger firing is unaffected by EXECUTE grants.
+revoke all on function public.enforce_dm_block_on_message() from public, anon, authenticated;
+revoke all on function public.enforce_dm_privacy_on_conversation() from public, anon, authenticated;

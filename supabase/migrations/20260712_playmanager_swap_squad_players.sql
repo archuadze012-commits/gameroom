@@ -67,5 +67,7 @@ begin
 end;
 $$;
 
-revoke all on function public.pm_swap_squad_players(uuid, bigint, bigint) from public;
+-- Revoke from anon/authenticated too, not just PUBLIC: Supabase grants EXECUTE to
+-- those roles by default and a public-only revoke leaves them (see 20260719).
+revoke all on function public.pm_swap_squad_players(uuid, bigint, bigint) from public, anon, authenticated;
 grant execute on function public.pm_swap_squad_players(uuid, bigint, bigint) to service_role;

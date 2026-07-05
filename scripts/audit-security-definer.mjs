@@ -83,12 +83,17 @@ for (const fn of fns) {
     if (!ok) badSearchPath.push(`${sig}  [${sp ?? 'no pin'}]`);
   }
 
-  // 2. client-executable privileged functions.
-  if (!fn.is_trigger && !allowed && (fn.anon_x || fn.auth_x)) {
+  // 2. client-executable privileged functions. A SECURITY DEFINER function
+  //    (Supabase advisor 0028/0029) or ANY mutating function is flagged when
+  //    anon/authenticated can EXECUTE it. Trigger functions are NOT exempt: even
+  //    though Postgres rejects direct invocation, an un-revoked definer trigger
+  //    trips the platform advisor, so we keep the RPC surface clean by flagging
+  //    it too (revoking EXECUTE never stops the trigger from firing).
+  if (!allowed && (fn.anon_x || fn.auth_x)) {
     const privileged = fn.definer || fn.mutates;
     if (privileged) {
       const who = [fn.anon_x && 'anon', fn.auth_x && 'authenticated'].filter(Boolean).join(', ');
-      const why = fn.definer ? 'SECURITY DEFINER' : 'mutating';
+      const why = fn.definer ? (fn.is_trigger ? 'SECURITY DEFINER trigger' : 'SECURITY DEFINER') : 'mutating';
       clientExecutable.push(`${sig}  ← ${why}, executable by: ${who}`);
     }
   }

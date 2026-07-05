@@ -40,6 +40,17 @@ const PLATFORM_SHIM = `
   create table if not exists auth.users (id uuid primary key default gen_random_uuid(), email text, raw_user_meta_data jsonb, created_at timestamptz default now());
   create table if not exists storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text, owner uuid, created_at timestamptz default now(), updated_at timestamptz default now(), metadata jsonb);
   create or replace function storage.foldername(name text) returns text[] language sql immutable as $$ select string_to_array(name, '/') $$;
+
+  -- Model Supabase's default privileges: new objects in public are granted to
+  -- anon/authenticated by default. Without this a migration's \`revoke ... from
+  -- public\` looks sufficient in replay while leaving anon/authenticated grants
+  -- intact on live (they're separate from PUBLIC). Applying this BEFORE migrations
+  -- means every function/table they create carries the default grant, so only an
+  -- explicit \`revoke ... from anon, authenticated\` actually locks it — matching
+  -- production, and letting the security audit catch revoke-from-public-only bugs.
+  grant usage on schema public to anon, authenticated;
+  alter default privileges in schema public grant execute on functions to anon, authenticated;
+  alter default privileges in schema public grant all on tables to anon, authenticated;
 `;
 
 function preprocess(sql) {
