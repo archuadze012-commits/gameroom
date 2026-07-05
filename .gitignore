@@ -99,3 +99,8 @@ public/playmanager/models/**/UserSettings/
 public/playmanager/models/**/[Mm]emoryCaptures/
 public/playmanager/models/**/*.csproj
 public/playmanager/models/**/*.sln
+# Playwright E2E
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/e2e/.auth/

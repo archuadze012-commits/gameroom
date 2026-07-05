@@ -65,3 +65,29 @@ jobs:
       - run: npm ci
       - name: Build
         run: npm run build
+
+  e2e:
+    name: e2e smoke (playwright)
+    runs-on: ubuntu-latest
+    # Fast-refusing Supabase URL — inlined at build time so the app boots as an
+    # unauthenticated visitor with no real backend; auth.getUser() fails fast and
+    # the smoke exercises boot/routing/render + the /playmanager→login redirect.
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:9999
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: placeholder-vapid-key
+      SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+      - name: Build (with fast-fail Supabase URL inlined)
+        run: npm run build
+      - name: Run smoke suite
+        run: npx playwright test e2e/smoke.spec.ts
