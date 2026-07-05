@@ -84,7 +84,7 @@ export default async function PlayManagerSearchPage({
   const pageSize = 20;
   const offset = (page - 1) * pageSize;
 
-  const admin = createSupabaseAdminClient() as any;
+  const admin = createSupabaseAdminClient();
   const searchTerm = q.replaceAll(',', ' ').replaceAll("'", '').trim();
 
   // Show welcome state if no query is entered and no explicit category tab is selected yet

@@ -44,10 +44,7 @@ export default async function ChampionshipsPage() {
   // Lazy: simulate any league fixtures whose kickoff time has passed.
   await processDueLeagueMatches();
 
-  const db = (await createSupabaseServerClient()) as unknown as {
-    auth: { getUser: () => Promise<{ data: { user: { id: string } | null } }> };
-    from: (t: string) => any;
-  };
+  const db = await createSupabaseServerClient();
   const { data: userData } = await db.auth.getUser();
   if (!userData.user) redirect('/auth/login?next=/playmanager/championships');
 
@@ -55,14 +52,14 @@ export default async function ChampionshipsPage() {
   const isAdmin = await hasPermission('manage_content');
 
   const [{ data: leagueRows }, { data: participantRows }, { data: fixtureRows }] = await Promise.all([
-    db.from('pm_league_instances').select('id,name,division_level,status,format,max_teams,prize_pool').order('created_at', { ascending: false }),
-    db.from('pm_league_participants').select('league_id,team_id,played,won,drawn,lost,goals_for,goals_against,points'),
-    db.from('pm_league_fixtures').select('league_id,round,home_team_id,away_team_id,home_goals,away_goals,status').order('round', { ascending: true }),
+    db.from('pm_league_instances').select('id,name,division_level,status,format,max_teams,prize_pool').order('created_at', { ascending: false }).returns<LeagueRow[]>(),
+    db.from('pm_league_participants').select('league_id,team_id,played,won,drawn,lost,goals_for,goals_against,points').returns<ParticipantRow[]>(),
+    db.from('pm_league_fixtures').select('league_id,round,home_team_id,away_team_id,home_goals,away_goals,status').order('round', { ascending: true }).returns<FixtureRow[]>(),
   ]);
 
-  const leagues = (leagueRows ?? []) as LeagueRow[];
-  const participants = (participantRows ?? []) as ParticipantRow[];
-  const fixtures = (fixtureRows ?? []) as FixtureRow[];
+  const leagues = leagueRows ?? [];
+  const participants = participantRows ?? [];
+  const fixtures = fixtureRows ?? [];
 
   // Resolve team names for everyone referenced.
   const teamIds = Array.from(new Set([

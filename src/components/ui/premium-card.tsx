@@ -12,7 +12,7 @@ export function PremiumCard({
   className?: string;
   glowVariant?: "default" | "tight";
   noHover?: boolean;
-  as?: any;
+  as?: React.ElementType;
 } & React.HTMLAttributes<HTMLDivElement>) {
   
   const glowClass = glowVariant === "tight" ? "premium-card-glow-tight" : "premium-card-glow";

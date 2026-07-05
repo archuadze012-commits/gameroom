@@ -597,7 +597,7 @@ export function LobbyInventory({
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                   {activeItems.map((item) => {
                     const isOverriddenByCombo = (tab === "characters" || tab === "vehicles" || tab === "lobby") && selected.combo !== "combo_none";
-                    const isSelected = !isOverriddenByCombo && (tab === "weapons" ? selected.weapons.includes(item.id) : (selected as any)[tab] === item.id);
+                    const isSelected = !isOverriddenByCombo && (tab === "weapons" ? selected.weapons.includes(item.id) : (selected as SelectedState)[tab] === item.id);
                     return (
                       <button
                         key={item.id}

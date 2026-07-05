@@ -81,7 +81,8 @@ export default async function HomePage() {
     avatarUrl: string | null;
   } | null = null;
   let liveStreams: LiveStream[] = [];
-  let freePcGamesDb: any[] = [];
+  type FreePcGameRow = { id: string; title: string; cover_url: string | null; rating: number };
+  let freePcGamesDb: FreePcGameRow[] = [];
   try {
     const supabase = await createSupabaseServerClient();
     const profilePromise = user
