@@ -8,6 +8,7 @@ import { PackageOpen, Sparkles, X } from 'lucide-react';
 import { PmCard, PmCardHead, PmPill, PmAction } from '@/components/playmanager/pm-cards';
 import { TalentClassBadge } from '@/components/playmanager/talent-class-badge';
 import { openPlayManagerPack } from '@/app/playmanager/actions/player-development-actions';
+import { formatGel } from '@/lib/playmanager/economy';
 
 export type ShopPack = {
   id: number;
@@ -83,7 +84,7 @@ export function PackShopClient({ packs, balance }: { packs: ShopPack[]; balance:
 
               <div className="mt-auto flex items-center justify-between gap-3">
                 <PmPill tone="red">
-                  {pack.cost_pm.toLocaleString('ka-GE')} ₾
+                  {formatGel(pack.cost_pm)}
                 </PmPill>
                 <PmAction
                   tone="green"

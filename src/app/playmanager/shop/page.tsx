@@ -5,6 +5,7 @@ import { PlayManagerLightShell } from '@/components/playmanager/playmanager-ligh
 import { PmCard, PmCardHead, PmPill } from '@/components/playmanager/pm-cards';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getTeam } from '@/lib/playmanager/team';
+import { formatGel } from '@/lib/playmanager/economy';
 import { PackShopClient, type ShopPack } from './pack-shop-client';
 
 export const dynamic = 'force-dynamic';
@@ -51,7 +52,7 @@ export default async function PlayManagerShopPage() {
               <ArrowLeft className="h-4 w-4" />
               უკან
             </Link>
-            <PmPill tone="green">ბალანსი: {team.balance.toLocaleString('ka-GE')} ₾</PmPill>
+            <PmPill tone="green">ბალანსი: {formatGel(team.balance)}</PmPill>
           </div>
 
           <PmCardHead
