@@ -27,6 +27,7 @@ import {
   respondPlayManagerTransferOffer,
   cancelPlayManagerTransferOffer,
 } from '@/app/playmanager/actions/transfer-actions';
+import { formatGel } from '@/lib/playmanager/economy';
 import { SpotlightCard } from '@/components/react-bits/spotlight-card';
 import CountUp from '@/components/CountUp';
 import type { PlayerCardStatsInput } from '@/lib/playmanager/player-card-stats';
@@ -532,7 +533,7 @@ function OfferModal({
           }`}
         />
         <p className={`mt-1.5 text-[10px] font-black ${belowFloor ? 'text-red-300' : 'text-white/40'}`}>
-          მინიმალური ფასი: {floor.toLocaleString('ka-GE')} ₾ (ღირებულების 50%)
+          მინიმალური ფასი: {formatGel(floor)} (ღირებულების 50%)
         </p>
 
         <button
@@ -627,7 +628,7 @@ function OffersInbox({
 
                     <div className="mt-2 flex items-center justify-between text-[11px] font-black">
                       <span className="text-white/45">{offer.iAmBuyer ? 'გამყიდველი' : 'მყიდველი'}: {offer.counterpartName}</span>
-                      <span className="text-emerald-100 [font-variant-numeric:tabular-nums]">{offer.amount.toLocaleString('ka-GE')} ₾</span>
+                      <span className="text-emerald-100 [font-variant-numeric:tabular-nums]">{formatGel(offer.amount)}</span>
                     </div>
 
                     {offer.awaitingMe ? (
@@ -638,7 +639,7 @@ function OffersInbox({
                             onChange={(event) => setCounterValue(event.target.value.replace(/[^\d\s]/g, ''))}
                             inputMode="numeric"
                             autoFocus
-                            placeholder={`მინ. ${offer.floorPrice.toLocaleString('ka-GE')} ₾`}
+                            placeholder={`მინ. ${formatGel(offer.floorPrice)}`}
                             className="h-10 w-full rounded-lg border border-white/10 bg-black/35 px-3 text-sm font-black text-white outline-none focus:border-emerald-300/40 [font-variant-numeric:tabular-nums]"
                           />
                           <div className="mt-2 flex gap-2">

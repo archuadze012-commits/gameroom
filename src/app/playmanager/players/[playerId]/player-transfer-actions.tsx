@@ -8,6 +8,7 @@ import {
   listPlayManagerPlayer,
   unlistPlayManagerPlayer,
 } from '@/app/playmanager/actions/transfer-actions';
+import { formatGel } from '@/lib/playmanager/economy';
 
 interface PlayerTransferActionsProps {
   playerId: string;
@@ -76,7 +77,7 @@ export function PlayerTransferActions({
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-200/62">status</p>
               <p className="mt-1 text-sm font-black text-white">სატრანსფერო ბაზარზეა</p>
               <p className="mt-0.5 text-xs font-bold text-white/54">
-                ფასი: <span className="font-black text-amber-300">{activeListing.asking_price.toLocaleString('ka-GE')} ₾</span>
+                ფასი: <span className="font-black text-amber-300">{formatGel(activeListing.asking_price)}</span>
               </p>
             </div>
             <button
