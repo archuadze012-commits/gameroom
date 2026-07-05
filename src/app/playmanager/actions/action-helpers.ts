@@ -8,6 +8,12 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import type { TeamFacilityState } from '@/lib/playmanager/facilities';
 import { getCombinedClubEffects, getManagerProgression } from '@/lib/playmanager/progression';
 import { getTeam } from '@/lib/playmanager/team';
+import { createLogger } from '@/lib/logger';
+
+// Economy/world-tick failures are alertable: a lost XP/credit award or a
+// dropped lifecycle job is real value the player earned quietly vanishing, so
+// these use log.critical (forwards to ALERT_WEBHOOK_URL when configured).
+const log = createLogger('playmanager');
 
 export type PlayManagerPlayerActionResult =
   | {
@@ -112,9 +118,9 @@ export async function applyPostActionRewards(input: {
   settled.forEach((result, index) => {
     const label = jobs[index].label;
     if (result.status === 'rejected') {
-      console.error(`[playmanager] reward job "${label}" threw`, { teamId: input.teamId, error: result.reason });
+      log.critical(`reward job "${label}" threw`, { teamId: input.teamId, error: result.reason });
     } else if (result.value?.error) {
-      console.error(`[playmanager] reward job "${label}" failed`, { teamId: input.teamId, error: result.value.error.message });
+      log.critical(`reward job "${label}" failed`, { teamId: input.teamId, error: result.value.error.message });
     }
   });
 }
@@ -126,7 +132,7 @@ export async function advancePlayManagerTime(teamId: string, days = 1) {
     p_days: days,
   });
   if (advanceError) {
-    console.error('[playmanager] pm_advance_time failed', { teamId, error: advanceError.message });
+    log.critical('pm_advance_time failed', { teamId, error: advanceError.message });
   }
   // jsonb return — narrow to the RPC's known result contract.
   const data = rawData as unknown as CalendarAdvance | null;
@@ -146,9 +152,9 @@ export async function advancePlayManagerTime(teamId: string, days = 1) {
   const settled = await Promise.allSettled(jobs.map((job) => job.run));
   settled.forEach((result, i) => {
     if (result.status === 'rejected') {
-      console.error(`[playmanager] time-advance job "${jobs[i].label}" threw`, { teamId, error: result.reason });
+      log.critical(`time-advance job "${jobs[i].label}" threw`, { teamId, error: result.reason });
     } else if (result.value?.error) {
-      console.error(`[playmanager] time-advance job "${jobs[i].label}" failed`, { teamId, error: result.value.error.message });
+      log.critical(`time-advance job "${jobs[i].label}" failed`, { teamId, error: result.value.error.message });
     }
   });
   return data ?? null;
