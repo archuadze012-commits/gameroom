@@ -28,6 +28,7 @@ import {
   cancelPlayManagerTransferOffer,
 } from '@/app/playmanager/actions/transfer-actions';
 import { formatGel } from '@/lib/playmanager/economy';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { SpotlightCard } from '@/components/react-bits/spotlight-card';
 import CountUp from '@/components/CountUp';
 import type { PlayerCardStatsInput } from '@/lib/playmanager/player-card-stats';
@@ -152,18 +153,39 @@ export function MarketStudio({
     }
   }, []);
 
-  // Poll the awaiting-me badge in the transfer market so incoming offers surface
-  // without a manual refresh.
+  // Keep the transfer-market inbox live. A Supabase realtime subscription on
+  // pm_transfer_offers (scoped to this team via two filters — offers where we're
+  // the from/to side) refetches the shaped list on any change, replacing the old
+  // 20s poll. A 60s fallback poll covers a dropped socket; the free-agents tab
+  // has no offers so it skips all of this.
   useEffect(() => {
     if (isFreeAgents) return;
-    // Fetch-on-mount + 20s poll for incoming offers. loadOffers flips a loading
-    // flag synchronously; that's the intended spinner behaviour here, not a
-    // cascading-render bug.
+    // Fetch-on-mount; loadOffers flips a loading flag synchronously — intended
+    // spinner behaviour, not a cascading-render bug.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadOffers();
-    const id = window.setInterval(loadOffers, 20_000);
-    return () => window.clearInterval(id);
-  }, [isFreeAgents, loadOffers]);
+
+    const supabase = createSupabaseBrowserClient();
+    // Coalesce the burst of events an accept/counter emits into one refetch.
+    let debounce: ReturnType<typeof setTimeout> | undefined;
+    const refresh = () => {
+      clearTimeout(debounce);
+      debounce = setTimeout(loadOffers, 300);
+    };
+    const channel = supabase
+      .channel(`pm-offers:${team.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pm_transfer_offers', filter: `to_team_id=eq.${team.id}` }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pm_transfer_offers', filter: `from_team_id=eq.${team.id}` }, refresh)
+      .subscribe();
+
+    const fallback = window.setInterval(loadOffers, 60_000);
+
+    return () => {
+      clearTimeout(debounce);
+      window.clearInterval(fallback);
+      supabase.removeChannel(channel);
+    };
+  }, [isFreeAgents, loadOffers, team.id]);
 
   async function contactSeller(player: MarketPlayer) {
     if (!player.sellerUserId) {
