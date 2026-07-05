@@ -59,6 +59,12 @@ jobs:
       - run: npm ci
       - name: Replay migrations
         run: npm run test:migrations
+      # Audits the replayed catalog for client-reachable privilege: definer
+      # functions must pin search_path (incl. pg_temp); no definer/mutating
+      # function may be executable by anon/authenticated/PUBLIC; every table with
+      # RLS policies must have RLS enabled.
+      - name: Security-definer audit
+        run: npm run test:security-definer
 
   build:
     name: next build

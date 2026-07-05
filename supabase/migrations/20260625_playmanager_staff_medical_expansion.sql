@@ -482,6 +482,10 @@ end;
 $$;
 
 grant execute on function public.pm_staff_hire_cost(text) to authenticated, service_role;
-grant execute on function public.pm_hire_staff(uuid, text) to authenticated, service_role;
+-- pm_hire_staff is a mutating RPC (debits the wallet, writes pm_staff) that trusts
+-- a caller-supplied p_team_id — service_role-only, like every other mutating pm_*.
+-- (The stale `authenticated` grant here was revoked on live but re-added it in a
+-- from-scratch build; 20260718 also revokes as belt-and-suspenders.)
+grant execute on function public.pm_hire_staff(uuid, text) to service_role;
 grant execute on function public.pm_advance_time(uuid, integer) to service_role;
 grant execute on function public.pm_simulate_league_round(uuid) to service_role;
