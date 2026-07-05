@@ -5,9 +5,8 @@ import { getEafc26PlayerFaceUrl, resolveRealPlayerStats } from './eafc26-dataset
 import { MARKET_TARGETS } from './gameplay';
 import { getPlayManagerNextOpponent } from './ai-opponents';
 import { LISTING_STATUS } from './status';
-import { buildPlayManagerPlayerCardLayout, type PlayManagerPlayerCardLayout } from './player-card';
+import { buildPlayManagerPlayerCardLayout } from './player-card';
 import { getEffectiveRealPlayerTalent, getPlayManagerDisplayAge } from './player-age';
-import type { PlayerCardStatsInput } from './player-card-stats';
 import {
   STAFF_ROLES,
   getMaxStaffLevelForDivision,
@@ -18,554 +17,39 @@ import {
   getStaffWeeklyWage,
   type StaffRoleKey,
 } from './staff';
-
-type CitySquadPlayer = {
-  squadId: number;
-  id: string;
-  name: string;
-  cardDisplayName?: string | null;
-  cardImageUrl?: string | null;
-  nationalityCode?: string | null;
-  cardEditorConfig?: PlayManagerPlayerCardLayout;
-  stats?: PlayerCardStatsInput;
-  position: string;
-  age: number;
-  ovrBase: number;
-  ovrCurrent: number;
-  value: number;
-  valueLabel: string;
-  fatigue: number;
-  morale: number;
-  injuryMatches: number;
-  availability: 'ready' | 'injured';
-  role: 'starter' | 'bench' | 'reserve';
-  lineupSlot: number | null;
-  talent: number;
-  squadNumber: number | null;
-};
-
-type CityMarketPlayer = {
-  key: string;
-  id: string | null;
-  name: string;
-  cardDisplayName?: string | null;
-  cardImageUrl?: string | null;
-  nationalityCode?: string | null;
-  cardEditorConfig?: PlayManagerPlayerCardLayout;
-  stats?: PlayerCardStatsInput;
-  position: string;
-  age: number;
-  ovr: number;
-  talent: number;
-  value: number;
-  valueLabel: string;
-  demand: string;
-  available: boolean;
-  shortlisted: boolean;
-  // Set only for manager-listed players (transfer_market module); drives the
-  // buy flow to pm_buy_listed_player instead of the free-pool buy.
-  listingId?: string | null;
-  sellerTeamName?: string | null;
-};
-
-type CityOutgoingListing = {
-  listingId: string;
-  playerId: string;
-  name: string;
-  position: string;
-  ovr: number;
-  askingPrice: number;
-  askingPriceLabel: string;
-};
+import { pickBestLineup, pickPersistedLineup } from './city-lineup';
+import type {
+  AcademyProspectRow,
+  ArenaFacilityRow,
+  BaseSquadPlayer,
+  CalendarRow,
+  CityOutgoingListing,
+  CupInstanceRow,
+  CupMatchRow,
+  EngagementRow,
+  EventFeedRow,
+  FinanceStateRow,
+  MarketRow,
+  MarketShortlistRow,
+  MatchHistoryRow,
+  MatchSettingsRow,
+  PlayManagerCitySnapshot,
+  PlayManagerCitySnapshotMode,
+  SeasonStateRow,
+  SquadRow,
+  StandingRow,
+  TransactionRow,
+  UntypedSupabaseClient,
+} from './city-data.types';
+// Re-exported so existing callers can keep importing the snapshot type from
+// '@/lib/playmanager/city-data' unchanged.
+export type { PlayManagerCitySnapshot } from './city-data.types';
 
 function normalizeMarketPosition(position: string | null | undefined) {
   const normalized = position?.trim().toUpperCase();
   if (normalized === 'CF') return 'ST';
   return normalized || 'CM';
 }
-
-type CityTransaction = {
-  amount: number;
-  amountLabel: string;
-  reason: string;
-  createdAt: string;
-};
-
-type CityMatchHistory = {
-  round: number;
-  opponent: string;
-  venue: 'Home' | 'Away';
-  score: string;
-  result: 'W' | 'D' | 'L';
-  attendance: number;
-  attendanceLabel: string;
-  income: number;
-  incomeLabel: string;
-  fanMood: number;
-  createdAt: string;
-};
-
-type CityAcademyProspect = {
-  id: string;
-  playerId: string | null;
-  name: string;
-  position: string;
-  age: number;
-  talent: number;
-  ovr: number;
-  potential: number;
-  signingCost: number;
-  signingCostLabel: string;
-};
-
-type CityEventFeedItem = {
-  id: number;
-  category: 'match' | 'medical' | 'finance' | 'academy' | 'media' | 'board' | 'system';
-  accent: 'green' | 'red' | 'gold';
-  title: string;
-  detail: string | null;
-  weekNo: number;
-  dayNo: number;
-  createdAt: string;
-};
-
-type CityFinanceSnapshot = {
-  ticketPrice: number;
-  sponsorTier: 'local' | 'regional' | 'global';
-  sponsorWeeklyAmount: number;
-  sponsorWeeklyAmountLabel: string;
-  weeklyWages: number;
-  weeklyWagesLabel: string;
-  projectedAttendance: number;
-  projectedAttendanceLabel: string;
-  projectedMatchdayIncome: number;
-  projectedMatchdayIncomeLabel: string;
-  stadiumLevel: number;
-  stadiumCapacity: number;
-  stadiumCapacityLabel: string;
-};
-
-type CityStaffMember = {
-  roleKey: StaffRoleKey;
-  name: string;
-  shortName: string;
-  category: 'coaching' | 'scouting' | 'medical' | 'operations';
-  description: string;
-  level: number;
-  maxLevel: number;
-  isHired: boolean;
-  hireCost: number;
-  hireCostLabel: string;
-  upgradeCost: number | null;
-  upgradeCostLabel: string | null;
-  weeklyWage: number;
-  weeklyWageLabel: string;
-  benefitLabel: string;
-};
-
-export type PlayManagerCitySnapshot = {
-  squad: CitySquadPlayer[];
-  starters: CitySquadPlayer[];
-  bench: CitySquadPlayer[];
-  reserves: CitySquadPlayer[];
-  formationLabel: string;
-  academy: CityAcademyProspect[];
-  market: CityMarketPlayer[];
-  outgoingListings: CityOutgoingListing[];
-  transactions: CityTransaction[];
-  matchHistory: CityMatchHistory[];
-  standings: Array<{
-    team: string;
-    pts: number;
-    played: number;
-    formPercent: number;
-  }>;
-  season: {
-    seasonNo: number;
-    isCompleted: boolean;
-    lastFinish: number | null;
-    lastReward: number;
-    lastRewardLabel: string;
-    lastOutcome: 'promoted' | 'relegated' | 'stayed' | null;
-  };
-  clock: {
-    weekNo: number;
-    dayNo: number;
-    totalDays: number;
-    label: string;
-  };
-  eventFeed: CityEventFeedItem[];
-  finance: CityFinanceSnapshot;
-  dailyReward: {
-    canClaim: boolean;
-    streak: number;
-    nextStreak: number;
-    nextReward: number;
-    nextRewardLabel: string;
-  };
-  staff: {
-    members: CityStaffMember[];
-    maxLevelByDivision: number;
-    totalWeeklyWages: number;
-    totalWeeklyWagesLabel: string;
-    bonuses: ReturnType<typeof getStaffBonuses>;
-  };
-  matchSettings: {
-    tacticalStyle: 'balanced' | 'pressing' | 'possession' | 'counter';
-    defensiveLine: 'low' | 'mid' | 'high';
-    tempo: 'controlled' | 'balanced' | 'direct';
-    focusSide: 'left' | 'center' | 'right';
-    readiness: number;
-    injuredCount: number;
-    availableCount: number;
-    avgMorale: number;
-  };
-  nextMatchLabel: string;
-  formPercent: number;
-  upcomingCupMatch: {
-    id: string;
-    cupId: string;
-    templateId: string;
-    cupName: string;
-    round: number;
-    position: number;
-    status: 'pending' | 'ready' | 'completed';
-    startTime: string;
-    opponentTeamId: string;
-    opponentName: string;
-    isHome: boolean;
-  } | null;
-  cups: {
-    id: string;
-    templateId: string;
-    name: string;
-    prizePoolLabel: string;
-    entryFeeLabel: string;
-    maxTeams: number;
-    participantCount: number;
-    isRegistered: boolean;
-    status: 'registration' | 'in_progress' | 'completed';
-  }[];
-};
-
-type PlayManagerCitySnapshotMode = 'full' | 'lineup' | 'light' | 'residence';
-
-type BaseSquadPlayer = Omit<CitySquadPlayer, 'role'> & {
-  normalizedName: string;
-};
-
-type SquadRow = {
-  id: number;
-  shirt_number: number | null;
-  squad_number: number | null;
-  position: string;
-  player: {
-    id: string;
-    normalized_name: string;
-    display_name: string;
-    card_display_name: string | null;
-    primary_position: string | null;
-    card_image_url: string | null;
-    nationality_code: string | null;
-    card_sil_width: number | null;
-    card_sil_height: number | null;
-    card_sil_x: number | null;
-    card_sil_y: number | null;
-    card_sil_opacity: number | null;
-    card_content_y: number | null;
-    card_name_size: number | null;
-    card_stats_scale: number | null;
-    card_stats: PlayerCardStatsInput;
-    is_real: boolean;
-    real_age: number | null;
-    age: number;
-    age_started_total_days: number | null;
-    ovr_base: number;
-    ovr_current: number;
-    current_transfer_value_gel: number;
-    fatigue: number;
-    morale: number;
-    injury_matches: number;
-    status: 'active' | 'injured' | 'retired';
-    talent: number;
-  } | null;
-};
-
-const FORMATION_433_TARGETS = ['GK', 'LB', 'CB', 'CB', 'RB', 'CDM', 'CM', 'CM', 'LW', 'ST', 'RW'] as const;
-
-function normalizePosition(position: string) {
-  const p = position.toUpperCase();
-  if (p === 'LCB' || p === 'RCB') return 'CB';
-  if (p === 'LCM' || p === 'RCM') return 'CM';
-  if (p === 'LWB') return 'LB';
-  if (p === 'RWB') return 'RB';
-  return p;
-}
-
-function canFillRole(playerPosition: string, targetPosition: string) {
-  const position = normalizePosition(playerPosition);
-  if (position === targetPosition) return true;
-  if (targetPosition === 'CB') return position === 'CB';
-  if (targetPosition === 'LB') return position === 'LB' || position === 'CB';
-  if (targetPosition === 'RB') return position === 'RB' || position === 'CB';
-  if (targetPosition === 'CDM') return position === 'CDM' || position === 'CM';
-  if (targetPosition === 'CM') return position === 'CM' || position === 'CAM' || position === 'CDM';
-  if (targetPosition === 'LW') return position === 'LW' || position === 'RW' || position === 'CAM';
-  if (targetPosition === 'RW') return position === 'RW' || position === 'LW' || position === 'CAM';
-  if (targetPosition === 'ST') return position === 'ST' || position === 'CAM' || position === 'LW' || position === 'RW';
-  return false;
-}
-
-function pickBestLineup(baseSquad: BaseSquadPlayer[]) {
-  const available = [...baseSquad];
-  const starters: CitySquadPlayer[] = [];
-
-  FORMATION_433_TARGETS.forEach((targetPosition, index) => {
-    const candidateIndex = available.findIndex((player) => canFillRole(player.position, targetPosition));
-    const bestIndex = available.reduce((selectedIndex, player, playerIndex) => {
-      if (!canFillRole(player.position, targetPosition)) return selectedIndex;
-      if (selectedIndex === -1) return playerIndex;
-      const selected = available[selectedIndex];
-      if (player.ovrCurrent !== selected.ovrCurrent) {
-        return player.ovrCurrent > selected.ovrCurrent ? playerIndex : selectedIndex;
-      }
-      return player.fatigue < selected.fatigue ? playerIndex : selectedIndex;
-    }, candidateIndex);
-
-    if (bestIndex === -1) return;
-    const [selected] = available.splice(bestIndex, 1);
-    starters.push({
-      ...selected,
-      role: 'starter',
-      lineupSlot: index + 1,
-    });
-  });
-
-  const sortedRemaining = available.sort((left, right) => {
-    if (right.ovrCurrent !== left.ovrCurrent) return right.ovrCurrent - left.ovrCurrent;
-    return left.fatigue - right.fatigue;
-  });
-
-  const bench = sortedRemaining.slice(0, 4).map((player, index) => ({
-    ...player,
-    role: 'bench' as const,
-    lineupSlot: 12 + index,
-  }));
-
-  const reserves = sortedRemaining.slice(4).map((player) => ({
-    ...player,
-    role: 'reserve' as const,
-    lineupSlot: null,
-  }));
-
-  return {
-    starters,
-    bench,
-    reserves,
-    squad: [...starters, ...bench, ...reserves],
-  };
-}
-
-function pickPersistedLineup(baseSquad: BaseSquadPlayer[]) {
-  const sorted = [...baseSquad].sort((left, right) => (left.lineupSlot ?? 999) - (right.lineupSlot ?? 999));
-  const starters = sorted
-    .filter((player) => player.lineupSlot !== null && player.lineupSlot <= 11)
-    .map((player) => ({ ...player, role: 'starter' as const }));
-  const bench = sorted
-    .filter((player) => player.lineupSlot !== null && player.lineupSlot >= 12 && player.lineupSlot <= 15)
-    .map((player) => ({ ...player, role: 'bench' as const }));
-  const reserves = sorted
-    .filter((player) => player.lineupSlot === null || player.lineupSlot > 15)
-    .map((player) => ({ ...player, role: 'reserve' as const, lineupSlot: player.lineupSlot && player.lineupSlot <= 15 ? null : player.lineupSlot }));
-
-  return {
-    starters,
-    bench,
-    reserves,
-    squad: [...starters, ...bench, ...reserves],
-  };
-}
-
-type MarketRow = {
-  id: string;
-  normalized_name: string;
-  display_name: string;
-  card_display_name: string | null;
-  primary_position: string | null;
-  card_image_url: string | null;
-  nationality_code: string | null;
-  card_sil_width: number | null;
-  card_sil_height: number | null;
-  card_sil_x: number | null;
-  card_sil_y: number | null;
-  card_sil_opacity: number | null;
-  card_content_y: number | null;
-  card_name_size: number | null;
-  card_stats_scale: number | null;
-  card_stats: PlayerCardStatsInput;
-  is_real: boolean;
-  talent: number;
-  ea_fc_ovr: number | null;
-  real_age: number | null;
-  age: number;
-  age_started_total_days: number | null;
-  ovr_current: number;
-  current_transfer_value_gel: number;
-  owner_id: string | null;
-};
-
-type TransactionRow = {
-  amount: number;
-  reason: string;
-  created_at: string;
-};
-
-type StandingRow = {
-  club_name: string;
-  played: number;
-  points: number;
-  form_percent: number;
-  row_order: number;
-};
-
-type MatchHistoryRow = {
-  round_no: number;
-  opponent_name: string;
-  venue: 'Home' | 'Away';
-  scored: number;
-  conceded: number;
-  result: 'W' | 'D' | 'L';
-  attendance: number;
-  income: number;
-  fan_mood: number;
-  created_at: string;
-};
-
-type SeasonStateRow = {
-  season_no: number;
-  is_completed: boolean;
-  last_finish: number | null;
-  last_reward: number;
-  last_outcome: 'promoted' | 'relegated' | 'stayed' | null;
-};
-
-type AcademyProspectRow = {
-  id: string;
-  player_id: string | null;
-  normalized_name: string;
-  display_name: string;
-  position: string;
-  age: number;
-  talent: number;
-  ovr_base: number;
-  potential_ovr: number;
-  signing_cost: number;
-};
-
-type MarketShortlistRow = {
-  player_key: string;
-};
-
-type MatchSettingsRow = {
-  tactical_style: 'balanced' | 'pressing' | 'possession' | 'counter';
-  defensive_line: 'low' | 'mid' | 'high';
-  tempo: 'controlled' | 'balanced' | 'direct';
-  focus_side: 'left' | 'center' | 'right';
-};
-
-type CalendarRow = {
-  week_no: number;
-  day_no: number;
-  total_days: number;
-};
-
-type EventFeedRow = {
-  id: number;
-  category: CityEventFeedItem['category'];
-  accent: CityEventFeedItem['accent'];
-  title: string;
-  detail: string | null;
-  week_no: number;
-  day_no: number;
-  created_at: string;
-};
-
-type FinanceStateRow = {
-  ticket_price: number;
-  sponsor_tier: 'local' | 'regional' | 'global';
-  sponsor_weekly_amount: number;
-};
-
-type ArenaFacilityRow = {
-  level: number;
-};
-
-type EngagementRow = {
-  streak: number;
-  last_claim_day: number;
-};
-
-type CupTemplateRow = {
-  id: string;
-  name: string;
-  prize_pool: number;
-  entry_fee: number;
-  max_teams: number;
-};
-
-type CupParticipantRow = {
-  team_id: string;
-};
-
-type CupInstanceRow = {
-  id: string;
-  status: 'registration' | 'in_progress' | 'completed';
-  pm_cup_templates: CupTemplateRow | CupTemplateRow[] | null;
-  pm_cup_participants: CupParticipantRow[] | null;
-};
-
-type CupMatchTeamRow = {
-  id?: string;
-  name: string;
-};
-
-type CupMatchInstanceTemplateRow = {
-  id: string;
-  name: string;
-};
-
-type CupMatchInstanceRow = {
-  id?: string;
-  template_id?: string;
-  status: 'registration' | 'in_progress' | 'completed';
-  pm_cup_templates: CupMatchInstanceTemplateRow | CupMatchInstanceTemplateRow[] | null;
-};
-
-type CupMatchRow = {
-  id: string;
-  cup_instance_id: string;
-  round: number;
-  position: number;
-  status: 'pending' | 'ready' | 'completed';
-  start_time: string;
-  team1_id: string;
-  team2_id: string;
-  team1: CupMatchTeamRow | CupMatchTeamRow[] | null;
-  team2: CupMatchTeamRow | CupMatchTeamRow[] | null;
-  pm_cup_instances: CupMatchInstanceRow | CupMatchInstanceRow[] | null;
-};
-
-type UntypedSupabaseQuery = PromiseLike<{ data: unknown; error: unknown }> & {
-  select: (columns: string) => UntypedSupabaseQuery;
-  or: (filters: string) => UntypedSupabaseQuery;
-  eq: (column: string, value: unknown) => UntypedSupabaseQuery;
-  in: (column: string, values: readonly string[]) => UntypedSupabaseQuery;
-  order: (column: string, options?: { ascending?: boolean }) => UntypedSupabaseQuery;
-};
-
-type UntypedSupabaseClient = {
-  from: (table: string) => UntypedSupabaseQuery;
-};
 
 function formatAttendance(value: number) {
   if (value >= 1000) {
@@ -1235,17 +719,17 @@ export async function getPlayManagerCitySnapshot(
         };
       }).filter((value): value is NonNullable<typeof value> => value !== null);
 
-      const championsCup = mapped.find((cup) => cup.templateId === 'champions_cup');
-      const openCup = mapped.find((cup) => cup.status === 'registration' && cup.templateId !== 'champions_cup');
-      const inProgressCup = mapped.find((cup) => cup.status === 'in_progress' && cup.templateId !== 'champions_cup');
-      const completedCup = mapped.find((cup) => cup.status === 'completed' && cup.templateId !== 'champions_cup');
+            return mapped.sort((a, b) => {
+        if (a.templateId === 'champions_cup' && b.templateId !== 'champions_cup') return -1;
+        if (b.templateId === 'champions_cup' && a.templateId !== 'champions_cup') return 1;
 
-      const result = [];
-      if (championsCup) result.push(championsCup);
-      if (openCup) result.push(openCup);
-      if (inProgressCup) result.push(inProgressCup);
-      if (completedCup) result.push(completedCup);
-      return result;
+        const weights: Record<string, number> = {
+          registration: 1,
+          in_progress: 2,
+          completed: 3,
+        };
+        return (weights[a.status] ?? 4) - (weights[b.status] ?? 4);
+      });
     })(),
   };
 }
