@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
   const text = (body.data.text ?? "").trim().slice(0, 1000);
   if (!text) return NextResponse.json({ error: "empty" }, { status: 400 });
-  const target = (body.data.targetLang ?? "áƒ¥áƒáƒ áƒ—áƒ£áƒšáƒ˜").slice(0, PROFILE_SHORT_TEXT_MAX_LENGTH);
+  const target = (body.data.targetLang ?? "ქართული").slice(0, PROFILE_SHORT_TEXT_MAX_LENGTH);
 
   try {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
         messages: [
           {
             role: "system",
-            content: `áƒ—áƒáƒ áƒ’áƒ›áƒœáƒ” áƒ¨áƒ”áƒ›áƒ“áƒ”áƒ’áƒ˜ áƒ¢áƒ”áƒ¥áƒ¡áƒ¢áƒ˜ ${target} áƒ”áƒœáƒáƒ–áƒ”. áƒ›áƒ®áƒáƒšáƒáƒ“ áƒ—áƒáƒ áƒ’áƒ›áƒáƒœáƒ˜ áƒ“áƒáƒáƒ‘áƒ áƒ£áƒœáƒ”, áƒ¡áƒ®áƒ•áƒ áƒáƒ áƒáƒ¤áƒ”áƒ áƒ˜.`,
+            content: `თარგმნე შემდეგი ტექსტი ${target} ენაზე. მხოლოდ თარგმანი დააბრუნე, სხვა არაფერი.`,
           },
           { role: "user", content: text },
         ],

@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
           },
           {
             role: "user",
-            content: `áƒ—áƒáƒ›áƒáƒ¨áƒ˜: ${game ?? "Gaming"}\náƒ¤áƒáƒ áƒ›áƒáƒ¢áƒ˜: ${format}\n\náƒ›áƒáƒœáƒáƒ¬áƒ˜áƒšáƒ”áƒ”áƒ‘áƒ˜:\n${participantText}`,
+            content: `თამაში: ${game ?? "Gaming"}\nფორმატი: ${format}\n\nმონაწილეები:\n${participantText}`,
           },
         ],
         max_tokens: 400,
