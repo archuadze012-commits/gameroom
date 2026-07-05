@@ -57,9 +57,9 @@ npm run dev                         # http://localhost:3000
 - ✅ Drizzle სქემა Phase 1 ცხრილებით + seed
 - ✅ Supabase server/client/proxy auth wiring
 - ✅ Single-elim bracket generator
-- ⚠️ ფორმები ჯერ server actions-თან მიბმული არ არის — UI mock data-ზე render-დება
-- ⚠️ RLS policies Supabase-ში ჯერ არ არის ჩაყრილი
-- ⚠️ რეალური ჩათი Phase 2-ში გადადის (Supabase Realtime)
+- ✅ ფორმები server actions-თან მიბმულია (PlayManager-ის market/transfer/staff/training/lineup და სხვ.)
+- ✅ RLS policies ჩაყრილია — sensitive per-team data (wallets, transactions, offers, staff, season) owner-scoped `auth.uid()`-ზე; public reads (leaderboards, standings, active listings) განზრახ ღიაა
+- ✅ ჩათი მუშაობს — global + direct messages, blocklist + toxicity moderation და per-user mutes სერვერის მხარეს (`src/lib/moderate.ts`, `user_mutes`)
 
 დეტალები: [docs/FEATURES.md](docs/FEATURES.md)
 
