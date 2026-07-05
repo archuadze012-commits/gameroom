@@ -63,7 +63,11 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
     if (state.message) {
       if (state.success) {
         toast.success(state.message);
+        // Reacting to a server-action result delivered via useActionState — the
+        // new post arrives as re-rendered state, so prepending it here is the
+        // intended pattern, not avoidable derived state.
         if (state.newPost) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setPosts((prev) => [state.newPost!, ...prev]);
         }
         setDraft("");

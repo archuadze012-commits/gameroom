@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Cropper from "react-easy-crop";
 import { Button } from "@/components/ui/button";
 import { getCroppedImg, type Area } from "@/lib/crop-image";
 import { ZoomIn, ZoomOut, Check, X } from "lucide-react";
+import { useHydrated } from "@/lib/use-hydrated";
 
 type Props = {
   imageSrc: string;
@@ -24,11 +25,7 @@ export function ImageCropModal({ imageSrc, aspect, shape = "rect", onConfirm, on
     setCroppedAreaPixels(pixels);
   }, []);
 
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useHydrated();
 
   const handleConfirm = async () => {
     if (!croppedAreaPixels) return;

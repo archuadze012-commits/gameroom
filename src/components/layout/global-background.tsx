@@ -50,8 +50,11 @@ interface Bolt {
 export function GlobalBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const lightningRef = useRef<LightningBoltState[]>([]);
+  // Weather is hardcoded to "storm" (dynamic weather removed per user request),
+  // so both the ref and the render state are simply initialised to it — no
+  // mount effect needed.
   const weatherRef = useRef<WeatherState>("storm");
-  const [weatherState, setWeatherState] = useState<WeatherState>("storm");
+  const [weatherState] = useState<WeatherState>("storm");
 
   // The lobby renders a full-screen opaque scene on top of this background, so
   // the storm/lightning canvas is invisible there — yet on mobile *landscape*
@@ -63,12 +66,6 @@ export function GlobalBackground() {
   const pathname = usePathname();
   const isLobby = pathname?.endsWith("/lobby") ?? false;
   const isPlayManager = pathname?.startsWith("/playmanager") ?? false;
-
-  useEffect(() => {
-    // Weather logic removed per user request, hardcoded to storm
-    weatherRef.current = "storm";
-    setWeatherState("storm");
-  }, []);
 
   useEffect(() => {
     if (isLobby) return;

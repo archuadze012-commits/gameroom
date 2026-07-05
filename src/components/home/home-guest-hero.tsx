@@ -221,6 +221,9 @@ function GoderdziIntro({
 
   useEffect(() => {
     const sentence = GODERDZI_SENTENCES[sentenceIdx];
+    // Typewriter animation: reset the visible text when the sentence changes,
+    // then drive it via timers below. The reset is intrinsic to the animation.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDisplayed("");
     setFading(false);
     let tid: ReturnType<typeof setTimeout>;
@@ -396,6 +399,8 @@ function LeoGuide({ onBack }: { onBack: () => void }) {
   const sentences = splitSentences(s.body);
 
   useEffect(() => {
+    // Reset the per-step dialogue animation when the wizard step changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSentIdx(0);
     setDisplayed("");
     setBubbleFading(false);
@@ -404,6 +409,9 @@ function LeoGuide({ onBack }: { onBack: () => void }) {
   useEffect(() => {
     const sentence = sentences[sentIdx] ?? "";
     play(LEO_AUDIO[`${s.key}-${sentIdx}`] ?? "");
+    // Typewriter animation: reset the visible text when the sentence changes,
+    // then drive it via the tick timer below.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDisplayed("");
     setBubbleFading(false);
     let i = 0;

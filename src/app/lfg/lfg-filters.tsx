@@ -2,6 +2,7 @@
 
 import React, { useCallback, useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useHydrated } from "@/lib/use-hydrated";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Filter, X, Radio, ChevronDown, Search } from "lucide-react";
 import { Label } from "@/components/ui/label";
@@ -37,10 +38,8 @@ export function LfgFilters({ favoriteSlugs = [] }: { favoriteSlugs?: string[] })
   const [pickerOpen, setPickerOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [pickerRect, setPickerRect] = useState<{ top: number; left: number; width: number } | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useHydrated();
   const btnRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (!pickerOpen) return;

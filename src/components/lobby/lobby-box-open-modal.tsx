@@ -386,6 +386,9 @@ export function LobbyBoxOpenModal({
 
   useEffect(() => {
     if (phase !== "spinning") {
+      // Not spinning → clear the highlighted center item; the value below is
+      // measured from layout each frame via requestAnimationFrame.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCenterIndex(null);
       return;
     }

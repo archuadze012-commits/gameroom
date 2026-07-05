@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useHydrated } from "@/lib/use-hydrated";
 import Link from "next/link";
 import { Monitor, Smartphone, Gamepad2, ChevronDown, Search } from "lucide-react";
 import { crackedGames, mockGames, type CrackedGame } from "@/lib/mock-data";
@@ -134,7 +135,7 @@ export default function CrackedGamesPage() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerRect, setPickerRect] = useState<{ top: number; left: number; width: number } | null>(null);
   const [genreSearch, setGenreSearch] = useState("");
-  const [mounted, setMounted] = useState(false);
+  const mounted = useHydrated();
   const genreBtnRef = useRef<HTMLButtonElement>(null);
   const [dbGames, setDbGames] = useState<CrackedGame[]>([]);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
@@ -142,7 +143,6 @@ export default function CrackedGamesPage() {
   const [favCounts, setFavCounts] = useState<Record<string, number>>({});
   const [dbRosterGames, setDbRosterGames] = useState<typeof mockGames>([]);
 
-  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (!pickerOpen) return;

@@ -1,35 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { RotateCcw } from "lucide-react";
 
+// Orientation/viewport is external browser state, so read it via
+// useSyncExternalStore rather than syncing into local state from an effect.
+function subscribeOrientation(callback: () => void) {
+  window.addEventListener("resize", callback);
+  window.addEventListener("orientationchange", callback);
+  return () => {
+    window.removeEventListener("resize", callback);
+    window.removeEventListener("orientationchange", callback);
+  };
+}
+
+// portrait-only guard on touch devices — no auto-fullscreen, no orientation lock.
+function getPortraitTouchSnapshot() {
+  return navigator.maxTouchPoints > 0 && window.innerHeight > window.innerWidth;
+}
+
+function getServerSnapshot() {
+  return false;
+}
+
 export function LobbyOrientationGuard({ enabled = false }: { enabled?: boolean }) {
-  const [showRotate, setShowRotate] = useState(false);
-
-  useEffect(() => {
-    if (!enabled) {
-      setShowRotate(false);
-      return;
-    }
-
-    const isTouch = () => navigator.maxTouchPoints > 0;
-
-    const check = () => {
-      if (!isTouch()) return setShowRotate(false);
-      const portrait = window.innerHeight > window.innerWidth;
-      setShowRotate(portrait);
-
-      // portrait-only guard — no auto-fullscreen, no orientation lock
-    };
-
-    check();
-    window.addEventListener("resize", check);
-    window.addEventListener("orientationchange", check);
-    return () => {
-      window.removeEventListener("resize", check);
-      window.removeEventListener("orientationchange", check);
-    };
-  }, [enabled]);
+  const isPortraitTouch = useSyncExternalStore(subscribeOrientation, getPortraitTouchSnapshot, getServerSnapshot);
+  const showRotate = enabled && isPortraitTouch;
 
   if (!showRotate) return null;
 
