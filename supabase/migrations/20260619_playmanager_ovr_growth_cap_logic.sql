@@ -1,6 +1,11 @@
+-- returns integer (not smallint): later migrations 20260620/20260629 redefine
+-- this returning integer, and create-or-replace cannot change a return type — so
+-- a from-scratch replay of the tree failed here. Aligning the original to integer
+-- (the live-DB type) keeps all three definitions consistent. The body still
+-- yields a smallint value, which widens to integer on return.
 create or replace function public.pm_player_ovr_growth_cap(
   p_talent smallint
-) returns smallint language sql immutable as $$
+) returns integer language sql immutable as $$
   select case
     when p_talent = 10 then 25
     when p_talent = 9 then 20

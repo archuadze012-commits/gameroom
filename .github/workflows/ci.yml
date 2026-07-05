@@ -45,6 +45,21 @@ jobs:
       - name: Integration tests
         run: npm run test:integration
 
+  migrations:
+    name: migration replay
+    runs-on: ubuntu-latest
+    # Replays every supabase/migrations/*.sql against an in-process Postgres
+    # (pglite, no Docker) to prove the tree builds a database from scratch.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: Replay migrations
+        run: npm run test:migrations
+
   build:
     name: next build
     runs-on: ubuntu-latest
