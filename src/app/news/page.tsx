@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { Newspaper, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
-import { DisplayHeading } from "@/components/ui/display-heading";
 import { Pill } from "@/components/ui/pill";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { format } from "date-fns";

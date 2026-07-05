@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Ghost, Home, Users } from "lucide-react";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { DisplayHeading } from "@/components/ui/display-heading";

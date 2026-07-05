@@ -1,11 +1,6 @@
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
-import Link from "next/link";
-import { ArrowLeft, Users, Rocket } from "lucide-react";
 import { mockGames } from "@/lib/mock-data";
-import { DisplayHeading } from "@/components/ui/display-heading";
-import { Pill } from "@/components/ui/pill";
-import { ChevronButton } from "@/components/ui/chevron-button";
 import { LobbyShell } from "@/components/lobby/lobby-shell";
 import { LobbyStage } from "@/components/lobby/lobby-stage";
 import { LobbyOrientationGuard } from "@/components/lobby/lobby-orientation";
@@ -24,8 +19,6 @@ const LOBBY_BG: Record<string, string> = {
   "pubg-mobile": "/lobbies/pubg-mobile-optimized.jpg",
 };
 
-const cutLg = "polygon(0 0, calc(100% - 32px) 0, 100% 32px, 100% 100%, 0 100%)";
-const cardBorder = "linear-gradient(135deg, rgba(139,92,246,0.55), rgba(192,38,211,0.5))";
 const WEBVIEW_USER_AGENT_RE = /(; wv\)|Electron|CEF|WebView|FBAN|FBAV|Instagram|Line\/|MicroMessenger)/i;
 
 type LobbyProfileRow = Pick<

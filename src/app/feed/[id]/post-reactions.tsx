@@ -65,7 +65,7 @@ export function PostReactions({ postId, initialCounts, initialMine, hideHeading 
     if (pending) return;
     const had = mine.has(key);
     setPending(key);
-    setMine((prev) => { const n = new Set(prev); had ? n.delete(key) : n.add(key); return n; });
+    setMine((prev) => { const n = new Set(prev); if (had) n.delete(key); else n.add(key); return n; });
     setCounts((prev) => ({ ...prev, [key]: Math.max(0, (prev[key] ?? 0) + (had ? -1 : 1)) }));
     try {
       const res = await fetch(`/api/posts/${postId}/reactions`, {
@@ -75,7 +75,7 @@ export function PostReactions({ postId, initialCounts, initialMine, hideHeading 
       });
       if (!res.ok) throw new Error();
     } catch {
-      setMine((prev) => { const n = new Set(prev); had ? n.add(key) : n.delete(key); return n; });
+      setMine((prev) => { const n = new Set(prev); if (had) n.add(key); else n.delete(key); return n; });
       setCounts((prev) => ({ ...prev, [key]: Math.max(0, (prev[key] ?? 0) + (had ? 1 : -1)) }));
     } finally {
       setPending(null);

@@ -7,7 +7,6 @@ import { DownloadButton } from "./download-button";
 import { AdminUrlEditor } from "./admin-url-editor";
 import { AdminDeleteButton } from "./delete-button";
 import { YouTubeEmbed } from "@/components/youtube-embed";
-import { DisplayHeading } from "@/components/ui/display-heading";
 
 function getObjectPosition(url?: string) {
   if (!url) return "center";

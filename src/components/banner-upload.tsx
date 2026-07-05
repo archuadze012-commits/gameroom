@@ -93,6 +93,7 @@ export function BannerUpload({ isOwner, userId, initialBannerUrl }: BannerUpload
       )}
       <div className="relative h-40 overflow-hidden">
         {bannerSrc ? (
+          // eslint-disable-next-line @next/next/no-img-element -- preview of a client-side data/object URL, no fixed dimensions
           <img src={bannerSrc} alt="banner" className="h-full w-full object-cover" />
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-[#0d0a2e] via-[#1a0533] to-[#0a1a2e]" />

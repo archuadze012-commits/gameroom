@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { DoorOpen, Lock, MapPin, Users as UsersIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ka } from "date-fns/locale";

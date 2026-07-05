@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { Dumbbell, Zap, Sliders } from 'lucide-react';
 import { PlayManagerBuildingShell } from '@/components/playmanager/playmanager-building-shell';
-import { PmCard, PmCardHead, PmPill, PmAction, PmGauge, PmPhotoCard } from '@/components/playmanager/pm-cards';
+import { PmCard, PmCardHead, PmPill, PmAction, PmGauge } from '@/components/playmanager/pm-cards';
 import { StaffContextGrid } from '@/components/playmanager/staff-context-grid';
 import { type EditableCityBuilding } from '@/components/playmanager/playmanager-city-editor';
 import { type PlayManagerPlayerActionResult } from '@/app/playmanager/actions/action-helpers';

@@ -125,7 +125,7 @@ export function HomeGuestHero({ headline, logoUrl }: Props) {
       onCallLeo={() => setView("leo")}
     />
   ) : (
-    <LeoGuide onBack={() => setView("goderdzi")} />
+    <LeoGuide />
   );
 }
 
@@ -387,7 +387,7 @@ function splitSentences(text: string): string[] {
   return text.match(/[^.!?]+[.!?]+/g)?.map((s) => s.trim()).filter(Boolean) ?? [text];
 }
 
-function LeoGuide({ onBack }: { onBack: () => void }) {
+function LeoGuide() {
   const [step, setStep] = useState(0);
   const [sentIdx, setSentIdx] = useState(0);
   const [displayed, setDisplayed] = useState("");

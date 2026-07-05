@@ -17,7 +17,6 @@ type CommentItem = {
 };
 
 export function NewsCommentsClient({
-  articleId,
   articleSlug,
   initialComments,
   currentUser,

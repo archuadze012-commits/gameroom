@@ -8,7 +8,7 @@ import { ensureArticlesSchema } from "@/lib/articles-migrate";
 
 const ALLOWED = ["admin", "moderator", "journalist"];
 
-function slugify(text: string) {
+function slugify() {
   return "article-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6);
 }
 
@@ -36,7 +36,7 @@ export async function createArticle(formData: FormData) {
 
   if (!title || !content) throw new Error("სათაური და კონტენტი სავალდებულოა");
 
-  const slug = slugify(title);
+  const slug = slugify();
   const publishedAt = publish ? new Date().toISOString() : null;
 
   // Ensure schema exists in the actual app DB (idempotent, runs once per process)

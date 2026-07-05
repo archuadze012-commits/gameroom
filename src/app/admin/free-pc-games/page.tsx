@@ -95,7 +95,6 @@ const ACCENT_OPTIONS = [
   { label: "ღია მწვანე", value: "from-lime-500/25 to-lime-500/5" },
 ];
 
-const BLANK_REQS = { os: "", cpu: "", ram: "", gpu: "", storage: "" };
 
 const ALL_GENRES = [
   "RPG", "Action", "Open World", "FPS", "Battle Royale", "Strategy",
@@ -223,6 +222,8 @@ export default function AdminCrackedGamesPage() {
         }
       } catch {}
     })();
+    // Mount-only: loads games once and (if ?edit=<id>) auto-opens that editor.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function startEdit(game: CrackedGame) {

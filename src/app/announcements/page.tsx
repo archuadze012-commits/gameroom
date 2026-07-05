@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { Bell, Users, UserCheck, MessageSquare, Trophy, Gamepad2, Info, AlertTriangle, AlertOctagon, CheckCheck, Loader2, type LucideIcon } from "lucide-react";
 import { PushBell } from "@/components/push-bell";
-import { DisplayHeading } from "@/components/ui/display-heading";
 import { Pill } from "@/components/ui/pill";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/page-header";

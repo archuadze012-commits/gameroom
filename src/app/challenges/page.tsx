@@ -1,7 +1,6 @@
 import { Trophy, Flame, Target } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { ChallengesList } from "@/components/challenges-list";
-import { DisplayHeading } from "@/components/ui/display-heading";
 import { PageHeader } from "@/components/page-header";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 

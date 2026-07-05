@@ -1,20 +1,13 @@
 import Link from "next/link";
-import { Trophy, Users, Calendar, Plus, Sparkles } from "lucide-react";
+import { Trophy, Users, Calendar, Plus } from "lucide-react";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { format } from "date-fns";
-import { DisplayHeading } from "@/components/ui/display-heading";
 import { PageHeader } from "@/components/page-header";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 import { unstable_cache } from "next/cache";
 
 export const metadata = { title: "ჩემპიონატები" };
 
-const statusTone: Record<string, "online" | "amber" | "live" | "neutral"> = {
-  open:      "online",
-  checkin:   "amber",
-  live:      "live",
-  completed: "neutral",
-};
 const statusLabel: Record<string, string> = {
   open: "რეგისტრაცია",
   checkin: "Check-in",

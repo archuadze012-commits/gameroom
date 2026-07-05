@@ -57,8 +57,8 @@ function initialOf(profile: Profile | null) {
 function ChatAvatar({ profile, size = 38 }: { profile: Profile | null; size?: number }) {
   const url = profile?.avatar_url;
   if (url) {
-    // eslint-disable-next-line @next/next/no-img-element
     return (
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={url}
         alt=""

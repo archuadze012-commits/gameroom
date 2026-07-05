@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useHydrated } from "@/lib/use-hydrated";
 import Link from "next/link";
-import { Monitor, Smartphone, Gamepad2, ChevronDown, Search } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 import { crackedGames, mockGames, type CrackedGame } from "@/lib/mock-data";
 
 function getObjectPosition(url?: string) {
@@ -117,19 +117,6 @@ function genreKa(g: string): string {
   return GENRE_KA_MAP[g.toLowerCase()] ?? g;
 }
 
-const GENRE_KA: Record<string, string> = Object.fromEntries(
-  Object.entries(GENRE_KA_MAP).map(([k, v]) => [k, v])
-);
-
-const PLATFORM_ICON: Record<string, React.ReactNode> = {
-  PC: <Monitor className="h-3 w-3" />,
-  Mobile: <Smartphone className="h-3 w-3" />,
-  PS5: <Gamepad2 className="h-3 w-3" />,
-  PS4: <Gamepad2 className="h-3 w-3" />,
-  Xbox: <Gamepad2 className="h-3 w-3" />,
-  Switch: <Gamepad2 className="h-3 w-3" />,
-};
-
 export default function CrackedGamesPage() {
   const [activeGenre, setActiveGenre] = useState("ყველა");
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -139,9 +126,9 @@ export default function CrackedGamesPage() {
   const genreBtnRef = useRef<HTMLButtonElement>(null);
   const [dbGames, setDbGames] = useState<CrackedGame[]>([]);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
-  const [userFavSlugs, setUserFavSlugs] = useState<string[]>([]);
-  const [favCounts, setFavCounts] = useState<Record<string, number>>({});
-  const [dbRosterGames, setDbRosterGames] = useState<typeof mockGames>([]);
+  const [, setUserFavSlugs] = useState<string[]>([]);
+  const [, setFavCounts] = useState<Record<string, number>>({});
+  const [, setDbRosterGames] = useState<typeof mockGames>([]);
 
 
   useEffect(() => {

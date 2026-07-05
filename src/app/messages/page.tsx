@@ -1,10 +1,9 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { MessageSquare, Inbox, ArrowRight, Sparkles } from "lucide-react";
+import { MessageSquare, Sparkles } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { UserAvatar } from "@/components/user-avatar";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { DisplayHeading } from "@/components/ui/display-heading";
 import { ChevronButton } from "@/components/ui/chevron-button";
 

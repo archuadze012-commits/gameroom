@@ -133,6 +133,7 @@ export function InviteButton({ username, displayName, gameSlugs }: InviteButtonP
                 >
                   {g.coverUrl && (
                     <div className="absolute inset-0 opacity-10 transition-opacity group-hover:opacity-20">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- decorative cover from an arbitrary external URL */}
                       <img src={g.coverUrl} alt="" className="h-full w-full object-cover" />
                     </div>
                   )}

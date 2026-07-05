@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type Props = {
   username: string;
@@ -9,12 +8,6 @@ type Props = {
   avatarUrl?: string | null;
   size?: "sm" | "md" | "lg";
   className?: string;
-};
-
-const sizeMap = {
-  sm: "h-8 w-8",
-  md: "h-10 w-10",
-  lg: "h-14 w-14",
 };
 
 export function UserAvatar({ username, displayName, avatarUrl, size = "md", className }: Props) {

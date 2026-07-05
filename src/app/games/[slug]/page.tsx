@@ -30,8 +30,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 
 
 const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
-const cardBorder = "linear-gradient(135deg, rgba(124,58,237,0.55), rgba(14,165,233,0.42))";
-const PUBG_COMMAND_GAMES = new Set<string>(["pubg-mobile", "pubg-battlegrounds", "cs2"]);
 const LOBBY_GAMES = new Set<string>(["pubg-mobile"]);
 
 function pubgCardDelay(index: number) {

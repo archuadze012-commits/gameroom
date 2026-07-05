@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { startTransition, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import { ChevronDown, Crosshair, DoorOpen, Gift, Swords, Target, Trophy } from "lucide-react";
 import dynamic from "next/dynamic";
 

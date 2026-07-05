@@ -5,7 +5,6 @@ import { unstable_cache } from "next/cache";
 import { UserAvatar } from "@/components/user-avatar";
 import { VerifiedBadge } from "@/components/verified-badge";
 import { xpToLevel } from "@/lib/badges";
-import { DisplayHeading } from "@/components/ui/display-heading";
 import { PageHeader } from "@/components/page-header";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 

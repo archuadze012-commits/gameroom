@@ -64,13 +64,6 @@ const OWNED_BY_TAB = {
   name_card:  OWNED_NAME_CARD_IDS,
 } as const;
 
-const TIER_RING: Record<LobbyInventoryTier, string> = {
-  common:    "ring-[var(--gr-text-mute)]",
-  rare:      "ring-[var(--gr-cyan-glow)]",
-  epic:      "ring-[var(--gr-violet-hi)]",
-  legendary: "ring-[var(--gr-amber)]",
-};
-
 const TIER_GRADIENT: Record<LobbyInventoryTier, string> = {
   common:    "from-slate-700 to-slate-900",
   rare:      "from-cyan-700 to-cyan-950",
@@ -83,20 +76,6 @@ const TIER_LABEL: Record<LobbyInventoryTier, string> = {
   rare:      "იშვიათი",
   epic:      "ეპიკური",
   legendary: "ლეგენდარული",
-};
-
-const TIER_BORDER: Record<LobbyInventoryTier, string> = {
-  common:    "border-slate-800",
-  rare:      "border-cyan-500/40",
-  epic:      "border-violet-500/40",
-  legendary: "border-amber-500/40",
-};
-
-const TIER_BG: Record<LobbyInventoryTier, string> = {
-  common:    "bg-slate-950/40",
-  rare:      "bg-cyan-950/30",
-  epic:      "bg-violet-950/30",
-  legendary: "bg-amber-950/20",
 };
 
 const TIER_GLOW: Record<LobbyInventoryTier, string> = {
@@ -135,7 +114,6 @@ const TABS: { id: LobbyInventoryTab; label: string; icon: typeof User; items: Lo
   { id: "name_card",  label: "Name Card",icon: CreditCard, items: NAME_CARD_ITEMS },
 ];
 
-const cutSm = "polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%)";
 
 type DbInventoryProp = { id: string; name: string; tier: string; image_url: string | null; metadata?: Record<string, unknown> };
 

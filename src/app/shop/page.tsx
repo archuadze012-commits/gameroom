@@ -1,17 +1,12 @@
 import Link from "next/link";
-import { ArrowRight, Crown, ShieldCheck, ShoppingBag, Sparkles } from "lucide-react";
+import { ShoppingBag, Sparkles } from "lucide-react";
 import { mockGames } from "@/lib/mock-data";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getWallet } from "@/lib/wallet/queries";
 import { getGlobalShopItems } from "@/lib/shop/queries";
-import { getActiveShopProducts } from "@/lib/shop-products/queries";
 import { ShopGrid } from "@/components/shop/shop-grid";
-import { ShopProductCard } from "@/components/shop/shop-product-card";
 import { LobbyCurrencyStrip } from "@/components/lobby/lobby-currency-strip";
-import { DisplayHeading } from "@/components/ui/display-heading";
-import { Button } from "@/components/ui/button";
-import { formatGel, STATUS_LABELS } from "@/lib/shop-products/types";
 import { PageHeader } from "@/components/page-header";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 
@@ -38,10 +33,9 @@ export default async function ShopPage({
     favSlugs = data?.favorite_game_slugs ?? [];
   }
 
-  const [globalItems, wallet, shopProducts] = await Promise.all([
+  const [globalItems, wallet] = await Promise.all([
     getGlobalShopItems(user?.id ?? null),
     user ? getWallet(user.id) : Promise.resolve({ nc_balance: 0, pro_balance: 0 }),
-    getActiveShopProducts(),
   ]);
 
   const favoriteGames = favSlugs.length > 0
@@ -49,7 +43,6 @@ export default async function ShopPage({
     : mockGames;
 
   const displayItems = isMine ? globalItems.filter((i) => i.owned) : globalItems;
-  const featuredProduct = shopProducts[0];
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">

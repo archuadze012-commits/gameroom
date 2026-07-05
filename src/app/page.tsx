@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageCircle, Search, MessageSquare, Bell, Gamepad2, ShoppingBag, Users, Trophy, Flame, Zap, Building2, ArrowRight } from "lucide-react";
+import { MessageCircle, Search, MessageSquare, Bell, Gamepad2, ShoppingBag, Flame, Building2, ArrowRight } from "lucide-react";
 import { mockGames, crackedGames } from "@/lib/mock-data";
 import { HomeNotificationsWidget } from "@/components/home-notifications-widget";
 import { HomeSearchWidget } from "@/components/home-search-widget";

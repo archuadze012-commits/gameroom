@@ -36,12 +36,6 @@ export function ShopGrid({ items, hasSession, variant = "global", premiumBoxes =
     : items.filter((i) => i.category === activeCategory);
   const activeMeta = categories.find((c) => c.key === activeCategory);
   const activeCount = activeCategory === "premium_shop" ? premiumBoxes.length : filtered.length;
-  const activeDescription = activeCategory === "premium_shop"
-    ? "აქ ჩანს მხოლოდ ორი სპეციალური crate."
-    : activeCategory === "combo"
-      ? "აქ ერთ item-ში უკვე გაერთიანებულია ჩარაქტერი და სრულად დადგმული lobby scene."
-    : "Clean marketplace layout with a stronger product stage and compact controls.";
-
   return (
     <section>
       {/* Category tabs */}

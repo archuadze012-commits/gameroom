@@ -100,9 +100,6 @@ export function GlobalBackground() {
     // thunder ripple
     let rippleActive = false;
     let rippleProgress = 0;
-    let rippleX = 0;
-    let rippleY = 0;
-    let rippleColor = "255,255,255";
 
     // pending companion bolts for double/triple strike
     const pendingStrikes: { delay: number; color: string }[] = [];
@@ -284,9 +281,6 @@ export function GlobalBackground() {
       // trigger thunder ripple (delayed feel)
       rippleActive = true;
       rippleProgress = 0;
-      rippleX = mid.x;
-      rippleY = mid.y;
-      rippleColor = color;
 
       return {
         points, branches, drawProgress: 0, phase: "drawing" as const,
@@ -377,7 +371,6 @@ export function GlobalBackground() {
         c.globalAlpha = 1;
       }
 
-      const isMobile = w < 768;
       const showAmbientEffects = true; // prefersReduced already completely aborts if portrait
 
       // === STORM CLOUDS (Illuminated by lightning or visible in cloudy weather) ===

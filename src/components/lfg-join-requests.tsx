@@ -45,7 +45,7 @@ export function LfgJoinRequests({
         const err = await res.json().catch(() => ({}));
         alert(err.error || "შეცდომა მოხდა");
       }
-    } catch (e) {
+    } catch {
       alert("შეცდომა კავშირისას");
     } finally {
       setIsProcessing(null);

@@ -4,7 +4,7 @@ import type { LobbyHudData } from "@/types/lobby";
 import { LobbyCurrencyStrip } from "@/components/lobby/lobby-currency-strip";
 import { LobbyPlayerCard } from "@/components/lobby/lobby-player-card";
 import { LobbyDailyBonus } from "@/components/lobby/lobby-daily-bonus";
-import { LOBBY_SCENE_HEIGHT, LOBBY_UI_SCALE, lobbyX, lobbyY } from "@/components/lobby/lobby-coordinate-system";
+import { LOBBY_UI_SCALE, lobbyX, lobbyY } from "@/components/lobby/lobby-coordinate-system";
 
 type LobbyHudProps = {
   data: LobbyHudData | null;
@@ -18,8 +18,6 @@ const PLAYER_CARD_SCALE = (START_WIDGET_REFERENCE_WIDTH * LOBBY_UI_SCALE) / PLAY
 const RIGHT_HUD_SCALE = LOBBY_UI_SCALE * 0.82;
 const PLAYER_CARD_BASE_LEFT = lobbyX(10.35);
 const PLAYER_CARD_BASE_TOP = lobbyY(10.35);
-const PLAYER_CARD_BOTTOM = PLAYER_CARD_BASE_TOP + (PLAYER_CARD_REFERENCE_HEIGHT * PLAYER_CARD_SCALE);
-const RIGHT_HUD_BASE_BOTTOM = LOBBY_SCENE_HEIGHT - PLAYER_CARD_BOTTOM;
 
 export function LobbyHud({ data, hideRightHud = false }: LobbyHudProps) {
   if (!data) {

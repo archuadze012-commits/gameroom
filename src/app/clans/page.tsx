@@ -3,7 +3,6 @@ import { Plus, Users, ShieldAlert, Trophy } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getSession } from "@/lib/auth";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
