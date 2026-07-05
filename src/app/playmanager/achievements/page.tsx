@@ -5,6 +5,7 @@ import { PmCard, PmCardHead, PmPill, PmGauge } from '@/components/playmanager/pm
 import { NestedMiniBox } from '@/components/playmanager/panel-primitives';
 import { getTeam } from '@/lib/playmanager/team';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { formatCount } from '@/lib/playmanager/economy';
 import {
   ACHIEVEMENT_CATEGORY_LABELS,
   getPlayManagerAchievements,
@@ -23,18 +24,13 @@ const CATEGORY_ICON: Record<AchievementCategory, LucideIcon> = {
 
 const CATEGORY_ORDER: AchievementCategory[] = ['match', 'squad', 'economy', 'progress'];
 
-// ka-GE groups thousands with a plain space, which wraps mid-number at narrow
-// (2-up mobile) card widths — swap in a non-breaking space so "1 000 000"
-// stays on one line; the " / " separator around it can still wrap if needed.
-function nbsp(n: number): string {
-  const NBSP = String.fromCharCode(160);
-  return n.toLocaleString('ka-GE').split(String.fromCharCode(32)).join(NBSP);
-}
-
+// formatCount groups thousands with a non-breaking space so "1 000 000" stays
+// on one line at narrow (2-up mobile) card widths; the " / " separator around
+// it can still wrap if needed.
 function formatMetric(a: AchievementProgress): string {
-  if (a.metric === 'balance') return `${nbsp(a.current)} / ${nbsp(a.goal)} ₾`;
+  if (a.metric === 'balance') return `${formatCount(a.current)} / ${formatCount(a.goal)} ₾`;
   if (a.metric === 'hasLegend' || a.metric === 'divisionA') return a.unlocked ? 'შესრულებულია' : 'ჯერ არა';
-  return `${nbsp(a.current)} / ${nbsp(a.goal)}`;
+  return `${formatCount(a.current)} / ${formatCount(a.goal)}`;
 }
 
 export default async function PlayManagerAchievementsPage() {

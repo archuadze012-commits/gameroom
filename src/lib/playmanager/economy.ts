@@ -89,13 +89,20 @@ export function getTalentClassAdjustedTransferValueGel(value: number, talent: nu
   return normalizeCurrencyValue(value * getTalentClass(talent).valueMultiplier);
 }
 
-export function formatGel(amount: number): string {
-  // Non-breaking space (U+00A0) between digit groups and before the currency
-  // symbol — a plain space lets the browser wrap mid-number ("1 000 000")
-  // inside narrow containers (2-up mobile cards), which reads as broken text.
+// Deterministic thousands-grouping with a non-breaking space (U+00A0) between
+// digit groups — a plain space lets the browser wrap mid-number ("1 000 000")
+// inside narrow containers (2-up mobile cards), which reads as broken text.
+// Intentionally NOT toLocaleString('ka-GE'): its grouping separator differs
+// between Node's server ICU and the browser's, which triggers SSR hydration
+// mismatches. This regex output is byte-identical on both sides.
+export function formatCount(amount: number): string {
   const NBSP = String.fromCharCode(160);
-  const formatted = Math.trunc(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, NBSP);
-  return `${formatted}${NBSP}${PLAYMANAGER_CURRENCY}`;
+  return Math.trunc(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, NBSP);
+}
+
+export function formatGel(amount: number): string {
+  const NBSP = String.fromCharCode(160);
+  return `${formatCount(amount)}${NBSP}${PLAYMANAGER_CURRENCY}`;
 }
 
 export function clampTicketPriceGel(ticketPrice: number): number {
