@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { hasTeam } from '@/lib/playmanager/team';
+import { playManagerActionLimited } from '../actions/action-helpers';
 
 export type CreateTeamResult =
   | { success: true }
@@ -16,6 +17,11 @@ export async function createTeamAction(
   const auth = await createSupabaseServerClient();
   const { data: { user } } = await auth.auth.getUser();
   if (!user) return { success: false, error: 'unauthenticated' };
+  // Team creation drafts a full squad inside the RPC — the heaviest single
+  // mutation in PlayManager — so it gets a tighter bucket than regular actions.
+  if (playManagerActionLimited(user.id, 'create_team', 3, 30_000)) {
+    return { success: false, error: 'unknown' };
+  }
 
   if (await hasTeam(user.id)) {
     redirect('/playmanager');

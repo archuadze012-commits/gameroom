@@ -6,8 +6,11 @@ import { join } from 'node:path';
 const LAYOUT_PATH = join(process.cwd(), 'public', 'playmanager', 'iso', 'sprites-layout.json');
 
 export async function POST(request: Request) {
-  if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'disabled in production' }, { status: 403 });
+  // Allow ONLY local development — an env other than 'development' (production,
+  // test, a misconfigured staging build) must never accept unauthenticated
+  // filesystem writes. Positive check beats the old `=== 'production'` block.
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json({ error: 'dev_only' }, { status: 403 });
   }
   try {
     const body = await request.json();
