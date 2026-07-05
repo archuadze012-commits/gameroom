@@ -90,7 +90,7 @@ test.describe("PlayManager authenticated flows", () => {
 
   test("mobile bottom nav links to the core sections", async ({ page }) => {
     await gotoManager(page, "/playmanager");
-    for (const label of [/მთავარი/, /მატჩი/, /გუნდი/, /მარკეტი/]) {
+    for (const label of [/მთავარი/, /მატჩი/, /გუნდი/, /მაღაზია|მარკეტი/]) {
       await expect(page.getByRole("link", { name: label }).first()).toBeVisible();
     }
   });
