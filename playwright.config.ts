@@ -9,6 +9,9 @@ import { defineConfig, devices } from "@playwright/test";
 // Requires a prior `npm run build` (the webServer runs `next start`).
 export default defineConfig({
   testDir: "./e2e",
+  // The authenticated flows have their own config (playwright.auth.config.ts) and
+  // need a real backend — keep them out of the auth-free smoke run.
+  testIgnore: "playmanager-flows.spec.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

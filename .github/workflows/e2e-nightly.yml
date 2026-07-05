@@ -1,0 +1,68 @@
+name: e2e-nightly
+
+# Authenticated PlayManager flow E2E (market / lineup / cups / matchday), run
+# against a real dev/branch Supabase via the /playmanager dev auth-bypass.
+# It is SKIP-BY-DEFAULT: until the E2E_SUPABASE_URL secret is set it exits green
+# without doing anything, so it never nags with red on an unprovisioned repo.
+#
+# To activate (see e2e/README.md): point at a DEV or preview-branch Supabase that
+# holds a seeded team — NEVER production, since these mutate state — and add repo
+# secrets E2E_SUPABASE_URL, E2E_SUPABASE_ANON_KEY, E2E_SERVICE_ROLE_KEY.
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # 03:00 UTC nightly
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  authenticated-flows:
+    name: authenticated flows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Gate on E2E backend secret
+        id: gate
+        env:
+          E2E_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+        run: |
+          if [ -z "$E2E_SUPABASE_URL" ]; then
+            echo "::notice::No E2E_SUPABASE_URL secret — skipping authenticated E2E (see e2e/README.md)."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.run == 'true'
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+        if: steps.gate.outputs.run == 'true'
+      - name: Install Playwright browser
+        if: steps.gate.outputs.run == 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Run authenticated PlayManager flows
+        if: steps.gate.outputs.run == 'true'
+        env:
+          E2E_PLAYMANAGER: "1"
+          # `next dev` sets NODE_ENV=development itself, enabling the auth-bypass.
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY: placeholder-vapid-key
+        run: npm run test:e2e:auth
+
+      - name: Upload Playwright report
+        if: steps.gate.outputs.run == 'true' && !cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
