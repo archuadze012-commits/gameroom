@@ -26,6 +26,7 @@ export async function savePlayManagerPrivacy(input: {
     p_hide_squad: input.hideSquad,
     p_hide_wallet: input.hideWallet,
     p_hide_transfers: input.hideTransfers,
+    p_user_id: user.id,
   });
 
   if (error) return mapPlayerActionError(error.message);

@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { orderUsers } from "@/lib/dm";
 import { rateLimit } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
+import { isBlocked, canReceiveDmFrom } from "@/lib/blocks";
 
 const logger = createLogger("api:lfg-queue");
 
@@ -51,7 +52,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "queue_lookup_failed" }, { status: 500 });
   }
 
-  if (waiter) {
+  // Don't match a pair that has blocked each other, or where the waiter's
+  // dm_privacy wouldn't allow this user to start a DM — the match would create a
+  // conversation the DB triggers reject (and would fire a push across the block).
+  // Treat as "no match this round": the user just joins the queue below.
+  const matchAllowed = waiter
+    ? !(await isBlocked(user.id, waiter.user_id)) && (await canReceiveDmFrom(waiter.user_id, user.id))
+    : false;
+
+  if (waiter && matchAllowed) {
     // MATCH FOUND — create or reuse conversation, mark both as matched
     const ordered = orderUsers(user.id, waiter.user_id);
 

@@ -24,6 +24,7 @@ type LeaderRow = {
   level: number;
   xp: number;
   balance: number;
+  walletHidden: boolean;
 };
 
 const DIVISION_LABELS = ['', 'A', 'B', 'C', 'D'];
@@ -80,10 +81,15 @@ export default async function PlayManagerLeaderboardPage({
   const userIds = [...new Set(teams.map((t) => t.user_id as string))];
   const teamIds = teams.map((t) => t.id);
 
-  const [{ data: profileRows }, { data: walletRows }] = await Promise.all([
+  const [{ data: profileRows }, { data: walletRows }, { data: privacyRows }] = await Promise.all([
     admin.from('profiles').select('id,display_name,username,avatar_url,xp,level').in('id', userIds),
     admin.from('pm_wallets').select('team_id,balance').in('team_id', teamIds),
+    admin.from('pm_team_privacy').select('team_id,hide_wallet').in('team_id', teamIds),
   ]);
+  // Teams that hide their wallet → balance masked for everyone but the owner.
+  const hideWalletMap = new Map(
+    ((privacyRows ?? []) as Array<{ team_id: string; hide_wallet: boolean }>).map((p) => [p.team_id, p.hide_wallet]),
+  );
 
   const profileMap = new Map(
     ((profileRows ?? []) as Array<{ id: string; display_name: string | null; username: string | null; avatar_url: string | null; xp: number | null; level: number | null }>).map(
@@ -96,6 +102,8 @@ export default async function PlayManagerLeaderboardPage({
 
   const rows: LeaderRow[] = teams.map((t) => {
     const profile = profileMap.get(t.user_id as string);
+    // Owner always sees their own balance; others see it only if not hidden.
+    const walletHidden = (hideWalletMap.get(t.id) ?? false) && t.user_id !== user.id;
     return {
       teamId: t.id,
       teamName: t.name,
@@ -106,7 +114,9 @@ export default async function PlayManagerLeaderboardPage({
       avatarUrl: profile?.avatar_url ?? null,
       level: profile?.level ?? 1,
       xp: profile?.xp ?? 0,
-      balance: walletMap.get(t.id) ?? 0,
+      // Masked teams sort to the bottom of the wealth board (balance 0).
+      balance: walletHidden ? 0 : walletMap.get(t.id) ?? 0,
+      walletHidden,
     };
   });
 
@@ -182,7 +192,7 @@ export default async function PlayManagerLeaderboardPage({
                     </PmPill>
                     {sort === 'wealth' ? (
                       <PmPill tone="green">
-                        <Coins className="h-3.5 w-3.5" /> {formatGel(row.balance)}
+                        <Coins className="h-3.5 w-3.5" /> {row.walletHidden ? '🔒' : formatGel(row.balance)}
                       </PmPill>
                     ) : (
                       <PmPill tone={sort === 'level' ? 'green' : undefined}>

@@ -95,6 +95,7 @@ export default async function PlayManagerSearchPage({
   let players: PlayerRow[] = [];
   let totalCount = 0;
   let ownerTeamMap = new Map<string, string>();
+  const hiddenOwnerTeams = new Set<string>();
 
   if (!showWelcome) {
     if (activeType === 'managers') {
@@ -186,8 +187,21 @@ export default async function PlayManagerSearchPage({
       if (players.length) {
         const ownerTeamIds = [...new Set(players.map((p: PlayerRow) => p.owner_id).filter((id: string | null): id is string => Boolean(id)))];
         if (ownerTeamIds.length) {
-          const { data: ownerTeams } = await admin.from('pm_teams').select('id,name').in('id', ownerTeamIds);
-          ownerTeamMap = new Map(((ownerTeams ?? []) as Array<{ id: string; name: string }>).map((row: { id: string; name: string }) => [row.id, row.name]));
+          const [{ data: ownerTeams }, { data: privacyRows }] = await Promise.all([
+            admin.from('pm_teams').select('id,name').in('id', ownerTeamIds),
+            admin.from('pm_team_privacy').select('team_id,hide_squad').in('team_id', ownerTeamIds),
+          ]);
+          // Teams that hide their squad (and aren't the viewer's own) get their
+          // roster hidden here too: drop them from the name map (so the club name
+          // falls back to a generic label) and collect them to mask player value.
+          for (const p of (privacyRows ?? []) as Array<{ team_id: string; hide_squad: boolean }>) {
+            if (p.hide_squad && p.team_id !== myTeam.id) hiddenOwnerTeams.add(p.team_id);
+          }
+          ownerTeamMap = new Map(
+            ((ownerTeams ?? []) as Array<{ id: string; name: string }>)
+              .filter((row) => !hiddenOwnerTeams.has(row.id))
+              .map((row: { id: string; name: string }) => [row.id, row.name]),
+          );
         }
       }
     }
@@ -295,7 +309,7 @@ export default async function PlayManagerSearchPage({
                 <SectionHeader icon={<Search className="h-4 w-4" />} title="ფეხბურთელები" count={totalCount} />
                 <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   {players.length ? players.map((player) => (
-                    <PlayerCard key={player.id} player={player} ownerTeamMap={ownerTeamMap} />
+                    <PlayerCard key={player.id} player={player} ownerTeamMap={ownerTeamMap} valueHidden={Boolean(player.owner_id && hiddenOwnerTeams.has(player.owner_id))} />
                   )) : <EmptyState q={q} />}
                 </div>
               </div>
@@ -409,7 +423,7 @@ function TeamCard({ team, isMine }: { team: TeamRow; isMine?: boolean }) {
   );
 }
 
-function PlayerCard({ player, ownerTeamMap }: { player: PlayerRow; ownerTeamMap: Map<string, string> }) {
+function PlayerCard({ player, ownerTeamMap, valueHidden }: { player: PlayerRow; ownerTeamMap: Map<string, string>; valueHidden: boolean }) {
   const position = (player.primary_position ?? 'CM').toUpperCase();
 
   return (
@@ -438,7 +452,7 @@ function PlayerCard({ player, ownerTeamMap }: { player: PlayerRow; ownerTeamMap:
               {player.real_age ?? player.age} წლის · {player.owner_id ? ownerTeamMap.get(player.owner_id) ?? 'კლუბშია' : 'თავისუფალი აგენტი'}
             </p>
             <p className="mt-3">
-              <PmPill tone="green">{formatGel(player.current_transfer_value_gel)}</PmPill>
+              <PmPill tone="green">{valueHidden ? '🔒' : formatGel(player.current_transfer_value_gel)}</PmPill>
             </p>
           </div>
         </div>

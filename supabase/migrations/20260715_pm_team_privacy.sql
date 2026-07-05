@@ -27,7 +27,8 @@ create or replace function public.pm_set_team_privacy(
   p_team_id uuid,
   p_hide_squad boolean,
   p_hide_wallet boolean,
-  p_hide_transfers boolean
+  p_hide_transfers boolean,
+  p_user_id uuid
 ) returns jsonb
 language plpgsql
 security definer
@@ -36,6 +37,15 @@ as $$
 declare
   v_row public.pm_team_privacy%rowtype;
 begin
+  -- Self-defending: the RPC verifies p_team_id belongs to p_user_id rather than
+  -- trusting the caller to pass its own team. (Callers use the service-role
+  -- client, so auth.uid() isn't available here — the owner id is passed in.)
+  if not exists (
+    select 1 from public.pm_teams where id = p_team_id and user_id = p_user_id
+  ) then
+    raise exception 'not_owner';
+  end if;
+
   insert into public.pm_team_privacy (team_id, hide_squad, hide_wallet, hide_transfers)
   values (p_team_id, p_hide_squad, p_hide_wallet, p_hide_transfers)
   on conflict (team_id) do update set
@@ -53,5 +63,5 @@ begin
 end;
 $$;
 
-revoke all on function public.pm_set_team_privacy(uuid, boolean, boolean, boolean) from public, anon, authenticated;
-grant execute on function public.pm_set_team_privacy(uuid, boolean, boolean, boolean) to service_role;
+revoke all on function public.pm_set_team_privacy(uuid, boolean, boolean, boolean, uuid) from public, anon, authenticated;
+grant execute on function public.pm_set_team_privacy(uuid, boolean, boolean, boolean, uuid) to service_role;

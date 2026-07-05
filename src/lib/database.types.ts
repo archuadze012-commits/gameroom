@@ -4933,6 +4933,7 @@ export type Database = {
           p_hide_transfers: boolean
           p_hide_wallet: boolean
           p_team_id: string
+          p_user_id: string
         }
         Returns: Json
       }
