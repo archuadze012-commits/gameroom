@@ -26,7 +26,8 @@ export type Permission =
   | "manage_pins"
   | "manage_shop"
   | "broadcast_email"
-  | "impersonate";
+  | "impersonate"
+  | "view_playmanager_ops";
 
 const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   admin: [
@@ -42,6 +43,7 @@ const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "manage_shop",
     "broadcast_email",
     "impersonate",
+    "view_playmanager_ops",
   ],
   moderator: ["manage_chat", "moderate_queue", "manage_shop"],
   organizer: ["manage_tournaments"],

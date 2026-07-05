@@ -18,12 +18,14 @@ import {
   MessageSquareWarning,
   Package,
   VolumeX,
+  Coins,
 } from "lucide-react";
 import { getCurrentRole } from "@/lib/admin";
 
 const allLinks = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "moderator", "organizer"] },
   { href: "/admin/analytics", label: "ანალიტიკა", icon: BarChart3, roles: ["admin"] },
+  { href: "/admin/playmanager-ops", label: "PlayManager Ops", icon: Coins, roles: ["admin"] },
   { href: "/admin/users", label: "მომხმარებლები", icon: UsersIcon, roles: ["admin"] },
   { href: "/admin/reports", label: "Reports", icon: Flag, roles: ["admin", "moderator"] },
   { href: "/admin/mutes", label: "Muted Users", icon: VolumeX, roles: ["admin", "moderator"] },
