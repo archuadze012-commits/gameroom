@@ -18,7 +18,9 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const authError = searchParams.get("error_description") ?? searchParams.get("error");
   const next = searchParams.get("next") ?? "/";
-  const redirectTo = next.startsWith("/") ? `${origin}${next}` : origin;
+  // 🛡️ Security: Prevent Open Redirect via protocol-relative URLs (//evil.com or /\evil.com)
+  const isSafeRedirect = next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\");
+  const redirectTo = isSafeRedirect ? `${origin}${next}` : origin;
 
   const redirectWithCleanup = (url: string) => {
     const response = NextResponse.redirect(url);
