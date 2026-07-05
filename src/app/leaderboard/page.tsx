@@ -12,6 +12,9 @@ export const metadata = { title: "Leaderboard" };
 
 const getLeaderboardData = unstable_cache(
   async () => {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return { topXp: [], topWallets: [] };
+    }
     const admin = createSupabaseAdminClient();
     const [{ data: topXp }, { data: topWallets }] = await Promise.all([
       admin
