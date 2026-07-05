@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { awardBonusXp } from "@/lib/gamification";
+import { moderateText } from "@/lib/moderate";
 import { createLogger } from "@/lib/logger";
 import { type FeedPost } from "./page";
 
@@ -47,6 +48,13 @@ export async function createPostAction(
   }
 
   const { data: body } = validated;
+
+  // Blocklist + toxicity gate before the post is stored (fails open if the AI
+  // moderator is unavailable, but the blocklist still applies).
+  const mod = await moderateText(body.content).catch(() => ({ ok: true, reason: undefined as string | undefined }));
+  if (!mod.ok) {
+    return { success: false, message: mod.reason ? `დაბლოკილია: ${mod.reason}` : "პოსტი დაიბლოკა მოდერაციამ" };
+  }
 
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase

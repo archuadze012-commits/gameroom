@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 import { awardBonusXp } from "@/lib/gamification";
 import { sendPushToUser } from "@/lib/push";
 import { rateLimit } from "@/lib/rate-limit";
+import { moderateText } from "@/lib/moderate";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("api:news-comments");
@@ -30,6 +31,12 @@ export async function POST(
   const commentBody = (body.body ?? "").trim();
   if (!commentBody || commentBody.length > 2000) {
     return NextResponse.json({ error: "comment_body_invalid" }, { status: 400 });
+  }
+
+  // Blocklist + toxicity gate before the comment is stored.
+  const mod = await moderateText(commentBody).catch(() => ({ ok: true, reason: undefined as string | undefined }));
+  if (!mod.ok) {
+    return NextResponse.json({ error: "content_blocked", reason: mod.reason }, { status: 400 });
   }
 
   const supabase = await createSupabaseServerClient();

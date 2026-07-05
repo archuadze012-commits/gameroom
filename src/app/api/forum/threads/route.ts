@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { awardBonusXp } from "@/lib/gamification";
 import { rateLimit } from "@/lib/rate-limit";
+import { moderateText } from "@/lib/moderate";
 import { createLogger } from "@/lib/logger";
 import { FORUM_THREAD_BODY_MAX_LENGTH, FORUM_THREAD_TITLE_MAX_LENGTH } from "@/lib/constants";
 
@@ -39,6 +40,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "title_invalid" }, { status: 400 });
   if (!postBody || postBody.length > FORUM_THREAD_BODY_MAX_LENGTH)
     return NextResponse.json({ error: "body_invalid" }, { status: 400 });
+
+  // Blocklist + toxicity gate on title + body before creating the thread.
+  const mod = await moderateText(`${title} ${postBody}`).catch(() => ({ ok: true, reason: undefined as string | undefined }));
+  if (!mod.ok) {
+    return NextResponse.json({ error: "content_blocked", reason: mod.reason }, { status: 400 });
+  }
 
   const supabase = await createSupabaseServerClient();
 
