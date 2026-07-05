@@ -9,6 +9,7 @@ import type { TeamFacilityState } from '@/lib/playmanager/facilities';
 import { getCombinedClubEffects, getManagerProgression } from '@/lib/playmanager/progression';
 import { getTeam } from '@/lib/playmanager/team';
 import { createLogger } from '@/lib/logger';
+import { rateLimit } from '@/lib/rate-limit';
 
 // Economy/world-tick failures are alertable: a lost XP/credit award or a
 // dropped lifecycle job is real value the player earned quietly vanishing, so
@@ -210,3 +211,19 @@ export function mapPlayerActionError(message: string): PlayManagerPlayerActionRe
   if (message.includes('invalid')) return { success: false, error: 'invalid_player' };
   return { success: false, error: 'unavailable' };
 }
+
+// App-level spam/retry guard for mutating actions. DB constraints already keep
+// state valid; this blunts rapid spam-click / double-submit bursts that would
+// otherwise hammer the RPCs. Per-user, per-bucket, generous window — tuned to
+// catch automated/retry storms, not normal play. In-memory & per-instance (see
+// rate-limit.ts); back with Redis for multi-instance hardening.
+export function playManagerActionLimited(userId: string, bucket: string, limit = 12, windowMs = 10_000): boolean {
+  return !rateLimit(`pm:${bucket}:${userId}`, limit, windowMs);
+}
+
+// The standard PlayManagerPlayerActionResult returned when a spam guard trips.
+export const RATE_LIMITED_RESULT: PlayManagerPlayerActionResult = {
+  success: false,
+  error: 'unavailable',
+  message: 'ძალიან სწრაფად — სცადე რამდენიმე წამში.',
+};

@@ -6,6 +6,8 @@ import {
   applyPostActionRewards,
   advancePlayManagerTime,
   getAuthenticatedTeam,
+  playManagerActionLimited,
+  RATE_LIMITED_RESULT,
   logPlayManagerEvent,
   mapPlayerActionError,
   type PlayManagerPlayerActionResult,
@@ -20,6 +22,7 @@ export async function listPlayManagerPlayer(
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
+  if (playManagerActionLimited(user.id, 'transfer')) return RATE_LIMITED_RESULT;
 
   const price = Math.floor(Number(askingPrice));
   if (!Number.isFinite(price) || price <= 0) {
@@ -61,6 +64,7 @@ export async function unlistPlayManagerPlayer(
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
+  if (playManagerActionLimited(user.id, 'transfer')) return RATE_LIMITED_RESULT;
 
   const db = createSupabaseAdminClient();
   const { error } = await db.rpc('pm_unlist_player', {
@@ -79,6 +83,7 @@ export async function buyPlayManagerListedPlayer(
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
+  if (playManagerActionLimited(user.id, 'transfer')) return RATE_LIMITED_RESULT;
 
   const db = createSupabaseAdminClient();
   const { data: rawData, error } = await db.rpc('pm_buy_listed_player', {
@@ -152,6 +157,7 @@ export async function makePlayManagerTransferOffer(
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
+  if (playManagerActionLimited(user.id, 'transfer')) return RATE_LIMITED_RESULT;
 
   const price = Math.floor(Number(amount));
   if (!Number.isFinite(price) || price <= 0) {
@@ -196,6 +202,7 @@ export async function respondPlayManagerTransferOffer(
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
+  if (playManagerActionLimited(user.id, 'transfer')) return RATE_LIMITED_RESULT;
 
   let counter: number | null = null;
   if (action === 'counter') {
@@ -269,6 +276,7 @@ export async function cancelPlayManagerTransferOffer(
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
+  if (playManagerActionLimited(user.id, 'transfer')) return RATE_LIMITED_RESULT;
 
   const db = createSupabaseAdminClient();
   const { error } = await db.rpc('pm_cancel_transfer_offer', {
