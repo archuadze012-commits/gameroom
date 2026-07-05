@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import {
   runPlayManagerCityAction,
   type MatchResult,
-  type PlayManagerPlayerActionResult,
   type RunCityActionResult,
-} from '@/app/playmanager/actions';
+} from '@/app/playmanager/actions/city-action';
+import type { PlayManagerPlayerActionResult } from '@/app/playmanager/actions/action-helpers';
 import { getFacilityUpgradeCostGel, isFacilityKey, type CityActionKey } from '@/lib/playmanager/gameplay';
 import type { PlayManagerCitySnapshot } from '@/lib/playmanager/city-data';
 import type { ClubEffectsSummary, ManagerPerk } from '@/lib/playmanager/progression';

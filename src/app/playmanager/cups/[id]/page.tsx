@@ -5,7 +5,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getTeam } from '@/lib/playmanager/team';
 import { Bracket } from '@/components/tournament/bracket';
 import type { BracketMatch } from '@/lib/tournament/generate-bracket';
-import { joinCupAction } from '@/app/playmanager/actions';
+import { joinCupAction } from '@/app/playmanager/actions/competition-actions';
 import { processDueCupMatches } from '@/lib/playmanager/cups';
 import {
   ArrowRight,

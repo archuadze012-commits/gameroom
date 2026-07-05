@@ -25,7 +25,7 @@ import {
 import {
   savePlayManagerLineup,
   savePlayManagerMatchSettings,
-} from '@/app/playmanager/actions';
+} from '@/app/playmanager/actions/squad-settings-actions';
 
 export type CupWorkbenchPlayer = {
   id: string;

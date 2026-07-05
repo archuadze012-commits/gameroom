@@ -85,7 +85,7 @@ mock.module('@/lib/supabase/admin', { namedExports: { createSupabaseAdminClient:
 mock.module('@/lib/supabase/server', { namedExports: {
   createSupabaseServerClient: async () => ({ auth: { getUser: async () => ({ data: { user: { id: USER } } }) } }),
 }});
-const { theAction } = await import('../../src/app/playmanager/actions.js');
+const { theAction } = await import('../../src/app/playmanager/actions/<domain>-actions.js');
 ```
 
 Run with `--experimental-test-module-mocks` (already in the test:integration

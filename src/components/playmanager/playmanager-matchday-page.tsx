@@ -15,7 +15,8 @@ import {
   Swords,
   Trophy,
 } from 'lucide-react';
-import { playPlayManagerNextFixture, type MatchResult } from '@/app/playmanager/actions';
+import { playPlayManagerNextFixture } from '@/app/playmanager/actions/competition-actions';
+import type { MatchResult } from '@/app/playmanager/actions/city-action';
 import { PlayManagerSidebar } from '@/components/playmanager/playmanager-side-nav';
 import { PlayManagerBottomNav } from '@/components/playmanager/playmanager-bottom-nav';
 import { PmCard } from '@/components/playmanager/pm-cards';

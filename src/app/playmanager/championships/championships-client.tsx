@@ -9,7 +9,7 @@ import {
   createPlayManagerLeague,
   joinPlayManagerLeague,
   startPlayManagerLeague,
-} from '@/app/playmanager/actions';
+} from '@/app/playmanager/actions/competition-actions';
 
 function errText(error?: string): string {
   switch (error) {

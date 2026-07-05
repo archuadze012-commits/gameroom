@@ -15,7 +15,7 @@ import { PmPill, PmGauge } from '@/components/playmanager/pm-cards';
 import { NestedMiniBox } from '@/components/playmanager/panel-primitives';
 import { PlayerFutCard, DEFAULT_FUT_CARD_EDITOR_CONFIG } from '@/components/playmanager/player-fut-card';
 import { getPlayerPotentialForTraining } from '@/components/playmanager/playmanager-city-editor';
-import { trainPlayManagerPlayer } from '@/app/playmanager/actions';
+import { trainPlayManagerPlayer } from '@/app/playmanager/actions/player-development-actions';
 import type { PlayManagerCitySnapshot } from '@/lib/playmanager/city-data';
 
 // Feedback shown right on the FUT card after a training session: either the

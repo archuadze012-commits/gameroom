@@ -3,7 +3,7 @@
 import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { renewPlayManagerCareer, releasePlayManagerCareer } from '@/app/playmanager/actions';
+import { renewPlayManagerCareer, releasePlayManagerCareer } from '@/app/playmanager/actions/career-actions';
 
 export function CareerDecisionButtons({ playerId }: { playerId: string }) {
   const [pending, startTransition] = useTransition();

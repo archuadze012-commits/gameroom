@@ -6,7 +6,7 @@ import { PlayManagerBuildingShell } from '@/components/playmanager/playmanager-b
 import { PmCard, PmCardHead, PmPill, PmAction, PmGauge, PmPhotoCard } from '@/components/playmanager/pm-cards';
 import { StaffContextGrid } from '@/components/playmanager/staff-context-grid';
 import { type EditableCityBuilding } from '@/components/playmanager/playmanager-city-editor';
-import { type PlayManagerPlayerActionResult } from '@/app/playmanager/actions';
+import { type PlayManagerPlayerActionResult } from '@/app/playmanager/actions/action-helpers';
 import { getFacilityUpgradeCostGel, type CityActionKey } from '@/lib/playmanager/gameplay';
 import { formatGel } from '@/lib/playmanager/economy';
 import type { PlayManagerCitySnapshot } from '@/lib/playmanager/city-data';

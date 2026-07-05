@@ -18,8 +18,8 @@ import { StaffContextGrid } from '@/components/playmanager/staff-context-grid';
 import {
   negotiatePlayManagerSponsor,
   savePlayManagerTicketPrice,
-  type PlayManagerPlayerActionResult,
-} from '@/app/playmanager/actions';
+} from '@/app/playmanager/actions/club-finance-actions';
+import type { PlayManagerPlayerActionResult } from '@/app/playmanager/actions/action-helpers';
 import {
   formatGel,
   getPlayerWeeklyWageGel,

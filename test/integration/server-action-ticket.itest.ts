@@ -15,7 +15,7 @@ import { asSupabase } from '../harness/pglite-supabase.js';
 // @/lib/supabase/server → a fake auth returning our user.
 
 let db: PGlite;
-let savePlayManagerTicketPrice: typeof import('../../src/app/playmanager/actions.js').savePlayManagerTicketPrice;
+let savePlayManagerTicketPrice: typeof import('../../src/app/playmanager/actions/club-finance-actions.js').savePlayManagerTicketPrice;
 
 const USER = '00000000-0000-0000-0000-0000000000aa';
 const TEAM = '00000000-0000-0000-0000-0000000000bb';
@@ -54,7 +54,7 @@ before(async () => {
     },
   });
 
-  ({ savePlayManagerTicketPrice } = await import('../../src/app/playmanager/actions.js'));
+  ({ savePlayManagerTicketPrice } = await import('../../src/app/playmanager/actions/club-finance-actions.js'));
 });
 
 after(async () => { await db?.close(); });

@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { confirmPlayManagerOvrUpgrade } from '@/app/playmanager/actions';
+import { confirmPlayManagerOvrUpgrade } from '@/app/playmanager/actions/player-development-actions';
 
 export type FodderOption = {
   id: string;

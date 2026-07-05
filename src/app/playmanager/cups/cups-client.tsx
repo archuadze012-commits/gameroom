@@ -4,7 +4,7 @@ import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { UserPlus } from 'lucide-react';
-import { joinCupAction } from '@/app/playmanager/actions';
+import { joinCupAction } from '@/app/playmanager/actions/competition-actions';
 
 export function JoinCupButton({ cupId, entryFeeLabel }: { cupId: string; entryFeeLabel: string }) {
   const router = useRouter();

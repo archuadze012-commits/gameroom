@@ -20,13 +20,13 @@ import {
   X,
 } from 'lucide-react';
 import { PlayerFutCard, DEFAULT_FUT_CARD_EDITOR_CONFIG } from '@/components/playmanager/player-fut-card';
+import { buyPlayManagerMarketPlayer } from '@/app/playmanager/actions/market-actions';
 import {
-  buyPlayManagerMarketPlayer,
   buyPlayManagerListedPlayer,
   makePlayManagerTransferOffer,
   respondPlayManagerTransferOffer,
   cancelPlayManagerTransferOffer,
-} from '@/app/playmanager/actions';
+} from '@/app/playmanager/actions/transfer-actions';
 import { SpotlightCard } from '@/components/react-bits/spotlight-card';
 import CountUp from '@/components/CountUp';
 import type { PlayerCardStatsInput } from '@/lib/playmanager/player-card-stats';

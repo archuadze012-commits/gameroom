@@ -7,7 +7,9 @@ import { toast } from 'sonner';
 import { ArrowLeft, ArrowUpCircle, ExternalLink, GraduationCap, Search, Sparkles, Users } from 'lucide-react';
 import { PmCard, PmCardHead, PmPill, PmAction, PmGauge } from '@/components/playmanager/pm-cards';
 import { TalentClassBadge } from '@/components/playmanager/talent-class-badge';
-import { runPlayManagerCityAction, signPlayManagerAcademyProspect, hirePlayManagerStaff, upgradePlayManagerStaff } from '@/app/playmanager/actions';
+import { runPlayManagerCityAction } from '@/app/playmanager/actions/city-action';
+import { signPlayManagerAcademyProspect } from '@/app/playmanager/actions/market-actions';
+import { hirePlayManagerStaff, upgradePlayManagerStaff } from '@/app/playmanager/actions/staff-actions';
 
 export type AcademyScout = {
   isHired: boolean;

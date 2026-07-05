@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowRight, HeartPulse, Sparkles, Wand2 } from 'lucide-react';
 import { PmCard, PmCardHead, PmPill, PmAction, PmGauge } from '@/components/playmanager/pm-cards';
 import { NestedMiniBox } from '@/components/playmanager/panel-primitives';
-import { buyPlayManagerXpPack } from '@/app/playmanager/actions';
+import { buyPlayManagerXpPack } from '@/app/playmanager/actions/player-development-actions';
 
 const XP_PACKS = [
   { key: 'starter' as const, label: 'Starter Pack', xp: 300, price: '35 000 ₾' },

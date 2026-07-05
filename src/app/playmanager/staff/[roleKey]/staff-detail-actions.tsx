@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { PmAction, PmPill } from '@/components/playmanager/pm-cards';
-import { hirePlayManagerStaff, upgradePlayManagerStaff } from '@/app/playmanager/actions';
+import { hirePlayManagerStaff, upgradePlayManagerStaff } from '@/app/playmanager/actions/staff-actions';
 
 export function StaffDetailActions({
   roleKey,

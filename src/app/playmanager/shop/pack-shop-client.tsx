@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { PackageOpen, Sparkles, X } from 'lucide-react';
 import { PmCard, PmCardHead, PmPill, PmAction } from '@/components/playmanager/pm-cards';
 import { TalentClassBadge } from '@/components/playmanager/talent-class-badge';
-import { openPlayManagerPack } from '@/app/playmanager/actions';
+import { openPlayManagerPack } from '@/app/playmanager/actions/player-development-actions';
 
 export type ShopPack = {
   id: number;

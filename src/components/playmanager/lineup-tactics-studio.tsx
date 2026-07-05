@@ -24,7 +24,7 @@ import { LineupTacticControls } from '@/components/playmanager/lineup-tactic-con
 import {
   savePlayManagerLineupFormation,
   savePlayManagerMatchSettings,
-} from '@/app/playmanager/actions';
+} from '@/app/playmanager/actions/squad-settings-actions';
 import {
   PRESET_FORMATIONS,
   type MatchTactics,

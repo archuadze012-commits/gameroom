@@ -18,10 +18,8 @@ import { PlayManagerBuildingShell } from '@/components/playmanager/playmanager-b
 import { PmCard, PmCardHead, PmPill, PmAction, PmGauge, PmPhotoCard, type PmTone } from '@/components/playmanager/pm-cards';
 import { NestedMiniBox } from '@/components/playmanager/panel-primitives';
 import { TalentClassBadge } from '@/components/playmanager/talent-class-badge';
-import {
-  signPlayManagerAcademyProspect,
-  type PlayManagerPlayerActionResult,
-} from '@/app/playmanager/actions';
+import { signPlayManagerAcademyProspect } from '@/app/playmanager/actions/market-actions';
+import type { PlayManagerPlayerActionResult } from '@/app/playmanager/actions/action-helpers';
 import { getFacilityUpgradeCostGel, type CityActionKey } from '@/lib/playmanager/gameplay';
 import { getMaxStaffLevelForDivision, type StaffCategory } from '@/lib/playmanager/staff';
 import { getStaffPhoto } from '@/lib/playmanager/staff-photos';

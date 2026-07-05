@@ -3,11 +3,11 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { sellPlayManagerPlayer } from '@/app/playmanager/actions/market-actions';
 import {
-  sellPlayManagerPlayer,
   listPlayManagerPlayer,
   unlistPlayManagerPlayer,
-} from '@/app/playmanager/actions';
+} from '@/app/playmanager/actions/transfer-actions';
 
 interface PlayerTransferActionsProps {
   playerId: string;
