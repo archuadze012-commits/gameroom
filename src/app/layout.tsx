@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Orbitron } from "next/font/google";
 import "./globals.css";
 import { after } from "next/server";
 import { updateLastSeen } from "@/lib/update-last-seen";
@@ -33,11 +32,16 @@ const alkSanet = localFont({
   preload: true,
 });
 
-const orbitron = Orbitron({
-  subsets: ["latin"],
+// Self-hosted (was next/font/google) so production builds never depend on a
+// build-time fetch to Google Fonts. Weights 700/800/900, latin subset.
+const orbitron = localFont({
+  src: [
+    { path: "./fonts/orbitron/Orbitron-Bold.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/orbitron/Orbitron-ExtraBold.woff2", weight: "800", style: "normal" },
+    { path: "./fonts/orbitron/Orbitron-Black.woff2", weight: "900", style: "normal" },
+  ],
   variable: "--font-orbitron",
   display: "swap",
-  weight: ["700", "800", "900"],
 });
 
 export const metadata: Metadata = {
