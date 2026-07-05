@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
+import { rateLimit } from "@/lib/rate-limit";
 
 // Soft-linking: user provides their Riot ID (gameName#tagLine). We resolve
 // the PUUID via Riot's account-v1 endpoint and optionally fetch Valorant rank.
@@ -22,6 +23,12 @@ const TIER_MAP: Record<string, string> = {
 export async function POST(request: NextRequest) {
   const user = await getSession().catch(() => null);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  // Each call fans out up to 3 requests against the shared RIOT_API_KEY, so a
+  // scripted loop could exhaust the app-wide Riot quota — cap per user.
+  if (!rateLimit(`riot-link:${user.id}`, 5, 60_000)) {
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+  }
 
   const body = await request.json().catch(() => ({}));
   const raw = typeof body.riotId === "string" ? body.riotId.trim() : "";

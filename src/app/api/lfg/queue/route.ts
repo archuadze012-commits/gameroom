@@ -61,6 +61,25 @@ export async function POST(request: NextRequest) {
     : false;
 
   if (waiter && matchAllowed) {
+    const matchedAt = new Date().toISOString();
+
+    // Atomically CLAIM the waiter first: flip 'searching' → 'matched' guarded on
+    // the current status, so only one concurrent request can win a given waiter.
+    // If we don't get the row back, someone else already matched them — fall
+    // through and just enqueue ourselves instead of double-matching the waiter.
+    const { data: claimed, error: claimError } = await supabase
+      .from("lfg_queue")
+      .update({ status: "matched", matched_with: user.id, matched_at: matchedAt })
+      .eq("id", waiter.id)
+      .eq("status", "searching")
+      .select("id")
+      .maybeSingle();
+    if (claimError) {
+      logger.error("failed to claim queue waiter", { queueId: waiter.id, error: claimError });
+      return NextResponse.json({ error: "queue_match_failed" }, { status: 500 });
+    }
+
+    if (claimed) {
     // MATCH FOUND — create or reuse conversation, mark both as matched
     const ordered = orderUsers(user.id, waiter.user_id);
 
@@ -100,26 +119,11 @@ export async function POST(request: NextRequest) {
       convId = newConv.id;
     }
 
-    const matchedAt = new Date().toISOString();
-
-    // Update the waiter's entry
-    const { error: waiterUpdateError } = await supabase
+    // Backfill the conversation id onto the already-claimed waiter row.
+    await supabase
       .from("lfg_queue")
-      .update({
-        status: "matched",
-        matched_with: user.id,
-        matched_conversation_id: convId,
-        matched_at: matchedAt,
-      })
+      .update({ matched_conversation_id: convId })
       .eq("id", waiter.id);
-    if (waiterUpdateError) {
-      logger.error("failed to mark waiter as matched", {
-        queueId: waiter.id,
-        userId: waiter.user_id,
-        error: waiterUpdateError,
-      });
-      return NextResponse.json({ error: "queue_match_failed" }, { status: 500 });
-    }
 
     // Insert our entry as already-matched
     const { data: myEntry, error: myEntryError } = await supabase
@@ -192,6 +196,8 @@ export async function POST(request: NextRequest) {
       conversationId: convId,
       queueId: myEntry?.id,
     });
+    } // end if (claimed)
+    // Lost the claim race — fall through and enqueue ourselves as searching.
   }
 
   // No waiter — add ourselves to queue

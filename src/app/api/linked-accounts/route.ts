@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 
+// OAuth access/refresh tokens are persisted in linked_accounts.metadata (e.g. the
+// TikTok callback stores access_token/refresh_token there). The UI never needs
+// them, so strip any secret-bearing key before the metadata reaches the browser —
+// otherwise an XSS / malicious extension / shared HAR could lift a live token and
+// take over the linked third-party account.
+function redactSecrets(metadata: unknown): unknown {
+  if (!metadata || typeof metadata !== "object") return metadata;
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(metadata as Record<string, unknown>)) {
+    if (/token|secret|password/i.test(key)) continue;
+    out[key] = value;
+  }
+  return out;
+}
+
 export async function GET(request: NextRequest) {
   const user = await getSession().catch(() => null);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -23,7 +38,7 @@ export async function GET(request: NextRequest) {
   const accounts = (data ?? []).map((row) => ({
     provider: row.provider,
     external_id: row.external_id,
-    data: row.metadata,
+    data: redactSecrets(row.metadata),
     verified: row.provider === "steam",
     linked_at: row.created_at,
     refreshed_at: row.updated_at,
