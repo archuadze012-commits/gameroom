@@ -6,6 +6,11 @@ export const runtime = 'nodejs';
 const MAX_BYTES = 100 * 1024;
 const MAX_WIDTH = 256;
 const MAX_HEIGHT = 256;
+const FETCH_TIMEOUT_MS = 8_000;
+// Upstream input cap — independent of MAX_BYTES (which bounds our *output*
+// webp). Without this a slow or misbehaving allowlisted host could stream an
+// arbitrarily large body into memory before sharp ever sees it.
+const MAX_UPSTREAM_BYTES = 12 * 1024 * 1024;
 const FALLBACK_QUALITY_STEPS = [68, 60, 52, 46, 40, 34];
 const ALLOWED_HOSTS = new Set([
   'cdn.sofifa.net',
@@ -73,6 +78,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'invalid_src' }, { status: 400 });
   }
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
   try {
     const upstream = await fetch(src, {
       headers: {
@@ -80,6 +88,7 @@ export async function GET(request: Request) {
         'User-Agent': 'Mozilla/5.0 PlayManagerCardImage/1.0',
       },
       cache: 'force-cache',
+      signal: controller.signal,
     });
 
     if (!upstream.ok) {
@@ -91,8 +100,31 @@ export async function GET(request: Request) {
       return NextResponse.redirect(src, 302);
     }
 
-    const arrayBuffer = await upstream.arrayBuffer();
-    const optimized = await toSizedWebp(Buffer.from(arrayBuffer));
+    const declaredLength = Number(upstream.headers.get('content-length') ?? NaN);
+    if (Number.isFinite(declaredLength) && declaredLength > MAX_UPSTREAM_BYTES) {
+      return NextResponse.redirect(src, 302);
+    }
+
+    // Read the body ourselves with a hard cap, rather than trusting
+    // content-length (absent or understated on some hosts) — a hostile or
+    // compromised allowlisted origin could otherwise stream unbounded bytes
+    // into memory before sharp ever runs.
+    const reader = upstream.body?.getReader();
+    if (!reader) return NextResponse.redirect(src, 302);
+    const chunks: Uint8Array[] = [];
+    let received = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      received += value.byteLength;
+      if (received > MAX_UPSTREAM_BYTES) {
+        await reader.cancel();
+        return NextResponse.redirect(src, 302);
+      }
+      chunks.push(value);
+    }
+
+    const optimized = await toSizedWebp(Buffer.concat(chunks));
 
     return new Response(new Uint8Array(optimized), {
       headers: {
@@ -102,5 +134,7 @@ export async function GET(request: Request) {
     });
   } catch {
     return NextResponse.redirect(src, 302);
+  } finally {
+    clearTimeout(timeout);
   }
 }

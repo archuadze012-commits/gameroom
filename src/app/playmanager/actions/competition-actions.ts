@@ -4,12 +4,15 @@ import { revalidatePath } from 'next/cache';
 import { hasPermission } from '@/lib/admin';
 import { createLeague, joinLeague, startLeague } from '@/lib/playmanager/leagues';
 import { playNextFixtureForTeam, type PlayedFixture } from '@/lib/playmanager/next-fixture';
-import { getAuthenticatedTeam } from './action-helpers';
+import { getAuthenticatedTeam, playManagerActionLimited } from './action-helpers';
 
 export async function joinCupAction(cupInstanceId: string): Promise<{ success: boolean; message?: string; error?: string }> {
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
+  if (playManagerActionLimited(user.id, 'competition')) {
+    return { success: false, error: 'ძალიან სწრაფად — სცადე რამდენიმე წამში' };
+  }
 
   const { joinPlayManagerCup } = await import('@/lib/playmanager/cups');
   const result = await joinPlayManagerCup(team.id, cupInstanceId);
@@ -52,6 +55,7 @@ export async function joinPlayManagerLeague(leagueId: string): Promise<{ success
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
+  if (playManagerActionLimited(user.id, 'competition')) return { success: false, error: 'rate_limited' };
 
   const result = await joinLeague(team.id, leagueId);
   if (!result.success) return { success: false, error: result.error };
@@ -75,6 +79,7 @@ export async function playPlayManagerNextFixture(): Promise<
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
+  if (playManagerActionLimited(user.id, 'competition')) return { success: false, error: 'rate_limited' };
 
   const fixture = await playNextFixtureForTeam(team.id);
   revalidatePath('/playmanager');

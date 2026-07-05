@@ -11,7 +11,7 @@ import {
 } from '@/lib/playmanager/gameplay';
 import { getActionRewardBonusPct, getCityActionXpReward } from '@/lib/playmanager/progression';
 import { getTeam } from '@/lib/playmanager/team';
-import { getActionContext, logPlayManagerEvent } from './action-helpers';
+import { getActionContext, logPlayManagerEvent, playManagerActionLimited } from './action-helpers';
 
 export type RunCityActionResult =
   | {
@@ -105,6 +105,7 @@ export async function runPlayManagerCityAction(input: {
 
   const team = await getTeam(user.id);
   if (!team) return { success: false, error: 'team_missing' };
+  if (playManagerActionLimited(user.id, 'city')) return { success: false, error: 'unavailable' };
 
   const db = createSupabaseAdminClient();
   const actionContext = await getActionContext(user.id, team.id);
