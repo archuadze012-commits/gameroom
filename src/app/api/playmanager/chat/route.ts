@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
+import { hasPermission, logAdminAction } from "@/lib/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { rateLimit } from "@/lib/rate-limit";
 import { moderateText } from "@/lib/moderate";
 
@@ -22,7 +24,10 @@ export async function GET() {
     .limit(150);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data ?? []);
+  // canManageChat lets the client render moderator affordances (delete-any,
+  // mute). Everyone can delete their OWN message and report others regardless.
+  const canManageChat = await hasPermission("manage_chat").catch(() => false);
+  return NextResponse.json({ messages: data ?? [], canManageChat });
 }
 
 export async function POST(request: NextRequest) {
@@ -75,4 +80,61 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
+}
+
+// Soft-delete a global-chat message. Authors can remove their own; holders of
+// `manage_chat` can remove anyone's. Deletion sets deleted_at so GET (which
+// filters `deleted_at is null`) and every client drops it.
+export async function DELETE(request: NextRequest) {
+  const user = await getSession().catch(() => null);
+  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!rateLimit(`playmanager-chat-delete:${user.id}`, 30, 60_000)) {
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+  }
+
+  const body = await request.json().catch(() => null);
+  const id = typeof body?.id === "string" ? body.id : "";
+  if (!id) return NextResponse.json({ error: "bad_request" }, { status: 400 });
+
+  const supabase = await createSupabaseServerClient();
+  const { data: message } = await supabase
+    .from("chat_messages")
+    .select("id, author_id, channel_id, deleted_at")
+    .eq("id", id)
+    .eq("channel_id", CHANNEL_ID)
+    .maybeSingle();
+
+  if (!message) return NextResponse.json({ error: "not_found" }, { status: 404 });
+  if (message.deleted_at) return NextResponse.json({ ok: true }); // already gone
+
+  const isOwner = message.author_id === user.id;
+  const canManage = isOwner ? false : await hasPermission("manage_chat").catch(() => false);
+  if (!isOwner && !canManage) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+
+  // Moderators may need to remove a message they can't see under RLS write
+  // rules, so the actual write goes through the admin client. Ownership /
+  // permission was already proven above.
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin
+    .from("chat_messages")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id)
+    .is("deleted_at", null);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Audit-log moderator deletions of other people's messages.
+  if (!isOwner) {
+    await logAdminAction({
+      actorId: user.id,
+      action: "delete_chat_message",
+      targetType: "message",
+      targetId: id,
+      metadata: { channelId: CHANNEL_ID, authorId: message.author_id },
+    });
+  }
+
+  return NextResponse.json({ ok: true });
 }

@@ -1,9 +1,19 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
-import { BadgeCheck, Loader2, MessageCircle, Send, Sparkles, UsersRound } from "lucide-react";
+import { BadgeCheck, Loader2, MessageCircle, Send, Sparkles, Trash2, UsersRound, VolumeX } from "lucide-react";
+import { toast } from "sonner";
 import { sendMessageAction, type SendMessageState } from "@/app/messages/actions";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { ReportButton } from "@/components/report-button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type Profile = {
   username: string;
@@ -40,6 +50,18 @@ type ChatMessage = {
 function getProfile(row: ChatMessage) {
   return Array.isArray(row.profiles) ? row.profiles[0] ?? null : row.profiles;
 }
+
+const PM_CHAT_CHANNEL = "playmanager_global";
+
+// Mirrors the admin mute durations accepted by /api/chat/mutes.
+const MUTE_OPTIONS = [
+  { key: "15m", label: "15 წთ" },
+  { key: "1h", label: "1 საათი" },
+  { key: "1d", label: "1 დღე" },
+  { key: "1w", label: "1 კვირა" },
+  { key: "permanent", label: "სამუდამო" },
+] as const;
+type MuteDurationKey = (typeof MUTE_OPTIONS)[number]["key"];
 
 function displayName(profile: Profile | null) {
   return profile?.display_name || profile?.username || "Manager";
@@ -327,6 +349,9 @@ export function PlayManagerGlobalChat() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [canManageChat, setCanManageChat] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [mutingAuthor, setMutingAuthor] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -339,9 +364,10 @@ export function PlayManagerGlobalChat() {
     async function load() {
       setLoading(true);
       const response = await fetch("/api/playmanager/chat");
-      const data = await response.json().catch(() => []);
+      const data = await response.json().catch(() => null);
       if (cancelled) return;
-      setMessages(Array.isArray(data) ? (data as ChatMessage[]) : []);
+      setMessages(Array.isArray(data?.messages) ? (data.messages as ChatMessage[]) : []);
+      setCanManageChat(!!data?.canManageChat);
       setLoading(false);
     }
     load();
@@ -364,8 +390,8 @@ export function PlayManagerGlobalChat() {
         },
         async () => {
           const response = await fetch("/api/playmanager/chat");
-          const data = await response.json().catch(() => []);
-          if (Array.isArray(data)) setMessages(data as ChatMessage[]);
+          const data = await response.json().catch(() => null);
+          if (Array.isArray(data?.messages)) setMessages(data.messages as ChatMessage[]);
         }
       )
       .subscribe();
@@ -397,6 +423,49 @@ export function PlayManagerGlobalChat() {
       setNotice(chatRejectionNotice(data));
     }
     setSending(false);
+  }
+
+  async function deleteMessage(id: string) {
+    if (deletingId) return;
+    setDeletingId(id);
+    const snapshot = messages;
+    // Optimistic — drop it now, restore if the request is rejected.
+    setMessages((current) => current.filter((item) => item.id !== id));
+    const response = await fetch("/api/playmanager/chat", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (!response.ok) {
+      setMessages(snapshot);
+      toast.error("წაშლა ვერ მოხერხდა.");
+    }
+    setDeletingId(null);
+  }
+
+  async function muteAuthor(username: string | undefined, durationKey: MuteDurationKey) {
+    if (!username || mutingAuthor) return;
+    setMutingAuthor(username);
+    try {
+      const response = await fetch("/api/chat/mutes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channelId: PM_CHAT_CHANNEL, username, durationKey }),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { error?: string; alreadyMuted?: boolean }
+        | null;
+      if (!response.ok) throw new Error(payload?.error || "mute_failed");
+      const label = MUTE_OPTIONS.find((option) => option.key === durationKey)?.label ?? durationKey;
+      toast.success(
+        payload?.alreadyMuted ? `@${username}-ის mute განახლდა: ${label}` : `@${username} დადუმდა: ${label}`
+      );
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "mute_failed";
+      toast.error(reason === "profile_not_found" ? "პროფილი ვერ მოიძებნა." : "Mute ვერ შესრულდა.");
+    } finally {
+      setMutingAuthor(null);
+    }
   }
 
   const remaining = 500 - draft.length;
@@ -489,6 +558,74 @@ export function PlayManagerGlobalChat() {
                       >
                         {timeLabel(message.created_at)}
                       </span>
+
+                      {/* Moderation actions — appear on hover beside the bubble.
+                          Report: anyone, on others' messages. Delete: own always,
+                          any with manage_chat. Mute: manage_chat, on others. */}
+                      <div
+                        className={`absolute top-1 flex items-center gap-2 opacity-0 transition group-hover:opacity-100 ${
+                          mine ? "right-full mr-2" : "left-full ml-2"
+                        }`}
+                      >
+                        {!mine ? (
+                          <ReportButton targetType="message" targetId={message.id} />
+                        ) : null}
+                        {mine || canManageChat ? (
+                          <button
+                            type="button"
+                            onClick={() => deleteMessage(message.id)}
+                            disabled={deletingId === message.id}
+                            className="text-white/35 transition-colors hover:text-rose-400 disabled:opacity-40"
+                            title="წაშლა"
+                            aria-label="შეტყობინების წაშლა"
+                          >
+                            {deletingId === message.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-3.5 w-3.5" />
+                            )}
+                          </button>
+                        ) : null}
+                        {canManageChat && !mine && profile?.username ? (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              render={
+                                <button
+                                  type="button"
+                                  disabled={mutingAuthor === profile.username}
+                                  className="text-white/35 transition-colors hover:text-violet-300 disabled:opacity-40"
+                                  title="Mute"
+                                  aria-label="ავტორის დადუმება"
+                                >
+                                  {mutingAuthor === profile.username ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    <VolumeX className="h-3.5 w-3.5" />
+                                  )}
+                                </button>
+                              }
+                            />
+                            <DropdownMenuContent
+                              align="end"
+                              className="w-36 border border-white/10 bg-black/90 backdrop-blur-xl"
+                            >
+                              <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-wider text-white/50">
+                                Mute ხანგრძლივობა
+                              </DropdownMenuLabel>
+                              <DropdownMenuSeparator className="bg-white/10" />
+                              {MUTE_OPTIONS.map((option) => (
+                                <DropdownMenuItem
+                                  key={option.key}
+                                  onClick={() => muteAuthor(profile?.username, option.key)}
+                                  className="text-[13px] font-medium text-white/80 focus:bg-white/10 focus:text-white"
+                                >
+                                  {option.label}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                 </div>
