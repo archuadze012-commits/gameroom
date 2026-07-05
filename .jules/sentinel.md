@@ -1,0 +1,4 @@
+## 2025-02-18 - Open Redirect via Protocol-Relative URLs
+**Vulnerability:** Open redirect possible when redirect URL (`next` parameter) is validated using only `.startsWith("/")`. This allows protocol-relative URLs like `//evil.com` or `/\evil.com` to bypass validation.
+**Learning:** `startsWith("/")` is insufficient validation for safe redirects because standard browsers will resolve `//domain.com` as `https://domain.com` when redirecting, causing users to leave the safe origin and be susceptible to phishing.
+**Prevention:** Always explicitly check for protocol-relative bypasses. A robust check for local redirects should be: `next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\")`.
