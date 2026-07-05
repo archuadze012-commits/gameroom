@@ -9,6 +9,11 @@ import { getTeam } from '@/lib/playmanager/team';
 import { getPlayManagerAchievements, type AchievementMetrics } from '@/lib/playmanager/achievements';
 import { getManagerMatchupHistory, type MatchupHistory } from '@/lib/playmanager/matchup';
 import { formatGel } from '@/lib/playmanager/economy';
+import { getTeamPrivacy, type TeamPrivacy } from '@/lib/playmanager/privacy';
+import { hasBlocked } from '@/lib/blocks';
+import { ReportButton } from '@/components/report-button';
+import { BlockButton } from '@/components/block-button';
+import { TeamPrivacySettings } from '@/components/playmanager/team-privacy-settings';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,6 +71,11 @@ export default async function PlayManagerManagerPage(
   const squadCount = theirMetrics?.squadSize ?? 0;
   const matchup = myTeam && team ? await getManagerMatchupHistory(myTeam.id, team.id) : null;
 
+  // Privacy: what THIS manager has chosen to hide. Owner sees their own data
+  // (and seeds the settings toggles); other viewers get it gated below.
+  const privacy: TeamPrivacy = team ? await getTeamPrivacy(team.id) : { hideSquad: false, hideWallet: false, hideTransfers: false };
+  const iBlockThem = !isMe ? await hasBlocked(userData.user.id, managerId) : false;
+
   return (
     <PlayManagerLightShell>
       <div className="mx-auto w-full max-w-4xl space-y-4">
@@ -116,6 +126,13 @@ export default async function PlayManagerManagerPage(
                   <UsersRound className="mr-2 h-4 w-4 opacity-50" />
                   სოციალური პროფილი
                 </Link>
+                {!isMe ? (
+                  <div className="inline-flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2">
+                    <BlockButton targetUserId={managerId} initialBlocked={iBlockThem} />
+                    <span className="h-4 w-px bg-white/10" />
+                    <ReportButton targetType="profile" targetId={managerId} iconSize="h-4 w-4" />
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
@@ -125,7 +142,12 @@ export default async function PlayManagerManagerPage(
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatTile icon={<Shield className="h-4 w-4" />} label="გუნდი" value={team.name} hint={`დივიზიონი ${team.division_id}`} tone="green" />
             <StatTile icon={<Award className="h-4 w-4" />} label="დონე" value={`Lv ${theirMetrics?.level ?? 1}`} hint={`${(theirMetrics?.wins ?? 0).toLocaleString('ka-GE')} გამარჯვება`} />
-            <StatTile icon={<UsersRound className="h-4 w-4" />} label="შემადგენლობა" value={String(squadCount)} hint={`საშ. OVR ${theirMetrics?.avgOvr ?? 0}`} />
+            <StatTile
+              icon={<UsersRound className="h-4 w-4" />}
+              label="შემადგენლობა"
+              value={privacy.hideSquad && !isMe ? '🔒' : String(squadCount)}
+              hint={privacy.hideSquad && !isMe ? 'მენეჯერმა დამალა' : `საშ. OVR ${theirMetrics?.avgOvr ?? 0}`}
+            />
             <StatTile
               icon={<CalendarDays className="h-4 w-4" />}
               label="დაარსება"
@@ -140,12 +162,14 @@ export default async function PlayManagerManagerPage(
           </PmCard>
         )}
 
+        {isMe && team ? <TeamPrivacySettings initial={privacy} /> : null}
+
         {!isMe && team && theirMetrics && myMetrics ? (
-          <HeadToHead theirName={profile.display_name ?? profile.username ?? 'მეტოქე'} mine={myMetrics} theirs={theirMetrics} />
+          <HeadToHead theirName={profile.display_name ?? profile.username ?? 'მეტოქე'} mine={myMetrics} theirs={theirMetrics} hideWallet={privacy.hideWallet} />
         ) : null}
 
         {!isMe && matchup ? (
-          <MatchupMemory theirName={profile.display_name ?? profile.username ?? 'მეტოქე'} matchup={matchup} />
+          <MatchupMemory theirName={profile.display_name ?? profile.username ?? 'მეტოქე'} matchup={matchup} hideTransfers={privacy.hideTransfers} />
         ) : null}
       </div>
     </PlayManagerLightShell>
@@ -158,8 +182,10 @@ const RESULT_STYLE: Record<'W' | 'D' | 'L', string> = {
   L: 'border-red-300/30 bg-red-300/10 text-red-100',
 };
 
-function MatchupMemory({ theirName, matchup }: { theirName: string; matchup: MatchupHistory }) {
-  const { record, meetings, transfers } = matchup;
+function MatchupMemory({ theirName, matchup, hideTransfers }: { theirName: string; matchup: MatchupHistory; hideTransfers: boolean }) {
+  const { record, meetings } = matchup;
+  // hide_transfers gates the deal history from the opponent.
+  const transfers = hideTransfers ? [] : matchup.transfers;
   const hasHistory = meetings.length > 0 || transfers.length > 0;
 
   return (
@@ -238,10 +264,12 @@ const H2H_ROWS: { label: string; key: keyof AchievementMetrics; fmt?: (v: number
   { label: 'დივიზიონი', key: 'divisionA', fmt: (v) => (v >= 1 ? 'A' : '—') },
 ];
 
-function HeadToHead({ theirName, mine, theirs }: { theirName: string; mine: AchievementMetrics; theirs: AchievementMetrics }) {
+function HeadToHead({ theirName, mine, theirs, hideWallet }: { theirName: string; mine: AchievementMetrics; theirs: AchievementMetrics; hideWallet: boolean }) {
+  // hide_wallet drops the balance row from the opponent's comparison entirely.
+  const rows = hideWallet ? H2H_ROWS.filter((r) => r.key !== 'balance') : H2H_ROWS;
   let meWins = 0;
   let themWins = 0;
-  for (const row of H2H_ROWS) {
+  for (const row of rows) {
     const a = mine[row.key];
     const b = theirs[row.key];
     if (a > b) meWins += 1;
@@ -257,7 +285,7 @@ function HeadToHead({ theirName, mine, theirs }: { theirName: string; mine: Achi
         right={<PmPill tone={meWins >= themWins ? 'green' : 'red'}>{meWins} : {themWins}</PmPill>}
       />
       <div className="space-y-1.5">
-        {H2H_ROWS.map((row) => {
+        {rows.map((row) => {
           const a = mine[row.key];
           const b = theirs[row.key];
           const fmt = row.fmt ?? ((v: number) => v.toLocaleString('ka-GE'));

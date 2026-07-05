@@ -3174,6 +3174,38 @@ export type Database = {
           },
         ]
       }
+      pm_team_privacy: {
+        Row: {
+          hide_squad: boolean
+          hide_transfers: boolean
+          hide_wallet: boolean
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          hide_squad?: boolean
+          hide_transfers?: boolean
+          hide_wallet?: boolean
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          hide_squad?: boolean
+          hide_transfers?: boolean
+          hide_wallet?: boolean
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pm_team_privacy_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: true
+            referencedRelation: "pm_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pm_teams: {
         Row: {
           created_at: string
@@ -4893,6 +4925,15 @@ export type Database = {
       pm_secondary_positions: { Args: { p_pos: string }; Returns: string[] }
       pm_sell_player: {
         Args: { p_player_id: string; p_team_id: string }
+        Returns: Json
+      }
+      pm_set_team_privacy: {
+        Args: {
+          p_hide_squad: boolean
+          p_hide_transfers: boolean
+          p_hide_wallet: boolean
+          p_team_id: string
+        }
         Returns: Json
       }
       pm_settle_transfer: {

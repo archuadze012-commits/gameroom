@@ -1,11 +1,12 @@
 import Link from 'next/link';
-import { ArrowLeft, UsersRound, CalendarDays, Award, Shield } from 'lucide-react';
+import { ArrowLeft, UsersRound, CalendarDays, Award, Shield, Lock } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { PlayManagerLightShell } from '@/components/playmanager/playmanager-light-shell';
 import { PmCard, PmCardHead, PmPill } from '@/components/playmanager/pm-cards';
 import { NestedMiniBox } from '@/components/playmanager/panel-primitives';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { formatGel } from '@/lib/playmanager/economy';
+import { getTeamPrivacy } from '@/lib/playmanager/privacy';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,6 +85,8 @@ export default async function PlayManagerTeamPage(
   }
 
   const isMe = team.user_id !== null && team.user_id === userData.user.id;
+  // hide_squad hides the roster (players, avg OVR, squad value) from other viewers.
+  const hideSquad = !isMe && (await getTeamPrivacy(team.id)).hideSquad;
 
   const avgOvr = squadPlayers.length
     ? Math.round(squadPlayers.reduce((sum, p) => sum + p.ovr_current, 0) / squadPlayers.length)
@@ -165,6 +168,13 @@ export default async function PlayManagerTeamPage(
         </PmCard>
 
         {/* ── SQUAD ── */}
+        {hideSquad ? (
+          <PmCard className="items-center py-10 text-center">
+            <Lock className="mx-auto h-9 w-9 text-white/25" />
+            <p className="mt-4 text-sm font-black text-white/70">შემადგენლობა დამალულია</p>
+            <p className="mt-1 text-xs font-bold text-white/40">ამ მენეჯერმა გუნდის შემადგენლობა სხვებისგან დამალა.</p>
+          </PmCard>
+        ) : (
         <PmCard>
           <PmCardHead icon={UsersRound} title="შემადგენლობა" subtitle={`${squadPlayers.length} ფეხბურთელი`} />
           <div className="grid grid-cols-3 gap-2">
@@ -197,6 +207,7 @@ export default async function PlayManagerTeamPage(
             </div>
           )}
         </PmCard>
+        )}
       </div>
     </PlayManagerLightShell>
   );

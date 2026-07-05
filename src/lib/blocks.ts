@@ -18,6 +18,20 @@ export async function isBlocked(a: string, b: string): Promise<boolean> {
   return (data?.length ?? 0) > 0;
 }
 
+// Direction-specific: has `blockerId` blocked `blockedId`? Used to seed the
+// BlockButton's label (you can only un-block a block you created).
+export async function hasBlocked(blockerId: string, blockedId: string): Promise<boolean> {
+  if (!blockerId || !blockedId || blockerId === blockedId) return false;
+  const db = createSupabaseAdminClient();
+  const { data } = await db
+    .from("user_blocks")
+    .select("blocker_id")
+    .eq("blocker_id", blockerId)
+    .eq("blocked_id", blockedId)
+    .maybeSingle();
+  return Boolean(data);
+}
+
 // Whether `senderId` may START a new DM with `recipientId`, per the recipient's
 // dm_privacy preference: everyone (default) → yes; nobody → no; followers → only
 // if the sender follows the recipient. Existing conversations are unaffected —

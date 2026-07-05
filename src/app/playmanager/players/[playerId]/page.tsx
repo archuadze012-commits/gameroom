@@ -32,6 +32,7 @@ import {
   type PlayerCardStatsInput,
 } from '@/lib/playmanager/player-card-stats';
 import { formatGel, getTalentClassAdjustedTransferValueGel } from '@/lib/playmanager/economy';
+import { getTeamPrivacy } from '@/lib/playmanager/privacy';
 import { buildPlayManagerPlayerCardLayout } from '@/lib/playmanager/player-card';
 import { ovrGrowthCap } from '@/lib/playmanager/players';
 import { TalentClassBadge } from '@/components/playmanager/talent-class-badge';
@@ -349,6 +350,9 @@ export default async function PlayManagerPlayerPage(
     }
   }
   const attributesRevealed = isOwnedByViewer || hasScout;
+  // hide_squad additionally masks this player's condition/value from non-owners,
+  // matching the roster hiding on the team/manager pages.
+  const conditionHidden = !isOwnedByViewer && team ? (await getTeamPrivacy(team.id)).hideSquad : false;
 
   const position = player.primary_position?.trim().toUpperCase() || inferPosition(player, squad);
   const derivedStats = derivePlayerStats(position, player.ovr_current, player.card_stats);
@@ -649,20 +653,20 @@ export default async function PlayManagerPlayerPage(
                     <InfoTile
                       icon={<BadgeDollarSign className="h-5 w-5" />}
                       label="საბაზრო ფასი"
-                      value={formatGel(marketValue)}
-                      sub={`${signed(valueGrowth)} GEL საწყისთან შედარებით`}
+                      value={conditionHidden ? '🔒' : formatGel(marketValue)}
+                      sub={conditionHidden ? 'მენეჯერმა დამალა' : `${signed(valueGrowth)} GEL საწყისთან შედარებით`}
                     />
                     <InfoTile
                       icon={<HeartPulse className="h-5 w-5" />}
                       label="მორალი"
-                      value={`${player.morale}%`}
-                      sub={player.morale >= 70 ? 'მენტალურად მზადაა' : 'მორალის აწევა სჭირდება'}
+                      value={conditionHidden ? '🔒' : `${player.morale}%`}
+                      sub={conditionHidden ? 'დამალული' : player.morale >= 70 ? 'მენტალურად მზადაა' : 'მორალის აწევა სჭირდება'}
                     />
                     <InfoTile
                       icon={<Dumbbell className="h-5 w-5" />}
                       label="დაღლა"
-                      value={`${player.fatigue}%`}
-                      sub={player.fatigue >= 55 ? 'როტაცია გაითვალისწინე' : 'ფიზიკურად ნორმაშია'}
+                      value={conditionHidden ? '🔒' : `${player.fatigue}%`}
+                      sub={conditionHidden ? 'დამალული' : player.fatigue >= 55 ? 'როტაცია გაითვალისწინე' : 'ფიზიკურად ნორმაშია'}
                     />
                   </div>
 
