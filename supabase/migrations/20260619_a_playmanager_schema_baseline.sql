@@ -180,8 +180,8 @@ begin
     end if;
 
     update pm_wallets set balance = balance - v_template.entry_fee where team_id = p_team_id;
-    insert into pm_transactions (team_id, amount, type, description)
-    values (p_team_id, -v_template.entry_fee, 'cup_entry', 'Entry fee for ' || v_template.name);
+    insert into pm_transactions (team_id, amount, reason)
+    values (p_team_id, -v_template.entry_fee, 'Entry fee for ' || v_template.name);
   end if;
 
   -- 6. Register team

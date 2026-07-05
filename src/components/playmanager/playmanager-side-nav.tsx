@@ -36,7 +36,7 @@ const navItems: NavItem[] = [
   { label: 'შემადგენლობა', icon: Shield, href: '/playmanager/arena/lineup' },
   { label: 'გუნდი', icon: UsersRound, href: '/playmanager/residence' },
   { label: 'საწვრთნელი', icon: Dumbbell, href: '/playmanager/training' },
-  { label: 'მარკეტი', icon: ShoppingCart, href: '/playmanager/market' },
+  { label: 'მაღაზია', icon: ShoppingCart, href: '/playmanager/shop' },
   { label: 'ოფისი', icon: Landmark, href: '/playmanager/finance' },
   { label: 'ძებნა', icon: Search, href: '/playmanager/search' },
   { label: 'რეიტინგი', icon: Crown, href: '/playmanager/leaderboard' },

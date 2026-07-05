@@ -31,7 +31,7 @@ const PRIMARY_TABS: Tab[] = [
   { href: '/playmanager', label: 'მთავარი', icon: Building2 },
   { href: '/playmanager/arena', label: 'მატჩი', icon: Trophy },
   { href: '/playmanager/residence', label: 'გუნდი', icon: UsersRound },
-  { href: '/playmanager/market', label: 'მარკეტი', icon: ShoppingCart },
+  { href: '/playmanager/shop', label: 'მაღაზია', icon: ShoppingCart },
 ];
 
 const MORE_LINKS: { href: string; label: string; icon: LucideIcon; badgeKey?: 'notifications' }[] = [
@@ -78,8 +78,10 @@ export function PlayManagerBottomNav() {
     return () => document.removeEventListener('mousedown', handler);
   }, [moreOpen]);
 
-  const isActive = (href: string) =>
-    href === '/playmanager' ? pathname === '/playmanager' : pathname.startsWith(href);
+  const isActive = (href: string) => {
+    const base = href.split('?')[0];
+    return base === '/playmanager' ? pathname === '/playmanager' : pathname.startsWith(base);
+  };
 
   const activeCls =
     'bg-[linear-gradient(135deg,rgba(16,185,129,0.2),rgba(52,211,153,0.12))] text-emerald-300 drop-shadow-[0_0_12px_rgba(16,185,129,0.6)] shadow-[0_0_26px_rgba(16,185,129,0.25)] ring-1 ring-emerald-400/30 scale-105';

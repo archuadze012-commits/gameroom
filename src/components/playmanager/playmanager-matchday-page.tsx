@@ -93,8 +93,6 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
     injuredCount,
     startersCount,
     tactics,
-    activeCupName,
-    cupsCount,
     activeCup,
     championship,
     realFixtureReady,
@@ -266,30 +264,31 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
         <section className="mt-4">
           <p className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/40">შეჯიბრები</p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Shortcut
+            <CompetitionCard
               href="/playmanager/cups"
-              icon={<Trophy className="h-5 w-5" />}
               title="ყოველდღიური თასები"
-              sub={activeCup ? `${activeCup.participantCount}/${activeCup.maxTeams} · ${activeCup.prizePoolLabel}` : activeCupName ?? `${cupsCount} ღია თასი`}
-              tone="red"
+              sub={activeCup ? `საპრიზო ${activeCup.prizePoolLabel}` : 'ყოველდღიური თასი'}
+              badgeLabel={activeCup ? 'მიმდინარე' : 'ღიაა'}
+              badgeCls={activeCup ? 'border-rose-400/26 bg-rose-400/10 text-rose-100' : 'border-emerald-300/26 bg-emerald-300/10 text-emerald-100'}
+              photoSrc="/playmanager/module-cards/arena/daily-cups.webp"
               index={0}
             />
-            <Shortcut
+            <CompetitionCard
               href="/playmanager/championships"
-              icon={<Medal className="h-5 w-5" />}
               title="ჩემპიონატები"
-              sub={championship
-                ? `${championship.name} · ${championship.status === 'in_progress' ? 'მიმდინარე' : 'რეგისტრაცია'}`
-                : 'დარეგისტრირდი ლიგაში'}
-              tone="green"
+              sub={championship ? championship.name : 'დარეგისტრირდი ლიგაში'}
+              badgeLabel={championship ? (championship.status === 'in_progress' ? 'მიმდინარე' : 'ღიაა') : 'ღიაა'}
+              badgeCls={championship && championship.status === 'in_progress' ? 'border-rose-400/26 bg-rose-400/10 text-rose-100' : 'border-emerald-300/26 bg-emerald-300/10 text-emerald-100'}
+              photoSrc="/playmanager/module-cards/arena/championships.webp"
               index={1}
             />
-            <Shortcut
+            <CompetitionCard
               href="/playmanager/championships"
-              icon={<Trophy className="h-5 w-5" />}
               title="ევრო ტურნირები"
-              sub="knockout — ნოკ-აუტ ბადე"
-              tone="red"
+              sub="ევროპული თასები"
+              badgeLabel="ნოკ-აუტი"
+              badgeCls="border-white/12 bg-white/[0.05] text-white/55"
+              photoSrc="/playmanager/module-cards/arena/euro-cups.webp"
               index={2}
             />
           </div>
@@ -605,6 +604,69 @@ function BriefingCell({ label, value, suffix = '', caption }: { label: string; v
       </p>
       {caption ? <p className="truncate text-[11px] font-bold text-white/45">{caption}</p> : null}
     </div>
+  );
+}
+
+function CompetitionCard({
+  href,
+  title,
+  sub,
+  badgeLabel,
+  badgeCls,
+  photoSrc,
+  photoPosition = '50% 50%',
+  index,
+}: {
+  href: string;
+  title: string;
+  sub: string;
+  badgeLabel: string;
+  badgeCls: string;
+  photoSrc: string;
+  photoPosition?: string;
+  index: number;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.4, delay: index * 0.07 }}
+    >
+      <Link href={href} className="pubg-loadout-link group block w-full">
+        <div className="pubg-loadout-card relative aspect-[4/3] overflow-hidden">
+          <div className="absolute inset-[5px] overflow-hidden rounded-[12px]">
+            <Image
+              src={photoSrc}
+              alt={title}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              style={{ objectPosition: photoPosition }}
+              priority={index === 0}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/40 to-transparent" />
+          </div>
+
+          <div className="absolute inset-[5px] z-10 flex h-[calc(100%-10px)] flex-col p-4">
+            <div className="flex items-start justify-end">
+              <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] backdrop-blur-md ${badgeCls}`}>
+                {badgeLabel}
+              </span>
+            </div>
+
+            <div className="mt-auto">
+              <h4 className="line-clamp-2 text-[15px] font-black uppercase tracking-[0.04em] text-white drop-shadow-md">
+                {title}
+              </h4>
+              <p className="mt-1 text-[11px] font-bold text-white/70 drop-shadow">
+                {sub}
+              </p>
+            </div>
+          </div>
+        </div>
+      </Link>
+    </motion.div>
   );
 }
 
