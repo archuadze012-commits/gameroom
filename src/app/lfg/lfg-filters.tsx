@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { mockGames } from "@/lib/mock-data";
 import { GameIcon } from "@/components/game-icon";
+import { useFavoriteSlugs } from "@/lib/use-favorite-slugs";
 
 function PremiumCard({
   children,
@@ -32,9 +33,12 @@ function PremiumCard({
   );
 }
 
-export function LfgFilters({ favoriteSlugs = [] }: { favoriteSlugs?: string[] }) {
+export function LfgFilters() {
   const router = useRouter();
   const params = useSearchParams();
+  // Favorites are read client-side so the /lfg page needn't do a per-request
+  // session + profile lookup on the server (it only sorts favorites first here).
+  const favoriteSlugs = useFavoriteSlugs();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [pickerRect, setPickerRect] = useState<{ top: number; left: number; width: number } | null>(null);
