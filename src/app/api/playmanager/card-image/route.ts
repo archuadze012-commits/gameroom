@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
+import { rateLimitShared } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -71,6 +72,20 @@ async function toSizedWebp(input: Buffer) {
 }
 
 export async function GET(request: Request) {
+  // Per-IP throttle. This route is unauthenticated and each miss costs a fresh
+  // upstream fetch + sharp resize/encode. A distinct `src` (e.g. a cache-busting
+  // ?b=<N> on an allowlisted URL) is a fresh cache key and forces real compute,
+  // so without a rate cap an anon client can drive unbounded Vercel CPU/cost.
+  // The cap makes cache-busting irrelevant — the attacker is throttled either way,
+  // while staying generous enough for legit batch card loading (a market/squad
+  // page can request dozens of distinct images at once).
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || request.headers.get('x-real-ip')
+    || 'unknown';
+  if (!(await rateLimitShared(`card-image:${ip}`, 240, 60_000))) {
+    return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
+  }
+
   const { searchParams } = new URL(request.url);
   const src = searchParams.get('src')?.trim();
 

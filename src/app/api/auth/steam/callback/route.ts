@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { getServerEnv } from "@/lib/env";
+import { rateLimitShared } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("api:steam-callback");
@@ -28,7 +30,24 @@ export async function GET(request: NextRequest) {
   const user = await getSession().catch(() => null);
   if (!user) return NextResponse.redirect(new URL("/auth/login", request.url));
 
+  if (!(await rateLimitShared(`steam-link:${user.id}`, 5, 60_000))) {
+    return NextResponse.redirect(new URL("/settings?steam=rate_limited", request.url));
+  }
+
   const params = request.nextUrl.searchParams;
+
+  // CSRF binding: the state must match the httpOnly cookie set in /start, so a
+  // callback URL captured from the attacker's own Steam login can't be replayed
+  // against a victim's session to force-link the attacker's steamid onto them.
+  const cookieStore = await cookies();
+  const savedState = cookieStore.get("steam_oauth_state")?.value;
+  cookieStore.delete("steam_oauth_state");
+  const state = params.get("state");
+  if (!state || !savedState || state !== savedState) {
+    logger.warn("Steam OAuth state validation failed", { hasState: !!state, hasCookie: !!savedState });
+    return NextResponse.redirect(new URL("/settings?steam=invalid", request.url));
+  }
+
   const valid = await verifySteamResponse(params);
   if (!valid) {
     return NextResponse.redirect(new URL("/settings?steam=invalid", request.url));
