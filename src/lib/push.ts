@@ -1,5 +1,5 @@
 import webpush from "web-push";
-import { createSupabaseServerClient } from "./supabase/server";
+import { createSupabaseAdminClient } from "./supabase/admin";
 import { getServerEnv } from "@/lib/env";
 import { createLogger } from "@/lib/logger";
 
@@ -37,7 +37,13 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
     return;
   }
 
-  const supabase = await createSupabaseServerClient();
+  // Service-role: this reads the RECIPIENT's subscriptions, but sendPushToUser is
+  // almost always called from the ACTOR's session (e.g. a replier notifying a
+  // thread author). push_subscriptions RLS is owner-only (auth.uid() = user_id),
+  // so a caller-scoped client would read 0 rows for anyone but the caller and
+  // every cross-user push would silently no-op. The admin client bypasses RLS so
+  // pushes actually reach their recipient; this is a trusted server-side send.
+  const supabase = createSupabaseAdminClient();
   const { data: subs } = await supabase
     .from("push_subscriptions")
     .select("id, endpoint, p256dh, auth")
