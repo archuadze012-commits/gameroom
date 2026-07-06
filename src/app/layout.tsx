@@ -1,19 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import { after } from "next/server";
-import { updateLastSeen } from "@/lib/update-last-seen";
-import { getSession } from "@/lib/auth";
-import { EditModeProvider } from "@/components/admin/edit-mode-context";
 import { AppRouteChrome } from "@/components/layout/app-route-chrome";
-
-const ROOT_ADMIN_EMAILS = [
-  "archuadze012@gmail.com",
-  ...(process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((email) => email.trim())
-    .filter(Boolean),
-];
 
 const firaGO = localFont({
   src: [
@@ -65,17 +53,15 @@ export const viewport = {
   initialScale: 1,
 };
 
-export default async function RootLayout({
+// No getSession()/cookies() here — this layout stays statically renderable so
+// individual routes can be static/ISR (and client navigation to them is
+// prefetched, not a server round-trip). Auth for the chrome is read client-side
+// inside AppRouteChrome via /api/me.
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const user = await getSession().catch(() => null);
-  if (user) {
-    after(() => updateLastSeen(user.id));
-  }
-  const canEdit = !!user?.email && ROOT_ADMIN_EMAILS.includes(user.email);
-
   return (
     <html
       lang="ka"
@@ -83,11 +69,7 @@ export default async function RootLayout({
       className={`dark ${firaGO.variable} ${alkSanet.variable} ${orbitron.variable} antialiased`}
     >
       <body suppressHydrationWarning className="bg-transparent text-foreground">
-        <EditModeProvider canEdit={canEdit}>
-          <AppRouteChrome isAuthenticated={!!user} canEdit={canEdit}>
-            {children}
-          </AppRouteChrome>
-        </EditModeProvider>
+        <AppRouteChrome>{children}</AppRouteChrome>
       </body>
     </html>
   );
