@@ -51,13 +51,26 @@ export default async function ChampionshipsPage() {
   const team = await getTeam(userData.user.id);
   const isAdmin = await hasPermission('manage_content');
 
-  const [{ data: leagueRows }, { data: participantRows }, { data: fixtureRows }] = await Promise.all([
-    db.from('pm_league_instances').select('id,name,division_level,status,format,max_teams,prize_pool').order('created_at', { ascending: false }).returns<LeagueRow[]>(),
-    db.from('pm_league_participants').select('league_id,team_id,played,won,drawn,lost,goals_for,goals_against,points').returns<ParticipantRow[]>(),
-    db.from('pm_league_fixtures').select('league_id,round,home_team_id,away_team_id,home_goals,away_goals,status').order('round', { ascending: true }).returns<FixtureRow[]>(),
-  ]);
+  // pm_league_participants / pm_league_fixtures are append-only and grow every
+  // season, so never pull the whole tables. Bound to the most-recent leagues and
+  // fetch only their participants/fixtures.
+  const { data: leagueRows } = await db
+    .from('pm_league_instances')
+    .select('id,name,division_level,status,format,max_teams,prize_pool')
+    .order('created_at', { ascending: false })
+    .limit(50)
+    .returns<LeagueRow[]>();
 
   const leagues = leagueRows ?? [];
+  const leagueIds = leagues.map((l) => l.id);
+
+  const [{ data: participantRows }, { data: fixtureRows }] = leagueIds.length
+    ? await Promise.all([
+        db.from('pm_league_participants').select('league_id,team_id,played,won,drawn,lost,goals_for,goals_against,points').in('league_id', leagueIds).returns<ParticipantRow[]>(),
+        db.from('pm_league_fixtures').select('league_id,round,home_team_id,away_team_id,home_goals,away_goals,status').in('league_id', leagueIds).order('round', { ascending: true }).returns<FixtureRow[]>(),
+      ])
+    : [{ data: [] as ParticipantRow[] }, { data: [] as FixtureRow[] }];
+
   const participants = participantRows ?? [];
   const fixtures = fixtureRows ?? [];
 
