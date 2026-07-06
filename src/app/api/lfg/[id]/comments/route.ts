@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { rateLimitShared } from "@/lib/rate-limit";
+import { moderateText } from "@/lib/moderate";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("api:lfg-comments");
@@ -21,6 +22,12 @@ export async function POST(
   const text = typeof body.body === "string" ? body.body.trim().slice(0, 2000) : "";
 
   if (!text) return NextResponse.json({ error: "body required" }, { status: 400 });
+
+  // Blocklist + toxicity gate before the comment is stored.
+  const mod = await moderateText(text).catch(() => ({ ok: true, reason: undefined as string | undefined }));
+  if (!mod.ok) {
+    return NextResponse.json({ error: "content_blocked", reason: mod.reason }, { status: 400 });
+  }
 
   const supabase = await createSupabaseServerClient();
 

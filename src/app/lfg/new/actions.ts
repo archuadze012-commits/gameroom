@@ -5,7 +5,8 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSession } from "@/lib/auth";
 import { moderateText } from "@/lib/moderate";
-import { awardBonusXp } from "@/lib/gamification";
+import { awardBonusXpCapped } from "@/lib/gamification";
+import { rateLimitShared } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
 import {
   LFG_DESCRIPTION_MAX_LENGTH,
@@ -44,6 +45,10 @@ export async function createLfgAction(
   const user = await getSession();
   if (!user) {
     return { success: false, message: "ავტორიზაცია აუცილებელია" };
+  }
+
+  if (!(await rateLimitShared(`lfg-create:${user.id}`, 8, 60_000))) {
+    return { success: false, message: "ძალიან სწრაფად — დაელოდე წამით." };
   }
 
   const optionalString = (name: string) => {
@@ -140,7 +145,8 @@ export async function createLfgAction(
     return { success: false, message: "ლოკალის გამოქვეყნება ვერ მოხერხდა" };
   }
 
-  await awardBonusXp(user.id, 5, "lfg:create-post");
+  // Capped: max 5 create-XP awards/day so create→delete→create can't farm.
+  await awardBonusXpCapped(user.id, 5, "lfg_create", 5);
 
   revalidatePath("/lfg");
   revalidatePath("/");

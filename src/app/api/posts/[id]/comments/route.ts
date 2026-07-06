@@ -5,6 +5,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createLogger } from "@/lib/logger";
 import { rateLimitShared } from "@/lib/rate-limit";
+import { moderateText } from "@/lib/moderate";
 
 const logger = createLogger("api:post-comments");
 
@@ -34,6 +35,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const text = (body.body ?? "").trim();
   if (!text || text.length > 1000)
     return NextResponse.json({ error: "Comment must be 1–1000 chars" }, { status: 400 });
+
+  // Blocklist + toxicity gate before the comment is stored.
+  const mod = await moderateText(text).catch(() => ({ ok: true, reason: undefined as string | undefined }));
+  if (!mod.ok) {
+    return NextResponse.json({ error: "content_blocked", reason: mod.reason }, { status: 400 });
+  }
 
   const admin = createSupabaseAdminClient();
   const { data: post, error: postError } = await admin

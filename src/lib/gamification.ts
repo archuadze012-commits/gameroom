@@ -56,6 +56,40 @@ export async function awardBonusXp(
 }
 
 /**
+ * Daily-capped XP award: grants `amount` to `userId` only up to `dailyCap` awards
+ * of `sourceType` per (UTC) day. Use this for create-flow XP (posting, listing)
+ * so create→delete→create can't farm unbounded XP — each award counts toward the
+ * cap regardless of later deletion. Returns ok even when capped (not an error).
+ */
+export async function awardBonusXpCapped(
+  userId: string,
+  amount: number,
+  sourceType: string,
+  dailyCap: number,
+): Promise<AwardXpResult> {
+  if (!userId || !Number.isInteger(amount) || amount <= 0 || !sourceType || !Number.isInteger(dailyCap) || dailyCap <= 0) {
+    return { ok: false, code: "invalid_input", message: "awardBonusXpCapped requires valid args" };
+  }
+  try {
+    const supabase = createSupabaseAdminClient();
+    const { error } = await supabase.rpc("award_xp_capped", {
+      p_user_id: userId,
+      p_amount: amount,
+      p_source_type: sourceType,
+      p_daily_cap: dailyCap,
+    });
+    if (error) {
+      logger.warn("awardBonusXpCapped RPC failed", { userId, amount, sourceType, dailyCap, error });
+      return { ok: false, code: "rpc_failed", message: error.message };
+    }
+    return { ok: true };
+  } catch (error) {
+    logger.error("awardBonusXpCapped threw", { userId, amount, sourceType, dailyCap, error });
+    return { ok: false, code: "exception", message: getErrorMessage(error) };
+  }
+}
+
+/**
  * Idempotent XP award: grants `amount` to `userId` at most once per
  * (sourceType, sourceId) pair, ever. Use this for XP tied to a reversible social
  * action (a like, a follow) so re-toggling can't farm XP — the key must encode

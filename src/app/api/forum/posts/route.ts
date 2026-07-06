@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 import { awardBonusXp } from "@/lib/gamification";
 import { sendPushToUser } from "@/lib/push";
 import { rateLimitShared } from "@/lib/rate-limit";
+import { moderateText } from "@/lib/moderate";
 import { createLogger } from "@/lib/logger";
 import { FORUM_REPLY_BODY_MAX_LENGTH } from "@/lib/constants";
 
@@ -30,6 +31,12 @@ export async function POST(request: NextRequest) {
   if (!threadId) return NextResponse.json({ error: "thread_id_required" }, { status: 400 });
   if (!postBody || postBody.length > FORUM_REPLY_BODY_MAX_LENGTH) {
     return NextResponse.json({ error: "body_invalid" }, { status: 400 });
+  }
+
+  // Blocklist + toxicity gate before the reply is stored.
+  const mod = await moderateText(postBody).catch(() => ({ ok: true, reason: undefined as string | undefined }));
+  if (!mod.ok) {
+    return NextResponse.json({ error: "content_blocked", reason: mod.reason }, { status: 400 });
   }
 
   const supabase = await createSupabaseServerClient();

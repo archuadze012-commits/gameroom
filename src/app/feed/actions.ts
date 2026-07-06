@@ -4,8 +4,9 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
-import { awardBonusXp } from "@/lib/gamification";
+import { awardBonusXpCapped } from "@/lib/gamification";
 import { moderateText } from "@/lib/moderate";
+import { rateLimitShared } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
 import { type FeedPost } from "./page";
 
@@ -49,6 +50,10 @@ export async function createPostAction(
 
   const { data: body } = validated;
 
+  if (!(await rateLimitShared(`feed-create:${user.id}`, 8, 60_000))) {
+    return { success: false, message: "ძალიან სწრაფად პოსტავ — დაელოდე წამით." };
+  }
+
   // Blocklist + toxicity gate before the post is stored (fails open if the AI
   // moderator is unavailable, but the blocklist still applies).
   const mod = await moderateText(body.content).catch(() => ({ ok: true, reason: undefined as string | undefined }));
@@ -72,7 +77,8 @@ export async function createPostAction(
     return { success: false, message: "პოსტის გამოქვეყნება ვერ მოხერხდა" };
   }
 
-  await awardBonusXp(user.id, 10, "feed:create-post");
+  // Capped: max 5 create-XP awards/day (+50) so create→delete→create can't farm.
+  await awardBonusXpCapped(user.id, 10, "feed_create", 5);
 
   revalidatePath("/feed");
   revalidatePath("/");
