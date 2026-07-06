@@ -21,11 +21,11 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci
-      # Blocks on NEW critical advisories. The one known high (lodash _.template
-      # via discord.js — latest, internal-only, no user-controlled template) is
-      # accepted and unfixable without dropping discord.js, so we gate at
-      # critical here and print the full report below for visibility.
-      - run: npm audit --omit=dev --audit-level=critical
+      # Production deps are now clean (undici→6.27.0 and lodash→4.18.1 pinned via
+      # overrides; the shadcn CLI moved to devDependencies took hono/js-yaml/babel
+      # out of the prod tree). Gate at `high` so a new high/critical advisory in a
+      # runtime dependency fails CI; the full report below stays for visibility.
+      - run: npm audit --omit=dev --audit-level=high
       - name: Full audit report (non-blocking)
         if: always()
         run: npm audit --omit=dev || true
