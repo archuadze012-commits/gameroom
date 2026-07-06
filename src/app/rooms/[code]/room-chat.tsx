@@ -116,15 +116,22 @@ export function RoomChat({ roomId, currentUserId }: Props) {
     }
     setSending(true);
     try {
-      const supabase = createSupabaseBrowserClient();
-      const { data, error } = await supabase
-        .from("room_chat_messages")
-        .insert({ room_id: roomId, user_id: currentUserId, body })
-        .select(
-          "id, user_id, body, created_at, profiles!room_chat_messages_user_id_fkey(username, display_name, avatar_url)"
-        )
-        .single();
-      if (error) throw error;
+      const res = await fetch(`/api/rooms/${roomId}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        if (res.status === 400 && data?.error === "content_blocked") {
+          toast.error(data.reason || "მესიჯი დაბლოკილია");
+        } else if (res.status === 429) {
+          toast.error("ძალიან ხშირად წერ — დაელოდე წამით");
+        } else {
+          toast.error("მესიჯი ვერ გაიგზავნა");
+        }
+        return;
+      }
       if (data) {
         setMessages((prev) => [...prev, data as unknown as Msg]);
       }
