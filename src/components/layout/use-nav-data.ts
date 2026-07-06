@@ -33,13 +33,10 @@ export function useNavMessageCount() {
           return;
         }
 
-        const res = await fetch("/api/conversations");
+        const res = await fetch("/api/conversations/unread-count");
         if (!res.ok || cancelled) return;
         const data = await res.json();
-        const total = Array.isArray(data)
-          ? data.reduce((sum: number, item: { unread?: number }) => sum + (item.unread ?? 0), 0)
-          : 0;
-        setCount(total);
+        setCount(typeof data?.count === "number" ? data.count : 0);
       } catch {}
     }
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Trophy, Users, Calendar, Plus } from "lucide-react";
+import { Trophy, Users, Calendar } from "lucide-react";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { format } from "date-fns";
 import { PageHeader } from "@/components/page-header";
@@ -118,14 +118,6 @@ export default async function TournamentsPage() {
           eyebrow="ჩემპიონატები"
           title="ტურნირები"
           description="თემიდან გასული ჩემპიონატები. დარეგისტრირდი, უყურე და მოიგე პრემიუმ პრიზები."
-          actions={
-            <Link
-              href="/tournaments/propose"
-              className="group flex items-center justify-center gap-2 rounded-full border border-pink-500/30 bg-pink-500/10 px-6 py-3 text-[12px] font-black uppercase tracking-[0.16em] text-pink-400 shadow-[0_0_15px_rgba(236,72,153,0.2)] transition-all hover:scale-105 hover:bg-pink-500/20 hover:shadow-[0_0_25px_rgba(236,72,153,0.4)] md:shrink-0"
-            >
-              <Plus className="h-4 w-4" /> შემოთავაზება
-            </Link>
-          }
         />
 
         <div className="space-y-16 mt-12">
