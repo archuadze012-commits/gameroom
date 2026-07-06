@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { useHydrated } from "@/lib/use-hydrated";
 import Link from "next/link";
 import { ChevronDown, Search } from "lucide-react";
-import { crackedGames, mockGames, type CrackedGame } from "@/lib/mock-data";
+import { crackedGames, type CrackedGame } from "@/lib/mock-data";
 
 function getObjectPosition(url?: string) {
   if (!url) return "center";
@@ -126,10 +126,6 @@ export default function CrackedGamesPage() {
   const genreBtnRef = useRef<HTMLButtonElement>(null);
   const [dbGames, setDbGames] = useState<CrackedGame[]>([]);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
-  const [, setUserFavSlugs] = useState<string[]>([]);
-  const [, setFavCounts] = useState<Record<string, number>>({});
-  const [, setDbRosterGames] = useState<typeof mockGames>([]);
-
 
   useEffect(() => {
     if (!pickerOpen) return;
@@ -153,43 +149,6 @@ export default function CrackedGamesPage() {
         const rows: DbRow[] = payload.games ?? payload;
         setHiddenIds(new Set(payload.hiddenIds ?? []));
         setDbGames(rows.map(dbRowToGame));
-      } catch {}
-    })();
-  }, []);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const { createSupabaseBrowserClient } = await import("@/lib/supabase/client");
-        const supabase = createSupabaseBrowserClient();
-        const { data: { user } } = await supabase.auth.getUser();
-
-        const [{ data: gamesData }, { data: profileRows }, myProfile] = await Promise.all([
-          supabase.from("games").select("slug, name_ka, emoji, accent_color, icon_url, cover_url"),
-          supabase.from("profiles").select("favorite_game_slugs"),
-          user ? supabase.from("profiles").select("favorite_game_slugs").eq("id", user.id).single() : Promise.resolve({ data: null }),
-        ]);
-
-        const counts: Record<string, number> = {};
-        for (const row of profileRows ?? []) {
-          for (const slug of (row.favorite_game_slugs as string[] | null) ?? []) {
-            counts[slug] = (counts[slug] ?? 0) + 1;
-          }
-        }
-        setFavCounts(counts);
-        setUserFavSlugs((myProfile.data?.favorite_game_slugs as string[] | null) ?? []);
-
-        const dbSlugs = new Set((gamesData ?? []).map((g) => g.slug));
-        const merged = [
-          ...(gamesData ?? []).map((g) => ({
-            slug: g.slug, nameKa: g.name_ka, nameEn: g.name_ka,
-            description: "", accent: g.accent_color ?? "", emoji: g.emoji ?? "🎮",
-            iconUrl: g.icon_url ?? undefined, coverUrl: g.cover_url ?? undefined,
-            players: 0, online: 0, liveLfg: 0, favoritedBy: 0,
-          })),
-          ...mockGames.filter((m) => !dbSlugs.has(m.slug)),
-        ];
-        setDbRosterGames(merged);
       } catch {}
     })();
   }, []);
