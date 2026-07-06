@@ -13,7 +13,7 @@ const csp = [
   `script-src 'self' 'unsafe-inline' challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
-  "connect-src 'self' blob: *.supabase.co wss://*.supabase.co *.livekit.cloud wss://*.livekit.cloud api.groq.com api.open-meteo.com",
+  "connect-src 'self' blob: *.supabase.co wss://*.supabase.co api.groq.com api.open-meteo.com",
   "worker-src 'self' blob:",
   "media-src 'self' blob: *.supabase.co",
   "font-src 'self' data:",
