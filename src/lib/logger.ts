@@ -1,3 +1,5 @@
+import * as Sentry from "@sentry/nextjs";
+
 type LogLevel = "debug" | "info" | "warn" | "error";
 
 type LogMeta = Record<string, unknown>;
@@ -34,6 +36,23 @@ function sendAlert(text: string): void {
   });
 }
 
+// Only .critical() forwards to Sentry (not every .error() call) — those are
+// already-caught, already-handled errors sprinkled across ~90 routes, and
+// sending all of them would blow through Sentry's free-tier event quota in
+// hours. .critical() is reserved for security/economy anomalies a human should
+// see promptly, so it stays naturally rate-limited.
+function sendToSentry(prefix: string, message: string, meta?: LogMeta): void {
+  const error = meta?.error;
+  Sentry.withScope((scope) => {
+    if (meta) scope.setContext("meta", meta as Record<string, unknown>);
+    if (error instanceof Error) {
+      Sentry.captureException(error, { extra: { message: `${prefix} ${message}` } });
+    } else {
+      Sentry.captureMessage(`${prefix} ${message}`, "fatal");
+    }
+  });
+}
+
 export function createLogger(moduleName: string) {
   const prefix = `[${moduleName}]`;
 
@@ -51,10 +70,12 @@ export function createLogger(moduleName: string) {
     info: (message: string, meta?: LogMeta) => write("info", message, meta),
     warn: (message: string, meta?: LogMeta) => write("warn", message, meta),
     error: (message: string, meta?: LogMeta) => write("error", message, meta),
-    // Alert-worthy: logs at error level AND forwards to the external sink.
-    // Use for security/economy anomalies that a human should see promptly.
+    // Alert-worthy: logs at error level, forwards to Sentry, AND forwards to
+    // the Discord webhook. Use for security/economy anomalies that a human
+    // should see promptly.
     critical: (message: string, meta?: LogMeta) => {
       write("error", message, meta);
+      sendToSentry(prefix, message, meta);
       sendAlert(`🚨 ${prefix} ${message}${meta ? ` ${safeStringify(meta)}` : ""}`);
     },
   };

@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 // unsafe-eval is ONLY needed in development (React's error overlay evals to
 // reconstruct server stacks). Per the Next.js CSP guide it is NOT required in
@@ -88,4 +89,21 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// withSentryConfig no-ops safely if SENTRY_ORG/SENTRY_PROJECT/SENTRY_AUTH_TOKEN
+// aren't set (source-map upload is just skipped at build time) — safe to ship
+// before Sentry is fully configured.
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: true,
+  // Route browser SDK traffic through our own domain (/monitoring) instead of
+  // calling *.sentry.io directly — avoids ad-blockers dropping events and means
+  // the CSP connect-src doesn't need a sentry.io entry at all.
+  tunnelRoute: "/monitoring",
+  widenClientFileUpload: true,
+  webpack: {
+    automaticVercelMonitors: false,
+    treeshake: { removeDebugLogging: true },
+  },
+});
