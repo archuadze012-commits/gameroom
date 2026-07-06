@@ -6,8 +6,10 @@ export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const origin = getSiteOrigin() ?? getRequestOriginFromHeaders(request.headers, requestUrl.origin);
   const next = requestUrl.searchParams.get("next") ?? "/";
+  // Check for leading slash, but reject protocol-relative URLs (//) and backslash URLs (/\)
+  const isSafeRelativeUrl = next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\");
   const callbackUrl = `${origin}/auth/callback${
-    next.startsWith("/") ? `?next=${encodeURIComponent(next)}` : ""
+    isSafeRelativeUrl ? `?next=${encodeURIComponent(next)}` : ""
   }`;
 
   const supabase = await createSupabaseServerClient();
