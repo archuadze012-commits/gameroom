@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
             request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
             request.headers.get("x-real-ip") ??
             "unknown";
-          const allowed = signupRateLimit(clientIp);
+          const allowed = await signupRateLimit(clientIp);
           if (!allowed) {
             logger.warn("signup rate-limited", { ip: clientIp });
             return redirectWithCleanup(

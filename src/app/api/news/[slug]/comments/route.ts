@@ -4,7 +4,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSession } from "@/lib/auth";
 import { awardBonusXp } from "@/lib/gamification";
 import { sendPushToUser } from "@/lib/push";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimitShared } from "@/lib/rate-limit";
 import { moderateText } from "@/lib/moderate";
 import { createLogger } from "@/lib/logger";
 
@@ -17,7 +17,7 @@ export async function POST(
   const user = await getSession().catch(() => null);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  if (!rateLimit(`news-comment:${user.id}`, 15, 60_000))
+  if (!(await rateLimitShared(`news-comment:${user.id}`, 15, 60_000)))
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   const { slug } = await params;

@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth";
 import { hasPermission, logAdminAction } from "@/lib/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimitShared } from "@/lib/rate-limit";
 import { moderateText } from "@/lib/moderate";
 
 const CHANNEL_ID = "playmanager_global";
@@ -33,7 +33,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const user = await getSession().catch(() => null);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  if (!rateLimit(`playmanager-chat:${user.id}`, 25, 60_000)) {
+  if (!(await rateLimitShared(`playmanager-chat:${user.id}`, 25, 60_000))) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
 
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const user = await getSession().catch(() => null);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  if (!rateLimit(`playmanager-chat-delete:${user.id}`, 30, 60_000)) {
+  if (!(await rateLimitShared(`playmanager-chat-delete:${user.id}`, 30, 60_000))) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
 

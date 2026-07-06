@@ -4,7 +4,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSession } from "@/lib/auth";
 import { awardBonusXp } from "@/lib/gamification";
 import { sendPushToUser } from "@/lib/push";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimitShared } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
 import { FORUM_REPLY_BODY_MAX_LENGTH } from "@/lib/constants";
 
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   const user = await getSession().catch(() => null);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  if (!rateLimit(`forum-post:${user.id}`, 10, 60_000))
+  if (!(await rateLimitShared(`forum-post:${user.id}`, 10, 60_000)))
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   let body: { threadId?: string; body?: string; parentPostId?: string };

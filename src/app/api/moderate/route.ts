@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { moderateText } from "@/lib/moderate";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimitShared } from "@/lib/rate-limit";
 import { readJsonObject } from "@/lib/api/json";
 
 export async function POST(request: NextRequest) {
   const auth = await createSupabaseServerClient();
   const { data: { user } } = await auth.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  if (!rateLimit(`moderate:${user.id}`, 30, 60_000)) {
+  if (!(await rateLimitShared(`moderate:${user.id}`, 30, 60_000))) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
 

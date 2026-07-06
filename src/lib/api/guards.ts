@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimitShared } from "@/lib/rate-limit";
 
 type GuardResult =
   | { ok: true; userId: string }
@@ -25,7 +25,7 @@ export async function requireRateLimitedUser(
   }
 
   const key = `${scope}:${user.id}`;
-  if (!rateLimit(key, limit, windowMs)) {
+  if (!(await rateLimitShared(key, limit, windowMs))) {
     return {
       ok: false,
       response: NextResponse.json({ error: "rate_limited" }, { status: 429 }),

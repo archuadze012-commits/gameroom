@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createLogger } from "@/lib/logger";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimitShared } from "@/lib/rate-limit";
 import type { PublicProfile } from "@/lib/types";
 
 const logger = createLogger("api:users");
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
     || request.headers.get("x-real-ip")
     || "unknown";
-  if (!rateLimit(`users-search:${ip}`, 30, 60_000)) {
+  if (!(await rateLimitShared(`users-search:${ip}`, 30, 60_000))) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
 

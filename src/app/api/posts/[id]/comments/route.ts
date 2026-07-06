@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createLogger } from "@/lib/logger";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimitShared } from "@/lib/rate-limit";
 
 const logger = createLogger("api:post-comments");
 
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const [{ id }, user] = await Promise.all([params, getSession().catch(() => null)]);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!rateLimit(`post-comment:${user.id}`, 15, 60_000))
+  if (!(await rateLimitShared(`post-comment:${user.id}`, 15, 60_000)))
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   let body: { body?: string };

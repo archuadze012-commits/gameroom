@@ -4631,6 +4631,10 @@ export type Database = {
       expire_old_lfg_posts: { Args: never; Returns: undefined }
       is_admin: { Args: never; Returns: boolean }
       open_box: { Args: { p_id: string }; Returns: undefined }
+      rate_limit_hit: {
+        Args: { p_key: string; p_limit: number; p_window_ms: number }
+        Returns: boolean
+      }
       open_box_as: {
         Args: { p_box_id: string; p_user_id: string }
         Returns: Json

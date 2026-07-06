@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimitShared } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
 import { isBlocked } from "@/lib/blocks";
 
@@ -40,7 +40,7 @@ export async function sendMessageAction(
   }
 
   // Anti-flood: cap DM sends per user per minute.
-  if (!rateLimit(`dm-send:${user.id}`, 30, 60_000)) {
+  if (!(await rateLimitShared(`dm-send:${user.id}`, 30, 60_000))) {
     return { success: false, message: "ნელა, ძალიან ბევრ მესიჯს აგზავნი. სცადე ცოტა ხანში." };
   }
 

@@ -4,7 +4,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { processDueCupMatches } from '@/lib/playmanager/cups';
 import { processDueLeagueMatches } from '@/lib/playmanager/leagues';
 import { getTeam } from '@/lib/playmanager/team';
-import { rateLimit } from '@/lib/rate-limit';
+import { rateLimitShared } from '@/lib/rate-limit';
 
 export async function POST() {
   const supabase = await createSupabaseServerClient();
@@ -14,7 +14,7 @@ export async function POST() {
   // This fans out to GLOBAL cup/league processing on every call — rate-limit per
   // user so it can't be scripted into a DB-load amplifier. (Longer term this
   // sweep belongs in a cron/queue, not a per-request path.)
-  if (!rateLimit(`pm-ensure-session:${user.id}`, 1, 5_000)) {
+  if (!(await rateLimitShared(`pm-ensure-session:${user.id}`, 1, 5_000))) {
     return NextResponse.json({ ok: true, throttled: true });
   }
 

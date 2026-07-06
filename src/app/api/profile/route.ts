@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimitShared } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
 import { PROFILE_MEDIUM_TEXT_MAX_LENGTH, PROFILE_SHORT_TEXT_MAX_LENGTH } from "@/lib/constants";
 import type { Database } from "@/lib/database.types";
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   const user = await getSession().catch(() => null);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  if (!rateLimit(`profile-update:${user.id}`, 20, 60_000))
+  if (!(await rateLimitShared(`profile-update:${user.id}`, 20, 60_000)))
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   let body: Record<string, unknown>;

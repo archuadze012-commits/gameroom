@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { orderUsers } from "@/lib/dm";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimitShared } from "@/lib/rate-limit";
 import { isBlocked, canReceiveDmFrom } from "@/lib/blocks";
 
 export async function GET() {
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
   const user = await getSession().catch(() => null);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  if (!rateLimit(`conversation-new:${user.id}`, 20, 60_000))
+  if (!(await rateLimitShared(`conversation-new:${user.id}`, 20, 60_000)))
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   const body = await request.json().catch(() => ({}));

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { awardBonusXp } from "@/lib/gamification";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimitShared } from "@/lib/rate-limit";
 import { moderateText } from "@/lib/moderate";
 import { createLogger } from "@/lib/logger";
 import { FORUM_THREAD_BODY_MAX_LENGTH, FORUM_THREAD_TITLE_MAX_LENGTH } from "@/lib/constants";
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
   const user = await getSession().catch(() => null);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  if (!rateLimit(`forum-thread:${user.id}`, 5, 60_000))
+  if (!(await rateLimitShared(`forum-thread:${user.id}`, 5, 60_000)))
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   let body: { categorySlug?: string; title?: string; body?: string };
