@@ -24,6 +24,24 @@ import { AdminGrantCoins } from "@/components/admin-grant-coins";
 import { getEquippedItems } from "@/lib/shop/equip-queries";
 import { ProfileFriendsTab } from "@/components/profile-friends-tab";
 
+// Public-safe display fields per linked-account provider. Everything else in
+// linked_accounts.metadata (puuid, valRank, and — for token-bearing providers
+// like TikTok — access/refresh tokens) is dropped before it reaches a profile
+// viewer's client payload. Unknown providers expose nothing.
+const LINKED_DISPLAY_FIELDS: Record<string, string[]> = {
+  steam: ["personaName", "profileUrl", "gameCount", "avatarUrl"],
+  riot: ["riotId", "gameName", "tagLine", "tierName", "tierEmoji"],
+};
+function pickLinkedDisplayFields(provider: string, metadata: unknown): Record<string, unknown> | null {
+  if (!metadata || typeof metadata !== "object") return null;
+  const allow = LINKED_DISPLAY_FIELDS[provider];
+  if (!allow) return null;
+  const src = metadata as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const key of allow) if (key in src) out[key] = src[key];
+  return Object.keys(out).length > 0 ? out : null;
+}
+
 export default async function ProfilePage({
   params,
 }: {
@@ -158,7 +176,11 @@ export default async function ProfilePage({
     linkedAccounts = (linked ?? []).map((row) => ({
       provider: row.provider as "steam" | "riot",
       external_id: row.external_id,
-      data: (row.metadata ?? null) as Record<string, unknown> | null,
+      // Whitelist only display fields per provider — never ship the raw metadata
+      // blob to a public profile viewer. Steam/Riot store no tokens, but other
+      // providers (e.g. TikTok) keep access/refresh tokens in metadata, so
+      // default to null and only surface known-safe presentational keys.
+      data: pickLinkedDisplayFields(row.provider, row.metadata),
       verified: true,
     }));
   }

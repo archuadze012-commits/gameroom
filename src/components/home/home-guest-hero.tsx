@@ -7,7 +7,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-const GODERDZI = "/characters/goderdzi.png";
+const GODERDZI = "/characters/goderdzi.webp";
+const GODERDZI_MOBILE = "/characters/goderdzi-mobile.webp";
 const LEO = "/characters/gameroom-vanguard-guide.webp";
 const LEO_MOBILE = "/characters/gameroom-vanguard-guide-mobile.png";
 
@@ -310,10 +311,12 @@ function GoderdziIntro({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={GODERDZI}
+          srcSet={`${GODERDZI_MOBILE} 320w, ${GODERDZI} 640w`}
+          sizes="(max-width: 639px) 70vw, 352px"
           alt="გოდერძი"
           className="h-full w-full object-contain object-bottom"
           loading="eager"
-          decoding="sync"
+          decoding="async"
           fetchPriority="high"
           width={352}
           height={448}
