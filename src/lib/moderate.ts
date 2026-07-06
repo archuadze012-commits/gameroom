@@ -56,6 +56,10 @@ export async function moderateText(
         max_tokens: 30,
         temperature: 0,
       }),
+      // Bound the call so a Groq slowdown/black-hole can't stall every moderated
+      // write path (feed/forum/comments/room chat) up to the platform timeout —
+      // an aborted fetch rejects into the catch below, which fails open.
+      signal: AbortSignal.timeout(4000),
     });
     const json = await res.json();
     const text = (json.choices?.[0]?.message?.content ?? "") as string;

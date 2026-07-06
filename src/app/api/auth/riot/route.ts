@@ -116,8 +116,11 @@ export async function POST(request: NextRequest) {
     } catch {}
   }
 
+  // onConflict (user_id,provider) only re-links your OWN riot account; if this
+  // puuid is already linked to a different user the (provider,external_id) unique
+  // index rejects (23505). Surface that instead of a false { ok: true }.
   const supabase = await createSupabaseServerClient();
-  await supabase
+  const { error: linkError } = await supabase
     .from("linked_accounts")
     .upsert(
       {
@@ -132,6 +135,10 @@ export async function POST(request: NextRequest) {
       },
       { onConflict: "user_id,provider" }
     );
+  if (linkError) {
+    const reason = linkError.code === "23505" ? "already_linked" : "save_failed";
+    return NextResponse.json({ error: reason }, { status: 409 });
+  }
 
   return NextResponse.json({ ok: true, profile });
 }

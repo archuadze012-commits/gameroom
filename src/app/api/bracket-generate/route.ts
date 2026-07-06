@@ -69,6 +69,9 @@ export async function POST(request: NextRequest) {
         max_tokens: 400,
         temperature: 0.4,
       }),
+      // Bound the upstream call so provider slowness can't hang the invocation;
+      // the aborted fetch rejects into the existing catch fallback below.
+      signal: AbortSignal.timeout(15000),
     });
 
     const json = await res.json();

@@ -103,9 +103,12 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Save to DB
+  // Save to DB. onConflict (user_id,provider) only arbitrates re-linking your OWN
+  // steam; if this steamId is already linked to a DIFFERENT user, the (provider,
+  // external_id) unique index rejects the insert (23505). Capture that error and
+  // surface it instead of unconditionally reporting success (a silent no-op).
   const supabase = await createSupabaseServerClient();
-  await supabase
+  const { error: linkError } = await supabase
     .from("linked_accounts")
     .upsert(
       {
@@ -120,6 +123,11 @@ export async function GET(request: NextRequest) {
       },
       { onConflict: "user_id,provider" }
     );
+  if (linkError) {
+    logger.warn("failed to link steam account", { userId: user.id, steamId, error: linkError });
+    const reason = linkError.code === "23505" ? "already_linked" : "save_failed";
+    return NextResponse.redirect(new URL(`/settings?steam=error&reason=${reason}`, request.url));
+  }
 
   return NextResponse.redirect(new URL("/settings?steam=ok", request.url));
 }

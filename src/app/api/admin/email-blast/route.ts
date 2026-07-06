@@ -60,6 +60,9 @@ export async function POST(request: NextRequest) {
             subject,
             html,
           }),
+          // Bound the upstream call so provider slowness can't hang the invocation;
+          // the aborted fetch rejects into the existing catch fallback below.
+          signal: AbortSignal.timeout(10000),
         });
         sent += batch.length;
       } catch (e) {

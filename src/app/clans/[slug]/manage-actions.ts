@@ -71,6 +71,13 @@ export async function processClanRequestAction(
     });
 
     if (insertErr) {
+      // The clan_members_user_id_uniq index is the atomic backstop for the racy
+      // check above: a concurrent accept that already placed this user in a clan
+      // makes this insert violate the unique (23505) rather than double-joining.
+      if (insertErr.code === "23505") {
+        await supabase.from("clan_requests").update({ status: "rejected" }).eq("id", requestId);
+        return { success: false, message: "მომხმარებელი უკვე სხვა კლანშია" };
+      }
       logger.error("failed to add clan member from request", { requestId, clanSlug, error: insertErr });
       return { success: false, message: "გაწევრიანება ვერ მოხერხდა" };
     }

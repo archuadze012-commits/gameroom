@@ -104,6 +104,17 @@ export async function reportMatchScoreAction(
   const user = await getSession();
   if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
 
+  // Validate scores server-side — the client controls these and there is no
+  // CHECK constraint on the columns, so reject negatives / non-integers / absurd
+  // values before they're persisted (e.g. a participant reporting -5 : 99999).
+  const MAX_SCORE = 999;
+  if (
+    !Number.isInteger(score1) || !Number.isInteger(score2) ||
+    score1 < 0 || score2 < 0 || score1 > MAX_SCORE || score2 > MAX_SCORE
+  ) {
+    return { success: false, message: "არასწორი ანგარიში" };
+  }
+
   const supabase = await createSupabaseServerClient();
 
   // 1. Verify match existence and user participation

@@ -252,60 +252,61 @@ function GoderdziIntro({
   }, [sentenceIdx]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <section className="relative z-10 mx-auto flex w-full h-full max-w-lg flex-col items-center px-1 pb-0 lg:max-w-2xl overflow-hidden">
+    <section className="relative z-10 mx-auto flex w-full h-full max-w-lg sm:max-w-3xl lg:max-w-4xl flex-col items-center px-1 pb-0 overflow-hidden">
 
-      {/* Comic speech bubble — horizontal oval with tail */}
-      <div className={`absolute top-31 left-[calc(50%-100px)] -translate-x-1/2 transition-opacity duration-500 ${hidden ? "opacity-0 pointer-events-none" : fading ? "opacity-0" : "opacity-100"}`}
-        style={{ filter: "drop-shadow(0 0 22px rgba(0,230,255,0.3)) drop-shadow(0 2px 12px rgba(0,0,0,0.7))" }}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 340 115"
-          className="w-[min(86vw,340px)]"
-          style={{ overflow: "visible" }}
-        >
-          <defs>
-            <linearGradient id="bubble-border" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#00E6FF" stopOpacity="0.9" />
-              <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.7" />
-            </linearGradient>
-            <linearGradient id="bubble-fill" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#0d0b1a" stopOpacity="0.97" />
-              <stop offset="100%" stopColor="#08060f" stopOpacity="0.97" />
-            </linearGradient>
-            <linearGradient id="bubble-shine" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#00E6FF" stopOpacity="0.12" />
-              <stop offset="60%" stopColor="#00E6FF" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          {/* Border ellipse */}
-          <ellipse cx="163" cy="50" rx="163" ry="50" fill="url(#bubble-border)" />
-          {/* Inner fill ellipse */}
-          <ellipse cx="163" cy="50" rx="160" ry="47" fill="url(#bubble-fill)" />
-          {/* Shine overlay */}
-          <ellipse cx="163" cy="32" rx="120" ry="22" fill="url(#bubble-shine)" />
-          {/* Tail — pointing bottom-right toward Goderdzi */}
-          <path d="M220 93 L265 118 L238 84 Z" fill="url(#bubble-border)" />
-          <path d="M221 91 L258 115 L239 83 Z" fill="url(#bubble-fill)" />
-        </svg>
-        {/* Text inside bubble */}
-        <div className="absolute inset-0 flex items-center justify-center px-10 text-center" style={{ paddingBottom: "10px" }}>
-          <p className="text-[13px] font-semibold leading-snug text-white/90 lg:text-[15px]" style={{ maxWidth: "260px" }}>
-            {!audioUnlocked && displayed === "" && sentenceIdx === 0
-              ? <span className="font-display uppercase tracking-[0.12em] text-white" style={{ textShadow: "0 0 8px rgba(255,30,30,0.9), 0 0 20px rgba(255,30,30,0.6), 0 0 40px rgba(255,30,30,0.3)" }}>შემეხები და გაიგებ ვინ ვარ!</span>
-              : <>{displayed}{!fading && <span className="ml-0.5 inline-block h-[1em] w-[2px] animate-pulse bg-[#00E6FF] align-middle" />}</>
-            }
-          </p>
-        </div>
-      </div>
+
 
       {/* Goderdzi STAGE — character + anchored buttons share ONE coordinate frame.
           The stage box has Goderdzi's aspect ratio, so % positions stay glued to
           him at every resolution (no width/height decoupling). */}
       <div
-        className="absolute bottom-0 left-1/2 -translate-x-1/2"
-        style={{ width: "min(70vw, calc(70dvh * 352 / 448))", aspectRatio: "352 / 448" }}
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 [--stage-width:min(96vw,calc(84dvh*352/448))] sm:[--stage-width:min(70vw,calc(70dvh*352/448))]"
+        style={{ width: "var(--stage-width)", aspectRatio: "352 / 448" }}
       >
+        {/* Comic speech bubble — horizontal oval with tail (glued centered above Goderdzi's head) */}
+        <div className={`absolute bottom-[102%] sm:bottom-[98%] left-1/2 z-20 -translate-x-1/2 transition-opacity duration-500 ${hidden ? "opacity-0 pointer-events-none" : fading ? "opacity-0" : "opacity-100"}`}
+          style={{ filter: "drop-shadow(0 0 22px rgba(0,230,255,0.3)) drop-shadow(0 2px 12px rgba(0,0,0,0.7))" }}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 340 115"
+            className="w-[min(86vw,340px)]"
+            style={{ overflow: "visible" }}
+          >
+            <defs>
+              <linearGradient id="bubble-border" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#00E6FF" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.7" />
+              </linearGradient>
+              <linearGradient id="bubble-fill" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#0d0b1a" stopOpacity="0.97" />
+                <stop offset="100%" stopColor="#08060f" stopOpacity="0.97" />
+              </linearGradient>
+              <linearGradient id="bubble-shine" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#00E6FF" stopOpacity="0.12" />
+                <stop offset="60%" stopColor="#00E6FF" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            {/* Border ellipse - centered */}
+            <ellipse cx="170" cy="50" rx="163" ry="50" fill="url(#bubble-border)" />
+            {/* Inner fill ellipse - centered */}
+            <ellipse cx="170" cy="50" rx="160" ry="47" fill="url(#bubble-fill)" />
+            {/* Shine overlay - centered */}
+            <ellipse cx="170" cy="32" rx="120" ry="22" fill="url(#bubble-shine)" />
+            {/* Tail — centered pointing straight down */}
+            <path d="M152 93 L170 120 L188 93 Z" fill="url(#bubble-border)" />
+            <path d="M154 91 L170 117 L186 91 Z" fill="url(#bubble-fill)" />
+          </svg>
+          {/* Text inside bubble */}
+          <div className="absolute inset-0 flex items-center justify-center px-10 text-center" style={{ paddingBottom: "10px" }}>
+            <p className="text-[13px] font-semibold leading-snug text-white/90 lg:text-[15px]" style={{ maxWidth: "260px" }}>
+              {!audioUnlocked && displayed === "" && sentenceIdx === 0
+                ? <span className="font-display uppercase tracking-[0.12em] text-white" style={{ textShadow: "0 0 8px rgba(255,30,30,0.9), 0 0 20px rgba(255,30,30,0.6), 0 0 40px rgba(255,30,30,0.3)" }}>შემეხები და გაიგებ ვინ ვარ!</span>
+                : <>{displayed}{!fading && <span className="ml-0.5 inline-block h-[1em] w-[2px] animate-pulse bg-[#00E6FF] align-middle" />}</>
+              }
+            </p>
+          </div>
+        </div>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={GODERDZI}
@@ -355,7 +356,7 @@ function GoderdziIntro({
           type="button"
           onClick={() => { stop(); onCallLeo(); }}
           aria-label="ლეო"
-          className={`absolute right-[-7%] top-[27%] flex flex-col items-center gap-2 transition-all duration-500 ${sentenceIdx >= 2 ? "opacity-100 pointer-events-auto animate-vanguard-float-b" : "opacity-0 pointer-events-none scale-75"}`}
+          className={`absolute right-[1%] sm:right-[-7%] top-[27%] flex flex-col items-center gap-2 transition-all duration-500 ${sentenceIdx >= 2 ? "opacity-100 pointer-events-auto animate-vanguard-float-b" : "opacity-0 pointer-events-none scale-75"}`}
         >
           <div className="relative">
             {/* pulse ring */}
@@ -449,7 +450,7 @@ function LeoGuide() {
   const gCut = "polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)";
 
   return (
-    <section className="relative z-10 mx-auto w-full h-full max-w-lg overflow-hidden lg:max-w-2xl">
+    <section className="relative z-10 mx-auto w-full h-full max-w-lg sm:max-w-3xl lg:max-w-4xl overflow-hidden">
 
       {/* Google sign-in — angular gaming button, docked under the top nav */}
       <a
@@ -488,11 +489,11 @@ function LeoGuide() {
           bubble stays glued above his head and the whole composition scales
           identically at every resolution (same trick as the Goderdzi stage). */}
       <div
-        className="absolute bottom-0 left-1/2 z-0 -translate-x-1/2"
-        style={{ width: "min(70vw, calc(72dvh * 1086 / 1448))", aspectRatio: "1086 / 1448" }}
+        className="absolute bottom-0 left-1/2 z-0 -translate-x-1/2 [--stage-width:min(96vw,calc(84dvh*1086/1448))] sm:[--stage-width:min(70vw,calc(72dvh*1086/1448))]"
+        style={{ width: "var(--stage-width)", aspectRatio: "1086 / 1448" }}
       >
         {/* Comic speech bubble — glued just above Leo's head */}
-        <div className={`absolute bottom-[97%] left-[calc(50%-100px)] z-20 -translate-x-1/2 transition-opacity duration-300 ${stepFading || bubbleFading ? "opacity-0" : "opacity-100"}`}
+        <div className={`absolute bottom-[102%] sm:bottom-[97%] left-1/2 z-20 -translate-x-1/2 transition-opacity duration-300 ${stepFading || bubbleFading ? "opacity-0" : "opacity-100"}`}
           style={{ filter: "drop-shadow(0 0 22px rgba(0,230,255,0.3)) drop-shadow(0 2px 12px rgba(0,0,0,0.7))" }}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 115" className="w-[min(86vw,340px)]" style={{ overflow: "visible" }}>
@@ -510,15 +511,15 @@ function LeoGuide() {
                 <stop offset="60%" stopColor="#00E6FF" stopOpacity="0" />
               </linearGradient>
             </defs>
-            {/* Border ellipse */}
-            <ellipse cx="163" cy="50" rx="163" ry="50" fill="url(#leo-bubble-border)" />
-            {/* Inner fill ellipse */}
-            <ellipse cx="163" cy="50" rx="160" ry="47" fill="url(#leo-bubble-fill)" />
-            {/* Shine overlay */}
-            <ellipse cx="163" cy="32" rx="120" ry="22" fill="url(#leo-bubble-shine)" />
-            {/* Tail — pointing bottom-right */}
-            <path d="M220 93 L265 118 L238 84 Z" fill="url(#leo-bubble-border)" />
-            <path d="M221 91 L258 115 L239 83 Z" fill="url(#leo-bubble-fill)" />
+            {/* Border ellipse - centered */}
+            <ellipse cx="170" cy="50" rx="163" ry="50" fill="url(#leo-bubble-border)" />
+            {/* Inner fill ellipse - centered */}
+            <ellipse cx="170" cy="50" rx="160" ry="47" fill="url(#leo-bubble-fill)" />
+            {/* Shine overlay - centered */}
+            <ellipse cx="170" cy="32" rx="120" ry="22" fill="url(#leo-bubble-shine)" />
+            {/* Tail — centered pointing straight down */}
+            <path d="M152 93 L170 120 L188 93 Z" fill="url(#leo-bubble-border)" />
+            <path d="M154 91 L170 117 L186 91 Z" fill="url(#leo-bubble-fill)" />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center px-10 text-center" style={{ paddingBottom: "10px" }}>
             <p className="text-[13px] font-semibold leading-snug text-white/90 lg:text-[15px]" style={{ maxWidth: "260px" }}>

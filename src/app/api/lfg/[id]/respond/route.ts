@@ -59,6 +59,33 @@ export async function POST(
       return NextResponse.json({ error: "no slots available" }, { status: 400 });
     }
 
+    const newFilled = post.slots_filled + 1;
+    const newStatus = newFilled >= post.slots_total ? "filled" : "open";
+
+    // Reserve the slot ATOMICALLY before accepting the response. The optimistic
+    // `.eq('slots_filled', post.slots_filled)` guard means a concurrent accept
+    // that already claimed this slot makes our update match 0 rows — so two
+    // simultaneous accepts can't both increment past slots_total (the reported
+    // over-fill race). Only once the slot is secured do we mark the response.
+    const { data: reserved, error: postUpdateError } = await supabase
+      .from("lfg_posts")
+      .update({ slots_filled: newFilled, status: newStatus })
+      .eq("id", postId)
+      .eq("slots_filled", post.slots_filled)
+      .select("id");
+    if (postUpdateError) {
+      logger.error("failed to update LFG post slots after accepting response", {
+        postId,
+        responseId,
+        error: postUpdateError,
+      });
+      return NextResponse.json({ error: "database error" }, { status: 500 });
+    }
+    if (!reserved || reserved.length === 0) {
+      // Another accept claimed the last slot between our read and write.
+      return NextResponse.json({ error: "no slots available" }, { status: 409 });
+    }
+
     const { error: updateError } = await supabase
       .from("lfg_responses")
       .update({ status: "accepted" })
@@ -66,22 +93,6 @@ export async function POST(
 
     if (updateError) {
       logger.error("failed to accept LFG response", { postId, responseId, error: updateError });
-      return NextResponse.json({ error: "database error" }, { status: 500 });
-    }
-
-    const newFilled = post.slots_filled + 1;
-    const newStatus = newFilled >= post.slots_total ? "filled" : "open";
-    
-    const { error: postUpdateError } = await supabase
-      .from("lfg_posts")
-      .update({ slots_filled: newFilled, status: newStatus })
-      .eq("id", postId);
-    if (postUpdateError) {
-      logger.error("failed to update LFG post slots after accepting response", {
-        postId,
-        responseId,
-        error: postUpdateError,
-      });
       return NextResponse.json({ error: "database error" }, { status: 500 });
     }
 
