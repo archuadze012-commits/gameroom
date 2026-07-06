@@ -115,14 +115,23 @@ drop policy if exists "la_select_own" on public.linked_accounts;
 
 drop index if exists public.mafia_plots_district_tile_unique;
 
-create index if not exists mafia_action_logs_target_user_id_idx
-on public.mafia_action_logs (target_user_id);
-
-create index if not exists mafia_battle_logs_winner_id_idx
-on public.mafia_battle_logs (winner_id);
-
-create index if not exists mafia_feed_events_target_user_id_idx
-on public.mafia_feed_events (target_user_id);
+-- mafia_* was dropped 2026-07-27 (orphaned schema, no application code ever
+-- read/wrote it). Guarded on existence so this migration still replays cleanly
+-- both before and after that drop, regardless of pass ordering.
+do $$ begin
+  if to_regclass('public.mafia_action_logs') is not null then
+    create index if not exists mafia_action_logs_target_user_id_idx
+    on public.mafia_action_logs (target_user_id);
+  end if;
+  if to_regclass('public.mafia_battle_logs') is not null then
+    create index if not exists mafia_battle_logs_winner_id_idx
+    on public.mafia_battle_logs (winner_id);
+  end if;
+  if to_regclass('public.mafia_feed_events') is not null then
+    create index if not exists mafia_feed_events_target_user_id_idx
+    on public.mafia_feed_events (target_user_id);
+  end if;
+end $$;
 
 create index if not exists pm_cup_instances_template_id_idx
 on public.pm_cup_instances (template_id);

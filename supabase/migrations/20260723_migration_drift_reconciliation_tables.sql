@@ -108,31 +108,40 @@ drop policy if exists "lfq_update_own" on public.lfg_queue;
 create policy "lfq_update_own" on public.lfg_queue for update
   using (( select auth.uid() ) = user_id);
 
-drop policy if exists "mafia action logs select own rows" on public.mafia_action_logs;
-create policy "mafia action logs select own rows" on public.mafia_action_logs for select to authenticated
-  using (( select auth.uid() ) = actor_id or ( select auth.uid() ) = target_user_id);
-
-drop policy if exists "mafia battle logs select own rows" on public.mafia_battle_logs;
-create policy "mafia battle logs select own rows" on public.mafia_battle_logs for select to authenticated
-  using (( select auth.uid() ) = attacker_id or ( select auth.uid() ) = defender_id);
-
-drop policy if exists "mafia businesses select owner rows" on public.mafia_businesses;
-create policy "mafia businesses select owner rows" on public.mafia_businesses for select to authenticated
-  using (( select auth.uid() ) = owner_id);
-
-drop policy if exists "mafia_districts_read" on public.mafia_districts;
-create policy "mafia_districts_read" on public.mafia_districts for select using (true);
-
-drop policy if exists "mafia feed select authenticated" on public.mafia_feed_events;
-create policy "mafia feed select authenticated" on public.mafia_feed_events for select to authenticated
-  using (true);
-
-drop policy if exists "mafia players select own row" on public.mafia_players;
-create policy "mafia players select own row" on public.mafia_players for select to authenticated
-  using (( select auth.uid() ) = user_id);
-
-drop policy if exists "mafia_plots_read" on public.mafia_plots;
-create policy "mafia_plots_read" on public.mafia_plots for select using (true);
+-- mafia_* was dropped 2026-07-27 (orphaned schema, no application code ever
+-- read/wrote it). `create policy` has no IF-EXISTS table guard, so these are
+-- wrapped in existence checks + dynamic SQL — safe to replay whether this file
+-- runs before or after that drop.
+do $$ begin
+  if to_regclass('public.mafia_action_logs') is not null then
+    execute 'drop policy if exists "mafia action logs select own rows" on public.mafia_action_logs';
+    execute 'create policy "mafia action logs select own rows" on public.mafia_action_logs for select to authenticated using ((select auth.uid()) = actor_id or (select auth.uid()) = target_user_id)';
+  end if;
+  if to_regclass('public.mafia_battle_logs') is not null then
+    execute 'drop policy if exists "mafia battle logs select own rows" on public.mafia_battle_logs';
+    execute 'create policy "mafia battle logs select own rows" on public.mafia_battle_logs for select to authenticated using ((select auth.uid()) = attacker_id or (select auth.uid()) = defender_id)';
+  end if;
+  if to_regclass('public.mafia_businesses') is not null then
+    execute 'drop policy if exists "mafia businesses select owner rows" on public.mafia_businesses';
+    execute 'create policy "mafia businesses select owner rows" on public.mafia_businesses for select to authenticated using ((select auth.uid()) = owner_id)';
+  end if;
+  if to_regclass('public.mafia_districts') is not null then
+    execute 'drop policy if exists "mafia_districts_read" on public.mafia_districts';
+    execute 'create policy "mafia_districts_read" on public.mafia_districts for select using (true)';
+  end if;
+  if to_regclass('public.mafia_feed_events') is not null then
+    execute 'drop policy if exists "mafia feed select authenticated" on public.mafia_feed_events';
+    execute 'create policy "mafia feed select authenticated" on public.mafia_feed_events for select to authenticated using (true)';
+  end if;
+  if to_regclass('public.mafia_players') is not null then
+    execute 'drop policy if exists "mafia players select own row" on public.mafia_players';
+    execute 'create policy "mafia players select own row" on public.mafia_players for select to authenticated using ((select auth.uid()) = user_id)';
+  end if;
+  if to_regclass('public.mafia_plots') is not null then
+    execute 'drop policy if exists "mafia_plots_read" on public.mafia_plots';
+    execute 'create policy "mafia_plots_read" on public.mafia_plots for select using (true)';
+  end if;
+end $$;
 
 drop policy if exists "pl_delete_own" on public.post_likes;
 create policy "pl_delete_own" on public.post_likes for delete
