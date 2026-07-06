@@ -28,7 +28,7 @@ import {
 type Tab = { href: string; label: string; icon: LucideIcon; badge?: number };
 
 const PRIMARY_TABS: Tab[] = [
-  { href: '/playmanager', label: 'მთავარი', icon: Building2 },
+  { href: '/playmanager', label: 'ქალაქი', icon: Building2 },
   { href: '/playmanager/arena', label: 'მატჩი', icon: Trophy },
   { href: '/playmanager/residence', label: 'გუნდი', icon: UsersRound },
   { href: '/playmanager/shop', label: 'მაღაზია', icon: ShoppingCart },
