@@ -1,9 +1,16 @@
 import type { NextConfig } from "next";
 
+// unsafe-eval is ONLY needed in development (React's error overlay evals to
+// reconstruct server stacks). Per the Next.js CSP guide it is NOT required in
+// production — neither React nor Next.js eval at runtime there — so drop it from
+// the prod policy. unsafe-inline stays: Next's hydration/bootstrap emits inline
+// scripts+styles, and a nonce-based CSP would force EVERY page into dynamic
+// rendering (no static/ISR/CDN caching) — not worth it for a content site.
+const isDev = process.env.NODE_ENV !== "production";
+
 const csp = [
   "default-src 'self'",
-  // Next.js requires unsafe-inline for hydration; unsafe-eval for dev HMR (removed in prod builds but kept for safety)
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' challenges.cloudflare.com",
+  `script-src 'self' 'unsafe-inline' challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "connect-src 'self' blob: *.supabase.co wss://*.supabase.co *.livekit.cloud wss://*.livekit.cloud api.groq.com api.open-meteo.com",
@@ -14,6 +21,8 @@ const csp = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
+  "frame-ancestors 'none'",
+  "upgrade-insecure-requests",
 ].join("; ");
 
 const securityHeaders = [
