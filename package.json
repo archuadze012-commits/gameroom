@@ -16,6 +16,7 @@
     "test:e2e:auth": "playwright test --config=playwright.auth.config.ts",
     "test:migrations": "node scripts/replay-migrations.mjs",
     "test:security-definer": "node scripts/audit-security-definer.mjs",
+    "smoke:rls": "node scripts/rls-boundary-smoke.mjs",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
