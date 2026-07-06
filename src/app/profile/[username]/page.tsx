@@ -95,118 +95,116 @@ export default async function ProfilePage({
   const profileAvatarUrl = dbProfile?.avatar_url ?? null;
   const avatarUrl = profileAvatarUrl ?? (isOwner ? sessionAvatarUrl : null);
 
-  let followerCount = 0;
-  if (targetUserId) {
-    const { count } = await supabase
-      .from("follows")
-      .select("*", { count: "exact", head: true })
-      .eq("following_id", targetUserId);
-    followerCount = count ?? 0;
-  }
-
-  let initialFollowing = false;
-  if (currentUserId && targetUserId && !isOwner) {
-    const { data } = await supabase
-      .from("follows")
-      .select("follower_id")
-      .eq("follower_id", currentUserId)
-      .eq("following_id", targetUserId)
-      .maybeSingle();
-    initialFollowing = !!data;
-  }
-
   const mockUser = mockUsers.find((u) => u.username === username);
   const displayName = dbProfile?.display_name ?? mockUser?.displayName ?? username;
-  
   const userPosts = mockLfgPosts.filter((p) => p.authorName === username).slice(0, 5);
 
-  let feedPosts: ProfileFeedPost[] = [];
-  let likedPostIds: string[] = [];
-  if (targetUserId) {
-    const { data: postRows } = await supabase
-      .from("posts")
-      .select("id, content, media_urls, likes_count, created_at, profiles!posts_author_id_profiles_id_fk(username, display_name, avatar_url, is_verified, role)")
-      .eq("author_id", targetUserId)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .limit(20);
-
-    const rawPosts = (postRows ?? []) as unknown as Array<Omit<ProfileFeedPost, "comments_count">>;
-    if (rawPosts.length > 0) {
-      const postIds = rawPosts.map((post) => post.id);
-      const [{ data: commentRows }, likedRowsResult] = await Promise.all([
-        supabase
-          .from("post_comments")
-          .select("post_id")
-          .in("post_id", postIds)
-          .is("deleted_at", null),
-        currentUserId
-          ? supabase
-              .from("post_likes")
-              .select("post_id")
-              .eq("user_id", currentUserId)
-              .in("post_id", postIds)
-          : Promise.resolve({ data: [] as Array<{ post_id: string }> | null }),
-      ]);
-
-      const commentCounts = new Map<string, number>();
-      for (const row of commentRows ?? []) {
-        commentCounts.set(row.post_id, (commentCounts.get(row.post_id) ?? 0) + 1);
-      }
-
-      likedPostIds = (likedRowsResult.data ?? []).map((row: { post_id: string }) => row.post_id);
-      feedPosts = rawPosts.map((post) => ({
-        ...post,
-        comments_count: commentCounts.get(post.id) ?? 0,
-      }));
-    }
-  }
-
-  let linkedAccounts: Array<{
-    provider: "steam" | "riot";
-    external_id: string;
-    data: Record<string, unknown> | null;
-    verified: boolean;
-  }> = [];
-  if (targetUserId) {
-    const { data: linked } = await supabase
-      .from("linked_accounts")
-      .select("provider, external_id, metadata")
-      .eq("user_id", targetUserId);
-    linkedAccounts = (linked ?? []).map((row) => ({
-      provider: row.provider as "steam" | "riot",
-      external_id: row.external_id,
-      // Whitelist only display fields per provider — never ship the raw metadata
-      // blob to a public profile viewer. Steam/Riot store no tokens, but other
-      // providers (e.g. TikTok) keep access/refresh tokens in metadata, so
-      // default to null and only surface known-safe presentational keys.
-      data: pickLinkedDisplayFields(row.provider, row.metadata),
-      verified: true,
-    }));
-  }
-
-  let profileGameSlugs = Array.from(
+  // Game slugs already known from the profile row; the lfg fallback query below
+  // only runs when the profile configured none.
+  const baseGameSlugs = Array.from(
     new Set([
       ...((dbProfile?.favorite_game_slugs as string[] | null) ?? []),
       ...(dbProfile?.main_game_slug ? [dbProfile.main_game_slug] : []),
     ])
   );
+  const needLfgFallback = !!targetUserId && baseGameSlugs.length === 0;
 
-  if (targetUserId && profileGameSlugs.length === 0) {
-    const { data: lfgGames } = await supabase
-      .from("lfg_posts")
-      .select("game_slug")
-      .eq("author_id", targetUserId)
-      .limit(12);
+  // Every read below depends only on targetUserId (+ the current viewer) and was
+  // previously awaited one-by-one, serializing ~5 round-trips on every profile
+  // view. Fire them concurrently instead; the posts follow-up (comment/like
+  // counts) still runs after, since it needs the post ids.
+  const [followerRes, followingRes, postsRes, linkedRes, lfgFallbackRes, equippedItems] = await Promise.all([
+    targetUserId
+      ? supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", targetUserId)
+      : Promise.resolve({ count: 0 }),
+    currentUserId && targetUserId && !isOwner
+      ? supabase
+          .from("follows")
+          .select("follower_id")
+          .eq("follower_id", currentUserId)
+          .eq("following_id", targetUserId)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    targetUserId
+      ? supabase
+          .from("posts")
+          .select("id, content, media_urls, likes_count, created_at, profiles!posts_author_id_profiles_id_fk(username, display_name, avatar_url, is_verified, role)")
+          .eq("author_id", targetUserId)
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false })
+          .limit(20)
+      : Promise.resolve({ data: null }),
+    targetUserId
+      ? supabase.from("linked_accounts").select("provider, external_id, metadata").eq("user_id", targetUserId)
+      : Promise.resolve({ data: null }),
+    needLfgFallback
+      ? supabase.from("lfg_posts").select("game_slug").eq("author_id", targetUserId).limit(12)
+      : Promise.resolve({ data: null }),
+    targetUserId ? getEquippedItems(targetUserId) : Promise.resolve([]),
+  ]);
 
-    profileGameSlugs = Array.from(
-      new Set((lfgGames ?? []).map((row: { game_slug: string | null }) => row.game_slug).filter(Boolean) as string[])
-    );
+  const followerCount = followerRes.count ?? 0;
+  const initialFollowing = !!followingRes.data;
+
+  let feedPosts: ProfileFeedPost[] = [];
+  let likedPostIds: string[] = [];
+  const rawPosts = (postsRes.data ?? []) as unknown as Array<Omit<ProfileFeedPost, "comments_count">>;
+  if (rawPosts.length > 0) {
+    const postIds = rawPosts.map((post) => post.id);
+    const [{ data: commentRows }, likedRowsResult] = await Promise.all([
+      supabase
+        .from("post_comments")
+        .select("post_id")
+        .in("post_id", postIds)
+        .is("deleted_at", null),
+      currentUserId
+        ? supabase
+            .from("post_likes")
+            .select("post_id")
+            .eq("user_id", currentUserId)
+            .in("post_id", postIds)
+        : Promise.resolve({ data: [] as Array<{ post_id: string }> | null }),
+    ]);
+
+    const commentCounts = new Map<string, number>();
+    for (const row of commentRows ?? []) {
+      commentCounts.set(row.post_id, (commentCounts.get(row.post_id) ?? 0) + 1);
+    }
+
+    likedPostIds = (likedRowsResult.data ?? []).map((row: { post_id: string }) => row.post_id);
+    feedPosts = rawPosts.map((post) => ({
+      ...post,
+      comments_count: commentCounts.get(post.id) ?? 0,
+    }));
   }
 
-  const steamAccount = linkedAccounts.find((a) => a.provider === "steam");
+  const linkedAccounts: Array<{
+    provider: "steam" | "riot";
+    external_id: string;
+    data: Record<string, unknown> | null;
+    verified: boolean;
+  }> = (linkedRes.data ?? []).map((row) => ({
+    provider: row.provider as "steam" | "riot",
+    external_id: row.external_id,
+    // Whitelist only display fields per provider — never ship the raw metadata
+    // blob to a public profile viewer. Steam/Riot store no tokens, but other
+    // providers (e.g. TikTok) keep access/refresh tokens in metadata, so
+    // default to null and only surface known-safe presentational keys.
+    data: pickLinkedDisplayFields(row.provider, row.metadata),
+    verified: true,
+  }));
 
-  const equippedItems = targetUserId ? await getEquippedItems(targetUserId) : [];
+  const profileGameSlugs = needLfgFallback
+    ? Array.from(
+        new Set(
+          ((lfgFallbackRes.data ?? []) as Array<{ game_slug: string | null }>)
+            .map((row) => row.game_slug)
+            .filter(Boolean) as string[]
+        )
+      )
+    : baseGameSlugs;
+
+  const steamAccount = linkedAccounts.find((a) => a.provider === "steam");
   const equippedCover = equippedItems.find((e) => e.category === "cover");
   const equippedFrame = equippedItems.find((e) => e.category === "profile_frame");
   const equippedNameFrame = equippedItems.find((e) => e.category === "name_frame");

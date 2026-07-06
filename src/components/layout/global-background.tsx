@@ -562,15 +562,36 @@ export function GlobalBackground() {
       }
     };
 
-    resize();
-    animId = requestAnimationFrame(draw); // render at least one frame
-    window.addEventListener("resize", resize);
-    document.addEventListener("visibilitychange", onVisibility);
+    let started = false;
+    const start = () => {
+      started = true;
+      resize();
+      animId = requestAnimationFrame(draw); // render at least one frame
+      window.addEventListener("resize", resize);
+      document.addEventListener("visibilitychange", onVisibility);
+    };
+
+    // Defer the heavy init — the one-off cloud bake (120 blurred arcs) plus the
+    // canvas sizing and the first animation frame — until the browser is idle,
+    // so this decorative backdrop never competes with hydration/navigation on
+    // first paint. Falls back to a short timeout where requestIdleCallback is
+    // unavailable.
+    let cancelStart: () => void;
+    if (typeof window.requestIdleCallback === "function") {
+      const id = window.requestIdleCallback(start, { timeout: 2000 });
+      cancelStart = () => window.cancelIdleCallback?.(id);
+    } else {
+      const id = window.setTimeout(start, 200);
+      cancelStart = () => clearTimeout(id);
+    }
 
     return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener("resize", resize);
-      document.removeEventListener("visibilitychange", onVisibility);
+      cancelStart();
+      if (started) {
+        cancelAnimationFrame(animId);
+        window.removeEventListener("resize", resize);
+        document.removeEventListener("visibilitychange", onVisibility);
+      }
     };
   }, [isLobby]);
 
