@@ -18,6 +18,18 @@ export async function POST(request: NextRequest) {
   if (!file || !path) return NextResponse.json({ error: "file and path required" }, { status: 400 });
   if (file.size > 10 * 1024 * 1024) return NextResponse.json({ error: "Max 10MB" }, { status: 400 });
 
+  // Only allow raster image types (no SVG — inline-served SVG is an XSS vector).
+  // Don't trust the client contentType for the actual store either.
+  const ALLOWED = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+  if (!ALLOWED.has(file.type)) {
+    return NextResponse.json({ error: "unsupported file type" }, { status: 400 });
+  }
+  // Constrain the client-supplied path: no traversal / absolute / control chars,
+  // safe charset only, so it can't overwrite assets outside the intended tree.
+  if (path.includes("..") || path.startsWith("/") || !/^[a-zA-Z0-9/_.-]{1,200}$/.test(path)) {
+    return NextResponse.json({ error: "invalid path" }, { status: 400 });
+  }
+
   const admin = createSupabaseAdminClient();
   const buffer = Buffer.from(await file.arrayBuffer());
 
