@@ -75,9 +75,20 @@ export function GlobalBackground() {
     if (!ctx) return;
 
     // Decorative ambient: freeze entirely for users who prefer reduced motion
-    // (a11y + perf), and never animate while the tab is backgrounded.
+    // (a11y + perf), and never animate while the tab is backgrounded. NB: this
+    // now honours the real prefers-reduced-motion media query, not just portrait
+    // orientation (it previously only paused in portrait, so reduced-motion
+    // desktop users still paid the full 60fps canvas cost).
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const isPortrait = window.matchMedia("(orientation: portrait)").matches;
-    let prefersReduced = isPortrait;
+    let prefersReduced = isPortrait || reducedMotion.matches;
+
+    // Cap the ambient loop at ~30fps. rAF fires at the display rate (usually
+    // 60/120Hz); a slow storm backdrop looks identical at 30fps but halves (or
+    // more) the per-second main-thread + GPU work that was competing with
+    // navigation/hydration on every page.
+    const FRAME_INTERVAL_MS = 1000 / 30;
+    let lastFrameAt = 0;
 
     let animId = 0;
     let w = 0;
@@ -188,7 +199,7 @@ export function GlobalBackground() {
       canvas!.style.height = h + "px";
       
       const isPortrait = window.matchMedia("(orientation: portrait)").matches;
-      prefersReduced = isPortrait;
+      prefersReduced = isPortrait || reducedMotion.matches;
       if (prefersReduced) {
         if (animId) {
           cancelAnimationFrame(animId);
@@ -312,6 +323,13 @@ export function GlobalBackground() {
 
     function draw() {
       if (prefersReduced) return; // Completely abort if reduced motion is active
+      // Throttle to ~30fps: if we're early, re-schedule without doing any work.
+      const nowTs = performance.now();
+      if (nowTs - lastFrameAt < FRAME_INTERVAL_MS) {
+        animId = requestAnimationFrame(draw);
+        return;
+      }
+      lastFrameAt = nowTs;
       const c = ctx!;
       c.clearRect(0, 0, w, h);
       frameCount++;
