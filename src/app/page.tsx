@@ -52,6 +52,37 @@ export default async function HomePage() {
     getSession().catch(() => null),
     getIsAdmin().catch(() => false),
   ]);
+
+  // Guests (never admins — getIsAdmin is false without a session) get the
+  // full-screen Goderdzi→Leo hero, which reads only the guest-hero site content.
+  // Return before the authed data pipeline (posts, articles, YouTube live API,
+  // cracked games) — none of it renders for guests, so fetching it was pure
+  // server latency on the highest-traffic public page.
+  if (!user && !isAdmin) {
+    const guestHero = await getSiteContentValue("home.guest.hero", {
+      headline: "ყველაფერი, რის გამოც თამაშები გიყვარს",
+      logoUrl: "/playgame-logo.png",
+    });
+    return (
+      <div className="relative mx-auto w-full min-h-[calc(100dvh-4rem)] -mt-16 pt-16 sm:mt-0 sm:pt-0 bg-transparent overflow-x-clip">
+        {/* ── CINEMATIC BACKGROUND ────────────────────────────── */}
+        <div className="absolute top-0 left-0 right-0 h-[1000px] w-full select-none pointer-events-none" style={{ maskImage: "linear-gradient(to bottom, black 0%, black 400px, transparent 800px)", WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 400px, transparent 800px)" }}>
+          <div aria-hidden className="absolute inset-0 gr-dot-grid opacity-50" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.15),transparent_50%)] mix-blend-screen" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(236,72,153,0.1),transparent_50%)] mix-blend-screen" />
+        </div>
+
+        <div className="fixed inset-x-0 top-16 bottom-0 z-0 flex flex-col items-center justify-center overflow-hidden">
+          <HomeGuestHero
+            headline={String(guestHero.headline ?? "ყველაფერი, რის გამოც თამაშები გიყვარს")}
+            logoUrl={String(guestHero.logoUrl ?? "/playgame-logo.png")}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // ── Authed / admin home ──────────────────────────────
   // Site-content lookups are independent per-key Supabase reads — run them in
   // one round-trip instead of four sequential awaits.
   const [guestHero, userCta, sectionGames, sectionFreeGames] = await Promise.all([
@@ -148,28 +179,6 @@ export default async function HomePage() {
         coverUrl: game.coverUrl,
         rating: game.rating,
       }));
-
-  // Non-admin guests get the interactive Goderdzi → Leo vanguard guide (full-screen).
-  // Admins fall through to the editable hero below so site content stays editable.
-  if (!user && !isAdmin) {
-    return (
-      <div className="relative mx-auto w-full min-h-[calc(100dvh-4rem)] -mt-16 pt-16 sm:mt-0 sm:pt-0 bg-transparent overflow-x-clip">
-        {/* ── CINEMATIC BACKGROUND ────────────────────────────── */}
-        <div className="absolute top-0 left-0 right-0 h-[1000px] w-full select-none pointer-events-none" style={{ maskImage: "linear-gradient(to bottom, black 0%, black 400px, transparent 800px)", WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 400px, transparent 800px)" }}>
-          <div aria-hidden className="absolute inset-0 gr-dot-grid opacity-50" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.15),transparent_50%)] mix-blend-screen" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(236,72,153,0.1),transparent_50%)] mix-blend-screen" />
-        </div>
-
-        <div className="fixed inset-x-0 top-16 bottom-0 z-0 flex flex-col items-center justify-center overflow-hidden">
-          <HomeGuestHero
-            headline={String(guestHero.headline ?? "ყველაფერი, რის გამოც თამაშები გიყვარს")}
-            logoUrl={String(guestHero.logoUrl ?? "/playgame-logo.png")}
-          />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-transparent overflow-x-clip">

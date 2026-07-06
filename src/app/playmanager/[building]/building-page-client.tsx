@@ -1,6 +1,7 @@
 'use client';
 
 import { startTransition, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import {
   runPlayManagerCityAction,
@@ -11,17 +12,34 @@ import type { PlayManagerPlayerActionResult } from '@/app/playmanager/actions/ac
 import { getFacilityUpgradeCostGel, isFacilityKey, type CityActionKey } from '@/lib/playmanager/gameplay';
 import type { PlayManagerCitySnapshot } from '@/lib/playmanager/city-data';
 import type { ClubEffectsSummary, ManagerPerk } from '@/lib/playmanager/progression';
+// Helpers + types come from the light data module, NOT the 3k-line editor —
+// importing them from the editor would pull the whole heavy module back into
+// this bundle and defeat the code-split below.
 import {
-  BuildingWorkspace,
   mergeFacilityState,
   DEFAULT_FACILITY_STATE,
   type EditableCityBuilding,
   type RunCityActionError,
   type PlayerActionError,
-} from '@/components/playmanager/playmanager-city-editor';
-import { PlayManagerOffice } from '@/components/playmanager/playmanager-office';
-import { PlayManagerTraining } from '@/components/playmanager/playmanager-training';
-import { PlayManagerResidence } from '@/components/playmanager/playmanager-residence';
+} from '@/components/playmanager/city-editor-data';
+
+// Each [building] page renders exactly ONE of these heavy modules (by spriteKey).
+// Static imports bundled all four into every building route; next/dynamic gives
+// each its own chunk so a visitor downloads only the module their building
+// actually renders. SSR stays on (default) so server output is unchanged — this
+// splits the client chunks without introducing a blank-screen flash.
+const BuildingWorkspace = dynamic(() =>
+  import('@/components/playmanager/playmanager-city-editor').then((m) => m.BuildingWorkspace),
+);
+const PlayManagerOffice = dynamic(() =>
+  import('@/components/playmanager/playmanager-office').then((m) => m.PlayManagerOffice),
+);
+const PlayManagerTraining = dynamic(() =>
+  import('@/components/playmanager/playmanager-training').then((m) => m.PlayManagerTraining),
+);
+const PlayManagerResidence = dynamic(() =>
+  import('@/components/playmanager/playmanager-residence').then((m) => m.PlayManagerResidence),
+);
 
 type Props = {
   building: EditableCityBuilding;
