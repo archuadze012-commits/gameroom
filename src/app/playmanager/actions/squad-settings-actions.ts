@@ -15,7 +15,7 @@ export async function savePlayManagerLineup(playerIds: string[]): Promise<PlayMa
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
-  if (playManagerActionLimited(user.id, 'squad')) return RATE_LIMITED_RESULT;
+  if (await playManagerActionLimited(user.id, 'squad')) return RATE_LIMITED_RESULT;
   if (playerIds.length === 0) return { success: false, error: 'invalid_player' };
 
   const db = createSupabaseAdminClient();
@@ -43,7 +43,7 @@ export async function savePlayManagerLineupFormation(
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
-  if (playManagerActionLimited(user.id, 'squad')) return RATE_LIMITED_RESULT;
+  if (await playManagerActionLimited(user.id, 'squad')) return RATE_LIMITED_RESULT;
   if (slots.length === 0) return { success: false, error: 'invalid_player' };
 
   const db = createSupabaseAdminClient();
@@ -74,7 +74,7 @@ export async function savePlayManagerMatchSettings(input: {
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
-  if (playManagerActionLimited(user.id, 'squad')) return RATE_LIMITED_RESULT;
+  if (await playManagerActionLimited(user.id, 'squad')) return RATE_LIMITED_RESULT;
 
   const db = createSupabaseAdminClient();
   const { error } = await db.rpc('pm_save_match_settings', {
@@ -104,7 +104,7 @@ export async function swapPlayManagerSquadPlayers(
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
-  if (playManagerActionLimited(user.id, 'squad')) return RATE_LIMITED_RESULT;
+  if (await playManagerActionLimited(user.id, 'squad')) return RATE_LIMITED_RESULT;
 
   const db = createSupabaseAdminClient();
   const { error } = await db.rpc('pm_swap_squad_players', {

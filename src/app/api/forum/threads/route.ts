@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
-import { awardBonusXp } from "@/lib/gamification";
+import { awardBonusXpCapped } from "@/lib/gamification";
 import { rateLimitShared } from "@/lib/rate-limit";
 import { moderateText } from "@/lib/moderate";
 import { createLogger } from "@/lib/logger";
@@ -121,8 +121,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "failed_to_create_initial_post" }, { status: 500 });
   }
 
-  // Award XP for creating thread
-  await awardBonusXp(user.id, 10, "forum:create-thread");
+  // Award XP for creating thread — capped per day so create→delete→create
+  // can't farm (mirrors feed/lfg create).
+  await awardBonusXpCapped(user.id, 10, "forum_thread", 5);
 
   return NextResponse.json({
     ok: true,

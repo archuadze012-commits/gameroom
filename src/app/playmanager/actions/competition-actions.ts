@@ -10,7 +10,7 @@ export async function joinCupAction(cupInstanceId: string): Promise<{ success: b
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
-  if (playManagerActionLimited(user.id, 'competition')) {
+  if (await playManagerActionLimited(user.id, 'competition')) {
     return { success: false, error: 'ძალიან სწრაფად — სცადე რამდენიმე წამში' };
   }
 
@@ -55,7 +55,7 @@ export async function joinPlayManagerLeague(leagueId: string): Promise<{ success
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
-  if (playManagerActionLimited(user.id, 'competition')) return { success: false, error: 'rate_limited' };
+  if (await playManagerActionLimited(user.id, 'competition')) return { success: false, error: 'rate_limited' };
 
   const result = await joinLeague(team.id, leagueId);
   if (!result.success) return { success: false, error: result.error };
@@ -79,7 +79,7 @@ export async function playPlayManagerNextFixture(): Promise<
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
-  if (playManagerActionLimited(user.id, 'competition')) return { success: false, error: 'rate_limited' };
+  if (await playManagerActionLimited(user.id, 'competition')) return { success: false, error: 'rate_limited' };
 
   const fixture = await playNextFixtureForTeam(team.id);
   revalidatePath('/playmanager');

@@ -17,7 +17,7 @@ export async function savePlayManagerTicketPrice(ticketPrice: number): Promise<P
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
-  if (playManagerActionLimited(user.id, 'finance')) return RATE_LIMITED_RESULT;
+  if (await playManagerActionLimited(user.id, 'finance')) return RATE_LIMITED_RESULT;
 
   // Validate at the boundary: clamp to the allowed range so a crafted request
   // can never send an out-of-range value to the RPC. (DB also enforces 10–80.)
@@ -45,7 +45,7 @@ export async function negotiatePlayManagerSponsor(): Promise<PlayManagerPlayerAc
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
-  if (playManagerActionLimited(user.id, 'finance')) return RATE_LIMITED_RESULT;
+  if (await playManagerActionLimited(user.id, 'finance')) return RATE_LIMITED_RESULT;
 
   const db = createSupabaseAdminClient();
   const { data: rawData, error } = await db.rpc('pm_negotiate_sponsor', {
@@ -74,7 +74,7 @@ export async function claimPlayManagerDailyReward(): Promise<PlayManagerPlayerAc
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
-  if (playManagerActionLimited(user.id, 'finance')) return RATE_LIMITED_RESULT;
+  if (await playManagerActionLimited(user.id, 'finance')) return RATE_LIMITED_RESULT;
 
   const db = createSupabaseAdminClient();
   const { data: rawData, error } = await db.rpc('pm_claim_daily_reward', {

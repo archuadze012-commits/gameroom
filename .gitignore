@@ -104,3 +104,7 @@ public/playmanager/models/**/*.sln
 /playwright-report/
 /playwright/.cache/
 /e2e/.auth/
+
+# Local Supabase schema dumps (never commit — use MCP/CI for schema of record)
+supabase/_prod_schema.sql
+supabase/*_dump.sql

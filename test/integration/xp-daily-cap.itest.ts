@@ -58,3 +58,22 @@ test('rejects invalid arguments', async () => {
   await assert.rejects(() => capped(0, 'x', 3));   // amount <= 0
   await assert.rejects(() => capped(10, 'x', 0));  // cap <= 0
 });
+
+test('a burst of concurrent awards never exceeds the cap', async () => {
+  // Fire cap+4 awards "at once". award_xp_capped takes a per-(user, source_type)
+  // pg_advisory_xact_lock, so even under real parallel contention the count→insert
+  // stays atomic and the cap holds exactly. NB: pglite is a single in-process
+  // connection so these actually serialize here — this asserts the invariant and
+  // guards against the lock breaking the logic; true multi-connection parallelism
+  // would need a full Postgres, but the advisory lock is what makes it safe there.
+  const cap = 3;
+  const results = await Promise.all(
+    Array.from({ length: cap + 4 }, () => capped(10, 'burst_src', cap)),
+  );
+  assert.equal(results.filter((r) => r === true).length, cap, 'exactly cap awards succeed');
+  assert.equal(results.filter((r) => r === false).length, 4, 'the rest are capped out');
+  const { rows } = await db.query<{ n: number }>(
+    `select count(*)::int as n from xp_events where source_type = 'burst_src'`,
+  );
+  assert.equal(rows[0].n, cap, 'ledger holds exactly cap rows — no over-award');
+});

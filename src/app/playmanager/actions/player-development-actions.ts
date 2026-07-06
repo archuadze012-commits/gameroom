@@ -35,7 +35,7 @@ export async function trainPlayManagerPlayer(playerId: string): Promise<PlayMana
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
-  if (playManagerActionLimited(user.id, 'dev')) return RATE_LIMITED_RESULT;
+  if (await playManagerActionLimited(user.id, 'dev')) return RATE_LIMITED_RESULT;
 
   const db = createSupabaseAdminClient();
   const actionContext = await getActionContext(user.id, team.id);
@@ -98,7 +98,7 @@ export async function openPlayManagerPack(packId: number): Promise<PlayManagerPl
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
-  if (playManagerActionLimited(user.id, 'dev')) return RATE_LIMITED_RESULT;
+  if (await playManagerActionLimited(user.id, 'dev')) return RATE_LIMITED_RESULT;
 
   const db = createSupabaseAdminClient();
   const { data: rawData, error } = await db.rpc('pm_open_pack', {
@@ -144,7 +144,7 @@ export async function confirmPlayManagerOvrUpgrade(
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
-  if (playManagerActionLimited(user.id, 'dev')) return RATE_LIMITED_RESULT;
+  if (await playManagerActionLimited(user.id, 'dev')) return RATE_LIMITED_RESULT;
 
   const db = createSupabaseAdminClient();
   const { data: rawData, error } = await db.rpc(
@@ -173,7 +173,7 @@ export async function buyPlayManagerXpPack(pack: 'starter' | 'prep' | 'elite'): 
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
-  if (playManagerActionLimited(user.id, 'dev')) return RATE_LIMITED_RESULT;
+  if (await playManagerActionLimited(user.id, 'dev')) return RATE_LIMITED_RESULT;
 
   const db = createSupabaseAdminClient();
   const { data: rawData, error } = await db.rpc('pm_buy_xp_pack', {

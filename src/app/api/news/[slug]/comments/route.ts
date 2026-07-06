@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSession } from "@/lib/auth";
-import { awardBonusXp } from "@/lib/gamification";
+import { awardBonusXpCapped } from "@/lib/gamification";
 import { sendPushToUser } from "@/lib/push";
 import { rateLimitShared } from "@/lib/rate-limit";
 import { moderateText } from "@/lib/moderate";
@@ -98,8 +98,8 @@ export async function POST(
     }).catch(() => {});
   }
 
-  // Award XP for posting comment
-  await awardBonusXp(user.id, 2, "news:create-comment");
+  // Award XP for posting comment — capped per day (anti-farm; mirrors feed/lfg).
+  await awardBonusXpCapped(user.id, 2, "news_comment", 10);
 
   return NextResponse.json(comment, { status: 201 });
 }

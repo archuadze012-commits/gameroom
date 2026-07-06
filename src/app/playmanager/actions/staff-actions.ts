@@ -16,7 +16,7 @@ export async function hirePlayManagerStaff(roleKey: string): Promise<PlayManager
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
-  if (playManagerActionLimited(user.id, 'staff')) return RATE_LIMITED_RESULT;
+  if (await playManagerActionLimited(user.id, 'staff')) return RATE_LIMITED_RESULT;
   if (!(roleKey in STAFF_ROLE_MAP)) {
     return { success: false, error: 'invalid_player', message: 'პერსონალის როლი ვერ მოიძებნა' };
   }
@@ -55,7 +55,7 @@ export async function upgradePlayManagerStaff(roleKey: string): Promise<PlayMana
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
-  if (playManagerActionLimited(user.id, 'staff')) return RATE_LIMITED_RESULT;
+  if (await playManagerActionLimited(user.id, 'staff')) return RATE_LIMITED_RESULT;
   if (!(roleKey in STAFF_ROLE_MAP)) {
     return { success: false, error: 'invalid_player', message: 'პერსონალის როლი ვერ მოიძებნა' };
   }

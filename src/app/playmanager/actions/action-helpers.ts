@@ -9,7 +9,7 @@ import type { TeamFacilityState } from '@/lib/playmanager/facilities';
 import { getCombinedClubEffects, getManagerProgression } from '@/lib/playmanager/progression';
 import { getTeam } from '@/lib/playmanager/team';
 import { createLogger } from '@/lib/logger';
-import { rateLimit } from '@/lib/rate-limit';
+import { rateLimitShared } from '@/lib/rate-limit';
 
 // Economy/world-tick failures are alertable: a lost XP/credit award or a
 // dropped lifecycle job is real value the player earned quietly vanishing, so
@@ -215,10 +215,12 @@ export function mapPlayerActionError(message: string): PlayManagerPlayerActionRe
 // App-level spam/retry guard for mutating actions. DB constraints already keep
 // state valid; this blunts rapid spam-click / double-submit bursts that would
 // otherwise hammer the RPCs. Per-user, per-bucket, generous window — tuned to
-// catch automated/retry storms, not normal play. In-memory & per-instance (see
-// rate-limit.ts); back with Redis for multi-instance hardening.
-export function playManagerActionLimited(userId: string, bucket: string, limit = 12, windowMs = 10_000): boolean {
-  return !rateLimit(`pm:${bucket}:${userId}`, limit, windowMs);
+// catch automated/retry storms, not normal play. Backed by the distributed
+// (Postgres) limiter so the cap holds across serverless instances, with an
+// in-memory fallback if the RPC errors (never fail-open). Returns true when the
+// caller is over the limit (i.e. the action should be rejected).
+export async function playManagerActionLimited(userId: string, bucket: string, limit = 12, windowMs = 10_000): Promise<boolean> {
+  return !(await rateLimitShared(`pm:${bucket}:${userId}`, limit, windowMs));
 }
 
 // The standard PlayManagerPlayerActionResult returned when a spam guard trips.

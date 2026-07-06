@@ -1,0 +1,54 @@
+name: rls-smoke-nightly
+
+# RLS boundary smoke (scripts/rls-boundary-smoke.mjs): creates throwaway users and
+# asserts cross-user RLS isolation (wallets, DMs, notifications, linked accounts,
+# purchases, loadouts). It CREATES REAL USERS + ROWS, so it must ONLY ever run
+# against a DEV / preview-branch Supabase — NEVER production.
+#
+# SKIP-BY-DEFAULT: until the RLS_SMOKE_SUPABASE_URL secret is set it exits green
+# without doing anything, so an unprovisioned repo never goes red. To activate,
+# provision a dev Supabase and add repo secrets RLS_SMOKE_SUPABASE_URL,
+# RLS_SMOKE_ANON_KEY, RLS_SMOKE_SERVICE_ROLE_KEY (pointing at the DEV project).
+
+on:
+  schedule:
+    - cron: "30 3 * * *" # 03:30 UTC nightly (after e2e-nightly)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rls-smoke:
+    name: rls boundary smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Gate on RLS smoke backend secret
+        id: gate
+        env:
+          RLS_SMOKE_SUPABASE_URL: ${{ secrets.RLS_SMOKE_SUPABASE_URL }}
+        run: |
+          if [ -z "$RLS_SMOKE_SUPABASE_URL" ]; then
+            echo "::notice::No RLS_SMOKE_SUPABASE_URL secret — skipping RLS smoke (never runs against prod)."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.run == 'true'
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+        if: steps.gate.outputs.run == 'true'
+
+      - name: Run RLS boundary smoke against DEV Supabase
+        if: steps.gate.outputs.run == 'true'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.RLS_SMOKE_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.RLS_SMOKE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.RLS_SMOKE_SERVICE_ROLE_KEY }}
+        run: npm run smoke:rls

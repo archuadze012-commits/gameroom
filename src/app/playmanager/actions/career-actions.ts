@@ -15,7 +15,7 @@ export async function renewPlayManagerCareer(playerId: string): Promise<PlayMana
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
-  if (playManagerActionLimited(user.id, 'career')) return RATE_LIMITED_RESULT;
+  if (await playManagerActionLimited(user.id, 'career')) return RATE_LIMITED_RESULT;
 
   const db = createSupabaseAdminClient();
   const { data: rawData, error } = await db.rpc('pm_career_renew', {
@@ -44,7 +44,7 @@ export async function releasePlayManagerCareer(playerId: string): Promise<PlayMa
   const { user, team } = await getAuthenticatedTeam();
   if (!user) return { success: false, error: 'unauthenticated' };
   if (!team) return { success: false, error: 'team_missing' };
-  if (playManagerActionLimited(user.id, 'career')) return RATE_LIMITED_RESULT;
+  if (await playManagerActionLimited(user.id, 'career')) return RATE_LIMITED_RESULT;
 
   const db = createSupabaseAdminClient();
   const { data: rawData, error } = await db.rpc('pm_career_release', {

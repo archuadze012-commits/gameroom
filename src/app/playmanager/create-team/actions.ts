@@ -19,7 +19,7 @@ export async function createTeamAction(
   if (!user) return { success: false, error: 'unauthenticated' };
   // Team creation drafts a full squad inside the RPC — the heaviest single
   // mutation in PlayManager — so it gets a tighter bucket than regular actions.
-  if (playManagerActionLimited(user.id, 'create_team', 3, 30_000)) {
+  if (await playManagerActionLimited(user.id, 'create_team', 3, 30_000)) {
     return { success: false, error: 'unknown' };
   }
 

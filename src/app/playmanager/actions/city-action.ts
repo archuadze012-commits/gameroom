@@ -105,7 +105,7 @@ export async function runPlayManagerCityAction(input: {
 
   const team = await getTeam(user.id);
   if (!team) return { success: false, error: 'team_missing' };
-  if (playManagerActionLimited(user.id, 'city')) return { success: false, error: 'unavailable' };
+  if (await playManagerActionLimited(user.id, 'city')) return { success: false, error: 'unavailable' };
 
   const db = createSupabaseAdminClient();
   const actionContext = await getActionContext(user.id, team.id);
