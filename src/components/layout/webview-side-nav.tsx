@@ -44,9 +44,9 @@ const iconActiveGlowClassName =
 
 export function WebViewSideNav({ canEdit = false }: { canEdit?: boolean }) {
   const pathname = usePathname();
-  const msgCount = useNavMessageCount();
-  const annCount = useNavAnnouncementCount();
   const profile = useNavProfile();
+  const msgCount = useNavMessageCount(!!profile);
+  const annCount = useNavAnnouncementCount(!!profile);
 
   const tabs = [
     { href: "/", label: "მთავარი", icon: Home },

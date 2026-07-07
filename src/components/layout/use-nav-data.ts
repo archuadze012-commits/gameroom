@@ -15,10 +15,15 @@ type UseNavProfileOptions = {
   localCache?: boolean;
 };
 
-export function useNavMessageCount() {
+// `enabled` gates the polling loop: guests never have unread messages or
+// per-user announcement reads, so callers pass their known auth state and we
+// skip the interval (and its getSession/fetch work) entirely for visitors.
+export function useNavMessageCount(enabled: boolean = true) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
+    // Guests start (and stay) at 0 — never polled, so nothing to reset here.
+    if (!enabled) return;
     let cancelled = false;
 
     async function tick() {
@@ -46,15 +51,17 @@ export function useNavMessageCount() {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, []);
+  }, [enabled]);
 
   return count;
 }
 
-export function useNavAnnouncementCount() {
+export function useNavAnnouncementCount(enabled: boolean = true) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
+    // Guests start (and stay) at 0 — never polled, so nothing to reset here.
+    if (!enabled) return;
     let cancelled = false;
 
     async function tick() {
@@ -74,7 +81,7 @@ export function useNavAnnouncementCount() {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, []);
+  }, [enabled]);
 
   return count;
 }

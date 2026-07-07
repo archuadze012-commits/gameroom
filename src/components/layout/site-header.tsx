@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SiteBrand } from "./site-brand";
 import { useNavProfile } from "./use-nav-data";
 import { MessagesLink } from "./messages-link";
@@ -42,17 +42,31 @@ export function SiteHeader() {
   const pathname = usePathname();
   const profile = useNavProfile();
   const [visible, setVisible] = useState(true);
-  const [lastY, setLastY] = useState(0);
+  const lastYRef = useRef(0);
+  const tickingRef = useRef(false);
 
   useEffect(() => {
+    // Read scroll position off a ref and only setState when the visibility
+    // actually flips — so the header re-renders on direction changes, not on
+    // every scroll frame. rAF-throttle keeps the handler off the critical path,
+    // and the empty dep array means the listener is attached once (not torn
+    // down and re-added on each scroll, which the old [lastY] dep forced).
     const onScroll = () => {
-      const y = window.scrollY;
-      setVisible(y < lastY || y < 10);
-      setLastY(y);
+      if (tickingRef.current) return;
+      tickingRef.current = true;
+      requestAnimationFrame(() => {
+        const y = window.scrollY;
+        setVisible((prev) => {
+          const next = y < lastYRef.current || y < 10;
+          return prev === next ? prev : next;
+        });
+        lastYRef.current = y;
+        tickingRef.current = false;
+      });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [lastY]);
+  }, []);
 
   if (pathname?.startsWith("/playmanager")) return null;
   if (pathname?.endsWith("/lobby")) return null;

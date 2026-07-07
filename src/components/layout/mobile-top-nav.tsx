@@ -19,9 +19,9 @@ const MORE_LINKS = [
 export function MobileTopNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const msgCount = useNavMessageCount();
-  const annCount = useNavAnnouncementCount();
   const profile = useNavProfile({ localCache: true });
+  const msgCount = useNavMessageCount(!!profile);
+  const annCount = useNavAnnouncementCount(!!profile);
   const [moreOpen, setMoreOpen] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
 
