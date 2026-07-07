@@ -18,6 +18,7 @@ import { DisplayHeading } from "@/components/ui/display-heading";
 import { getSiteContentValue } from "@/lib/site-content";
 import { Separator } from "@/components/ui/separator";
 import { PostReactions } from "@/app/feed/[id]/post-reactions";
+import { DeferMount } from "@/components/defer-mount";
 import { EditableText } from "@/components/admin/editable-text";
 import { EditableImage } from "@/components/admin/editable-image";
 import { PostComposer } from "@/components/post-composer";
@@ -455,9 +456,14 @@ export default async function HomePage() {
                               <PostContent content={p.content} mediaUrls={p.media_urls} />
                             </div>
 
-                            {/* Reactions */}
+                            {/* Reactions — deferred: each instance hydrates and
+                                fires a /reactions fetch on mount, so a screenful
+                                of posts would do both ×N on load. Mount them as
+                                they near the viewport instead. */}
                             <div className="relative z-10 mt-4">
-                              <PostReactions postId={p.id} hideHeading />
+                              <DeferMount minHeight={34}>
+                                <PostReactions postId={p.id} hideHeading />
+                              </DeferMount>
                             </div>
 
                             <Separator className="my-4 bg-white/10" />
