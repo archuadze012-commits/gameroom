@@ -26,14 +26,17 @@ const GlobalBackground = dynamic(
 export function AppRouteChrome({ children }: { children: React.ReactNode }) {
   // Auth is read CLIENT-SIDE here (not in the root layout) so the layout — and
   // therefore every route — is no longer forced into dynamic rendering.
-  const { authenticated, canEdit } = useMe();
+  const { authenticated, canEdit, resolved } = useMe();
   const pathname = usePathname();
   const hasResolvedPath = Boolean(pathname);
   const isPlayManager = pathname?.startsWith('/playmanager');
   const showGlobalChrome = hasResolvedPath && !isPlayManager;
   // The animated storm background is reserved for the unauthorized (guest) home
-  // page; every other route shows just a static dark backdrop.
-  const isGuestHome = pathname === '/' && !authenticated;
+  // page; every other route shows just a static dark backdrop. Gate on `resolved`
+  // so an authed user on `/` never sees a storm flash before the session read
+  // completes (authenticated starts false); a real guest still gets it as soon as
+  // the near-instant local session read resolves.
+  const isGuestHome = pathname === '/' && resolved && !authenticated;
 
   return (
     <EditModeProvider canEdit={canEdit}>
