@@ -96,13 +96,25 @@ function DepartmentCard({
   tone,
   onClick,
   className = '',
+  priority = false,
+  fullWidth = false,
 }: {
   title: string;
   photo: string;
   tone: Tone;
   onClick: () => void;
   className?: string;
+  // First card in the grid is the page's LCP element — skip lazy-loading so
+  // the browser fetches it immediately instead of discovering it late.
+  priority?: boolean;
+  // The first card spans both columns on mobile; the rest sit in a 2-up grid.
+  // Telling next/image the real slot width (50vw, not 100vw) stops it fetching
+  // a 2× oversized source for the smaller cards.
+  fullWidth?: boolean;
 }) {
+  const sizes = fullWidth
+    ? '(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 340px'
+    : '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 340px';
   return (
     <button type="button" onClick={onClick} className={`pubg-loadout-link group block w-full text-left ${className}`}>
       <div className="pubg-loadout-card relative aspect-[4/3] overflow-hidden">
@@ -112,7 +124,8 @@ function DepartmentCard({
             src={photo}
             alt=""
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
+            priority={priority}
+            sizes={sizes}
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/28 to-black/10" />
@@ -293,6 +306,8 @@ export function PlayManagerOffice(props: PlayManagerOfficeProps) {
                   tone={dep.tone}
                   onClick={() => openModule(dep.key, dep.href)}
                   className={index === 0 && departments.length % 2 === 1 ? 'col-span-2 lg:col-span-1' : ''}
+                  priority={index === 0}
+                  fullWidth={index === 0 && departments.length % 2 === 1}
                 />
               ))}
             </div>

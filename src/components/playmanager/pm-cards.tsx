@@ -132,11 +132,13 @@ export function PmPhotoCard({
     <button type="button" onClick={onClick} disabled={pending} className={`pubg-loadout-link group block w-full text-left ${className}`}>
       <div className="pubg-loadout-card relative aspect-[4/3] overflow-hidden">
         <div className="absolute inset-[5px] overflow-hidden rounded-[12px]">
+          {/* These tiles always sit in a 2-up (mobile) → 3-up (desktop) grid,
+              never full-width, so the slot is ~50vw / ~33vw — not 100vw. */}
           <Image
             src={photo}
             alt=""
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 340px"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/28 to-black/10" />

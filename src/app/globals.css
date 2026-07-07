@@ -1776,6 +1776,20 @@ main:has(.pm-playmanager-root) {
     animation: none !important;
     transform: none !important;
   }
+
+  /* Persistent conic-gradient rings (bottom nav, CTAs, active nav item) spin
+     via the --border-angle custom property, which cannot be composited — it
+     repaints every frame on the main thread for the whole session. Freeze the
+     rotation for reduced-motion users; the static ring still reads as a neon
+     border, just without the continuous paint cost. */
+  .neon-rail::before,
+  .neon-rail::after,
+  .neon-btn::before,
+  .neon-btn::after,
+  .premium-nav-item-glow-active::before,
+  .premium-nav-item-glow-active::after {
+    animation: none !important;
+  }
 }
 
 .gr-webview-side-nav-panel {
