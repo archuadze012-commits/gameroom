@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
 import { LightningWebGL, type LightningBoltState } from "@/components/layout/lightning-webgl";
 
 type WeatherState = "clear" | "clouds" | "rain" | "storm" | "snow";
@@ -47,7 +46,12 @@ interface Bolt {
   startTime?: number; // time when bolt animation started
 }
 
-export function GlobalBackground() {
+// The animated storm (lightning + clouds + rain) is expensive ambient decoration.
+// Per product decision it now renders ONLY on the unauthorized (guest) home page;
+// every other route — authed home, catalogs, lobby, etc. — gets a plain static
+// dark backdrop. The parent (AppRouteChrome) decides via the `storm` prop, since
+// it already knows both the pathname and the client-side auth state.
+export function GlobalBackground({ storm = false }: { storm?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const lightningRef = useRef<LightningBoltState[]>([]);
   // Weather is hardcoded to "storm" (dynamic weather removed per user request),
@@ -56,19 +60,8 @@ export function GlobalBackground() {
   const weatherRef = useRef<WeatherState>("storm");
   const [weatherState] = useState<WeatherState>("storm");
 
-  // The lobby renders a full-screen opaque scene on top of this background, so
-  // the storm/lightning canvas is invisible there — yet on mobile *landscape*
-  // it keeps animating (portrait pauses it), stacking a wasted full-screen
-  // canvas + WebGL pass on top of the heavy 1920×1080 lobby render. On low-memory
-  // phones that exhausts GPU memory → the tab crashes → the browser auto-reloads
-  // → it crashes again (infinite reload). Skip the animated background entirely
-  // on lobby routes; a static dark backdrop is all that could ever show.
-  const pathname = usePathname();
-  const isLobby = pathname?.endsWith("/lobby") ?? false;
-  const isPlayManager = pathname?.startsWith("/playmanager") ?? false;
-
   useEffect(() => {
-    if (isLobby) return;
+    if (!storm) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -593,15 +586,12 @@ export function GlobalBackground() {
         document.removeEventListener("visibilitychange", onVisibility);
       }
     };
-  }, [isLobby]);
+  }, [storm]);
 
-  // Lobby: static dark backdrop only — no canvas, no WebGL, no animation.
-  if (isLobby) {
+  // Non-guest-home routes: plain static dark backdrop — no canvas, no WebGL, no
+  // animation loop.
+  if (!storm) {
     return <div className="fixed inset-0 z-[-100] bg-[var(--gr-bg-0)] pointer-events-none" />;
-  }
-
-  if (isPlayManager) {
-    return null;
   }
 
   return (

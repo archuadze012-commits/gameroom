@@ -31,10 +31,13 @@ export function AppRouteChrome({ children }: { children: React.ReactNode }) {
   const hasResolvedPath = Boolean(pathname);
   const isPlayManager = pathname?.startsWith('/playmanager');
   const showGlobalChrome = hasResolvedPath && !isPlayManager;
+  // The animated storm background is reserved for the unauthorized (guest) home
+  // page; every other route shows just a static dark backdrop.
+  const isGuestHome = pathname === '/' && !authenticated;
 
   return (
     <EditModeProvider canEdit={canEdit}>
-      {showGlobalChrome ? <GlobalBackground /> : null}
+      {showGlobalChrome ? <GlobalBackground storm={isGuestHome} /> : null}
       <div className="relative flex min-h-[100dvh] w-full max-w-[100vw] flex-col overflow-x-clip">
         {showGlobalChrome ? <SiteHeader /> : null}
         <main className={`flex-1 ${isPlayManager ? '' : 'pt-16 pb-6 sm:pt-16 landscape:pb-0'}`}>{children}</main>
