@@ -5,7 +5,9 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   environment: process.env.NEXT_PUBLIC_VERCEL_ENV ?? process.env.NODE_ENV,
-  tracesSampleRate: 0.1,
+  // Errors-only on the client: tracesSampleRate pulls the whole
+  // browserTracingIntegration (~150-300KB) into the every-page critical
+  // bundle. Server-side tracing (sentry.server.config) is unaffected.
   // Not enabling Session Replay/profiling here — free tier is scoped to error
   // tracking; add if/when the plan and need for it grow.
 });

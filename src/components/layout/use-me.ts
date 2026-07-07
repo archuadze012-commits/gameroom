@@ -21,27 +21,29 @@ export function useMe(): Me {
   useEffect(() => {
     let cancelled = false;
 
-    // 1) Instant: browser session tells us auth state with no round-trip. Mark
-    //    `resolved` once it completes (session or not) — never flip an already
-    //    known auth=true back to false.
     (async () => {
+      // 1) Instant: browser session tells us auth state with no round-trip.
+      //    Mark `resolved` once it completes (session or not).
+      let hasSession = false;
       try {
         const supabase = createSupabaseBrowserClient();
         const { data } = await supabase.auth.getSession();
         if (cancelled) return;
+        hasSession = !!data.session?.user;
         setMe((prev) => ({
           ...prev,
-          authenticated: prev.authenticated || !!data.session?.user,
+          authenticated: prev.authenticated || hasSession,
           resolved: true,
         }));
       } catch {
         if (!cancelled) setMe((prev) => ({ ...prev, resolved: true }));
       }
-    })();
 
-    // 2) Authoritative: /api/me confirms auth, resolves canEdit, and triggers
-    //    the last-seen / daily-login side effect server-side.
-    (async () => {
+      // 2) Authoritative (authed only): /api/me resolves canEdit and triggers
+      //    the last-seen / daily-login side effect server-side. Guests skip it —
+      //    for them it always answers {false,false}, so calling it was a wasted
+      //    serverless invocation on every page load.
+      if (!hasSession || cancelled) return;
       try {
         const res = await fetch("/api/me", { cache: "no-store" });
         if (!res.ok || cancelled) return;

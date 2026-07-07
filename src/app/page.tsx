@@ -3,7 +3,7 @@ import { MessageCircle, Search, MessageSquare, Bell, Gamepad2, ShoppingBag, Flam
 import { mockGames, crackedGames } from "@/lib/mock-data";
 import { HomeNotificationsWidget } from "@/components/home-notifications-widget";
 import { HomeSearchWidget } from "@/components/home-search-widget";
-import { getIsAdmin, getSession } from "@/lib/auth";
+import { getSession, isAdminFromProfile } from "@/lib/auth";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import { HomeHeroCarousel } from "@/components/home/home-hero-carousel";
 import { HomeGuestHero } from "@/components/home/home-guest-hero";
@@ -49,17 +49,15 @@ const QUICK_NAV = [
 ];
 
 export default async function HomePage() {
-  const [user, isAdmin] = await Promise.all([
-    getSession().catch(() => null),
-    getIsAdmin().catch(() => false),
-  ]);
+  const user = await getSession().catch(() => null);
 
-  // Guests (never admins — getIsAdmin is false without a session) get the
-  // full-screen Goderdzi→Leo hero, which reads only the guest-hero site content.
-  // Return before the authed data pipeline (posts, articles, YouTube live API,
-  // cracked games) — none of it renders for guests, so fetching it was pure
-  // server latency on the highest-traffic public page.
-  if (!user && !isAdmin) {
+  // Guests get the full-screen Goderdzi→Leo hero, which reads only the
+  // guest-hero site content. Return before the authed data pipeline (posts,
+  // articles, YouTube live API, cracked games) — none of it renders for
+  // guests, so fetching it was pure server latency on the highest-traffic
+  // public page. Admin status comes from the profiles row fetched below, so
+  // the guest path costs a single auth round trip.
+  if (!user) {
     const guestHero = await getSiteContentValue("home.guest.hero", {
       headline: "ყველაფერი, რის გამოც თამაშები გიყვარს",
       logoUrl: "/playgame-logo.png",
@@ -113,17 +111,18 @@ export default async function HomePage() {
     avatarUrl: string | null;
   } | null = null;
   let liveStreams: LiveStream[] = [];
+  let isAdmin = false;
   type FreePcGameRow = { id: string; title: string; cover_url: string | null; rating: number };
   let freePcGamesDb: FreePcGameRow[] = [];
   try {
     const supabase = await createSupabaseServerClient();
-    const profilePromise = user
-      ? supabase
-          .from("profiles")
-          .select("username, display_name, avatar_url")
-          .eq("id", user.id)
-          .maybeSingle()
-      : Promise.resolve({ data: null });
+    // role/banned ride along so the admin check doesn't need its own
+    // profiles round trip (previously a separate getIsAdmin() query).
+    const profilePromise = supabase
+      .from("profiles")
+      .select("username, display_name, avatar_url, role, banned")
+      .eq("id", user.id)
+      .maybeSingle();
     const [postsRes, articleRows, profileRes, streamsRes, crackedRes] = await Promise.all([
       supabase
         .from("posts")
@@ -152,17 +151,16 @@ export default async function HomePage() {
       date: new Date(r.published_at).getTime(),
     }));
     feedItems = [...postItems, ...articleItems].sort((a, b) => b.date - a.date);
-    if (user) {
-      const profile = profileRes.data;
-      composerUser = {
-        id: user.id,
-        username: profile?.username ?? user.email?.split("@")[0] ?? "player",
-        displayName:
-          profile?.display_name ??
-          String(user.user_metadata?.full_name ?? user.user_metadata?.name ?? profile?.username ?? ""),
-        avatarUrl: profile?.avatar_url ?? user.user_metadata?.avatar_url ?? null,
-      };
-    }
+    const profile = profileRes.data;
+    isAdmin = isAdminFromProfile(profile, user.email);
+    composerUser = {
+      id: user.id,
+      username: profile?.username ?? user.email?.split("@")[0] ?? "player",
+      displayName:
+        profile?.display_name ??
+        String(user.user_metadata?.full_name ?? user.user_metadata?.name ?? profile?.username ?? ""),
+      avatarUrl: profile?.avatar_url ?? user.user_metadata?.avatar_url ?? null,
+    };
   } catch (e) {
     console.error("[HomePage] Exception during fetch:", e);
   }

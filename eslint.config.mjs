@@ -24,6 +24,7 @@ const eslintConfig = defineConfig([
     // are not application source — keep them out of the lint scope.
     "public/**",
     "scripts/**",
+    "ComfyUI/**",
     "*.mjs",
     "*.log",
     "devserver*.log",

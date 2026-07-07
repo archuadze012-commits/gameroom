@@ -102,6 +102,13 @@ export default withSentryConfig(nextConfig, {
   // the CSP connect-src doesn't need a sentry.io entry at all.
   tunnelRoute: "/monitoring",
   widenClientFileUpload: true,
+  // Bundler-agnostic tree-shaking (works under Turbopack too, unlike the
+  // webpack.treeshake option): strip debug code and the tracing integration
+  // from the client bundle — the client is errors-only (no tracesSampleRate).
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+    excludeTracing: true,
+  },
   webpack: {
     automaticVercelMonitors: false,
     treeshake: { removeDebugLogging: true },
