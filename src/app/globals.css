@@ -296,6 +296,7 @@
   pointer-events: none;
   transition: opacity 0.25s ease, filter 0.25s ease;
   animation: border-rotate 8s linear infinite;
+  animation-play-state: paused; /* only spins on hover/focus — see hover rules below */
   /* Keep ring thickness stable so hover cannot leave an inner band. */
   padding: 3px;
 }
@@ -460,6 +461,7 @@
   pointer-events: none;
   transition: opacity 0.25s ease, filter 0.25s ease;
   animation: border-rotate 8s linear infinite;
+  animation-play-state: paused;
   padding: 3px;
 }
 
@@ -713,6 +715,7 @@
   /* padding snaps instantly (no transition) so inner thickness appears with no lag */
   transition: opacity 0.25s ease, filter 0.25s ease;
   animation: border-rotate 8s linear infinite;
+  animation-play-state: paused;
 }
 
 
@@ -808,6 +811,7 @@
   pointer-events: none;
   transition: all 0.4s ease;
   animation: border-rotate 8s linear infinite;
+  animation-play-state: paused;
   opacity: 0;
 }
 
@@ -825,6 +829,10 @@
 .premium-nav-item-glow-active::before,
 .premium-nav-item-glow-active::after {
   opacity: 0.4;
+  /* Unlike the idle (invisible) base state, the active ring is genuinely visible
+     at rest, so it keeps spinning — there's usually only one active nav item on
+     screen, so this doesn't multiply like the per-card idle animations did. */
+  animation-play-state: running;
 }
 
 .premium-nav-item-glow-active::before {
