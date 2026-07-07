@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/page-header";
 import { mockGames, type MockGame } from "@/lib/mock-data";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseAdminClientOrNull } from "@/lib/supabase/admin";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 import { GamesCatalog } from "./games-catalog";
 
@@ -42,8 +42,12 @@ function dbToGame(g: DbGame): MockGame {
 }
 
 export default async function GamesCatalogPage() {
-  const supabase = createSupabaseAdminClient();
-  const { data: dbGames } = await supabase.from("games").select("*");
+  // Falls back to the built-in mockGames catalog if admin env is missing (e.g. a
+  // preview build); production build/runtime reads the live games table.
+  const supabase = createSupabaseAdminClientOrNull();
+  const { data: dbGames } = supabase
+    ? await supabase.from("games").select("*")
+    : { data: null };
 
   const db: MockGame[] = (dbGames ?? []).map(dbToGame);
   const dbSlugs = new Set(db.map((g) => g.slug));

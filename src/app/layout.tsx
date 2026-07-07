@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { AppRouteChrome } from "@/components/layout/app-route-chrome";
 
@@ -70,6 +71,7 @@ export default function RootLayout({
     >
       <body suppressHydrationWarning className="bg-transparent text-foreground">
         <AppRouteChrome>{children}</AppRouteChrome>
+        <SpeedInsights />
       </body>
     </html>
   );

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Trophy, Users, Calendar } from "lucide-react";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseAdminClientOrNull } from "@/lib/supabase/admin";
 import { format } from "date-fns";
 import { PageHeader } from "@/components/page-header";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
@@ -50,7 +50,8 @@ type TournamentCard = {
 
 const getTournaments = unstable_cache(
   async () => {
-    const admin = createSupabaseAdminClient();
+    const admin = createSupabaseAdminClientOrNull();
+    if (!admin) return null;
     const { data } = await admin
       .from("tournaments")
       .select(`

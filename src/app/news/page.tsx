@@ -3,7 +3,7 @@ import { Clock } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 import { Pill } from "@/components/ui/pill";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseAdminClientOrNull } from "@/lib/supabase/admin";
 import { format } from "date-fns";
 import { GamerCard } from "@/components/ui/gamer-card";
 import { unstable_cache } from "next/cache";
@@ -30,7 +30,8 @@ type NewsRow = {
 
 const getNews = unstable_cache(
   async () => {
-  const admin = createSupabaseAdminClient();
+  const admin = createSupabaseAdminClientOrNull();
+  if (!admin) return null;
   const { data } = await admin
     .from("news_articles")
     .select(`

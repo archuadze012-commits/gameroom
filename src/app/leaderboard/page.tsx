@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Trophy, Crown, Medal, Coins, Sparkles } from "lucide-react";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseAdminClientOrNull } from "@/lib/supabase/admin";
 import { unstable_cache } from "next/cache";
 import { UserAvatar } from "@/components/user-avatar";
 import { VerifiedBadge } from "@/components/verified-badge";
@@ -12,7 +12,8 @@ export const metadata = { title: "Leaderboard" };
 
 const getLeaderboardData = unstable_cache(
   async () => {
-    const admin = createSupabaseAdminClient();
+    const admin = createSupabaseAdminClientOrNull();
+    if (!admin) return { topXp: null, topWallets: null };
     const [{ data: topXp }, { data: topWallets }] = await Promise.all([
       admin
         .from("profiles")
