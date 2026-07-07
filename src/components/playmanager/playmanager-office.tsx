@@ -120,6 +120,8 @@ function DepartmentCard({
       <div className="pubg-loadout-card relative aspect-[4/3] overflow-hidden">
         {/* Photo inset from the edge so the neon frame is never covered. */}
         <div className="absolute inset-[5px] overflow-hidden rounded-[12px]">
+          {/* `priority` = eager + fetchpriority=high + a <link rel="preload"> in
+              <head> — the preload is what fixes Lighthouse's LCP-discovery. */}
           <Image
             src={photo}
             alt=""

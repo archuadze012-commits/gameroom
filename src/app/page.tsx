@@ -5,8 +5,9 @@ import { HomeNotificationsWidget } from "@/components/home-notifications-widget"
 import { HomeSearchWidget } from "@/components/home-search-widget";
 import { getSession, isAdminFromProfile } from "@/lib/auth";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
-import { HomeHeroCarousel } from "@/components/home/home-hero-carousel";
-import { HomeGuestHero } from "@/components/home/home-guest-hero";
+// Lazy wrappers: guest hero and authed carousel are code-split into separate
+// chunks so each audience downloads only its own hero (see home-hero-lazy.tsx).
+import { HomeHeroCarousel, HomeGuestHero } from "@/components/home/home-hero-lazy";
 import { getLiveStreams, type LiveStream } from "@/lib/streams/youtube-live";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { listPublishedArticles } from "@/lib/articles-db";

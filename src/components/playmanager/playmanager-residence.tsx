@@ -161,7 +161,7 @@ export function PlayManagerResidence(props: PlayManagerResidenceProps) {
               />
               <PmPhotoCard
                 title={`დროებითი განთავსება (${snapshot.unassigned?.length ?? 0})`}
-                photo="/playmanager/city/buildings/market.webp"
+                photo="/playmanager/city/buildings/headquarters.webp"
                 tone="gold"
                 onClick={() => openModule('unassigned')}
               />

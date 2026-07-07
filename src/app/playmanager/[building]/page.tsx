@@ -37,6 +37,16 @@ const BUILDING_SCALE: Record<string, { anchorX: number; anchorY: number; scale: 
   residence: { anchorX: 0.18,  anchorY: 0.18,  scale: 1.3,  tone: 'green' },
 };
 
+const BUILDING_SPRITE_SRC: Record<string, string> = {
+  market: '/playmanager/city/buildings/gamestore.webp',
+  training: '/playmanager/city/buildings/training.webp',
+  finance: '/playmanager/city/buildings/headquarters.webp',
+  league: '/playmanager/city/buildings/trophy_hall.webp',
+  media: '/playmanager/city/buildings/fountain.webp',
+  medical: '/playmanager/city/buildings/medical.webp',
+  residence: '/playmanager/city/buildings/tower.webp',
+};
+
 // The page awaits its data directly (no inner <Suspense> streaming). The nearest
 // loading.tsx ([building]/loading.tsx — a bare background) covers the fetch, so
 // there's a single, fast, animation-free fallback instead of a streamed skeleton
@@ -144,7 +154,7 @@ async function BuildingData({ params }: { params: Promise<{ building: string }> 
     description: meta.description,
     status: meta.status,
     spriteKey: resolvedKey,
-    spriteUrl: `/playmanager/city/buildings/${resolvedKey}.webp`,
+    spriteUrl: BUILDING_SPRITE_SRC[resolvedKey] ?? `/playmanager/city/buildings/${resolvedKey}.webp`,
     anchorX: pos.anchorX,
     anchorY: pos.anchorY,
     scale: pos.scale,

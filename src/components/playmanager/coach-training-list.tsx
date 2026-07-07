@@ -14,7 +14,11 @@ import { useRouter } from 'next/navigation';
 import { PmPill, PmGauge } from '@/components/playmanager/pm-cards';
 import { NestedMiniBox } from '@/components/playmanager/panel-primitives';
 import { PlayerFutCard, DEFAULT_FUT_CARD_EDITOR_CONFIG } from '@/components/playmanager/player-fut-card';
-import { getPlayerPotentialForTraining } from '@/components/playmanager/playmanager-city-editor';
+// Import the helper from the pure leaf module, NOT from playmanager-city-editor
+// (which only re-exports it). Pulling it through the 3k-line 'use client'
+// workspace component dragged that whole module into the /playmanager/staff
+// route bundle; city-editor-data.ts is where the function actually lives.
+import { getPlayerPotentialForTraining } from '@/components/playmanager/city-editor-data';
 import { trainPlayManagerPlayer } from '@/app/playmanager/actions/player-development-actions';
 import type { PlayManagerCitySnapshot } from '@/lib/playmanager/city-data';
 
