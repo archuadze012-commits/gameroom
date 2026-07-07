@@ -319,6 +319,13 @@ export function HomeHeroCarousel({ cta, freeGames, freeGamesTitle, liveStreams =
   // ── Carousel state ────────────────────────────────────────────
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  // `active` gates the auto-advance loop: an off-screen or background-tab
+  // carousel that keeps re-rendering every AUTO_ADVANCE_MS is pure main-thread
+  // work competing with whatever the user is actually interacting with (bad for
+  // INP). Starts true so it advances immediately if in view; the observer below
+  // corrects it.
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(true);
 
   const dragStartX = useRef<number | null>(null);
   const dragDelta = useRef(0);
@@ -334,14 +341,41 @@ export function HomeHeroCarousel({ cta, freeGames, freeGamesTitle, liveStreams =
     [slideCount],
   );
 
+  // Pause auto-advance when the carousel is scrolled out of view or the tab is
+  // backgrounded — no point spending main-thread time advancing slides nobody
+  // is looking at.
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    let inView = true;
+    const sync = () => setActive(inView && document.visibilityState === "visible");
+    const io =
+      typeof IntersectionObserver !== "undefined"
+        ? new IntersectionObserver(
+            (entries) => {
+              inView = entries[0]?.isIntersecting ?? true;
+              sync();
+            },
+            { threshold: 0 },
+          )
+        : null;
+    io?.observe(el);
+    document.addEventListener("visibilitychange", sync);
+    sync();
+    return () => {
+      io?.disconnect();
+      document.removeEventListener("visibilitychange", sync);
+    };
+  }, []);
+
   // Auto-advance
   useEffect(() => {
-    if (slideCount < 2 || paused) return;
+    if (slideCount < 2 || paused || !active) return;
     const id = window.setInterval(() => {
       setIndex((i) => (i + 1) % slideCount);
     }, AUTO_ADVANCE_MS);
     return () => window.clearInterval(id);
-  }, [slideCount, paused]);
+  }, [slideCount, paused, active]);
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (slideCount < 2) return;
@@ -371,7 +405,7 @@ export function HomeHeroCarousel({ cta, freeGames, freeGamesTitle, liveStreams =
   };
 
   return (
-    <div className="pubg-carousel-wrap w-full max-w-2xl mx-auto">
+    <div ref={wrapRef} className="pubg-carousel-wrap w-full max-w-2xl mx-auto">
       <div
         className="pubg-loadout-card relative overflow-hidden !p-0"
         onMouseEnter={() => setPaused(true)}
