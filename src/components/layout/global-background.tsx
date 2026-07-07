@@ -5,6 +5,23 @@ import { LightningWebGL, type LightningBoltState } from "@/components/layout/lig
 
 type WeatherState = "clear" | "clouds" | "rain" | "storm" | "snow";
 
+// Low-end devices pay the storm's canvas+WebGL cost disproportionately — the
+// same 30fps loop that's cheap on a modern phone competes hard with
+// hydration/interaction handling on a weak one, which is exactly where INP
+// suffers most. deviceMemory <= 4 and Data Saver are the reliable weak-device
+// signals (low-RAM Android, and users who explicitly asked for less data);
+// hardwareConcurrency alone is a poor signal — plenty of capable laptops and
+// Chromebooks report 4 cores — so it only counts at an extreme value (<= 2).
+// These navigator fields are synchronous and this component is client-only
+// (dynamic-imported with ssr:false), so reading them at module scope is safe.
+function isLowPowerDevice(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const cores = navigator.hardwareConcurrency ?? 8;
+  const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8;
+  const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData ?? false;
+  return memory <= 4 || saveData || cores <= 2;
+}
+
 function generateBolt(x1: number, y1: number, x2: number, y2: number, depth: number, jitter = 0.4): { x: number; y: number }[] {
   if (depth <= 0) return [{ x: x1, y: y1 }, { x: x2, y: y2 }];
   const midX = (x1 + x2) / 2;
@@ -59,9 +76,11 @@ export function GlobalBackground({ storm = false }: { storm?: boolean }) {
   // mount effect needed.
   const weatherRef = useRef<WeatherState>("storm");
   const [weatherState] = useState<WeatherState>("storm");
+  const [lowPower] = useState(isLowPowerDevice);
+  const effectiveStorm = storm && !lowPower;
 
   useEffect(() => {
-    if (!storm) return;
+    if (!effectiveStorm) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -586,11 +605,11 @@ export function GlobalBackground({ storm = false }: { storm?: boolean }) {
         document.removeEventListener("visibilitychange", onVisibility);
       }
     };
-  }, [storm]);
+  }, [effectiveStorm]);
 
-  // Non-guest-home routes: plain static dark backdrop — no canvas, no WebGL, no
-  // animation loop.
-  if (!storm) {
+  // Non-guest-home routes, and guest-home on a low-power device: plain static
+  // dark backdrop — no canvas, no WebGL, no animation loop.
+  if (!effectiveStorm) {
     return <div className="fixed inset-0 z-[-100] bg-[var(--gr-bg-0)] pointer-events-none" />;
   }
 
