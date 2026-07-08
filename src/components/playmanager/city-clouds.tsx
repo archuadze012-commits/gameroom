@@ -136,6 +136,21 @@ export function CityClouds({ scaleX, scaleY }: { scaleX: number; scaleY: number 
     let prev = performance.now();
     let lastSx = -1;
 
+    // Backgrounded tabs still run rAF (throttled to ~1fps by the browser, not
+    // stopped), so without this the loop keeps ticking — and dt clamps each
+    // stall to 0.05s, so on return every cloud jumps as if time had barely
+    // passed instead of resuming naturally. Pausing on hide and resetting
+    // `prev` on show avoids both the wasted background ticks and the jump.
+    const onVisibility = () => {
+      if (document.hidden) {
+        if (raf) cancelAnimationFrame(raf);
+        raf = 0;
+      } else if (!raf) {
+        prev = performance.now();
+        raf = requestAnimationFrame(tick);
+      }
+    };
+
     const tick = (now: number) => {
       const dt = Math.min(0.05, (now - prev) / 1000); // clamp big gaps
       prev = now;
@@ -195,8 +210,12 @@ export function CityClouds({ scaleX, scaleY }: { scaleX: number; scaleY: number 
       raf = requestAnimationFrame(tick);
     };
 
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    document.addEventListener('visibilitychange', onVisibility);
+    if (!document.hidden) raf = requestAnimationFrame(tick);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      cancelAnimationFrame(raf);
+    };
   }, [ready]);
 
   if (!ready) return null;

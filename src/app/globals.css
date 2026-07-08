@@ -179,6 +179,7 @@
   -webkit-background-clip: text;
   background-clip: text;
   animation: site-title-pan 6s linear infinite, site-title-glow 2.8s ease-in-out infinite;
+  animation-play-state: paused; /* only animates on hover — see hover rule below */
 }
 
 @keyframes site-title-pan {
@@ -202,15 +203,18 @@
 .group:hover .site-title-wordmark,
 .site-title-wordmark:hover {
   animation-duration: 3.5s, 1.8s;
+  animation-play-state: running;
 }
 
 .site-brand-icon {
   animation: icon-float 3.6s ease-in-out infinite, icon-glow 3.6s ease-in-out infinite;
+  animation-play-state: paused; /* only animates on hover — see hover rule below */
   transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .group:hover .site-brand-icon {
   animation-duration: 2.2s, 2.2s;
+  animation-play-state: running;
   transform: scale(1.12);
 }
 
@@ -375,6 +379,7 @@
   );
   background-size: 250% 250%;
   animation: gradient-pan 12s ease-in-out infinite;
+  animation-play-state: paused; /* only pans on hover/focus — see hover rules below */
   opacity: 0.15;
   transition: opacity 0.5s ease;
 }
@@ -415,6 +420,10 @@
 .pubg-carousel-wrap:hover > .pubg-loadout-card::before,
 .pubg-carousel-wrap:hover > .pubg-loadout-card::after {
   animation: border-rotate 3s linear infinite;
+}
+
+.pubg-carousel-wrap:hover > .pubg-loadout-card > .pubg-loadout-field {
+  animation-play-state: running;
 }
 
 .pubg-carousel-wrap:hover > .pubg-loadout-card {
@@ -500,10 +509,14 @@
 .neon-frame--overlay::after { z-index: 2; }
 .neon-frame--overlay > * { z-index: 1; }
 
-/* ── Neon rail ── always-on rotating conic ring for nav bars.
-   Same moving palette as .neon-frame, but no hover gating (a nav bar isn't a
-   hover target as a unit) and the ring renders above the bar's own fill so the
-   bar background/border never covers it. Apply to a positioned element; the
+/* ── Neon rail ── static conic ring for nav bars. Same moving palette as
+   .neon-frame; a nav bar isn't a hover target as a unit, so — unlike every
+   other ring in this file — there's no sensible hover trigger to gate the
+   spin on. It used to run continuously (border-rotate repaints every frame
+   on the main thread, uncomposited, for the whole session on every page);
+   now it's frozen at its rest angle, matching how reduced-motion users
+   already saw it. The ring renders above the bar's own fill so the bar
+   background/border never covers it. Apply to a positioned element; the
    element keeps its own background, the ring hugs its border-radius. */
 .neon-rail { position: relative; isolation: isolate; }
 
@@ -520,6 +533,7 @@
   mask-composite: exclude;
   pointer-events: none;
   animation: border-rotate 8s linear infinite;
+  animation-play-state: paused;
   padding: 1.5px;
   z-index: 3;
 }
@@ -558,6 +572,7 @@
   mask-composite: exclude;
   pointer-events: none;
   animation: border-rotate 8s linear infinite;
+  animation-play-state: paused; /* only spins on hover — see hover rule below */
   padding: 1.5px;
   z-index: 3;
   transition: opacity 0.25s ease, filter 0.25s ease;
@@ -568,6 +583,11 @@
 
 .neon-btn:hover::before { opacity: 0.9; filter: blur(8px); }
 .neon-btn:hover::after  { opacity: 1; }
+
+.neon-btn:hover::before,
+.neon-btn:hover::after {
+  animation-play-state: running;
+}
 
 .neon-btn > * { position: relative; z-index: 4; }
 
@@ -648,6 +668,7 @@
 
 .pubg-loadout-link:hover > .pubg-loadout-card > .pubg-loadout-field,
 .pubg-loadout-link:focus-visible > .pubg-loadout-card > .pubg-loadout-field {
+  animation-play-state: running;
   opacity: 1;
   background: linear-gradient(
     135deg,
