@@ -299,8 +299,6 @@
   mask-composite: exclude;
   pointer-events: none;
   transition: opacity 0.25s ease, filter 0.25s ease;
-  animation: border-rotate 8s linear infinite;
-  animation-play-state: paused; /* only spins on hover/focus — see hover rules below */
   /* Keep ring thickness stable so hover cannot leave an inner band. */
   padding: 3px;
 }
@@ -370,16 +368,12 @@
   border-radius: 16px;
   pointer-events: none;
   background: linear-gradient(
-    135deg,
+    in oklab 135deg,
     var(--huashu-purple) 0%,
-    transparent 30%,
-    var(--huashu-red) 50%,
-    transparent 70%,
+    rgba(255, 255, 255, 0.02) 50%,
     var(--huashu-blue) 100%
   );
   background-size: 250% 250%;
-  animation: gradient-pan 12s ease-in-out infinite;
-  animation-play-state: paused; /* only pans on hover/focus — see hover rules below */
   opacity: 0.15;
   transition: opacity 0.5s ease;
 }
@@ -394,14 +388,6 @@
     0 0 48px rgba(255, 0, 60, 0.3);
   border-color: rgba(255, 255, 255, 0.2);
 }
-
-.pubg-loadout-link:hover > .pubg-loadout-card::before,
-.pubg-loadout-link:focus-visible > .pubg-loadout-card::before,
-.pubg-loadout-link:hover > .pubg-loadout-card::after,
-.pubg-loadout-link:focus-visible > .pubg-loadout-card::after {
-  animation: border-rotate 3s linear infinite; /* Speeds up dramatically on hover */
-}
-
 .pubg-loadout-link:hover > .pubg-loadout-card::before,
 .pubg-loadout-link:focus-visible > .pubg-loadout-card::before {
   opacity: 1;
@@ -413,19 +399,6 @@
   opacity: 1;
   filter: blur(2px);
 }
-
-/* Carousel wrapper — same hover treatment as .pubg-loadout-link, but the carousel
-   has no link wrapper, so it needs its own hover trigger. Base ring geometry,
-   transitions and box-shadow are inherited from the shared .pubg-loadout-card rules. */
-.pubg-carousel-wrap:hover > .pubg-loadout-card::before,
-.pubg-carousel-wrap:hover > .pubg-loadout-card::after {
-  animation: border-rotate 3s linear infinite;
-}
-
-.pubg-carousel-wrap:hover > .pubg-loadout-card > .pubg-loadout-field {
-  animation-play-state: running;
-}
-
 .pubg-carousel-wrap:hover > .pubg-loadout-card {
   box-shadow:
     0 0 12px rgba(0, 68, 255, 0.45),
@@ -666,20 +639,7 @@
     0 10px 22px -18px rgba(0, 0, 0, 0.92);
 }
 
-.pubg-loadout-link:hover > .pubg-loadout-card > .pubg-loadout-field,
-.pubg-loadout-link:focus-visible > .pubg-loadout-card > .pubg-loadout-field {
-  animation-play-state: running;
-  opacity: 1;
-  background: linear-gradient(
-    135deg,
-    var(--huashu-purple) 0%,
-    transparent 20%,
-    rgba(239, 68, 68, 0.12) 50%,
-    transparent 80%,
-    var(--huashu-blue) 100%
-  );
-  background-size: 200% 200%;
-}
+
 
 .pubg-loadout-kicker {
   position: relative;

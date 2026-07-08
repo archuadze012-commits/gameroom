@@ -22,6 +22,11 @@ export function LobbyDailyBonus({ available }: { available: boolean }) {
         router.refresh();
       } else if (result.error === "already_claimed") {
         setClaimed(true);
+      } else {
+        // Previously any other error gave zero feedback — the button just
+        // re-enabled and the user couldn't tell if they were paid.
+        setFlash("ვერ მოხერხდა");
+        setTimeout(() => setFlash(null), 2500);
       }
     });
   }

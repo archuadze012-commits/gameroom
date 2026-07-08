@@ -16,5 +16,10 @@ export async function GET() {
   }
   const hiddenIds = new Set((hidden ?? []).map((r) => r.id));
   const filtered = (data ?? []).filter((g) => !hiddenIds.has(g.id));
-  return NextResponse.json({ games: filtered, hiddenIds: [...hiddenIds] });
+  // The cracked-games catalog changes rarely — let the browser/CDN cache it so
+  // repeat visits and back-navigations don't re-hit Supabase every mount.
+  return NextResponse.json(
+    { games: filtered, hiddenIds: [...hiddenIds] },
+    { headers: { "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600" } },
+  );
 }

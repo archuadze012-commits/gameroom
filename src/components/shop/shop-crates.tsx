@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Package, Gift } from "lucide-react";
@@ -71,17 +72,19 @@ function CrateCard({ box, hasSession }: { box: EventBox; hasSession: boolean }) 
             <div aria-hidden className="absolute inset-0 bg-[linear-gradient(115deg,transparent_0%,rgba(255,255,255,0.06)_46%,transparent_52%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
             {box.image_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={box.image_url}
                 alt={box.name}
+                width={isFullCoverCrate ? 800 : 400}
+                height={isFullCoverCrate ? 450 : 220}
                 className={heroImageClass}
               />
             ) : featuredItem?.image_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={featuredItem.image_url}
                 alt={featuredItem.item_name}
+                width={200}
+                height={200}
                 className="relative z-10 h-32 w-auto max-w-[92%] object-contain drop-shadow-[0_16px_18px_rgba(0,0,0,0.72)] transition-transform duration-500 group-hover:scale-105"
               />
             ) : (

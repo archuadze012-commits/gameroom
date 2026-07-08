@@ -3,7 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { rateLimitShared } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
-import { PROFILE_MEDIUM_TEXT_MAX_LENGTH, PROFILE_SHORT_TEXT_MAX_LENGTH } from "@/lib/constants";
+import { PROFILE_BIO_MAX_LENGTH, PROFILE_MEDIUM_TEXT_MAX_LENGTH, PROFILE_SHORT_TEXT_MAX_LENGTH } from "@/lib/constants";
 import type { Database } from "@/lib/database.types";
 
 type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
   if (typeof body.displayName === "string")
     update.display_name = body.displayName.trim().slice(0, PROFILE_MEDIUM_TEXT_MAX_LENGTH) || null;
   if (typeof body.bio === "string")
-    update.bio = body.bio.trim() || null;
+    update.bio = body.bio.trim().slice(0, PROFILE_BIO_MAX_LENGTH) || null;
   if (typeof body.region === "string")
     update.region = body.region.trim() || null;
   if (typeof body.voiceChat === "boolean")

@@ -52,15 +52,27 @@ export function DiscordVoiceDashboard({ gameSlug }: { gameSlug?: string }) {
   }, [gameSlug]);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      void fetchData();
-    }, 0);
-    const interval = setInterval(() => {
-      void fetchData();
-    }, 10000);
+    let interval: ReturnType<typeof setInterval> | null = null;
+    const start = () => {
+      if (interval !== null) return;
+      interval = setInterval(() => { void fetchData(); }, 10000);
+    };
+    const stop = () => {
+      if (interval !== null) { clearInterval(interval); interval = null; }
+    };
+
+    void fetchData();
+    // Don't poll a hidden tab — a backgrounded dashboard kept hammering Discord
+    // every 10s. Pause on hide, refresh + resume on show.
+    if (document.visibilityState === "visible") start();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") { void fetchData(); start(); }
+      else stop();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
-      clearTimeout(timeout);
-      clearInterval(interval);
+      stop();
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [fetchData]);
 

@@ -41,16 +41,18 @@ export function RoomChat({ roomId, currentUserId }: Props) {
     (async () => {
       setLoading(true);
       const supabase = createSupabaseBrowserClient();
+      // Newest 200 (descending + limit), reversed to ascending for display.
+      // Ascending-before-limit would freeze the view on the oldest 200 forever.
       const { data } = await supabase
         .from("room_chat_messages")
         .select(
           "id, user_id, body, created_at, profiles!room_chat_messages_user_id_fkey(username, display_name, avatar_url)"
         )
         .eq("room_id", roomId)
-        .order("created_at", { ascending: true })
+        .order("created_at", { ascending: false })
         .limit(200);
       if (!cancelled) {
-        setMessages((data ?? []) as unknown as Msg[]);
+        setMessages(((data ?? []) as unknown as Msg[]).slice().reverse());
         setLoading(false);
       }
     })();

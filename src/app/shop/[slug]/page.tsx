@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Crown, ShieldCheck, ShoppingBag } from "lucide-react";
 import { mockGames } from "@/lib/mock-data";
@@ -97,12 +98,17 @@ export default async function GameShopPage({ params }: { params: Promise<{ slug:
                 <div className="relative mt-8 flex flex-1 items-center justify-center">
                   <div aria-hidden className="absolute inset-x-[10%] bottom-8 h-px bg-[linear-gradient(90deg,transparent,rgba(34,211,238,0.5),rgba(236,72,153,0.5),transparent)]" />
                   {featuredImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={featuredImage}
-                      alt={featuredItem?.item_name ?? featuredBox.name}
-                      className="relative z-[2] max-h-[280px] w-full object-contain drop-shadow-[0_25px_35px_rgba(0,0,0,0.8)] transition-transform duration-700 group-hover/img:scale-110"
-                    />
+                    <div className="relative h-[280px] w-full">
+                      <Image
+                        src={featuredImage}
+                        alt={featuredItem?.item_name ?? featuredBox.name}
+                        fill
+                        loading="eager"
+                        fetchPriority="high"
+                        sizes="(min-width: 1024px) 700px, 100vw"
+                        className="z-[2] object-contain drop-shadow-[0_25px_35px_rgba(0,0,0,0.8)] transition-transform duration-700 group-hover/img:scale-110"
+                      />
+                    </div>
                   ) : (
                     <Crown className="relative z-[2] h-28 w-28 text-white/20 drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]" />
                   )}

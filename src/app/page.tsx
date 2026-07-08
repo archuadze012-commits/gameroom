@@ -288,7 +288,7 @@ export default async function HomePage() {
             </div>
 
             <Link href="/playmanager" className="hidden md:block w-full max-w-4xl group">
-              <article className="relative overflow-hidden rounded-[28px] border border-[#2b6b55] bg-[linear-gradient(135deg,rgba(3,18,13,0.96),rgba(6,33,24,0.94)_55%,rgba(9,52,38,0.92))] px-6 py-5 shadow-[0_0_0_1px_rgba(41,117,84,0.25),0_24px_60px_rgba(0,0,0,0.38)] transition-all duration-500 hover:-translate-y-1 hover:border-[#4fb488] hover:shadow-[0_0_0_1px_rgba(79,180,136,0.35),0_28px_70px_rgba(4,18,12,0.52)]">
+              <article className="relative overflow-hidden rounded-[28px] border border-[#2b6b55] bg-[linear-gradient(135deg,rgba(3,18,13,0.96),rgba(6,33,24,0.94)_55%,rgba(9,52,38,0.92))] px-6 py-5 shadow-[0_0_0_1px_rgba(41,117,84,0.25),0_24px_60px_rgba(0,0,0,0.38)] transition-all duration-500 hover:-translate-y-1 hover:border-[#4fb488] hover:shadow-[0_0_0_1px_rgba(79,180,136,0.35)]">
                 <span aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_left,rgba(48,145,102,0.26),transparent_38%),radial-gradient(circle_at_right,rgba(95,201,152,0.18),transparent_34%)] opacity-90" />
                 <span aria-hidden className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(126,255,195,0.55),transparent)]" />
                 <span className="relative z-[1] flex items-center justify-between gap-4">

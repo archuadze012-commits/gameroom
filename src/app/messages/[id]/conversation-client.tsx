@@ -42,6 +42,8 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
   const router = useRouter();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [input, setInput] = useState("");
   const [isDeleting, startDeleteTransition] = useTransition();
   const [smartReplies, setSmartReplies] = useState<string[]>([]);
@@ -86,18 +88,28 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const res = await fetch(`/api/conversations/${conversationId}/messages`);
-      if (cancelled) return;
-      const data = await res.json();
-      const msgs: Msg[] = Array.isArray(data) ? data : [];
-      setMessages(msgs);
-      setLoading(false);
-      // fetch smart replies for last received message
-      const lastReceived = [...msgs].reverse().find((m) => m.sender_id !== currentUserId);
-      if (lastReceived) fetchSmartReplies(lastReceived.body);
+      setLoadError(false);
+      try {
+        const res = await fetch(`/api/conversations/${conversationId}/messages`);
+        if (cancelled) return;
+        // A 401/403/500 would otherwise parse to a non-array and render the
+        // misleading "no messages yet" empty state over a real thread.
+        if (!res.ok) throw new Error(`status ${res.status}`);
+        const data = await res.json();
+        if (cancelled) return;
+        const msgs: Msg[] = Array.isArray(data) ? data : [];
+        setMessages(msgs);
+        // fetch smart replies for last received message
+        const lastReceived = [...msgs].reverse().find((m) => m.sender_id !== currentUserId);
+        if (lastReceived) fetchSmartReplies(lastReceived.body);
+      } catch {
+        if (!cancelled) setLoadError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     })();
     return () => { cancelled = true; };
-  }, [conversationId, currentUserId, fetchSmartReplies]);
+  }, [conversationId, currentUserId, fetchSmartReplies, reloadKey]);
 
   // Realtime subscription
   useEffect(() => {
@@ -215,7 +227,21 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
               <Loader2 className="h-6 w-6 animate-spin" />
             </div>
           )}
-          {!loading && messages.length === 0 && (
+          {!loading && loadError && (
+            <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-[var(--gr-text-dim)]">
+                მესიჯების ჩატვირთვა ვერ მოხერხდა
+              </p>
+              <Button
+                variant="ghost"
+                onClick={() => setReloadKey((k) => k + 1)}
+                className="rounded-full border border-[var(--gr-cyan-glow)]/30 bg-[var(--gr-cyan-glow)]/10 px-6 text-[11px] font-black uppercase tracking-[0.16em] text-[var(--gr-cyan-glow)] hover:bg-[var(--gr-cyan-glow)]/20"
+              >
+                ხელახლა ცდა
+              </Button>
+            </div>
+          )}
+          {!loading && !loadError && messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Sparkles className="mb-4 h-12 w-12 text-[var(--gr-cyan-glow)]/40 drop-shadow-[0_0_20px_rgba(34,211,238,0.5)]" />
               <p className="text-xs font-black uppercase tracking-[0.22em] text-[var(--gr-text-dim)]">

@@ -146,6 +146,23 @@ type SharedProfileResult = {
 
 let sharedProfilePromise: Promise<SharedProfileResult> | null = null;
 
+// Auth-change fan-out. Without this the shared promise (and every mounted nav
+// consumer) kept rendering the previous session — a signed-out user's avatar
+// after logout, or `null` after a client-side login — until a hard reload,
+// because logout/login are client-side transitions, not full navigations.
+const authChangeListeners = new Set<() => void>();
+let authSubscribed = false;
+
+function ensureAuthSubscription() {
+  if (authSubscribed) return;
+  authSubscribed = true;
+  const supabase = createSupabaseBrowserClient();
+  supabase.auth.onAuthStateChange(() => {
+    sharedProfilePromise = null; // drop the cached session+profile
+    authChangeListeners.forEach((cb) => cb());
+  });
+}
+
 function loadSharedProfile(): Promise<SharedProfileResult> {
   if (sharedProfilePromise) return sharedProfilePromise;
   sharedProfilePromise = (async () => {
@@ -222,9 +239,15 @@ export function useNavProfile({ localCache = false }: UseNavProfileOptions = {})
       }
     }
 
+    ensureAuthSubscription();
     load();
+    // Re-run on any auth transition so the avatar/name reflect the new session
+    // immediately, without a hard reload.
+    const onAuthChange = () => { load(); };
+    authChangeListeners.add(onAuthChange);
     return () => {
       cancelled = true;
+      authChangeListeners.delete(onAuthChange);
     };
   }, [localCache]);
 

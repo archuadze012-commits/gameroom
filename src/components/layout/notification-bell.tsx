@@ -49,24 +49,35 @@ export function NotificationBell() {
   const handleClick = async () => {
     if (totalCount === 0) return;
 
-    // Show announcements
-    for (const ann of unreadAnnouncements) {
-      const variantFn =
-        ann.severity === "critical"
-          ? toast.error
-          : ann.severity === "warning"
-          ? toast.warning
-          : toast.info;
-      variantFn(ann.title, { description: ann.body, duration: 12000 });
-      try {
-        await fetch(`/api/announcements/${ann.id}/read`, { method: "POST" });
-      } catch {}
+    // Show each announcement and mark it read. Fire the POSTs in parallel and
+    // only locally dismiss the ids the server actually accepted — a swallowed
+    // failure used to hide the announcement client-side while it stayed unread
+    // server-side, so it re-toasted and re-counted on every later page load.
+    const acked = await Promise.all(
+      unreadAnnouncements.map(async (ann) => {
+        const variantFn =
+          ann.severity === "critical"
+            ? toast.error
+            : ann.severity === "warning"
+            ? toast.warning
+            : toast.info;
+        variantFn(ann.title, { description: ann.body, duration: 12000 });
+        try {
+          const res = await fetch(`/api/announcements/${ann.id}/read`, { method: "POST" });
+          return res.ok ? ann.id : null;
+        } catch {
+          return null;
+        }
+      })
+    );
+    const ackedIds = acked.filter((id): id is string => id !== null);
+    if (ackedIds.length) {
+      setDismissedIds((prev) => {
+        const next = new Set(prev);
+        ackedIds.forEach((id) => next.add(id));
+        return next;
+      });
     }
-    setDismissedIds((prev) => {
-      const next = new Set(prev);
-      unreadAnnouncements.forEach((a) => next.add(a.id));
-      return next;
-    });
 
     // Show invites
     try {

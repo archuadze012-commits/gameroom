@@ -6,9 +6,13 @@ import { Toaster } from '@/components/ui/sonner';
 import { EditModeProvider } from '@/components/admin/edit-mode-context';
 import { useMe } from '@/components/layout/use-me';
 
+// SSR'd (unlike the other chrome below): this renders the header logo, which
+// is the page's LCP element. useMe()/useNavProfile() start from a safe
+// deterministic default ({authenticated:false}/null) on both server and first
+// client render, so SSR-ing this introduces no hydration mismatch — it just
+// gets the logo into the initial HTML instead of behind a client-only mount.
 const SiteHeader = dynamic(
   () => import('@/components/layout/site-header').then((mod) => mod.SiteHeader),
-  { ssr: false },
 );
 const SiteFooter = dynamic(
   () => import('@/components/layout/site-footer').then((mod) => mod.SiteFooter),

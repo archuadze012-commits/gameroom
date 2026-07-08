@@ -43,10 +43,16 @@ export async function POST(
   let insertedProgressId: string | null = null;
 
   if (existing) {
-    const { error: updateError } = await adminClient
+    // Conditional flip: `.eq("claimed", false)` makes this an atomic
+    // compare-and-set. Two concurrent claims race on the same row — Postgres
+    // serialises them, so only the first matches (the second sees claimed=true
+    // and updates 0 rows). Only the winner proceeds to awardXp, so no double XP.
+    const { data: claimedRows, error: updateError } = await adminClient
       .from("user_challenge_progress")
       .update({ claimed: true, completed: true, progress: 1, claimed_at: new Date().toISOString() })
-      .eq("id", existing.id);
+      .eq("id", existing.id)
+      .eq("claimed", false)
+      .select("id");
 
     if (updateError) {
       logger.error("failed to mark challenge progress claimed", {
@@ -55,6 +61,11 @@ export async function POST(
         error: updateError,
       });
       return NextResponse.json({ error: "Failed to claim challenge" }, { status: 500 });
+    }
+
+    if (!claimedRows || claimedRows.length === 0) {
+      // Lost the race to a concurrent claim — reward already granted to us once.
+      return NextResponse.json({ error: "Already claimed" }, { status: 400 });
     }
   } else {
     const { data: insertedProgress, error: insertError } = await adminClient

@@ -12,6 +12,7 @@ type SiteBrandProps = {
   imageClassName?: string;
   iconSize?: number;
   showIcon?: boolean;
+  priority?: boolean;
 };
 
 export function SiteBrand({
@@ -20,6 +21,7 @@ export function SiteBrand({
   imageClassName,
   iconSize = 48,
   showIcon = true,
+  priority = false,
 }: SiteBrandProps) {
   return (
     <span className={cn("flex items-center gap-3.5 group cursor-pointer", className)}>
@@ -30,6 +32,7 @@ export function SiteBrand({
             alt="PLAYGAME.GE"
             width={iconSize}
             height={iconSize}
+            {...(priority ? { loading: "eager" as const, fetchPriority: "high" as const } : null)}
             style={SITE_BRAND_ICON_STYLE}
             className={cn("relative z-10 object-contain site-brand-icon", imageClassName)}
           />

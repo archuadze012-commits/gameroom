@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import {
   MessageSquare,
@@ -247,7 +248,18 @@ export default async function GamePage({
   const { slug } = await params;
 
   const supabase = await createSupabaseServerClient();
-  const { data: dbGame } = await supabase.from("games").select("*").eq("slug", slug).single();
+  // Both queries depend only on `slug`, so fetch them together instead of
+  // awaiting the game row before starting the rooms query (~1 saved round trip).
+  const [{ data: dbGame }, { data: roomsRaw }] = await Promise.all([
+    supabase.from("games").select("*").eq("slug", slug).single(),
+    supabase
+      .from("game_rooms")
+      .select("id, room_code, mode, map, perspective, max_players, current_players, host_id")
+      .eq("game_slug", slug)
+      .eq("status", "open")
+      .gt("expires_at", new Date().toISOString())
+      .limit(30),
+  ]);
 
   const game: MockGame | undefined = dbGame
     ? {
@@ -275,14 +287,6 @@ export default async function GamePage({
   const labels = getGameLabels(game.slug);
   const hidesLfgPreview = game.slug === "pubg-mobile";
 
-  const { data: roomsRaw } = await supabase
-    .from("game_rooms")
-    .select("id, room_code, mode, map, perspective, max_players, current_players, host_id")
-    .eq("game_slug", slug)
-    .eq("status", "open")
-    .gt("expires_at", new Date().toISOString())
-    .limit(30);
-
   let topRooms = (roomsRaw ?? []) as RoomPreview[];
 
   if (topRooms.length > 1) {
@@ -306,11 +310,14 @@ export default async function GamePage({
       {game.coverUrl && (
         <div className="relative h-56 overflow-hidden border-b border-white/5 sm:h-72 lg:h-80 after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-[var(--gr-violet-hi)] after:to-transparent after:shadow-[0_0_20px_var(--gr-violet)]">
           <div className={`absolute inset-0 bg-gradient-to-br ${game.accent} opacity-30 mix-blend-overlay`} />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={game.coverUrl}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover"
+            fill
+            loading="eager"
+            fetchPriority="high"
+            sizes="100vw"
+            className="object-cover"
             style={{ objectPosition: "top center" }}
           />
           <div

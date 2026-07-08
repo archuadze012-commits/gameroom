@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 import { ka } from "date-fns/locale";
 import { ArrowUpRight, Clock, Radio } from "lucide-react";
@@ -35,11 +36,12 @@ export function ArticleCard({ a }: { a: ArticleCardData }) {
           {/* Thumbnail area */}
           <div className="relative h-60 w-full overflow-hidden shrink-0">
             {a.cover_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={a.cover_url}
                 alt={a.title}
-                className="h-full w-full object-cover opacity-90 transition-all duration-700 ease-out group-hover:scale-105 group-hover:opacity-100"
+                fill
+                sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                className="object-cover opacity-90 transition-all duration-700 ease-out group-hover:scale-105 group-hover:opacity-100"
               />
             ) : (
               <div className="grid h-full w-full place-items-center bg-[radial-gradient(ellipse_at_center,rgba(139,92,246,0.2),transparent_70%)]">
