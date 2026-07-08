@@ -26,7 +26,10 @@ export async function GET() {
     .select("*", { count: "exact", head: true })
     .in("conversation_id", ids)
     .neq("sender_id", user.id)
-    .is("read_at", null);
+    .is("read_at", null)
+    // Exclude soft-deleted messages — the thread view filters them out, so the
+    // badge must too, else a deleted-but-unread message keeps the count stuck > 0.
+    .is("deleted_at", null);
 
   return NextResponse.json({ count: count ?? 0 });
 }

@@ -55,6 +55,9 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
   const [uploading, setUploading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  // Posts with an in-flight like request — blocks concurrent toggles on the
+  // same post (a ref, not state: it's a mutex, not something we render).
+  const likeInFlight = useRef<Set<string>>(new Set());
 
   const initialState: PostActionState = { success: false };
   const [state, formAction, isPending] = useActionState(createPostAction, initialState);
@@ -117,7 +120,28 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
   }
 
   async function toggleLike(postId: string) {
+    // One in-flight toggle per post. Without this, rapid clicks fire overlapping
+    // POSTs against a server-side *toggle* RPC, and out-of-order responses leave
+    // the heart/count out of sync with the DB.
+    if (likeInFlight.current.has(postId)) return;
+    likeInFlight.current.add(postId);
+
     const isLiked = likedIds.has(postId);
+    // Revert the optimistic flip back to the pre-toggle state.
+    const revert = () => {
+      setLikedIds((prev) => {
+        const next = new Set(prev);
+        if (isLiked) next.add(postId);
+        else next.delete(postId);
+        return next;
+      });
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId ? { ...p, likes_count: p.likes_count + (isLiked ? 1 : -1) } : p
+        )
+      );
+    };
+
     setLikedIds((prev) => {
       const next = new Set(prev);
       if (isLiked) next.delete(postId);
@@ -132,18 +156,17 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
     try {
       const res = await fetch(`/api/posts/${postId}/like`, { method: "POST" });
       if (!res.ok) throw new Error("like failed");
+      // The RPC returns the authoritative post-toggle liked state. If it landed
+      // on our PRE-toggle belief, our optimistic flip was a duplicate/no-op
+      // (e.g. already liked in another tab) — revert to stay in sync with the DB.
+      const data = (await res.json()) as { liked?: boolean };
+      if (typeof data.liked === "boolean" && data.liked === isLiked) {
+        revert();
+      }
     } catch {
-      setLikedIds((prev) => {
-        const next = new Set(prev);
-        if (isLiked) next.add(postId);
-        else next.delete(postId);
-        return next;
-      });
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.id === postId ? { ...p, likes_count: p.likes_count + (isLiked ? 1 : -1) } : p
-        )
-      );
+      revert();
+    } finally {
+      likeInFlight.current.delete(postId);
     }
   }
 

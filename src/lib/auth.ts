@@ -13,10 +13,24 @@ function isMissingRefreshTokenError(error: unknown) {
 export const getSession = cache(async () => {
   try {
     const supabase = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    return user;
+    // getClaims() verifies the JWT locally via the project's cached JWKS
+    // (this project uses asymmetric ES256 signing keys) — no per-request
+    // round trip to Supabase, unlike getUser(). If a token ever surfaces
+    // signed with the legacy symmetric secret, the SDK transparently falls
+    // back to a getUser()-equivalent network check, so this is not a security
+    // downgrade either way — see @supabase/auth-js GoTrueClient.getClaims(),
+    // and src/lib/supabase/middleware.ts which already relies on this.
+    const { data, error } = await supabase.auth.getClaims();
+    if (error || !data) return null;
+    const { claims } = data;
+    return {
+      id: claims.sub,
+      email: claims.email,
+      phone: claims.phone,
+      is_anonymous: claims.is_anonymous,
+      user_metadata: claims.user_metadata,
+      app_metadata: claims.app_metadata,
+    };
   } catch (error) {
     if (isMissingRefreshTokenError(error)) {
       return null;

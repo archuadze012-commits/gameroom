@@ -61,8 +61,15 @@ export function HomeNotificationsWidget() {
   }, []);
 
   async function markRead(id: string) {
+    const removed = items.find((n) => n.id === id);
     setItems((prev) => prev.filter((n) => n.id !== id));
-    await fetch(`/api/notifications/${id}`, { method: "PATCH" });
+    try {
+      const res = await fetch(`/api/notifications/${id}`, { method: "PATCH" });
+      if (!res.ok) throw new Error("failed");
+    } catch {
+      // Restore on failure so the item isn't silently lost while still unread.
+      if (removed) setItems((prev) => (prev.some((n) => n.id === id) ? prev : [removed, ...prev]));
+    }
   }
 
   if (items.length === 0) return null;

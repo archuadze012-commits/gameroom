@@ -42,6 +42,26 @@ const PROBE_TIMEOUT_MS = 2500;
 
 type LiveProbe = { videoId: string; title: string; viewers: number | null };
 
+/**
+ * fetch() bounded by PROBE_TIMEOUT_MS. The Data-API path previously had NO
+ * timeout, so a slow googleapis response could stall the entire (home page)
+ * render. Returns null on timeout/network error instead of throwing.
+ */
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit & { next?: { revalidate: number } },
+): Promise<Response | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function normalizeHandle(raw: string): string {
   return raw
     .trim()
@@ -70,8 +90,8 @@ async function resolveChannelId(handle: string): Promise<string | null> {
     `https://www.googleapis.com/youtube/v3/channels?part=id&forHandle=${encodeURIComponent(handle)}` +
     `&key=${YT_API_KEY}`;
   try {
-    const res = await fetch(url, { next: { revalidate: API_CHANNEL_REVALIDATE } });
-    if (!res.ok) return null;
+    const res = await fetchWithTimeout(url, { next: { revalidate: API_CHANNEL_REVALIDATE } });
+    if (!res || !res.ok) return null;
     const json = (await res.json()) as { items?: Array<{ id?: string }> };
     return json.items?.[0]?.id ?? null;
   } catch {
@@ -89,8 +109,8 @@ async function probeViaApi(handle: string): Promise<LiveProbe | null> {
     `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}` +
     `&eventType=live&type=video&maxResults=1&key=${YT_API_KEY}`;
   try {
-    const res = await fetch(searchUrl, { next: { revalidate: API_LIVE_REVALIDATE } });
-    if (!res.ok) return null;
+    const res = await fetchWithTimeout(searchUrl, { next: { revalidate: API_LIVE_REVALIDATE } });
+    if (!res || !res.ok) return null;
     const json = (await res.json()) as {
       items?: Array<{ id?: { videoId?: string }; snippet?: { title?: string } }>;
     };
@@ -105,8 +125,8 @@ async function probeViaApi(handle: string): Promise<LiveProbe | null> {
       const vUrl =
         `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}` +
         `&key=${YT_API_KEY}`;
-      const vRes = await fetch(vUrl, { next: { revalidate: 120 } });
-      if (vRes.ok) {
+      const vRes = await fetchWithTimeout(vUrl, { next: { revalidate: 120 } });
+      if (vRes && vRes.ok) {
         const vJson = (await vRes.json()) as {
           items?: Array<{ liveStreamingDetails?: { concurrentViewers?: string } }>;
         };

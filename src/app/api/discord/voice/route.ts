@@ -55,6 +55,93 @@ function matchesGame(channelName: string, categoryName: string | null, gameSlug:
   return !matchesOtherGame;
 }
 
+// ── Shared guild snapshot cache ─────────────────────────────────
+// This route is polled every 10s PER viewer, and each request used to hit
+// Discord's REST API (guild.fetch + channels.fetch). 20 viewers = 120 Discord
+// calls/min → rate-limit risk + wasted CPU. Cache the full (unfiltered) snapshot
+// module-side for ~10s and dedupe concurrent refreshes, so ONE Discord fetch
+// serves every viewer; the per-request game filter runs against the cached copy.
+const GUILD_CACHE_TTL_MS = 10_000;
+
+type VoiceMember = {
+  id: string; username: string; displayName: string; avatar: string;
+  isMuted: boolean; isDeaf: boolean; isStreaming: boolean;
+};
+type VoiceChannelData = {
+  id: string; name: string; categoryName: string | null;
+  members: VoiceMember[]; userCount: number; userLimit: number; position: number;
+};
+type GuildVoiceSnapshot = {
+  guildId: string; serverName: string; serverIcon: string | null;
+  channels: VoiceChannelData[];
+};
+
+type DiscordClient = NonNullable<ReturnType<typeof getDiscordClient>>;
+
+let guildSnapshotCache: { data: GuildVoiceSnapshot; expires: number } | null = null;
+let guildSnapshotInFlight: Promise<GuildVoiceSnapshot> | null = null;
+
+async function loadGuildSnapshot(client: DiscordClient, guildId: string): Promise<GuildVoiceSnapshot> {
+  if (!client.isReady()) {
+    await Promise.race([
+      new Promise((resolve) => client.once("ready", () => resolve(true))),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Discord client timeout")), 8000)),
+    ]);
+  }
+
+  const guild = await client.guilds.fetch(guildId);
+  if (!guild) throw new Error("Guild not found");
+
+  const channels = await guild.channels.fetch();
+  const voiceChannels: VoiceChannelData[] = Array.from(channels.values())
+    .filter((c): c is VoiceChannel => c?.type === ChannelType.GuildVoice)
+    .map((c) => {
+      const parentCategory = c.parentId ? channels.get(c.parentId) : null;
+      return {
+        id: c.id,
+        name: c.name,
+        categoryName: parentCategory ? parentCategory.name : null,
+        members: c.members.map((m: GuildMember) => ({
+          id: m.id,
+          username: m.user.username,
+          displayName: m.displayName,
+          avatar: m.user.displayAvatarURL(),
+          isMuted: !!(m.voice.selfMute || m.voice.serverMute),
+          isDeaf: !!(m.voice.selfDeaf || m.voice.serverDeaf),
+          isStreaming: !!(m.voice.selfVideo || m.voice.streaming),
+        })),
+        userCount: c.members.size,
+        userLimit: c.userLimit,
+        position: c.position,
+      };
+    })
+    .sort((a, b) => a.position - b.position);
+
+  return {
+    guildId: guild.id,
+    serverName: guild.name,
+    serverIcon: guild.iconURL(),
+    channels: voiceChannels,
+  };
+}
+
+async function getGuildSnapshot(client: DiscordClient, guildId: string): Promise<GuildVoiceSnapshot> {
+  const now = Date.now();
+  if (guildSnapshotCache && guildSnapshotCache.expires > now) return guildSnapshotCache.data;
+  if (guildSnapshotInFlight) return guildSnapshotInFlight;
+
+  guildSnapshotInFlight = (async () => {
+    try {
+      const data = await loadGuildSnapshot(client, guildId);
+      guildSnapshotCache = { data, expires: Date.now() + GUILD_CACHE_TTL_MS };
+      return data;
+    } finally {
+      guildSnapshotInFlight = null;
+    }
+  })();
+  return guildSnapshotInFlight;
+}
+
 export async function GET(request: NextRequest) {
   const user = await getSession().catch(() => null);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -67,60 +154,16 @@ export async function GET(request: NextRequest) {
   if (!guildEnv.ok) return NextResponse.json({ error: "Missing GUILD_ID" }, { status: 500 });
 
   try {
-    logger.debug("checking Discord client readiness");
-    // Wait for client to be ready with a 5s timeout
-    if (!client.isReady()) {
-      logger.info("Discord client not ready, waiting");
-      await Promise.race([
-        new Promise((resolve) => client!.once("ready", () => {
-          logger.info("Discord client became ready");
-          resolve(true);
-        })),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Discord client timeout")), 8000))
-      ]);
-    }
-
-    logger.debug("fetching Discord guild", { guildEnv: guildEnv.name });
-    const guild = await client.guilds.fetch(guildEnv.value);
-    if (!guild) return NextResponse.json({ error: "Guild not found" }, { status: 404 });
-
-    const channels = await guild.channels.fetch();
-    const voiceChannels = Array.from(channels.values())
-      .filter((c): c is VoiceChannel => c?.type === ChannelType.GuildVoice)
-      .map((c) => {
-        const parentCategory = c.parentId ? channels.get(c.parentId) : null;
-        return {
-          id: c.id,
-          name: c.name,
-          categoryName: parentCategory ? parentCategory.name : null,
-          members: c.members.map((m: GuildMember) => ({
-            id: m.id,
-            username: m.user.username,
-            displayName: m.displayName,
-            avatar: m.user.displayAvatarURL(),
-            isMuted: m.voice.selfMute || m.voice.serverMute,
-            isDeaf: m.voice.selfDeaf || m.voice.serverDeaf,
-            isStreaming: m.voice.selfVideo || m.voice.streaming,
-          })),
-          userCount: c.members.size,
-          userLimit: c.userLimit,
-          position: c.position,
-        };
-      })
-      .sort((a, b) => a.position - b.position);
-
-    let filteredChannels = voiceChannels;
-    if (game) {
-      filteredChannels = voiceChannels.filter((c) => 
-        matchesGame(c.name, c.categoryName, game)
-      );
-    }
+    const snapshot = await getGuildSnapshot(client, guildEnv.value);
+    const channels = game
+      ? snapshot.channels.filter((c) => matchesGame(c.name, c.categoryName, game))
+      : snapshot.channels;
 
     return NextResponse.json({
-      guildId: guild.id,
-      serverName: guild.name,
-      serverIcon: guild.iconURL(),
-      channels: filteredChannels,
+      guildId: snapshot.guildId,
+      serverName: snapshot.serverName,
+      serverIcon: snapshot.serverIcon,
+      channels,
     });
   } catch (err) {
     logger.error("Discord voice route failed", { error: err });

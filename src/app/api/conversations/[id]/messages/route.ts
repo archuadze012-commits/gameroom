@@ -23,15 +23,20 @@ export async function GET(
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
+  // Fetch the NEWEST 200 (descending + limit), then reverse to ascending for
+  // display. Ordering ascending before the limit would pin the response to the
+  // OLDEST 200 messages forever — newer messages would never load on refresh.
   const { data, error } = await supabase
     .from("conversation_messages")
     .select("id, sender_id, body, created_at, read_at")
     .eq("conversation_id", id)
     .is("deleted_at", null)
-    .order("created_at", { ascending: true })
+    .order("created_at", { ascending: false })
     .limit(200);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  const messages = (data ?? []).slice().reverse();
 
   // Mark unread messages addressed to current user as read
   await supabase
@@ -41,5 +46,5 @@ export async function GET(
     .neq("sender_id", user.id)
     .is("read_at", null);
 
-  return NextResponse.json(data ?? []);
+  return NextResponse.json(messages);
 }

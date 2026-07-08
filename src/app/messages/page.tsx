@@ -35,36 +35,64 @@ export default async function MessagesPage() {
     .order("last_message_at", { ascending: false })
     .limit(100);
 
-  const items: ConvoListItem[] = await Promise.all(
-    (convos ?? []).map(async (c) => {
-      const otherId = c.user_a === user.id ? c.user_b : c.user_a;
-      const [{ data: profile }, { data: lastMsg }, { count }] = await Promise.all([
-        supabase
+  const convoRows = convos ?? [];
+  const otherIds = convoRows.map((c) => (c.user_a === user.id ? c.user_b : c.user_a));
+  const convoIds = convoRows.map((c) => c.id);
+
+  // Batch what used to be two queries PER conversation into one query each:
+  // all counterpart profiles in a single `.in`, and all unread messages in a
+  // single `.in` tallied by conversation in JS. (3N round trips → N + 2.)
+  const [{ data: profileRows }, { data: unreadRows }] = await Promise.all([
+    otherIds.length
+      ? supabase
           .from("profiles")
-          .select("username, display_name, avatar_url, is_verified")
-          .eq("id", otherId)
-          .maybeSingle(),
-        supabase
+          .select("id, username, display_name, avatar_url, is_verified")
+          .in("id", otherIds)
+      : Promise.resolve({ data: [] as { id: string; username: string; display_name: string | null; avatar_url: string | null; is_verified: boolean }[] }),
+    convoIds.length
+      ? supabase
           .from("conversation_messages")
-          .select("body, created_at, sender_id")
-          .eq("conversation_id", c.id)
-          .is("deleted_at", null)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-        supabase
-          .from("conversation_messages")
-          .select("*", { count: "exact", head: true })
-          .eq("conversation_id", c.id)
+          .select("conversation_id")
+          .in("conversation_id", convoIds)
           .neq("sender_id", user.id)
-          .is("read_at", null),
-      ]);
+          .is("read_at", null)
+          .is("deleted_at", null)
+      : Promise.resolve({ data: [] as { conversation_id: string }[] }),
+  ]);
+
+  const profileMap = new Map((profileRows ?? []).map((p) => [p.id, p]));
+  const unreadMap = new Map<string, number>();
+  for (const r of unreadRows ?? []) {
+    unreadMap.set(r.conversation_id, (unreadMap.get(r.conversation_id) ?? 0) + 1);
+  }
+
+  // Last message is the only remaining per-conversation query (newest non-deleted
+  // row); PostgREST can't do "latest-per-group" in one shot without an RPC.
+  const items: ConvoListItem[] = await Promise.all(
+    convoRows.map(async (c) => {
+      const otherId = c.user_a === user.id ? c.user_b : c.user_a;
+      const { data: lastMsg } = await supabase
+        .from("conversation_messages")
+        .select("body, created_at, sender_id")
+        .eq("conversation_id", c.id)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const profile = profileMap.get(otherId);
       return {
         id: c.id,
         otherId,
-        other: profile,
+        other: profile
+          ? {
+              username: profile.username,
+              display_name: profile.display_name,
+              avatar_url: profile.avatar_url,
+              is_verified: profile.is_verified,
+            }
+          : null,
         lastMessage: lastMsg,
-        unread: count ?? 0,
+        unread: unreadMap.get(c.id) ?? 0,
         last_message_at: c.last_message_at,
       };
     })

@@ -1,5 +1,9 @@
 export const PROFILE_SHORT_TEXT_MAX_LENGTH = 32;
 export const PROFILE_MEDIUM_TEXT_MAX_LENGTH = 64;
+// Bio is a free-text paragraph (unbounded `text` column) — cap it so a
+// multi-megabyte payload can't bloat storage or amplify the /api/users search
+// response, while still comfortably fitting a real bio.
+export const PROFILE_BIO_MAX_LENGTH = 500;
 
 export const LFG_TITLE_MAX_LENGTH = 140;
 export const LFG_DESCRIPTION_MAX_LENGTH = 2000;

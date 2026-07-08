@@ -80,7 +80,7 @@ export function SiteHeader() {
         {/* Left: Brand Logo */}
         <div className="gr-site-header-brand flex items-center flex-shrink-0 relative z-10 w-fit mr-[-12rem]">
           <Link href="/">
-            <SiteBrand iconSize={36} wordmarkClassName="text-[20px] lg:text-[24px]" />
+            <SiteBrand iconSize={36} wordmarkClassName="text-[20px] lg:text-[24px]" priority />
           </Link>
         </div>
 

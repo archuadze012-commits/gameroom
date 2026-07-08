@@ -143,7 +143,7 @@ export default function CrackedGamesPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/cracked-games", { cache: "no-store" });
+        const res = await fetch("/api/cracked-games");
         if (!res.ok) return;
         const payload = await res.json();
         const rows: DbRow[] = payload.games ?? payload;

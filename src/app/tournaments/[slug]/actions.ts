@@ -31,17 +31,20 @@ export async function registerForTournamentAction(
   if (tErr || !t) return { success: false, message: "ტურნირი ვერ მოიძებნა" };
   if (t.status !== "open") return { success: false, message: "რეგისტრაცია დახურულია" };
 
-  // 2. Check current participant count
+  const maxParticipants = t.max_participants || 8;
+
+  // 2. Fast-path capacity check (cheap early reject; NOT the authoritative guard).
   const { count } = await supabase
     .from("tournament_participants")
     .select("*", { count: "exact", head: true })
     .eq("tournament_id", tournamentId);
 
-  if ((count ?? 0) >= (t.max_participants || 8)) {
+  if ((count ?? 0) >= maxParticipants) {
     return { success: false, message: "ადგილები შევსებულია" };
   }
 
-  // 3. Register
+  // 3. Insert (seed is provisional — corrected below). The (tournament_id,
+  // user_id) unique index makes this idempotent per user.
   const { error } = await supabase
     .from("tournament_participants")
     .insert({
@@ -55,6 +58,49 @@ export async function registerForTournamentAction(
     logger.error("failed to register for tournament", { userId: user.id, tournamentId, error });
     return { success: false, message: "რეგისტრაცია ვერ მოხერხდა" };
   }
+
+  // 4. Reconcile against concurrent registrations. `count`-then-insert races let
+  // several users past step 2 at once — overfilling the bracket and colliding on
+  // `seed`. Rank everyone by immutable `registered_at`: the earliest
+  // `maxParticipants` win deterministically; anyone beyond removes their own row.
+  // Seed is then set from that stable rank, so concurrent registrants never share
+  // a seed. (No DB migration; a unique (tournament_id, seed) constraint + atomic
+  // RPC would be the airtight version — say the word and I'll add it.)
+  const { data: ordered, error: orderErr } = await supabase
+    .from("tournament_participants")
+    .select("user_id, registered_at")
+    .eq("tournament_id", tournamentId)
+    .order("registered_at", { ascending: true });
+
+  if (orderErr || !ordered) {
+    // Reconciliation read failed — leave the registration as-is (step 2 already
+    // gated the common case) rather than wrongly rejecting a valid signup.
+    logger.error("failed to reconcile tournament seeds", { userId: user.id, tournamentId, error: orderErr });
+    revalidatePath(`/tournaments/${slug}`);
+    return { success: true, message: "წარმატებით დარეგისტრირდი!" };
+  }
+
+  const rank = ordered.findIndex((r) => r.user_id === user.id);
+
+  if (rank >= maxParticipants) {
+    // We lost the race for the last slot(s) — undo our own insert.
+    const { error: delErr } = await supabase
+      .from("tournament_participants")
+      .delete()
+      .eq("tournament_id", tournamentId)
+      .eq("user_id", user.id);
+    if (delErr) {
+      logger.error("failed to remove over-capacity registration", { userId: user.id, tournamentId, error: delErr });
+    }
+    return { success: false, message: "ადგილები შევსებულია" };
+  }
+
+  // Set our final seed from the stable registration order (1-based).
+  await supabase
+    .from("tournament_participants")
+    .update({ seed: rank + 1 })
+    .eq("tournament_id", tournamentId)
+    .eq("user_id", user.id);
 
   revalidatePath(`/tournaments/${slug}`);
   return { success: true, message: "წარმატებით დარეგისტრირდი!" };
