@@ -30,7 +30,6 @@ export function SiteBrand({
             alt="PLAYGAME.GE"
             width={iconSize}
             height={iconSize}
-            unoptimized
             style={SITE_BRAND_ICON_STYLE}
             className={cn("relative z-10 object-contain site-brand-icon", imageClassName)}
           />

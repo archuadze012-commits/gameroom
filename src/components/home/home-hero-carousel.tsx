@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Zap, Gift, Star, ArrowRight, Radio, Play, Eye } from "lucide-react";
 import { EditableText } from "@/components/admin/editable-text";
@@ -161,12 +162,13 @@ export function HomeHeroCarousel({ cta, freeGames, freeGamesTitle, liveStreams =
                   
                   <div className="relative z-[1] h-full w-full">
                     {game.coverUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={game.coverUrl}
                         alt={game.title}
+                        fill
+                        sizes="(max-width: 640px) 33vw, 220px"
                         draggable={false}
-                        className="absolute inset-0 h-full w-full object-cover opacity-70 mix-blend-luminosity transition-all duration-700 group-hover/card:opacity-100 group-hover/card:scale-105 group-hover/card:mix-blend-normal"
+                        className="object-cover opacity-70 mix-blend-luminosity transition-all duration-700 group-hover/card:opacity-100 group-hover/card:scale-105 group-hover/card:mix-blend-normal"
                       />
                     ) : (
                       <div className="absolute inset-0 bg-gradient-to-br from-[var(--gr-magenta)]/20 to-[var(--gr-violet-hi)]/10" />

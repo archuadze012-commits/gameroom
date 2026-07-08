@@ -85,6 +85,15 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "cdn.sofifa.net",
       },
+      // Game cover / hero art is admin-entered and lives on arbitrary CDNs
+      // (gamewallpapers.com, gaming-cdn.com, wallpapers.com, …). A wildcard
+      // lets those render through the optimizer (resized WebP instead of raw
+      // 400KB source JPGs) without a runtime crash whenever a new host shows
+      // up in content.
+      {
+        protocol: "https",
+        hostname: "**",
+      },
     ],
   },
 };

@@ -5,20 +5,17 @@ import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { loadAndClearInvites, type GameInvite } from "@/components/invite-button";
-import { INVITE_TOAST_DURATION_MS, NAV_BADGE_POLL_INTERVAL_MS } from "@/lib/constants";
+import { INVITE_TOAST_DURATION_MS } from "@/lib/constants";
 import { playInviteSound } from "@/lib/sounds";
-
-type Announcement = {
-  id: string;
-  title: string;
-  body: string;
-  severity: "info" | "warning" | "critical";
-  created_at: string;
-};
+import { useUnreadAnnouncements } from "./use-nav-data";
 
 export function NotificationBell() {
   const [pending, setPending] = useState<GameInvite[]>([]);
-  const [unreadAnnouncements, setUnreadAnnouncements] = useState<Announcement[]>([]);
+  // Announcements come from the shared nav poller (one request serves the
+  // bell, the mobile nav and the webview nav). Locally dismissed ids bridge
+  // the gap until the poller refetches and sees the server-side read marks.
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const unreadAnnouncements = useUnreadAnnouncements().filter((a) => !dismissedIds.has(a.id));
   const prevCountRef = useRef(0);
 
   useEffect(() => {
@@ -40,23 +37,10 @@ export function NotificationBell() {
       } catch {}
     };
 
-    const checkAnnouncements = async () => {
-      try {
-        const res = await fetch("/api/announcements");
-        const data: { announcements: Announcement[]; readIds: string[] } = await res.json();
-        const readSet = new Set(data.readIds ?? []);
-        const unread = (data.announcements ?? []).filter((a) => !readSet.has(a.id));
-        setUnreadAnnouncements(unread);
-      } catch {}
-    };
-
     checkInvites();
-    checkAnnouncements();
     const id = setInterval(checkInvites, 2000);
-    const idAnn = setInterval(checkAnnouncements, NAV_BADGE_POLL_INTERVAL_MS);
     return () => {
       clearInterval(id);
-      clearInterval(idAnn);
     };
   }, []);
 
@@ -78,7 +62,11 @@ export function NotificationBell() {
         await fetch(`/api/announcements/${ann.id}/read`, { method: "POST" });
       } catch {}
     }
-    setUnreadAnnouncements([]);
+    setDismissedIds((prev) => {
+      const next = new Set(prev);
+      unreadAnnouncements.forEach((a) => next.add(a.id));
+      return next;
+    });
 
     // Show invites
     try {

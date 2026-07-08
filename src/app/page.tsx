@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { MessageCircle, Search, MessageSquare, Bell, Gamepad2, ShoppingBag, Flame, Building2, ArrowRight } from "lucide-react";
 import { mockGames, crackedGames } from "@/lib/mock-data";
 import { HomeNotificationsWidget } from "@/components/home-notifications-widget";
@@ -83,9 +84,11 @@ export default async function HomePage() {
   }
 
   // ── Authed / admin home ──────────────────────────────
-  // Site-content lookups are independent per-key Supabase reads — run them in
-  // one round-trip instead of four sequential awaits.
-  const [guestHero, userCta, sectionGames, sectionFreeGames] = await Promise.all([
+  // Site-content lookups are independent per-key Supabase reads — kick them
+  // off here WITHOUT awaiting so they run concurrently with the posts/
+  // articles/streams batch below instead of adding a serial round trip
+  // before it. Awaited after the try block (always reached).
+  const siteContentPromise = Promise.all([
     getSiteContentValue("home.guest.hero", {
       headline: "ყველაფერი, რის გამოც თამაშები გიყვარს",
       logoUrl: "/playgame-logo.png",
@@ -165,6 +168,10 @@ export default async function HomePage() {
   } catch (e) {
     console.error("[HomePage] Exception during fetch:", e);
   }
+
+  // getSiteContentValue resolves to its defaults on failure, so this await
+  // cannot throw; it has been running since before the batch above.
+  const [guestHero, userCta, sectionGames, sectionFreeGames] = await siteContentPromise;
 
   const homeFreeGames = freePcGamesDb.length > 0
     ? freePcGamesDb.map((g) => ({
@@ -330,8 +337,7 @@ export default async function HomePage() {
                       <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[3px] z-[5]" />
                       
                       {game.coverUrl && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={game.coverUrl} alt={game.nameKa} className="absolute inset-0 h-full w-full object-cover opacity-60 mix-blend-luminosity transition-all duration-700 group-hover:opacity-100 group-hover:scale-105 group-hover:mix-blend-normal z-[1]" />
+                        <Image src={game.coverUrl} alt={game.nameKa} fill sizes="(max-width: 640px) 100vw, 480px" className="object-cover opacity-60 mix-blend-luminosity transition-all duration-700 group-hover:opacity-100 group-hover:scale-105 group-hover:mix-blend-normal z-[1]" />
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-[var(--gr-bg-0)] via-[var(--gr-bg-1)]/40 to-transparent z-[2]" />
                       <div className="relative z-[3] flex h-full items-end p-4">
