@@ -36,7 +36,7 @@ const PRIMARY_TABS: Tab[] = [
 
 const MORE_LINKS: { href: string; label: string; icon: LucideIcon; badgeKey?: 'notifications' }[] = [
   { href: '/playmanager/training', label: 'საწვრთნელი', icon: Dumbbell },
-  { href: '/playmanager/finance', label: 'ოფისი', icon: Landmark },
+  { href: '/playmanager/office', label: 'ოფისი', icon: Landmark },
   { href: '/playmanager/leaderboard', label: 'რეიტინგი', icon: Crown },
   { href: '/playmanager/achievements', label: 'მიღწევები', icon: Award },
   { href: '/playmanager/notifications', label: 'შეტყობინება', icon: Bell, badgeKey: 'notifications' },

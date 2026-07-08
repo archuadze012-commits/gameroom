@@ -230,7 +230,7 @@ export type PlayManagerCitySnapshot = {
   unassigned: CitySquadPlayer[];
 };
 
-export type PlayManagerCitySnapshotMode = 'full' | 'lineup' | 'light' | 'residence';
+export type PlayManagerCitySnapshotMode = 'full' | 'lineup' | 'light' | 'residence' | 'office';
 
 export type BaseSquadPlayer = Omit<CitySquadPlayer, 'role'> & {
   normalizedName: string;

@@ -69,11 +69,16 @@ export async function getPlayManagerCitySnapshot(
 ): Promise<PlayManagerCitySnapshot> {
   const mode = options?.mode ?? 'full';
   const isLineupOnly = mode === 'lineup';
+  const isOfficeOnly = mode === 'office';
   // 'light' keeps the cheap, always-needed slices (squad, standings, season,
   // finance, calendar, match settings, eventFeed) but drops the heavy ones that
   // a non-squad building (e.g. media/chat) never reads — market, transactions,
   // match history, academy, shortlist and cups.
-  const isReduced = isLineupOnly || mode === 'light' || mode === 'residence';
+  // 'office' is reduced too, but keeps transactions for the cashflow card.
+  const isReduced = isLineupOnly || mode === 'light' || mode === 'residence' || isOfficeOnly;
+  const includeTransactions = !isLineupOnly && (mode === 'full' || isOfficeOnly);
+  const includeEventFeed = !isLineupOnly && !isOfficeOnly;
+  const includePlayerCardPayload = !isOfficeOnly;
   // 'residence' is like 'light' but keeps academy — the residence page renders
   // squad + academy + staff and nothing else, so it can skip everything else.
   const includeAcademy = !isReduced || mode === 'residence';
@@ -129,7 +134,7 @@ export async function getPlayManagerCitySnapshot(
           .or('ovr_source.is.null,ovr_source.neq.ea_fc,real_age.not.is.null')
           .order('ovr_current', { ascending: false })
           .limit(marketLimit),
-    isReduced
+    !includeTransactions
       ? Promise.resolve({ data: [] as TransactionRow[] })
       : db
           .from('pm_transactions')
@@ -181,7 +186,7 @@ export async function getPlayManagerCitySnapshot(
         .select('week_no, day_no, total_days')
         .eq('team_id', teamId)
         .single(),
-      isLineupOnly
+      !includeEventFeed
         ? Promise.resolve({ data: [] as EventFeedRow[] })
         : db
             .from('pm_event_feed')
@@ -253,21 +258,21 @@ export async function getPlayManagerCitySnapshot(
   const typedEventFeedRows = (eventFeedRows ?? []) as EventFeedRow[];
   const currentTotalDays = calendarRow?.total_days ?? null;
   const missingImageKeys = new Set<string>();
-  typedSquadRows.forEach((row) => {
-    if (row.player?.normalized_name && !row.player.card_image_url) missingImageKeys.add(row.player.normalized_name);
-  });
-  if (!isLineupOnly) {
+  if (includePlayerCardPayload) {
+    typedSquadRows.forEach((row) => {
+      if (row.player?.normalized_name && !row.player.card_image_url) missingImageKeys.add(row.player.normalized_name);
+    });
     typedMarketRows.forEach((row) => {
       if (row.normalized_name && !row.card_image_url) missingImageKeys.add(row.normalized_name);
     });
   }
   const fallbackFaceByName = new Map(
-    await Promise.all(
+    includePlayerCardPayload ? await Promise.all(
       [...missingImageKeys].map(async (normalizedName) => [normalizedName, await getEafc26PlayerFaceUrl(normalizedName)] as const),
-    ),
+    ) : [],
   );
   const resolvedStatsByName = new Map(
-    await Promise.all(
+    includePlayerCardPayload ? await Promise.all(
       [...new Set([
         ...typedSquadRows.map((row) => row.player?.normalized_name).filter(Boolean),
         ...typedMarketRows.map((row) => row.normalized_name).filter(Boolean),
@@ -277,7 +282,7 @@ export async function getPlayManagerCitySnapshot(
         const dbStats = squadPlayer?.card_stats ?? marketPlayer?.card_stats ?? null;
         return [normalizedName, await resolveRealPlayerStats(normalizedName, dbStats)] as const;
       }),
-    ),
+    ) : [],
   );
   const activeSquadRows = typedSquadRows.slice(0, 18);
   const unassignedRows = typedSquadRows.slice(18);
@@ -299,10 +304,12 @@ export async function getPlayManagerCitySnapshot(
         normalizedName: row.player.normalized_name,
         name: row.player.display_name,
         cardDisplayName: row.player.card_display_name,
-        cardImageUrl: row.player.card_image_url || fallbackFaceByName.get(row.player.normalized_name) || null,
-        nationalityCode: row.player.nationality_code,
-        cardEditorConfig: buildPlayManagerPlayerCardLayout(row.player),
-        stats: (row.player.is_real ? resolvedStatsByName.get(row.player.normalized_name) : null) ?? row.player.card_stats,
+        ...(includePlayerCardPayload ? {
+          cardImageUrl: row.player.card_image_url || fallbackFaceByName.get(row.player.normalized_name) || null,
+          nationalityCode: row.player.nationality_code,
+          cardEditorConfig: buildPlayManagerPlayerCardLayout(row.player),
+          stats: (row.player.is_real ? resolvedStatsByName.get(row.player.normalized_name) : null) ?? row.player.card_stats,
+        } : {}),
         position: row.player.primary_position?.trim() || row.position,
         age: getPlayManagerDisplayAge({
           storedAge: row.player.age,
@@ -340,10 +347,12 @@ export async function getPlayManagerCitySnapshot(
         id: row.player.id,
         name: row.player.display_name,
         cardDisplayName: row.player.card_display_name,
-        cardImageUrl: row.player.card_image_url || fallbackFaceByName.get(row.player.normalized_name) || null,
-        nationalityCode: row.player.nationality_code,
-        cardEditorConfig: buildPlayManagerPlayerCardLayout(row.player),
-        stats: (row.player.is_real ? resolvedStatsByName.get(row.player.normalized_name) : null) ?? row.player.card_stats,
+        ...(includePlayerCardPayload ? {
+          cardImageUrl: row.player.card_image_url || fallbackFaceByName.get(row.player.normalized_name) || null,
+          nationalityCode: row.player.nationality_code,
+          cardEditorConfig: buildPlayManagerPlayerCardLayout(row.player),
+          stats: (row.player.is_real ? resolvedStatsByName.get(row.player.normalized_name) : null) ?? row.player.card_stats,
+        } : {}),
         position: row.player.primary_position?.trim() || row.position,
         age: getPlayManagerDisplayAge({
           storedAge: row.player.age,
@@ -663,12 +672,12 @@ export async function getPlayManagerCitySnapshot(
       academy,
       market: liveMarket.length > 0 ? liveMarket : seededMarket,
       outgoingListings,
-    transactions: isLineupOnly ? [] : (transactionRows ?? []).map((row) => ({
+    transactions: includeTransactions ? (transactionRows ?? []).map((row) => ({
       amount: row.amount,
       amountLabel: `${row.amount > 0 ? '+' : ''}${formatGel(row.amount)}`,
       reason: row.reason,
       createdAt: row.created_at,
-    })),
+    })) : [],
     matchHistory,
     standings,
     season: {
@@ -687,7 +696,7 @@ export async function getPlayManagerCitySnapshot(
       totalDays: calendarRow?.total_days ?? 1,
       label: `კვირა ${calendarRow?.week_no ?? 1} · დღე ${calendarRow?.day_no ?? 1}`,
     },
-    eventFeed: isLineupOnly ? [] : typedEventFeedRows.map((row) => ({
+    eventFeed: includeEventFeed ? typedEventFeedRows.map((row) => ({
       id: row.id,
       category: row.category,
       accent: row.accent,
@@ -696,7 +705,7 @@ export async function getPlayManagerCitySnapshot(
       weekNo: row.week_no,
       dayNo: row.day_no,
       createdAt: row.created_at,
-    })),
+    })) : [],
     finance: {
       ticketPrice,
       sponsorTier: (financeStateRow?.sponsor_tier as FinanceStateRow['sponsor_tier']) ?? 'local',

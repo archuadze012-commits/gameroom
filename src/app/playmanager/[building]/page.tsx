@@ -108,8 +108,8 @@ async function BuildingData({ params }: { params: Promise<{ building: string }> 
     );
   }
 
-  const snapshotMode: 'light' | 'residence' | undefined =
-    resolvedKey === 'media' ? 'light' : resolvedKey === 'residence' ? 'residence' : undefined;
+  const snapshotMode: 'light' | 'residence' | 'office' | undefined =
+    resolvedKey === 'media' ? 'light' : resolvedKey === 'residence' ? 'residence' : resolvedKey === 'finance' ? 'office' : undefined;
 
   // Fetch facilities, the city snapshot and the manager profile concurrently —
   // the profile query no longer waits for the snapshot to resolve first.

@@ -184,8 +184,6 @@ main:has(.pm-playmanager-root) {
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
-  filter: blur(10px);
-  transform: scale(1.04);
 }
 
 .pm-building-workspace-environment::after {
