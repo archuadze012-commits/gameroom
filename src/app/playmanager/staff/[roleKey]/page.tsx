@@ -198,7 +198,9 @@ export default async function PlayManagerStaffDetailPage({
 
         <PmCard>
           <div className="relative -mx-5 -mt-5 aspect-[16/9] overflow-hidden sm:-mx-6 sm:-mt-6">
-            <Image src={getStaffPhoto(roleKey)} alt="" fill sizes="720px" className="object-cover" priority />
+            {/* Next 16: `priority` emits the preload but no longer implies
+                fetchPriority — both are needed for a prioritized LCP preload. */}
+            <Image src={getStaffPhoto(roleKey)} alt="" fill sizes="720px" className="object-cover" priority fetchPriority="high" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/92 via-black/15 to-transparent" />
           </div>
 

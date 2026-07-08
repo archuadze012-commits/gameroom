@@ -120,13 +120,18 @@ function DepartmentCard({
       <div className="pubg-loadout-card relative aspect-[4/3] overflow-hidden">
         {/* Photo inset from the edge so the neon frame is never covered. */}
         <div className="absolute inset-[5px] overflow-hidden rounded-[12px]">
-          {/* `priority` = eager + fetchpriority=high + a <link rel="preload"> in
-              <head> — the preload is what fixes Lighthouse's LCP-discovery. */}
+          {/* Next 16 split these: `priority` emits the <head> preload + eager
+              loading but NO LONGER implies fetchPriority (verified in
+              get-img-props.js — it's passed through as-is). Both are needed:
+              priority for the preload, explicit fetchPriority to stamp
+              fetchpriority="high" onto that preload and the <img>, which is
+              exactly what Lighthouse's LCP-discovery audit checks. */}
           <Image
             src={photo}
             alt=""
             fill
             priority={priority}
+            fetchPriority={priority ? 'high' : undefined}
             sizes={sizes}
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
@@ -367,6 +372,7 @@ export function PlayManagerOffice(props: PlayManagerOfficeProps) {
                 </div>
                 <input
                   type="range"
+                  aria-label="ბილეთის ფასი"
                   min={10}
                   max={80}
                   step={1}
@@ -522,6 +528,7 @@ function TicketsView(props: {
           </div>
           <input
             type="range"
+            aria-label="ბილეთის ფასი"
             min={10}
             max={80}
             step={1}

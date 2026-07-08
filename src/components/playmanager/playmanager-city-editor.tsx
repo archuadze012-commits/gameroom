@@ -623,6 +623,7 @@ export function BuildingWorkspace({
                   width={760}
                   height={608}
                   priority={building.spriteKey === 'training'}
+                  fetchPriority={building.spriteKey === 'training' ? 'high' : undefined}
                   className="pm-facility-command-sprite"
                 />
               ) : null}

@@ -161,7 +161,9 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
           transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
           className="relative mt-4 overflow-hidden rounded-[34px] border border-white/10 shadow-[0_40px_120px_rgba(0,0,0,0.5)]"
         >
-          <Image src="/playmanager/module-cards/arena/matchday-stadium.webp" alt="" fill priority sizes="100vw" className="object-cover" />
+          {/* Next 16: `priority` emits the preload but no longer implies
+              fetchPriority — both are needed for a prioritized LCP preload. */}
+          <Image src="/playmanager/module-cards/arena/matchday-stadium.webp" alt="" fill priority fetchPriority="high" sizes="100vw" className="object-cover" />
           <div className="absolute inset-0 bg-[radial-gradient(120%_120%_at_50%_-10%,rgba(3,7,12,0.5),rgba(3,7,12,0.92))]" />
           <div className="absolute inset-y-0 left-0 w-1/2 bg-[radial-gradient(80%_90%_at_15%_50%,rgba(16,185,129,0.28),transparent_70%)]" />
           <div className="absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(80%_90%_at_85%_50%,rgba(244,63,94,0.22),transparent_70%)]" />
@@ -644,6 +646,7 @@ function CompetitionCard({
               className="object-cover transition-transform duration-500 group-hover:scale-105"
               style={{ objectPosition: photoPosition }}
               priority={index === 0}
+              fetchPriority={index === 0 ? 'high' : undefined}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/40 to-transparent" />
           </div>
