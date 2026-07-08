@@ -61,7 +61,9 @@ export function DiscordVoiceDashboard({ gameSlug }: { gameSlug?: string }) {
       if (interval !== null) { clearInterval(interval); interval = null; }
     };
 
-    void fetchData();
+    // Deferred (not called synchronously in the effect body) — matches the
+    // original pattern and satisfies react-hooks/set-state-in-effect.
+    const initialFetch = setTimeout(() => { void fetchData(); }, 0);
     // Don't poll a hidden tab — a backgrounded dashboard kept hammering Discord
     // every 10s. Pause on hide, refresh + resume on show.
     if (document.visibilityState === "visible") start();
@@ -71,6 +73,7 @@ export function DiscordVoiceDashboard({ gameSlug }: { gameSlug?: string }) {
     };
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
+      clearTimeout(initialFetch);
       stop();
       document.removeEventListener("visibilitychange", onVisibility);
     };
