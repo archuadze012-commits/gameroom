@@ -58,6 +58,13 @@ export const viewport = {
 // individual routes can be static/ISR (and client navigation to them is
 // prefetched, not a server round-trip). Auth for the chrome is read client-side
 // inside AppRouteChrome via /api/me.
+// SpeedInsights fetches /_vercel/speed-insights/script.js, a route Vercel's
+// edge injects at runtime — it 404s (and spams the console) on any host that
+// isn't actually Vercel, including localhost. VERCEL is set by Vercel itself
+// in every one of its environments, so this only renders where the script
+// can actually load.
+const isOnVercel = Boolean(process.env.VERCEL);
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -71,7 +78,7 @@ export default function RootLayout({
     >
       <body suppressHydrationWarning className="bg-transparent text-foreground">
         <AppRouteChrome>{children}</AppRouteChrome>
-        <SpeedInsights />
+        {isOnVercel ? <SpeedInsights /> : null}
       </body>
     </html>
   );

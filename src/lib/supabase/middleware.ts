@@ -50,11 +50,15 @@ export async function updateSession(request: NextRequest) {
         setAll() {},
       },
     });
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    // getClaims() verifies the JWT locally via the project's cached JWKS
+    // (this project uses asymmetric ES256 signing keys) — no per-request
+    // round trip to Supabase, unlike getUser(). If a token ever surfaces
+    // signed with the legacy symmetric secret, the SDK transparently falls
+    // back to a getUser()-equivalent network check, so this is not a security
+    // downgrade either way — see @supabase/auth-js GoTrueClient.getClaims().
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
 
-    if (!user) {
+    if (claimsError || !claimsData) {
       const loginUrl = new URL(
         "/auth/login",
         getSiteOrigin() ?? getRequestOriginFromHeaders(request.headers, request.nextUrl.origin)
