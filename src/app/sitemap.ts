@@ -8,9 +8,10 @@ import { getSiteUrl } from "@/lib/url";
 export const revalidate = 3600;
 
 function anon() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return null;
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     { auth: { persistSession: false } },
   );
 }
@@ -40,13 +41,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const [articles, games, tournaments, clans, news, cracked] = await Promise.all([
     listPublishedArticles(1000).catch(() => []),
-    rows<{ slug: string }>(supabase.from("games").select("slug")),
-    rows<{ slug: string }>(supabase.from("tournaments").select("slug")),
-    rows<{ slug: string }>(supabase.from("clans").select("slug")),
-    rows<{ slug: string; published_at: string | null }>(
+    supabase ? rows<{ slug: string }>(supabase.from("games").select("slug")) : Promise.resolve([]),
+    supabase ? rows<{ slug: string }>(supabase.from("tournaments").select("slug")) : Promise.resolve([]),
+    supabase ? rows<{ slug: string }>(supabase.from("clans").select("slug")) : Promise.resolve([]),
+    supabase ? rows<{ slug: string; published_at: string | null }>(
       supabase.from("news_articles").select("slug, published_at").eq("status", "published"),
-    ),
-    rows<{ id: string }>(supabase.from("cracked_games").select("id")),
+    ) : Promise.resolve([]),
+    supabase ? rows<{ id: string }>(supabase.from("cracked_games").select("id")) : Promise.resolve([]),
   ]);
 
   const dynamic: MetadataRoute.Sitemap = [
