@@ -6,36 +6,11 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { mockGames } from "@/lib/mock-data";
 import { INVITE_SENT_FEEDBACK_MS } from "@/lib/constants";
+import { saveInvite, type GameInvite } from "@/lib/invites";
 
-export interface GameInvite {
-  id: string;
-  fromUsername: string;
-  fromDisplay: string;
-  toUsername: string;
-  gameSlug: string;
-  gameName: string;
-  sentAt: number;
-}
-
-export function saveInvite(invite: GameInvite) {
-  try {
-    const key = `gameroom_invites_${invite.toUsername}`;
-    const existing: GameInvite[] = JSON.parse(localStorage.getItem(key) ?? "[]");
-    existing.push(invite);
-    localStorage.setItem(key, JSON.stringify(existing));
-  } catch {}
-}
-
-export function loadAndClearInvites(username: string): GameInvite[] {
-  try {
-    const key = `gameroom_invites_${username}`;
-    const invites: GameInvite[] = JSON.parse(localStorage.getItem(key) ?? "[]");
-    localStorage.removeItem(key);
-    return invites;
-  } catch {
-    return [];
-  }
-}
+// Re-exported for backward compatibility; the definitions now live in
+// @/lib/invites so global chrome can import them without this heavy component.
+export { saveInvite, loadAndClearInvites, type GameInvite } from "@/lib/invites";
 
 interface InviteButtonProps {
   username: string;
