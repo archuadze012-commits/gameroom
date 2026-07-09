@@ -6,7 +6,17 @@ import { PageHeader } from "@/components/page-header";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 import { unstable_cache } from "next/cache";
 
-export const metadata = { title: "ჩემპიონატები" };
+export const metadata = {
+  title: "ჩემპიონატები",
+  description: "ქართული გეიმინგ ჩემპიონატები — დარეგისტრირდი, ითამაშე და მოიგე PLAYGAME.GE-ზე.",
+  alternates: { canonical: "/tournaments" },
+  openGraph: {
+    title: "ჩემპიონატები · PLAYGAME.GE",
+    description: "ქართული გეიმინგ ჩემპიონატები PLAYGAME.GE-ზე.",
+    url: "/tournaments",
+    type: "website",
+  },
+};
 
 const statusLabel: Record<string, string> = {
   open: "რეგისტრაცია",

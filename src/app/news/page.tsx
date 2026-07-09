@@ -8,7 +8,17 @@ import { format } from "date-fns";
 import { GamerCard } from "@/components/ui/gamer-card";
 import { unstable_cache } from "next/cache";
 
-export const metadata = { title: "სიახლეები" };
+export const metadata = {
+  title: "სიახლეები",
+  description: "გეიმინგ სიახლეები, განახლებები და ანონსები PLAYGAME.GE-ზე.",
+  alternates: { canonical: "/news" },
+  openGraph: {
+    title: "სიახლეები · PLAYGAME.GE",
+    description: "გეიმინგ სიახლეები და განახლებები PLAYGAME.GE-ზე.",
+    url: "/news",
+    type: "website",
+  },
+};
 
 type NewsRow = {
   id: string;

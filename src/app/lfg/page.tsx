@@ -9,7 +9,17 @@ import { PageHeader } from "@/components/page-header";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 import { PremiumCard } from "@/components/ui/premium-card";
 
-export const metadata = { title: "ლოკალი — გუნდის ძებნა" };
+export const metadata = {
+  title: "ლოკალი — გუნდის ძებნა",
+  description: "იპოვე გუნდი და თანაგუნდელები შენს საყვარელ თამაშებში — PLAYGAME.GE.",
+  alternates: { canonical: "/lfg" },
+  openGraph: {
+    title: "ლოკალი — გუნდის ძებნა · PLAYGAME.GE",
+    description: "იპოვე გუნდი და თანაგუნდელები PLAYGAME.GE-ზე.",
+    url: "/lfg",
+    type: "website",
+  },
+};
 
 type LfgRow = {
   id: string;
