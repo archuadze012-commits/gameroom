@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { rateLimitShared } from "@/lib/rate-limit";
 
 const ALLOWED = ["gg", "w", "clutch", "noob", "goat", "cringe", "heart", "pro"];
 
@@ -27,6 +28,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Light cap on toggle spam (DB write amplification protection).
+  if (!(await rateLimitShared(`react:${user.id}`, 60, 60_000)))
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   let body: { emoji?: string };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }

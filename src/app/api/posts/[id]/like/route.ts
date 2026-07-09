@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { awardBonusXpOnce } from "@/lib/gamification";
+import { rateLimitShared } from "@/lib/rate-limit";
 
 export async function POST(
   _request: NextRequest,
@@ -11,6 +12,10 @@ export async function POST(
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Light cap on like/unlike toggle spam (DB write amplification protection).
+  if (!(await rateLimitShared(`like:${user.id}`, 60, 60_000)))
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   const admin = createSupabaseAdminClient();
   const { data, error } = await admin.rpc("toggle_post_like_as", {

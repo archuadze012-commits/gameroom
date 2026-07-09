@@ -14,6 +14,7 @@ import { LfgComments } from "@/components/lfg-comments";
 import { LfgJoinRequests } from "@/components/lfg-join-requests";
 import { RoleBadge, type UserRole } from "@/components/role-badge";
 import { VerifiedBadge } from "@/components/verified-badge";
+import type { Metadata } from "next";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 
@@ -36,6 +37,27 @@ type LfgRow = {
     is_verified: boolean | null;
   } | null;
 };
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const supabase = await createSupabaseServerClient();
+  const { data: p } = await supabase
+    .from("lfg_posts")
+    .select("title, description")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!p) return { title: "განცხადება ვერ მოიძებნა", robots: { index: false } };
+  const title = p.title || "ლოკალის ძებნა";
+  const description =
+    (p.description ?? "").replace(/\s+/g, " ").trim().slice(0, 160) || `${title} — მოძებნე გუნდი PLAYGAME.GE-ზე.`;
+  return {
+    title,
+    description,
+    alternates: { canonical: `/lfg/${id}` },
+    openGraph: { title, description, url: `/lfg/${id}`, type: "website" },
+  };
+}
 
 export default async function LfgDetailPage({
   params,
