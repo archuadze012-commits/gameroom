@@ -54,51 +54,75 @@ export default async function TournamentDetailPage({
 }) {
   const { slug } = await params;
   const supabase = await createSupabaseServerClient();
-  const sessionUser = await getSession().catch(() => null);
 
-  // Fetch tournament details
-  const { data: t } = await supabase
-    .from("tournaments")
-    .select(`
-      id,
-      name,
-      slug,
-      description,
-      banner_url,
-      format,
-      max_participants,
-      prize_pool,
-      starts_at,
-      status,
-      games:game_id (
+  // session is independent of the tournament row — fetch them together.
+  const [sessionUser, { data: t }] = await Promise.all([
+    getSession().catch(() => null),
+    supabase
+      .from("tournaments")
+      .select(`
+        id,
+        name,
         slug,
-        name_ka,
-        emoji
-      )
-    `)
-    .eq("slug", slug)
-    .single();
+        description,
+        banner_url,
+        format,
+        max_participants,
+        prize_pool,
+        starts_at,
+        status,
+        games:game_id (
+          slug,
+          name_ka,
+          emoji
+        )
+      `)
+      .eq("slug", slug)
+      .single(),
+  ]);
 
   if (!t) notFound();
   const game = (Array.isArray(t.games) ? t.games[0] : t.games) as GameRel;
 
-  // Fetch participants
-  const { data: dbParticipants } = await supabase
-    .from("tournament_participants")
-    .select(`
-      id,
-      seed,
-      team_name,
-      checked_in,
-      profiles:user_id (
+  // participants and bracket matches both depend only on t.id/t.status, so
+  // fetch them concurrently instead of one after the other.
+  const needMatches = t.status === "live" || t.status === "completed";
+  const [{ data: dbParticipants }, matchesRes] = await Promise.all([
+    supabase
+      .from("tournament_participants")
+      .select(`
         id,
-        username,
-        display_name,
-        avatar_url
-      )
-    `)
-    .eq("tournament_id", t.id)
-    .order("seed", { ascending: true });
+        seed,
+        team_name,
+        checked_in,
+        profiles:user_id (
+          id,
+          username,
+          display_name,
+          avatar_url
+        )
+      `)
+      .eq("tournament_id", t.id)
+      .order("seed", { ascending: true }),
+    needMatches
+      ? supabase
+          .from("tournament_matches")
+          .select(`
+            id,
+            round,
+            position,
+            player1_id,
+            player2_id,
+            score1,
+            score2,
+            winner_id,
+            status
+          `)
+          .eq("tournament_id", t.id)
+          .order("round", { ascending: true })
+          .order("position", { ascending: true })
+      : Promise.resolve({ data: null }),
+  ]);
 
   const participantRows = (dbParticipants ?? []) as ParticipantRow[];
 
@@ -122,23 +146,8 @@ export default async function TournamentDetailPage({
   let matches: BracketMatch[] = [];
   let activeMatch: (BracketMatch & { id: string }) | null = null;
 
-  if (t.status === "live" || t.status === "completed") {
-    const { data: dbMatches } = await supabase
-      .from("tournament_matches")
-      .select(`
-        id,
-        round,
-        position,
-        player1_id,
-        player2_id,
-        score1,
-        score2,
-        winner_id,
-        status
-      `)
-      .eq("tournament_id", t.id)
-      .order("round", { ascending: true })
-      .order("position", { ascending: true });
+  if (needMatches) {
+    const dbMatches = matchesRes.data;
 
     matches = ((dbMatches ?? []) as MatchRow[]).map((m) => {
       const p1 = participants.find((p) => p.id === m.player1_id) || null;

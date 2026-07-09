@@ -43,19 +43,22 @@ export default async function ClanDetailPage({
 }) {
   const { slug } = await params;
   const supabase = await createSupabaseServerClient();
-  const sessionUser = await getSession().catch(() => null);
 
-  const { data: clan } = await supabase
-    .from("clans")
-    .select(`
-      id, name, slug, tag, description, avatar_url, banner_url, xp, level, status,
-      clan_members (
-        id, role, joined_at,
-        profiles ( id, username, display_name, avatar_url, is_verified )
-      )
-    `)
-    .eq("slug", slug)
-    .single();
+  // session is independent of the clan row — fetch them together.
+  const [sessionUser, { data: clan }] = await Promise.all([
+    getSession().catch(() => null),
+    supabase
+      .from("clans")
+      .select(`
+        id, name, slug, tag, description, avatar_url, banner_url, xp, level, status,
+        clan_members (
+          id, role, joined_at,
+          profiles ( id, username, display_name, avatar_url, is_verified )
+        )
+      `)
+      .eq("slug", slug)
+      .single(),
+  ]);
 
   if (!clan) notFound();
 

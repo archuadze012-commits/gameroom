@@ -48,20 +48,22 @@ export default async function ProfilePage({
   params: Promise<{ username: string }>;
 }) {
   const { username } = await params;
-  const [session, isAdmin] = await Promise.all([
+  const supabase = await createSupabaseServerClient();
+
+  // The profile-by-username row depends only on the URL param, not on the
+  // viewer's session — fetch it concurrently with session/isAdmin instead of
+  // after them (~1 saved round trip per profile view).
+  const [session, isAdmin, { data: dbProfile }] = await Promise.all([
     getSession().catch(() => null),
     getIsAdmin().catch(() => false),
+    supabase
+      .from("profiles")
+      .select("id, username, display_name, avatar_url, favorite_game_slugs, main_game_slug, banner_url, is_verified, youtube_handle, tiktok_handle, tiktok_followers")
+      .eq("username", username)
+      .maybeSingle(),
   ]);
   const sessionAvatarUrl = (session?.user_metadata?.avatar_url as string | undefined) ?? null;
   const currentUserId = session?.id ?? null;
-
-  const supabase = await createSupabaseServerClient();
-
-  const { data: dbProfile } = await supabase
-    .from("profiles")
-    .select("id, username, display_name, avatar_url, favorite_game_slugs, main_game_slug, banner_url, is_verified, youtube_handle, tiktok_handle, tiktok_followers")
-    .eq("username", username)
-    .maybeSingle();
 
   if (!dbProfile && currentUserId) {
     const legacySlugs = new Set(
