@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Users, Trophy, ShieldCheck, Target, MessageSquare } from "lucide-react";
@@ -36,6 +37,26 @@ type ClanRequest = {
   profiles: ClanRequestProfile;
 };
 
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createSupabaseServerClient();
+  const { data: c } = await supabase
+    .from("clans")
+    .select("name, tag, description, avatar_url, banner_url")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (!c) return { title: "კლანი ვერ მოიძებნა", robots: { index: false } };
+  const title = c.tag ? `${c.name} [${c.tag}]` : c.name;
+  const description = c.description || `${c.name} — კლანი PLAYGAME.GE-ზე. შეუერთდი გუნდს.`;
+  const image = c.banner_url ?? c.avatar_url ?? undefined;
+  return {
+    title,
+    description,
+    alternates: { canonical: `/clans/${slug}` },
+    openGraph: { title, description, url: `/clans/${slug}`, type: "website", images: image ? [{ url: image }] : undefined },
+  };
+}
+
 export default async function ClanDetailPage({
   params,
 }: {
@@ -43,19 +64,22 @@ export default async function ClanDetailPage({
 }) {
   const { slug } = await params;
   const supabase = await createSupabaseServerClient();
-  const sessionUser = await getSession().catch(() => null);
 
-  const { data: clan } = await supabase
-    .from("clans")
-    .select(`
-      id, name, slug, tag, description, avatar_url, banner_url, xp, level, status,
-      clan_members (
-        id, role, joined_at,
-        profiles ( id, username, display_name, avatar_url, is_verified )
-      )
-    `)
-    .eq("slug", slug)
-    .single();
+  // session is independent of the clan row — fetch them together.
+  const [sessionUser, { data: clan }] = await Promise.all([
+    getSession().catch(() => null),
+    supabase
+      .from("clans")
+      .select(`
+        id, name, slug, tag, description, avatar_url, banner_url, xp, level, status,
+        clan_members (
+          id, role, joined_at,
+          profiles ( id, username, display_name, avatar_url, is_verified )
+        )
+      `)
+      .eq("slug", slug)
+      .single(),
+  ]);
 
   if (!clan) notFound();
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { rateLimitShared } from "@/lib/rate-limit";
+import { moderateText } from "@/lib/moderate";
 import { createLogger } from "@/lib/logger";
 import { PROFILE_BIO_MAX_LENGTH, PROFILE_MEDIUM_TEXT_MAX_LENGTH, PROFILE_SHORT_TEXT_MAX_LENGTH } from "@/lib/constants";
 import type { Database } from "@/lib/database.types";
@@ -55,6 +56,22 @@ export async function POST(request: NextRequest) {
     update.game_id = body.gameId.trim().slice(0, PROFILE_MEDIUM_TEXT_MAX_LENGTH) || null;
   if (typeof body.mainGameSlug === "string")
     update.main_game_slug = body.mainGameSlug.trim() || null;
+
+  // Moderate the free-text profile fields — these render publicly across the
+  // site (profile page, /api/users search), so they get the same gate as
+  // posts/LFG/chat/comments, which the profile route previously skipped.
+  const profileText = [update.display_name, update.bio, update.in_game_name]
+    .filter((v): v is string => typeof v === "string" && v.length > 0)
+    .join(" ");
+  if (profileText) {
+    const mod = await moderateText(profileText).catch(() => ({
+      ok: true,
+      reason: undefined as string | undefined,
+    }));
+    if (!mod.ok) {
+      return NextResponse.json({ error: "content_blocked", reason: mod.reason }, { status: 400 });
+    }
+  }
 
   try {
     const supabase = await createSupabaseServerClient();

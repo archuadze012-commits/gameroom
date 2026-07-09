@@ -45,29 +45,34 @@ export default async function LfgDetailPage({
   const { id } = await params;
 
   const supabase = await createSupabaseServerClient();
-  const { data } = await supabase
-    .from("lfg_posts")
-    .select(
-      "id, author_id, game_slug, title, description, rank, region, slots_total, voice_required, created_at, profiles(username, display_name, avatar_url, role, is_verified)"
-    )
-    .eq("id", id)
-    .is("deleted_at", null)
-    .maybeSingle();
+  // The post, the viewer's session, and the comment list are mutually
+  // independent (each needs only `id`, or nothing) — fetch them together
+  // instead of serially. The responses query still follows, since it needs
+  // isAuthor (session + post.author_id).
+  const [postRes, session, commentsRes] = await Promise.all([
+    supabase
+      .from("lfg_posts")
+      .select(
+        "id, author_id, game_slug, title, description, rank, region, slots_total, voice_required, created_at, profiles(username, display_name, avatar_url, role, is_verified)"
+      )
+      .eq("id", id)
+      .is("deleted_at", null)
+      .maybeSingle(),
+    getSession().catch(() => null),
+    supabase
+      .from("lfg_comments")
+      .select(
+        "id, body, created_at, user_id, profiles!lfg_comments_user_id_profiles_id_fk(username, display_name, avatar_url)"
+      )
+      .eq("post_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: true }),
+  ]);
 
-  if (!data) notFound();
-  const post = data as unknown as LfgRow & { author_id: string };
-
-  const session = await getSession().catch(() => null);
+  if (!postRes.data) notFound();
+  const post = postRes.data as unknown as LfgRow & { author_id: string };
+  const commentsData = commentsRes.data;
   const isAuthor = !!(session && session.id === post.author_id);
-
-  const { data: commentsData } = await supabase
-    .from("lfg_comments")
-    .select(
-      "id, body, created_at, user_id, profiles!lfg_comments_user_id_profiles_id_fk(username, display_name, avatar_url)"
-    )
-    .eq("post_id", id)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: true });
 
   let responses: unknown[] = [];
   if (isAuthor) {

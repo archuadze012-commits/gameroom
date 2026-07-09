@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { sendPushToUser } from "@/lib/push";
+import { moderateText } from "@/lib/moderate";
+import { rateLimitShared } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("api:lfg-join");
@@ -13,11 +15,21 @@ export async function POST(
   const user = await getSession().catch(() => null);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
+  // Cap join requests per user — each fires a push to a different post author,
+  // so without this one account can spam pushes across many LFG posts.
+  if (!(await rateLimitShared(`lfg-join:${user.id}`, 20, 60_000)))
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+
   const { id: postId } = await params;
   const body = await request.json().catch(() => ({}));
   const message = typeof body.message === "string" ? body.message.trim().slice(0, 1000) : "";
 
   if (!message) return NextResponse.json({ error: "message required" }, { status: 400 });
+
+  // The message is pushed to and shown to the post author — moderate it like
+  // every other user-generated text channel.
+  const mod = await moderateText(message).catch(() => ({ ok: true, reason: undefined as string | undefined }));
+  if (!mod.ok) return NextResponse.json({ error: "content_blocked", reason: mod.reason }, { status: 400 });
 
   const supabase = await createSupabaseServerClient();
 

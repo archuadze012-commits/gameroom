@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { mockLfgPosts, mockUsers } from "@/lib/mock-data";
 import { RoleBadge, type UserRole } from "@/components/role-badge";
@@ -48,20 +48,22 @@ export default async function ProfilePage({
   params: Promise<{ username: string }>;
 }) {
   const { username } = await params;
-  const [session, isAdmin] = await Promise.all([
+  const supabase = await createSupabaseServerClient();
+
+  // The profile-by-username row depends only on the URL param, not on the
+  // viewer's session — fetch it concurrently with session/isAdmin instead of
+  // after them (~1 saved round trip per profile view).
+  const [session, isAdmin, { data: dbProfile }] = await Promise.all([
     getSession().catch(() => null),
     getIsAdmin().catch(() => false),
+    supabase
+      .from("profiles")
+      .select("id, username, display_name, avatar_url, favorite_game_slugs, main_game_slug, banner_url, is_verified, youtube_handle, tiktok_handle, tiktok_followers")
+      .eq("username", username)
+      .maybeSingle(),
   ]);
   const sessionAvatarUrl = (session?.user_metadata?.avatar_url as string | undefined) ?? null;
   const currentUserId = session?.id ?? null;
-
-  const supabase = await createSupabaseServerClient();
-
-  const { data: dbProfile } = await supabase
-    .from("profiles")
-    .select("id, username, display_name, avatar_url, favorite_game_slugs, main_game_slug, banner_url, is_verified, youtube_handle, tiktok_handle, tiktok_followers")
-    .eq("username", username)
-    .maybeSingle();
 
   if (!dbProfile && currentUserId) {
     const legacySlugs = new Set(
@@ -96,6 +98,9 @@ export default async function ProfilePage({
   const avatarUrl = profileAvatarUrl ?? (isOwner ? sessionAvatarUrl : null);
 
   const mockUser = mockUsers.find((u) => u.username === username);
+  // No real profile and no mock fallback (and the legacy-slug redirect above
+  // didn't fire) → a genuine 404, not an empty profile shell served as HTTP 200.
+  if (!dbProfile && !mockUser) notFound();
   const displayName = dbProfile?.display_name ?? mockUser?.displayName ?? username;
   const userPosts = mockLfgPosts.filter((p) => p.authorName === username).slice(0, 5);
 

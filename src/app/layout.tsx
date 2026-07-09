@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { AppRouteChrome } from "@/components/layout/app-route-chrome";
+import { getSiteUrl } from "@/lib/url";
 
 const firaGO = localFont({
   src: [
@@ -34,6 +35,10 @@ const orbitron = localFont({
 });
 
 export const metadata: Metadata = {
+  // Without metadataBase, every relative OG/Twitter image (here and in per-page
+  // generateMetadata) resolves to a broken URL in production. Next warns about
+  // exactly this. Set it from the canonical site origin.
+  metadataBase: new URL(getSiteUrl()),
   title: {
     default: "PLAYGAME.GE — ქართველი გეიმერების სახლი",
     template: "%s · PLAYGAME.GE",
@@ -44,8 +49,17 @@ export const metadata: Metadata = {
   openGraph: {
     title: "PLAYGAME.GE",
     description: "ქართველი გეიმერების სათემო პლატფორმა.",
+    siteName: "PLAYGAME.GE",
+    url: "/",
     locale: "ka_GE",
     type: "website",
+    images: [{ url: "/logo.png", width: 512, height: 512, alt: "PLAYGAME.GE" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "PLAYGAME.GE",
+    description: "ქართველი გეიმერების სათემო პლატფორმა.",
+    images: ["/logo.png"],
   },
 };
 

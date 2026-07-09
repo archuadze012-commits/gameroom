@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { awardBonusXpOnce } from "@/lib/gamification";
+import { rateLimitShared } from "@/lib/rate-limit";
 
 type ResolveResult =
   | { ok: true; followerId: string; followingId: string }
@@ -30,6 +31,12 @@ export async function POST(
   const supabase = await createSupabaseServerClient();
   const ids = await resolveIds(supabase, username);
   if (!ids.ok) return NextResponse.json({ error: ids.error }, { status: ids.status });
+
+  // Shared follow/unfollow budget per user — blocks the follow→unfollow→follow
+  // loop that would otherwise fire an unbounded stream of push notifications at
+  // one victim (each fresh follow sends a push, below).
+  if (!(await rateLimitShared(`follow:${ids.followerId}`, 30, 60_000)))
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   const { error } = await supabase
     .from("follows")
@@ -73,6 +80,11 @@ export async function DELETE(
   const supabase = await createSupabaseServerClient();
   const ids = await resolveIds(supabase, username);
   if (!ids.ok) return NextResponse.json({ error: ids.error }, { status: ids.status });
+
+  // Same shared budget as POST — the abuse vector is rapid follow/unfollow
+  // toggling, so unfollows draw from the same bucket.
+  if (!(await rateLimitShared(`follow:${ids.followerId}`, 30, 60_000)))
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   await supabase
     .from("follows")

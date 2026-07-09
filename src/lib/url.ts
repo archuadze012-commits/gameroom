@@ -27,6 +27,13 @@ export function getSiteOrigin() {
   return siteUrl ? normalizeOrigin(siteUrl) : null;
 }
 
+// Canonical public origin for absolute URLs in metadata / sitemap / robots.
+// NEXT_PUBLIC_SITE_URL is set per-environment (localhost in dev,
+// https://playgame.ge in prod); falls back to the prod domain if unset.
+export function getSiteUrl() {
+  return getSiteOrigin() ?? "https://playgame.ge";
+}
+
 export function getTrustedOrigin(fallbackOrigin: string) {
   return getSiteOrigin() ?? normalizeOrigin(fallbackOrigin);
 }

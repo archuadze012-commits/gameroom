@@ -128,10 +128,14 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
         if (row.sender_id === currentUserId) return;
         setMessages((prev) => {
           if (prev.some((m) => m.id === row.id)) return prev;
-          return [...prev, row];
+          const next = [...prev, row];
+          // Keep the in-memory list bounded on long-lived conversations.
+          return next.length > 300 ? next.slice(-300) : next;
         });
         fetchSmartReplies(row.body);
-        try { await fetch(`/api/conversations/${conversationId}/messages`); } catch {}
+        // Mark read via the lightweight PATCH instead of re-fetching the whole
+        // history (which was downloaded and discarded on every incoming message).
+        try { await fetch(`/api/conversations/${conversationId}`, { method: "PATCH" }); } catch {}
       })
       .subscribe();
       
@@ -321,6 +325,7 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
               name="body"
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              aria-label="მესიჯის ტექსტი"
               placeholder="დაწერე მესიჯი..."
               className="h-12 rounded-full border-white/[0.07] bg-white/5 px-6 text-[15px] font-medium text-[var(--gr-text)] shadow-inner transition-all focus-visible:border-[var(--gr-cyan-glow)]/50 focus-visible:bg-white/10 focus-visible:ring-1 focus-visible:ring-[var(--gr-cyan-glow)]/50 focus-visible:shadow-[0_0_20px_rgba(34,211,238,0.15)]"
               autoFocus

@@ -4,6 +4,8 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
+import { moderateText } from "@/lib/moderate";
+import { rateLimitShared } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("clan-actions");
@@ -28,6 +30,9 @@ export async function createClanAction(
   const user = await getSession();
   if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
 
+  if (!(await rateLimitShared(`clan-create:${user.id}`, 5, 60_000)))
+    return { success: false, message: "ძალიან ხშირად — სცადე ცოტა ხანში" };
+
   const rawData = {
     name: formData.get("name"),
     tag: formData.get("tag"),
@@ -45,6 +50,17 @@ export async function createClanAction(
   }
 
   const { name, tag, description } = validated.data;
+
+  // Clan name/tag/description render across the site — moderate them like every
+  // other user-generated text channel (posts, LFG, chat, comments).
+  const mod = await moderateText([name, tag, description ?? ""].filter(Boolean).join(" ")).catch(() => ({
+    ok: true,
+    reason: undefined as string | undefined,
+  }));
+  if (!mod.ok) {
+    return { success: false, message: mod.reason || "შინაარსი დაბლოკილია" };
+  }
+
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
   const supabase = await createSupabaseServerClient();
 
@@ -105,6 +121,10 @@ export async function requestJoinClanAction(
   const user = await getSession();
   if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
 
+  // Cap join requests per user so one account can't spam requests across clans.
+  if (!(await rateLimitShared(`clan-join:${user.id}`, 20, 60_000)))
+    return { success: false, message: "ძალიან ხშირად — სცადე ცოტა ხანში" };
+
   const supabase = await createSupabaseServerClient();
 
   // check if already in a clan
@@ -115,6 +135,15 @@ export async function requestJoinClanAction(
     .maybeSingle();
 
   if (existing) return { success: false, message: "ჯერ გადი ამჟამინდელი კლანიდან" };
+
+  // The join-request message is free text shown to clan leadership — moderate it.
+  if (message && message.trim()) {
+    const mod = await moderateText(message).catch(() => ({
+      ok: true,
+      reason: undefined as string | undefined,
+    }));
+    if (!mod.ok) return { success: false, message: mod.reason || "შინაარსი დაბლოკილია" };
+  }
 
   const { error } = await supabase
     .from("clan_requests")

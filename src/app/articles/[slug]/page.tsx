@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import { getPublishedArticle } from "@/lib/articles-db";
 import { formatDistanceToNow } from "date-fns";
@@ -7,17 +9,60 @@ import { ArrowLeft, Clock } from "lucide-react";
 import { UserAvatar } from "@/components/user-avatar";
 import { ArticleOwnerActions } from "@/components/article-owner-actions";
 import { getIsAdmin, getSession } from "@/lib/auth";
+import { getSiteUrl } from "@/lib/url";
 
+// Cached per-request so generateMetadata and the page share ONE DB read.
+const getArticle = cache((slug: string) => getPublishedArticle(slug).catch(() => null));
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug: rawSlug } = await params;
+  const article = await getArticle(decodeURIComponent(rawSlug));
+  if (!article) return { title: "სტატია ვერ მოიძებნა", robots: { index: false } };
+  const description = (article.excerpt ?? article.content).replace(/\s+/g, " ").trim().slice(0, 160);
+  const url = `/articles/${encodeURIComponent(article.slug)}`;
+  return {
+    title: article.title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      title: article.title,
+      description,
+      url,
+      publishedTime: article.published_at,
+      authors: [article.author_display_name ?? article.author_username],
+      images: article.cover_url ? [{ url: article.cover_url }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: article.title,
+      description,
+      images: article.cover_url ? [article.cover_url] : undefined,
+    },
+  };
+}
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug: rawSlug } = await params;
   const slug = decodeURIComponent(rawSlug);
   const [article, session, isAdmin] = await Promise.all([
-    getPublishedArticle(slug).catch(() => null),
+    getArticle(slug),
     getSession().catch(() => null),
     getIsAdmin().catch(() => false),
   ]);
   if (!article) notFound();
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: article.title,
+    description: article.excerpt ?? undefined,
+    image: article.cover_url ?? undefined,
+    datePublished: article.published_at,
+    author: { "@type": "Person", name: article.author_display_name ?? article.author_username },
+    publisher: { "@type": "Organization", name: "PLAYGAME.GE" },
+    mainEntityOfPage: `${getSiteUrl()}/articles/${encodeURIComponent(article.slug)}`,
+  };
   const canEdit = !!session && session.id === article.author_id;
   const canDelete = canEdit || isAdmin;
 
@@ -25,6 +70,10 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-40" />
 
       {/* HERO — cover with overlaid title at the bottom-left */}

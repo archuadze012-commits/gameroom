@@ -26,11 +26,21 @@ function formatRemaining(seconds: number): string {
 }
 
 export function RoomElapsed({ createdAt, expiresAt }: Props) {
-  const [now, setNow] = useState(() => Date.now());
+  // Seed from createdAt (a prop) rather than Date.now(): Date.now() differs
+  // between the server render and client hydration → hydration mismatch. The
+  // effect corrects to the real clock immediately on mount.
+  const [now, setNow] = useState(() => new Date(createdAt).getTime());
 
   useEffect(() => {
+    // Correct to the real clock in an async callback (rAF), not synchronously in
+    // the effect body — keeps react-hooks/set-state-in-effect happy while still
+    // updating within one frame of mount.
+    const raf = requestAnimationFrame(() => setNow(Date.now()));
     const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearInterval(id);
+    };
   }, []);
 
   const createdMs = new Date(createdAt).getTime();

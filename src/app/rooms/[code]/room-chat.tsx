@@ -85,9 +85,12 @@ export function RoomChat({ roomId, currentUserId }: Props) {
             .eq("id", row.id)
             .maybeSingle();
           if (data) {
-            setMessages((prev) =>
-              prev.some((m) => m.id === data.id) ? prev : [...prev, data as unknown as Msg]
-            );
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === data.id)) return prev;
+              const next = [...prev, data as unknown as Msg];
+              // Bound the list — rooms can stay open for hours.
+              return next.length > 200 ? next.slice(-200) : next;
+            });
           }
         }
       )
@@ -135,7 +138,10 @@ export function RoomChat({ roomId, currentUserId }: Props) {
         return;
       }
       if (data) {
-        setMessages((prev) => [...prev, data as unknown as Msg]);
+        setMessages((prev) => {
+          const next = [...prev, data as unknown as Msg];
+          return next.length > 200 ? next.slice(-200) : next;
+        });
       }
       setInput("");
     } catch (err) {
@@ -205,6 +211,7 @@ export function RoomChat({ roomId, currentUserId }: Props) {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            aria-label="მესიჯის ტექსტი"
             maxLength={500}
             placeholder="დაწერე..."
             disabled={sending}
