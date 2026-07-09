@@ -41,17 +41,27 @@ create policy "post_media_delete_own" on storage.objects
 -- Raster image types only; image/svg+xml is intentionally excluded (public
 -- bucket + SVG can carry inline <script> → stored XSS). Limits mirror the
 -- existing client-side checks so no legitimate upload path is tightened.
-update storage.buckets
-  set file_size_limit = 5242880, -- 5 MB, matches avatar-upload.tsx
-      allowed_mime_types = array['image/jpeg','image/png','image/webp','image/gif','image/avif']
-  where id = 'avatars';
+-- Guarded: the CI migration-replay DB has storage.objects (so the policies
+-- above run) but not storage.buckets, so skip the bucket updates there.
+do $$
+begin
+  if to_regclass('storage.buckets') is null then
+    raise notice 'storage.buckets not present (migration replay) — skipping bucket limits';
+    return;
+  end if;
 
-update storage.buckets
-  set file_size_limit = 8388608, -- 8 MB, matches banner-upload.tsx
-      allowed_mime_types = array['image/jpeg','image/png','image/webp','image/gif','image/avif']
-  where id = 'banners';
+  update storage.buckets
+    set file_size_limit = 5242880, -- 5 MB, matches avatar-upload.tsx
+        allowed_mime_types = array['image/jpeg','image/png','image/webp','image/gif','image/avif']
+    where id = 'avatars';
 
-update storage.buckets
-  set file_size_limit = 8388608, -- 8 MB, matches post-composer.tsx
-      allowed_mime_types = array['image/jpeg','image/png','image/webp','image/gif','image/avif']
-  where id = 'post_media';
+  update storage.buckets
+    set file_size_limit = 8388608, -- 8 MB, matches banner-upload.tsx
+        allowed_mime_types = array['image/jpeg','image/png','image/webp','image/gif','image/avif']
+    where id = 'banners';
+
+  update storage.buckets
+    set file_size_limit = 8388608, -- 8 MB, matches post-composer.tsx
+        allowed_mime_types = array['image/jpeg','image/png','image/webp','image/gif','image/avif']
+    where id = 'post_media';
+end $$;
