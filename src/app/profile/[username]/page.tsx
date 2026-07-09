@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
@@ -40,6 +41,35 @@ function pickLinkedDisplayFields(provider: string, metadata: unknown): Record<st
   const out: Record<string, unknown> = {};
   for (const key of allow) if (key in src) out[key] = src[key];
   return Object.keys(out).length > 0 ? out : null;
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
+  const { username } = await params;
+  const supabase = await createSupabaseServerClient();
+  const { data: p } = await supabase
+    .from("profiles")
+    .select("username, display_name, bio, avatar_url")
+    .eq("username", username)
+    .maybeSingle();
+  const mock = mockUsers.find((u) => u.username === username);
+  if (!p && !mock) return { title: "პროფილი ვერ მოიძებნა", robots: { index: false } };
+  const name = p?.display_name ?? mock?.displayName ?? username;
+  const title = `${name} (@${username})`;
+  const description =
+    (p?.bio ?? "").replace(/\s+/g, " ").trim().slice(0, 160) || `${name} — გეიმერის პროფილი PLAYGAME.GE-ზე.`;
+  const image = p?.avatar_url ?? undefined;
+  return {
+    title,
+    description,
+    alternates: { canonical: `/profile/${username}` },
+    openGraph: {
+      title,
+      description,
+      url: `/profile/${username}`,
+      type: "profile",
+      images: image ? [{ url: image }] : undefined,
+    },
+  };
 }
 
 export default async function ProfilePage({
