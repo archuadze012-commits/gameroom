@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { loadAndClearInvites, type GameInvite } from "@/components/invite-button";
+import { loadAndClearInvites, type GameInvite } from "@/lib/invites";
 import { INVITE_TOAST_DURATION_MS } from "@/lib/constants";
 import { playInviteSound } from "@/lib/sounds";
 import { useUnreadAnnouncements } from "./use-nav-data";
