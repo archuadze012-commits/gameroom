@@ -228,8 +228,16 @@ export function useNavProfile({ localCache = false }: UseNavProfileOptions = {})
         if (localCache) {
           localStorage.setItem(key, JSON.stringify({ ...stored, username, displayName }));
           if (dbProfile?.avatar_url) {
+            // LRU cap: re-insert to move this username to newest, then keep only
+            // the last 200 so the map can't grow unbounded over months of use.
+            delete avatars[username];
             avatars[username] = dbProfile.avatar_url;
-            localStorage.setItem("gameroom_avatars", JSON.stringify(avatars));
+            const keys = Object.keys(avatars);
+            const capped =
+              keys.length > 200
+                ? Object.fromEntries(keys.slice(-200).map((k) => [k, avatars[k]]))
+                : avatars;
+            localStorage.setItem("gameroom_avatars", JSON.stringify(capped));
           }
         }
 
