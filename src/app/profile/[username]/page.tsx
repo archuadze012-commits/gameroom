@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { mockLfgPosts, mockUsers } from "@/lib/mock-data";
 import { RoleBadge, type UserRole } from "@/components/role-badge";
@@ -98,6 +98,9 @@ export default async function ProfilePage({
   const avatarUrl = profileAvatarUrl ?? (isOwner ? sessionAvatarUrl : null);
 
   const mockUser = mockUsers.find((u) => u.username === username);
+  // No real profile and no mock fallback (and the legacy-slug redirect above
+  // didn't fire) → a genuine 404, not an empty profile shell served as HTTP 200.
+  if (!dbProfile && !mockUser) notFound();
   const displayName = dbProfile?.display_name ?? mockUser?.displayName ?? username;
   const userPosts = mockLfgPosts.filter((p) => p.authorName === username).slice(0, 5);
 

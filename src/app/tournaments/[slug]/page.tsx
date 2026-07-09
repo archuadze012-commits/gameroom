@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Trophy, Users, Calendar, ListChecks, BookOpen } from "lucide-react";
@@ -46,6 +47,24 @@ const mapStatus = (s: string): "pending" | "ready" | "live" | "completed" => {
   if (s === "ready") return "ready";
   return "pending";
 };
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createSupabaseServerClient();
+  const { data: t } = await supabase
+    .from("tournaments")
+    .select("name, description, banner_url")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (!t) return { title: "ტურნირი ვერ მოიძებნა", robots: { index: false } };
+  const description = t.description || `${t.name} — ჩემპიონატი PLAYGAME.GE-ზე. დარეგისტრირდი და ითამაშე.`;
+  return {
+    title: t.name,
+    description,
+    alternates: { canonical: `/tournaments/${slug}` },
+    openGraph: { title: t.name, description, url: `/tournaments/${slug}`, type: "website", images: t.banner_url ? [{ url: t.banner_url }] : undefined },
+  };
+}
 
 export default async function TournamentDetailPage({
   params,

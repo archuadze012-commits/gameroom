@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -238,6 +239,27 @@ function PromoCard({ href, title, icon, accent, neon = false, index = 0, label =
       </article>
     </Link>
   );
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createSupabaseServerClient();
+  const { data: g } = await supabase
+    .from("games")
+    .select("name_ka, description, cover_url")
+    .eq("slug", slug)
+    .maybeSingle();
+  const mock = mockGames.find((e) => e.slug === slug);
+  if (!g && !mock) return { title: "თამაში ვერ მოიძებნა", robots: { index: false } };
+  const name = g?.name_ka ?? mock?.nameKa ?? slug;
+  const description = g?.description || `${name} — ლობი, ჩემპიონატები, გუნდები და შოპი PLAYGAME.GE-ზე.`;
+  const cover = g?.cover_url ?? mock?.coverUrl;
+  return {
+    title: name,
+    description,
+    alternates: { canonical: `/games/${slug}` },
+    openGraph: { title: name, description, url: `/games/${slug}`, type: "website", images: cover ? [{ url: cover }] : undefined },
+  };
 }
 
 export default async function GamePage({
