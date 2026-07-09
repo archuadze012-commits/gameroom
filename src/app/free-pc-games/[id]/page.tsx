@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Star, Monitor, Cpu, MemoryStick, HardDrive, Gamepad2, Smartphone, Pencil } from "lucide-react";
@@ -53,6 +54,29 @@ function dbRowToGame(row: DbRow): CrackedGame {
     trending: row.trending,
     systemReqs: row.system_reqs,
     metacriticScore: row.metacritic_score ?? undefined,
+  };
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const supabase = await createSupabaseServerClient();
+  const { data: dbRow } = await supabase.from("cracked_games").select("*").eq("id", id).maybeSingle();
+  const game = dbRow ? dbRowToGame(dbRow as unknown as DbRow) : crackedGames.find((g) => g.id === id);
+  if (!game) return { title: "თამაში ვერ მოიძებნა", robots: { index: false } };
+  const description =
+    (game.description ?? "").replace(/\s+/g, " ").trim().slice(0, 160) ||
+    `${game.title} — გადმოწერე უფასოდ PLAYGAME.GE-ზე.`;
+  return {
+    title: game.title,
+    description,
+    alternates: { canonical: `/free-pc-games/${id}` },
+    openGraph: {
+      title: game.title,
+      description,
+      url: `/free-pc-games/${id}`,
+      type: "website",
+      images: game.coverUrl ? [{ url: game.coverUrl }] : undefined,
+    },
   };
 }
 

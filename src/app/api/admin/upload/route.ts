@@ -5,12 +5,13 @@ import { createLogger } from "@/lib/logger";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const logger = createLogger("api:admin-upload");
+// image/svg+xml intentionally excluded: SVG can carry inline <script>/event
+// handlers and is served publicly from site_uploads → stored XSS.
 const ALLOWED_MIME = new Set([
   "image/png",
   "image/jpeg",
   "image/webp",
   "image/gif",
-  "image/svg+xml",
 ]);
 
 function extFromMime(mime: string): string {

@@ -7,6 +7,7 @@ import { Pill } from "@/components/ui/pill";
 
 const cutMd = "polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)";
 
+import type { Metadata } from "next";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { formatDistanceToNow } from "date-fns";
@@ -22,6 +23,33 @@ type CommentRow = {
   profiles: { username: string | null } | null;
 };
 type ArticleAuthor = { username: string | null };
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createSupabaseServerClient();
+  const { data: a } = await supabase
+    .from("news_articles")
+    .select("title, excerpt, cover_url, published_at")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (!a) return { title: "სიახლე ვერ მოიძებნა", robots: { index: false } };
+  const description = (a.excerpt ?? "").replace(/\s+/g, " ").trim().slice(0, 160) || a.title;
+  const url = `/news/${encodeURIComponent(slug)}`;
+  return {
+    title: a.title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      title: a.title,
+      description,
+      url,
+      publishedTime: a.published_at ?? undefined,
+      images: a.cover_url ? [{ url: a.cover_url }] : undefined,
+    },
+    twitter: { card: "summary_large_image", title: a.title, description, images: a.cover_url ? [a.cover_url] : undefined },
+  };
+}
 
 export default async function NewsArticlePage({
   params,
