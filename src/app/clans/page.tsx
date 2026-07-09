@@ -8,6 +8,17 @@ import { getSession } from "@/lib/auth";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 import { PremiumCard } from "@/components/ui/premium-card";
 
+export const metadata = {
+  title: "კლანები",
+  description: "გეიმინგ კლანები — შეუერთდი გუნდს ან შექმენი შენი PLAYGAME.GE-ზე.",
+  alternates: { canonical: "/clans" },
+  openGraph: {
+    title: "კლანები · PLAYGAME.GE",
+    description: "გეიმინგ კლანები PLAYGAME.GE-ზე.",
+    url: "/clans",
+    type: "website",
+  },
+};
 
 type ClanListItem = {
   id: string;

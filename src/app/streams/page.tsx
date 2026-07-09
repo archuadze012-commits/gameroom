@@ -6,7 +6,17 @@ import { PremiumCard } from "@/components/ui/premium-card";
 import { getLiveStreams } from "@/lib/streams/youtube-live";
 import { Pill } from "@/components/ui/pill";
 
-export const metadata = { title: "ლაივ სტრიმები" };
+export const metadata = {
+  title: "ლაივ სტრიმები",
+  description: "ქართველი გეიმერების ლაივ სტრიმები — უყურე პირდაპირ ეთერში PLAYGAME.GE-ზე.",
+  alternates: { canonical: "/streams" },
+  openGraph: {
+    title: "ლაივ სტრიმები · PLAYGAME.GE",
+    description: "ქართველი გეიმერების ლაივ სტრიმები PLAYGAME.GE-ზე.",
+    url: "/streams",
+    type: "website",
+  },
+};
 export const dynamic = "force-dynamic";
 
 export default async function StreamsPage() {

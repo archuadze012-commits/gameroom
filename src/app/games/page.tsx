@@ -4,7 +4,17 @@ import { createSupabaseAdminClientOrNull } from "@/lib/supabase/admin";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 import { GamesCatalog } from "./games-catalog";
 
-export const metadata = { title: "თამაშები" };
+export const metadata = {
+  title: "თამაშები",
+  description: "აღმოაჩინე შენი საყვარელი თამაშები — ლობი, ჩემპიონატები, გუნდები და შოპი PLAYGAME.GE-ზე.",
+  alternates: { canonical: "/games" },
+  openGraph: {
+    title: "თამაშები · PLAYGAME.GE",
+    description: "აღმოაჩინე შენი საყვარელი თამაშები PLAYGAME.GE-ზე.",
+    url: "/games",
+    type: "website",
+  },
+};
 
 // The games catalog is identical for every visitor — the per-user "favorites"
 // split is layered on client-side (see GamesCatalog). That lets this page render

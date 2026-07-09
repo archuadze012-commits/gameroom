@@ -7,7 +7,17 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { listPublishedArticles } from "@/lib/articles-db";
 import { PenLine } from "lucide-react";
 
-export const metadata = { title: "სტატიები" };
+export const metadata = {
+  title: "სტატიები",
+  description: "გეიმინგ სტატიები, გაიდები და მიმოხილვები — eFootball, PUBG, CS2 და მეტი PLAYGAME.GE-ზე.",
+  alternates: { canonical: "/articles" },
+  openGraph: {
+    title: "სტატიები · PLAYGAME.GE",
+    description: "გეიმინგ სტატიები და გაიდები PLAYGAME.GE-ზე.",
+    url: "/articles",
+    type: "website",
+  },
+};
 
 export default async function ArticlesPage() {
   const supabase = await createSupabaseServerClient();
