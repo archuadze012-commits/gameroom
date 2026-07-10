@@ -36,7 +36,7 @@ const itemActiveClassName =
   "relative rounded-xl border border-white/20 bg-white/10 backdrop-blur-md text-white shadow-[0_8px_32px_rgba(0,0,0,0.25),inset_0_1px_1px_rgba(255,255,255,0.15)] scale-110 premium-nav-item-glow premium-nav-item-glow-active overflow-visible transition-all duration-300";
 
 const itemIdleClassName =
-  "relative rounded-xl border border-transparent bg-transparent text-white/70 hover:border-white/15 hover:bg-white/5 hover:backdrop-blur-md hover:text-white hover:shadow-[0_8px_32px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:scale-110 premium-nav-item-glow overflow-visible transition-all duration-300";
+  "relative rounded-xl border border-transparent bg-transparent text-white/70 hover:border-white/15 hover:bg-white/5 hover:backdrop-blur-md hover:text-white hover:shadow-[0_8px_32px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.1)] premium-nav-item-glow overflow-visible transition-all duration-300";
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -76,7 +76,7 @@ export function SiteHeader() {
 
   return (
     <header className={`gr-site-header-root block fixed top-0 left-0 right-0 z-40 bg-[rgba(8,6,15,0.6)] backdrop-blur-2xl shadow-[0_4px_30px_rgba(0,0,0,0.5)] transition-transform duration-300 sm:translate-y-0 ${visible ? "translate-y-0" : "-translate-y-full"}`}>
-      <div className="neon-rail gr-site-header-shell gr-site-header-inner sm:container mx-0 sm:mx-auto my-2 flex h-14 items-center justify-between rounded-none sm:rounded-2xl bg-[rgba(8,6,15,0.5)] px-4 relative">
+      <div className="neon-rail gr-site-header-shell gr-site-header-inner mx-0 sm:mx-4 lg:mx-6 my-2 flex h-14 items-center justify-between rounded-none sm:rounded-2xl bg-[rgba(8,6,15,0.5)] px-4 relative">
         {/* Left: Brand Logo */}
         <div className="gr-site-header-brand flex items-center flex-shrink-0 relative z-10 w-fit">
           <Link href="/">
@@ -86,7 +86,7 @@ export function SiteHeader() {
 
         {/* Center: Main Navigation */}
         <nav className="hidden sm:flex flex-1 justify-center items-center h-full py-3 flex-nowrap">
-          <div className="flex items-center h-full pointer-events-auto">
+          <div className="flex items-center gap-1.5 h-full pointer-events-auto">
           {navItems.map((item) => {
             const active = isActive(item.href);
             const Icon = item.icon;
@@ -137,44 +137,57 @@ export function SiteHeader() {
                     </AvatarFallback>
                   </Avatar>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56" style={{ background: "rgba(8,6,15,0.95)", border: "1px solid rgba(236,72,153,0.35)", boxShadow: "0 0 24px rgba(236,72,153,0.2), 0 8px 32px rgba(0,0,0,0.6)" }}>
+                <DropdownMenuContent
+                  align="end"
+                  sideOffset={10}
+                  className="w-[300px] overflow-hidden rounded-xl border border-violet-400/35 bg-[rgba(8,6,15,0.97)] p-2 text-white shadow-[0_0_28px_rgba(139,92,246,0.2),0_18px_50px_rgba(0,0,0,0.65)] backdrop-blur-xl"
+                >
+                  <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-pink-400 to-transparent shadow-[0_0_14px_rgba(236,72,153,0.8)]" />
                   <DropdownMenuGroup>
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-sm font-bold text-white drop-shadow-[0_0_8px_rgba(236,72,153,0.9)]">{profile.displayName}</span>
-                        <span className="text-xs text-white/60">@{profile.username}</span>
+                    <DropdownMenuLabel className="rounded-lg bg-violet-400/[0.08] px-3 py-3 font-normal">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10 border border-pink-400/35 shadow-[0_0_16px_rgba(236,72,153,0.25)]">
+                          <AvatarImage src={profile.avatarUrl} alt={profile.displayName} />
+                          <AvatarFallback className="bg-pink-500/15 text-pink-200 font-semibold">
+                            {profile.displayName.slice(0, 1).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <span className="block truncate text-sm font-bold text-white">{profile.displayName}</span>
+                          <span className="mt-0.5 block truncate text-xs text-white/55">@{profile.username}</span>
+                        </div>
                       </div>
                     </DropdownMenuLabel>
                   </DropdownMenuGroup>
-                  <DropdownMenuSeparator style={{ background: "rgba(236,72,153,0.25)" }} />
+                  <DropdownMenuSeparator className="my-2 bg-white/10" />
                   <DropdownMenuGroup>
-                    <DropdownMenuItem className="p-0">
-                      <Link href={`/profile/${profile.username}`} className="flex w-full px-3 py-2 text-white hover:text-pink-400">
+                    <DropdownMenuItem className="p-0 text-white/80">
+                      <Link href={`/profile/${profile.username}`} className="flex w-full rounded-md px-3 py-2.5 text-white/80 hover:bg-pink-400/10 hover:text-pink-200">
                         ჩემი პროფილი
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="p-0">
-                      <Link href="/settings" className="flex w-full px-3 py-2 text-white hover:text-pink-400">
+                    <DropdownMenuItem className="p-0 text-white/80">
+                      <Link href="/settings" className="flex w-full rounded-md px-3 py-2.5 text-white/80 hover:bg-violet-400/10 hover:text-violet-200">
                         პარამეტრები
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="p-0">
-                      <Link href="/lfg/new" className="flex w-full px-3 py-2 text-white hover:text-pink-400">
+                    <DropdownMenuItem className="p-0 text-white/80">
+                      <Link href="/lfg/new" className="flex w-full rounded-md px-3 py-2.5 text-white/80 hover:bg-cyan-300/10 hover:text-cyan-100">
                         ლოკალის დაპოსტვა
                       </Link>
                     </DropdownMenuItem>
                     {["admin", "moderator", "journalist"].includes(profile.role ?? "") && (
-                      <DropdownMenuItem className="p-0">
-                        <Link href="/admin/free-pc-games" className="flex w-full px-3 py-2 text-white hover:text-pink-400 font-bold text-pink-400">
+                      <DropdownMenuItem className="p-0 text-white/80">
+                        <Link href="/admin/free-pc-games" className="flex w-full rounded-md px-3 py-2.5 font-bold text-pink-300 hover:bg-pink-400/10 hover:text-pink-100">
                           ადმინ პანელი
                         </Link>
                       </DropdownMenuItem>
                     )}
                   </DropdownMenuGroup>
-                  <DropdownMenuSeparator style={{ background: "rgba(236,72,153,0.25)" }} />
+                  <DropdownMenuSeparator className="my-2 bg-white/10" />
                   <DropdownMenuGroup>
                     <DropdownMenuItem className="p-0">
-                      <div className="w-full px-3 py-2 text-white hover:text-pink-400">
+                      <div className="w-full rounded-md px-3 py-2 text-white/75 hover:bg-pink-400/10 hover:text-pink-200">
                         <LogoutButton />
                       </div>
                     </DropdownMenuItem>
