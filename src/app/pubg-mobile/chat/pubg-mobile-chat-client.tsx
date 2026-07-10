@@ -384,7 +384,7 @@ export function PubgMobileChatClient({
                   ჩატში წერისთვის ავტორიზაციაა საჭირო.
                 </p>
                 <Link href="/auth/login">
-                  <Button className="h-10 rounded-full border border-pink-500/50 bg-[linear-gradient(90deg,#ec4899,#8b5cf6)] px-6 text-[11px] font-black uppercase tracking-[0.18em] text-white shadow-[0_0_20px_rgba(236,72,153,0.3)] hover:scale-105 transition-all">
+                  <Button className="h-10 rounded-full border border-transparent bg-[linear-gradient(135deg,#0044ff,#8a2be2,#ff003c)] px-6 text-[11px] font-black uppercase tracking-[0.18em] text-white shadow-[0_0_18px_rgba(0,68,255,0.24),0_0_28px_rgba(138,43,226,0.22),0_0_22px_rgba(255,0,60,0.18)] transition-all hover:scale-105 hover:shadow-[0_0_22px_rgba(0,68,255,0.34),0_0_36px_rgba(138,43,226,0.3),0_0_28px_rgba(255,0,60,0.24)]">
                     <LogIn className="mr-2 h-4 w-4" />
                     შესვლა
                   </Button>
