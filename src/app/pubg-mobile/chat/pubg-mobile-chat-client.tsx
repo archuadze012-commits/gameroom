@@ -317,11 +317,12 @@ export function PubgMobileChatClient({
                       )}
                       
                       <div
-                        className={`msg-bubble group/msg relative rounded-[20px] px-5 py-3.5 ${
-                          isMine ? "msg-bubble--mine rounded-br-[8px]" : "msg-bubble--theirs rounded-bl-[8px]"
+                        className={`pubg-chat-bubble group/msg relative overflow-hidden rounded-[20px] border px-5 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_12px_30px_-20px_rgba(0,0,0,0.95)] backdrop-blur-[18px] ${
+                          isMine
+                            ? "rounded-br-[8px] border-[#ff4fa8]/20 bg-[linear-gradient(180deg,rgba(255,79,168,0.16),rgba(107,53,255,0.08)),rgba(18,9,28,0.94)]"
+                            : "rounded-bl-[8px] border-slate-400/10 bg-[linear-gradient(180deg,rgba(18,24,42,0.96),rgba(7,9,20,0.94))]"
                         }`}
                       >
-                        {isMine && <div className="absolute inset-0 rounded-[inherit] bg-[radial-gradient(ellipse_at_top_right,rgba(138,43,226,0.18),transparent_55%)] pointer-events-none" />}
                         <p
                           className="relative z-10 whitespace-pre-wrap break-words text-[14px] font-medium leading-relaxed text-white sm:text-[15px]"
                         >
