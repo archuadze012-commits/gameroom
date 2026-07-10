@@ -8,14 +8,18 @@ import { getSiteUrl } from "@/lib/url";
 export const revalidate = 3600;
 
 function anon() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return null;
+  }
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     { auth: { persistSession: false } },
   );
 }
 
-async function rows<T>(q: PromiseLike<{ data: T[] | null }>): Promise<T[]> {
+async function rows<T>(q: PromiseLike<{ data: T[] | null }> | null): Promise<T[]> {
+  if (!q) return [];
   try {
     const { data } = await q;
     return data ?? [];
@@ -40,13 +44,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const [articles, games, tournaments, clans, news, cracked] = await Promise.all([
     listPublishedArticles(1000).catch(() => []),
-    rows<{ slug: string }>(supabase.from("games").select("slug")),
-    rows<{ slug: string }>(supabase.from("tournaments").select("slug")),
-    rows<{ slug: string }>(supabase.from("clans").select("slug")),
+    rows<{ slug: string }>(supabase ? supabase.from("games").select("slug") : null),
+    rows<{ slug: string }>(supabase ? supabase.from("tournaments").select("slug") : null),
+    rows<{ slug: string }>(supabase ? supabase.from("clans").select("slug") : null),
     rows<{ slug: string; published_at: string | null }>(
-      supabase.from("news_articles").select("slug, published_at").eq("status", "published"),
+      supabase ? supabase.from("news_articles").select("slug, published_at").eq("status", "published") : null,
     ),
-    rows<{ id: string }>(supabase.from("cracked_games").select("id")),
+    rows<{ id: string }>(supabase ? supabase.from("cracked_games").select("id") : null),
   ]);
 
   const dynamic: MetadataRoute.Sitemap = [
