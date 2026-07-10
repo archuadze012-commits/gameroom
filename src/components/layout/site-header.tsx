@@ -78,7 +78,7 @@ export function SiteHeader() {
     <header className={`gr-site-header-root block fixed top-0 left-0 right-0 z-40 bg-[rgba(8,6,15,0.6)] backdrop-blur-2xl shadow-[0_4px_30px_rgba(0,0,0,0.5)] transition-transform duration-300 sm:translate-y-0 ${visible ? "translate-y-0" : "-translate-y-full"}`}>
       <div className="neon-rail gr-site-header-shell gr-site-header-inner sm:container mx-0 sm:mx-auto my-2 flex h-14 items-center justify-between rounded-none sm:rounded-2xl bg-[rgba(8,6,15,0.5)] px-4 relative">
         {/* Left: Brand Logo */}
-        <div className="gr-site-header-brand flex items-center flex-shrink-0 relative z-10 w-fit mr-[-12rem]">
+        <div className="gr-site-header-brand flex items-center flex-shrink-0 relative z-10 w-fit">
           <Link href="/">
             <SiteBrand iconSize={36} wordmarkClassName="text-[20px] lg:text-[24px]" priority />
           </Link>
