@@ -2,11 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell } from "lucide-react";
+import { Bell, ExternalLink, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import { playInviteSound } from "@/lib/sounds";
-import { useUnreadAnnouncements } from "./use-nav-data";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useNavAnnouncements } from "./use-nav-data";
 
 type PersonalNotification = {
   id: string;
@@ -14,33 +18,38 @@ type PersonalNotification = {
   body: string | null;
   link: string | null;
   read_at: string | null;
+  created_at: string;
 };
+
+function timeAgo(iso: string) {
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diff < 60) return "ახლახანს";
+  if (diff < 3600) return `${Math.floor(diff / 60)} წუთის წინ`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} საათის წინ`;
+  return `${Math.floor(diff / 86400)} დღის წინ`;
+}
 
 export function NotificationBell() {
   const router = useRouter();
   const [personal, setPersonal] = useState<PersonalNotification[]>([]);
-  // Announcements come from the shared nav poller (one request serves the
-  // bell, the mobile nav and the webview nav). Locally dismissed ids bridge
-  // the gap until the poller refetches and sees the server-side read marks.
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
-  const unreadAnnouncements = useUnreadAnnouncements().filter((a) => !dismissedIds.has(a.id));
+  const { announcements, readIds } = useNavAnnouncements();
+  const [locallyReadAnnouncementIds, setLocallyReadAnnouncementIds] = useState<Set<string>>(new Set());
   const prevCountRef = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
     const loadPersonal = async () => {
       try {
-        const response = await fetch("/api/notifications?unread=1", { cache: "no-store" });
+        const response = await fetch("/api/notifications", { cache: "no-store" });
         if (!response.ok || cancelled) return;
         const data = await response.json();
-        const unread = (Array.isArray(data.notifications) ? data.notifications : []).filter(
-          (item: PersonalNotification) => !item.read_at,
-        ) as PersonalNotification[];
+        const notifications = (Array.isArray(data.notifications) ? data.notifications : []) as PersonalNotification[];
+        const unread = notifications.filter((item) => !item.read_at);
         if (unread.length > prevCountRef.current) {
           playInviteSound();
         }
         prevCountRef.current = unread.length;
-        setPersonal(unread);
+        setPersonal(notifications);
       } catch {}
     };
 
@@ -52,81 +61,100 @@ export function NotificationBell() {
     };
   }, []);
 
-  const totalCount = personal.length + unreadAnnouncements.length;
+  const readAnnouncementIds = new Set([...readIds, ...locallyReadAnnouncementIds]);
+  const unreadAnnouncementCount = announcements.filter((announcement) => !readAnnouncementIds.has(announcement.id)).length;
+  const unreadPersonalCount = personal.filter((notification) => !notification.read_at).length;
+  const totalCount = unreadPersonalCount + unreadAnnouncementCount;
 
-  const handleClick = async () => {
-    if (totalCount === 0) return;
-
-    // Show each announcement and mark it read. Fire the POSTs in parallel and
-    // only locally dismiss the ids the server actually accepted — a swallowed
-    // failure used to hide the announcement client-side while it stayed unread
-    // server-side, so it re-toasted and re-counted on every later page load.
-    const acked = await Promise.all(
-      unreadAnnouncements.map(async (ann) => {
-        const variantFn =
-          ann.severity === "critical"
-            ? toast.error
-            : ann.severity === "warning"
-            ? toast.warning
-            : toast.info;
-        variantFn(ann.title, { description: ann.body, duration: 12000 });
-        try {
-          const res = await fetch(`/api/announcements/${ann.id}/read`, { method: "POST" });
-          return res.ok ? ann.id : null;
-        } catch {
-          return null;
-        }
-      })
-    );
-    const ackedIds = acked.filter((id): id is string => id !== null);
-    if (ackedIds.length) {
-      setDismissedIds((prev) => {
-        const next = new Set(prev);
-        ackedIds.forEach((id) => next.add(id));
-        return next;
-      });
+  const openNotification = async (notification: PersonalNotification) => {
+    if (!notification.read_at) {
+      const response = await fetch(`/api/notifications/${notification.id}`, { method: "PATCH" });
+      if (response.ok) {
+        setPersonal((current) => current.map((item) => (
+          item.id === notification.id ? { ...item, read_at: new Date().toISOString() } : item
+        )));
+        prevCountRef.current = Math.max(0, prevCountRef.current - 1);
+      }
     }
+    if (notification.link) router.push(notification.link);
+  };
 
-    const personalAcked = await Promise.all(
-      personal.map(async (item, index) => {
-        window.setTimeout(() => {
-          toast(item.title, {
-            description: item.body ?? undefined,
-            duration: 12_000,
-            action: item.link
-              ? { label: "გახსნა", onClick: () => router.push(item.link!) }
-              : undefined,
-          });
-        }, index * 350);
-        try {
-          const response = await fetch(`/api/notifications/${item.id}`, { method: "PATCH" });
-          return response.ok ? item.id : null;
-        } catch {
-          return null;
-        }
-      }),
-    );
-    const personalAckedIds = new Set(personalAcked.filter((id): id is string => id !== null));
-    if (personalAckedIds.size > 0) {
-      setPersonal((current) => current.filter((item) => !personalAckedIds.has(item.id)));
-      prevCountRef.current = Math.max(0, personal.length - personalAckedIds.size);
+  const markAnnouncementRead = async (id: string) => {
+    if (readAnnouncementIds.has(id)) return;
+    const response = await fetch(`/api/announcements/${id}/read`, { method: "POST" });
+    if (response.ok) {
+      setLocallyReadAnnouncementIds((current) => new Set([...current, id]));
     }
   };
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      aria-label="შეტყობინებები"
-      className="relative"
-      onClick={handleClick}
-    >
-      <Bell className="h-4 w-4" />
-      {totalCount > 0 && (
-        <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
-          {totalCount}
-        </span>
-      )}
-    </Button>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label="შეტყობინებები" className="relative">
+          <Bell className="h-4 w-4" />
+          {totalCount > 0 && (
+            <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+              {totalCount > 99 ? "99+" : totalCount}
+            </span>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        sideOffset={10}
+        className="w-[380px] overflow-hidden rounded-xl border border-pink-500/35 bg-[rgba(8,6,15,0.97)] p-0 text-white shadow-[0_0_28px_rgba(236,72,153,0.2),0_18px_50px_rgba(0,0,0,0.65)] backdrop-blur-xl"
+      >
+        <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <Bell className="h-4 w-4 text-pink-400" />
+            <span className="text-sm font-bold">უწყებები</span>
+            {totalCount > 0 && <span className="rounded-full bg-pink-500/15 px-1.5 py-0.5 text-[10px] font-bold text-pink-300">{totalCount}</span>}
+          </div>
+          <button onClick={() => router.push("/announcements")} className="text-[11px] font-semibold text-cyan-300 transition-colors hover:text-cyan-100">
+            ყველას ნახვა
+          </button>
+        </div>
+
+        <div className="max-h-[420px] overflow-y-auto p-2">
+          {[...personal, ...announcements]
+            .sort((left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime())
+            .slice(0, 8)
+            .map((item) => {
+              const isPersonal = "read_at" in item;
+              const unread = isPersonal ? !item.read_at : !readAnnouncementIds.has(item.id);
+              return (
+                <button
+                  key={`${isPersonal ? "notification" : "announcement"}-${item.id}`}
+                  onClick={() => isPersonal ? void openNotification(item) : void markAnnouncementRead(item.id)}
+                  className={`relative flex w-full gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-white/[0.06] ${unread ? "bg-pink-500/[0.06]" : ""}`}
+                >
+                  <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${unread ? "bg-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.85)]" : "bg-white/15"}`} />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-start justify-between gap-3">
+                      <span className={`line-clamp-1 text-[13px] ${unread ? "font-semibold text-white" : "font-medium text-white/75"}`}>{item.title}</span>
+                      <span className="shrink-0 text-[10px] text-white/40">{timeAgo(item.created_at)}</span>
+                    </span>
+                    {item.body && <span className="mt-1 block line-clamp-2 text-[12px] leading-relaxed text-white/55">{item.body}</span>}
+                  </span>
+                  {isPersonal && item.link ? <ExternalLink className="mt-1 h-3.5 w-3.5 shrink-0 text-white/35" /> : null}
+                </button>
+              );
+            })}
+          {personal.length + announcements.length === 0 && (
+            <div className="flex flex-col items-center gap-2 px-4 py-10 text-center text-white/50">
+              <Info className="h-5 w-5 text-cyan-300/75" />
+              <span className="text-sm">უწყება ჯერ არ გაქვს</span>
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={() => router.push("/announcements")}
+          className="flex w-full items-center justify-center gap-2 border-t border-white/10 px-4 py-3 text-[11px] font-bold text-cyan-300 transition-colors hover:bg-cyan-400/[0.08] hover:text-cyan-100"
+        >
+          ყველა უწყების გახსნა <ExternalLink className="h-3.5 w-3.5" />
+        </button>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

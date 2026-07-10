@@ -117,17 +117,20 @@ export function useNavMessageCount(enabled: boolean = true) {
 // Full unread list — used by the notification bell (needs title/body/severity
 // for the dropdown). Shares the same poller as the count hook below.
 export function useUnreadAnnouncements(enabled: boolean = true) {
-  const [unread, setUnread] = useState<NavAnnouncement[]>([]);
+  const { announcements, readIds } = useNavAnnouncements(enabled);
+  const readSet = new Set(readIds);
+  return announcements.filter((announcement) => !readSet.has(announcement.id));
+}
+
+export function useNavAnnouncements(enabled: boolean = true) {
+  const [snapshot, setSnapshot] = useState<AnnouncementsSnapshot>({ announcements: [], readIds: [] });
 
   useEffect(() => {
     if (!enabled) return;
-    return subscribeAnnouncements(({ announcements, readIds }) => {
-      const readSet = new Set(readIds);
-      setUnread(announcements.filter((a) => !readSet.has(a.id)));
-    });
+    return subscribeAnnouncements(setSnapshot);
   }, [enabled]);
 
-  return unread;
+  return snapshot;
 }
 
 export function useNavAnnouncementCount(enabled: boolean = true) {
