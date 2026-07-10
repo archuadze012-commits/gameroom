@@ -44,7 +44,11 @@ export default async function FeedPage() {
       .limit(50);
     const rows = (data ?? []) as unknown as (FeedPost & { post_likes?: { post_id: string }[] })[];
     likedPostIds = rows.filter((p) => (p.post_likes?.length ?? 0) > 0).map((p) => p.id);
-    posts = rows.map(({ post_likes: _likes, ...post }) => post as FeedPost);
+    posts = rows.map((row) => {
+      const post = { ...row };
+      delete post.post_likes;
+      return post as FeedPost;
+    });
   }
 
   // news filtered by favorite game slugs

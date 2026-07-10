@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const e2ePort = process.env.E2E_PORT ?? "3001";
+const e2eBaseUrl = `http://localhost:${e2ePort}`;
+
 // E2E config. The smoke suite (e2e/smoke.spec.ts) is auth-free and runs against a
 // production `next start` with placeholder Supabase env — an unauthenticated
 // visitor exercises boot, routing, render and the /playmanager→login redirect
@@ -18,7 +21,7 @@ export default defineConfig({
   reporter: process.env.CI ? "list" : [["list"], ["html", { open: "never" }]],
   timeout: 30_000,
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: e2eBaseUrl,
     trace: "on-first-retry",
   },
   projects: [
@@ -26,9 +29,11 @@ export default defineConfig({
     { name: "mobile", use: { ...devices["Pixel 5"] } },
   ],
   webServer: {
-    command: "npm run start",
-    url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
+    command: `npm run start -- --port ${e2ePort}`,
+    url: e2eBaseUrl,
+    // Never attach auth-free smoke tests to a local `next dev` server: dev mode
+    // intentionally bypasses PlayManager auth for the development experience.
+    reuseExistingServer: false,
     timeout: 120_000,
     env: {
       // A fast-refusing URL (not a bogus domain that hangs on DNS): auth.getUser()
@@ -36,7 +41,7 @@ export default defineConfig({
       // instead of the request hanging until timeout.
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:9999",
       NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "placeholder-anon-key",
-      NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+      NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL ?? e2eBaseUrl,
       NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "placeholder-vapid-key",
       SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "placeholder-service-role",
     },
