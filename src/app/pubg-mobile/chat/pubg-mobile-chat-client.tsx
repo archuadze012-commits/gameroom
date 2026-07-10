@@ -317,11 +317,19 @@ export function PubgMobileChatClient({
                       )}
                       
                       <div
-                        className={`pubg-chat-bubble group/msg relative overflow-hidden rounded-[20px] border px-5 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_12px_30px_-20px_rgba(0,0,0,0.95)] backdrop-blur-[18px] ${
+                        className={`pubg-chat-bubble group/msg relative overflow-hidden rounded-[20px] border border-transparent px-5 py-3.5 backdrop-blur-[18px] ${
                           isMine
-                            ? "rounded-br-[8px] border-[#ff4fa8]/20 bg-[linear-gradient(180deg,rgba(255,79,168,0.16),rgba(107,53,255,0.08)),rgba(18,9,28,0.94)]"
-                            : "rounded-bl-[8px] border-slate-400/10 bg-[linear-gradient(180deg,rgba(18,24,42,0.96),rgba(7,9,20,0.94))]"
+                            ? "rounded-br-[8px]"
+                            : "rounded-bl-[8px]"
                         }`}
+                        style={{
+                          background: isMine
+                            ? "linear-gradient(180deg, rgba(22, 9, 30, 0.97), rgba(9, 7, 20, 0.95)) padding-box, linear-gradient(135deg, #ff003c, #8a2be2, #0044ff) border-box"
+                            : "linear-gradient(180deg, rgba(7, 10, 24, 0.98), rgba(8, 8, 19, 0.95)) padding-box, linear-gradient(135deg, #0044ff, #8a2be2, #ff003c) border-box",
+                          boxShadow: isMine
+                            ? "inset 0 1px 0 rgba(255,255,255,0.08), 0 0 18px rgba(255,0,60,0.16), 0 14px 30px -22px rgba(0,0,0,0.95)"
+                            : "inset 0 1px 0 rgba(255,255,255,0.08), 0 0 18px rgba(0,68,255,0.16), 0 14px 30px -22px rgba(0,0,0,0.95)",
+                        }}
                       >
                         <p
                           className="relative z-10 whitespace-pre-wrap break-words text-[14px] font-medium leading-relaxed text-white sm:text-[15px]"
