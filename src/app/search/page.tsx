@@ -79,6 +79,9 @@ function dbRowToCrackedGame(row: DbCrackedGameRow): CrackedGame {
 }
 
 function SearchPlayerCard({ user }: { user: PublicProfile }) {
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  const initials = (user.displayName ?? user.username).slice(0, 1).toUpperCase();
+
   return (
     <div className="player-card-stable relative w-full rounded-[20px] bg-[rgba(15,12,30,0.6)] backdrop-blur-md premium-card-glow-tight transition-all duration-300 p-[2px]">
       <div className="relative z-10 flex min-h-[112px] items-center gap-4 overflow-hidden rounded-[18px] p-4 sm:min-h-[124px] sm:gap-5 sm:p-5">
@@ -94,16 +97,17 @@ function SearchPlayerCard({ user }: { user: PublicProfile }) {
               flexShrink: 0,
             }}
           >
-            {user.avatarUrl ? (
+            {user.avatarUrl && !avatarFailed ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={user.avatarUrl}
                 alt={user.displayName ?? user.username}
                 style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                onError={() => setAvatarFailed(true)}
               />
             ) : (
               <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 900, color: "#ffffff", textShadow: "0 0 4px rgba(196,30,58,0.4)" }}>
-                {(user.displayName ?? user.username).slice(0, 1).toUpperCase()}
+                {initials}
               </div>
             )}
           </div>
