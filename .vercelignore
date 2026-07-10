@@ -3,3 +3,17 @@ dev.err.log
 dev.out.log
 .agents
 .codex
+.chrome-profile-codex
+.claude
+.codex-run
+.planning
+.tmp
+.vscode
+codebase-memory-mcp
+ComfyUI
+graphify-out
+meshy_output
+playwright-report
+scratch
+test-results
+*.log
