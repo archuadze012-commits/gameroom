@@ -50,7 +50,7 @@ export function UserAvatar({ username, displayName, avatarUrl, size = "md", clas
           src={src}
           alt={displayName ?? username}
           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+          onError={() => setSrc(null)}
         />
       ) : (
         <span className="text-primary font-semibold text-sm">{initials}</span>

@@ -38,6 +38,7 @@ type FollowProfileRow = {
 
 function CompactPlayerCard({ user }: { user: FriendUser }) {
   const initial = user.displayName.slice(0, 1).toUpperCase();
+  const [avatarFailed, setAvatarFailed] = useState(false);
   
   return (
     <Link href={`/profile/${user.username}`} className="group block">
@@ -47,9 +48,14 @@ function CompactPlayerCard({ user }: { user: FriendUser }) {
           {/* Avatar */}
           <div className="relative shrink-0">
             <div className="h-10 w-10 overflow-hidden rounded-full ring-1 ring-white/10">
-              {user.avatarUrl ? (
+              {user.avatarUrl && !avatarFailed ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.avatarUrl} alt={user.displayName} className="h-full w-full object-cover" />
+                <img
+                  src={user.avatarUrl}
+                  alt={user.displayName}
+                  className="h-full w-full object-cover"
+                  onError={() => setAvatarFailed(true)}
+                />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-violet-500/20 text-sm font-bold text-violet-400">
                   {initial}

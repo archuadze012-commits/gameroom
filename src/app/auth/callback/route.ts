@@ -8,6 +8,15 @@ import { createLogger } from "@/lib/logger";
 
 const logger = createLogger("auth/callback");
 
+function isUploadedAvatarUrl(value: string | null | undefined) {
+  try {
+    const url = new URL(value ?? "");
+    return url.hostname.endsWith(".supabase.co") && url.pathname.includes("/storage/v1/object/public/avatars/");
+  } catch {
+    return false;
+  }
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams, origin: requestOrigin } = new URL(request.url);
   const cookieStore = await cookies();
@@ -65,7 +74,7 @@ export async function GET(request: NextRequest) {
       try {
         const { data: existing } = await supabase
           .from("profiles")
-          .select("username")
+          .select("username, avatar_url")
           .eq("id", user.id)
           .maybeSingle();
 
@@ -108,8 +117,12 @@ export async function GET(request: NextRequest) {
             updated_at: new Date().toISOString(),
           };
 
-          // Preserve an existing uploaded avatar when the auth provider does not return one.
-          if (typeof nextAvatarUrl === "string" && nextAvatarUrl.trim()) {
+          // Provider-hosted URLs can expire; never replace a user-uploaded avatar on login.
+          if (
+            !isUploadedAvatarUrl(existing.avatar_url) &&
+            typeof nextAvatarUrl === "string" &&
+            nextAvatarUrl.trim()
+          ) {
             profileUpdate.avatar_url = nextAvatarUrl;
           }
 
