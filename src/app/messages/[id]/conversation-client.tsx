@@ -38,6 +38,14 @@ function timeOnly(iso: string) {
   return new Date(iso).toLocaleTimeString("ka-GE", { hour: "2-digit", minute: "2-digit" });
 }
 
+function mergeMessages(current: Msg[], incoming: Msg[]) {
+  const byId = new Map(current.map((message) => [message.id, message]));
+  incoming.forEach((message) => byId.set(message.id, message));
+  return [...byId.values()]
+    .sort((left, right) => new Date(left.created_at).getTime() - new Date(right.created_at).getTime())
+    .slice(-300);
+}
+
 export function ConversationClient({ conversationId, currentUserId, other }: Props) {
   const router = useRouter();
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -55,19 +63,21 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
   const initialSendState: SendMessageState = { success: false };
   const [sendState, sendFormAction, isSending] = useActionState(sendMessageAction, initialSendState);
 
-  // Handle send action response
+  // The action response is the fastest path for our own messages. Realtime
+  // remains a second path, while reloadKey is a tiny server-confirmed fallback.
   useEffect(() => {
     if (sendState.success && sendState.newMsg) {
       const msg = sendState.newMsg;
       queueMicrotask(() => {
-        setMessages((prev) => [...prev, msg]);
+        setMessages((current) => mergeMessages(current, [msg]));
         setInput("");
         setSmartReplies([]);
+        setReloadKey((current) => current + 1);
       });
     } else if (sendState.message && !sendState.success) {
       toast.error(sendState.message);
     }
-  }, [sendState]);
+  }, [sendState.success, sendState.newMsg, sendState.message]);
 
   const fetchSmartReplies = useCallback(async (lastMsg: string) => {
     setLoadingReplies(true);
@@ -98,7 +108,7 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
         const data = await res.json();
         if (cancelled) return;
         const msgs: Msg[] = Array.isArray(data) ? data : [];
-        setMessages(msgs);
+        setMessages((current) => mergeMessages(current, msgs));
         // fetch smart replies for last received message
         const lastReceived = [...msgs].reverse().find((m) => m.sender_id !== currentUserId);
         if (lastReceived) fetchSmartReplies(lastReceived.body);
@@ -125,13 +135,8 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
         filter: `conversation_id=eq.${conversationId}`,
       }, async (payload) => {
         const row = payload.new as Msg;
+        setMessages((current) => mergeMessages(current, [row]));
         if (row.sender_id === currentUserId) return;
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === row.id)) return prev;
-          const next = [...prev, row];
-          // Keep the in-memory list bounded on long-lived conversations.
-          return next.length > 300 ? next.slice(-300) : next;
-        });
         fetchSmartReplies(row.body);
         // Mark read via the lightweight PATCH instead of re-fetching the whole
         // history (which was downloaded and discarded on every incoming message).
