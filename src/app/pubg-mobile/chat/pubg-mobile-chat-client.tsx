@@ -209,7 +209,7 @@ export function PubgMobileChatClient({
   };
 
   return (
-    <section className="group neon-frame neon-frame--overlay mx-auto flex h-full w-full max-w-4xl flex-col rounded-[24px]">
+    <section className="pubg-mobile-chat-panel group neon-frame neon-frame--overlay mx-auto flex h-full w-full max-w-4xl flex-col rounded-[24px]">
       <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[21px] bg-[#0a0714] backdrop-blur-md">
         <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.08),transparent_50%)] pointer-events-none" />
 

@@ -651,6 +651,10 @@
   left: 0;
 }
 
+.pubg-mobile-chat-panel .msg-bubble--theirs::after {
+  display: none;
+}
+
 .msg-bubble--compact {
   backdrop-filter: blur(10px);
   box-shadow:
