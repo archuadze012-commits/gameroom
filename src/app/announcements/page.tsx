@@ -11,7 +11,6 @@ import { CinematicBackground } from "@/components/ui/cinematic-background";
 type NotificationType =
   | "lfg_response"
   | "lfg_accepted"
-  | "forum_reply"
   | "news_comment"
   | "tournament_checkin"
   | "tournament_match"
@@ -37,7 +36,7 @@ interface Announcement {
   created_at: string;
 }
 
-type Tab = "all" | "lfg" | "forum" | "system";
+type Tab = "all" | "lfg" | "news" | "system";
 
 function timeAgo(iso: string) {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -50,7 +49,6 @@ function timeAgo(iso: string) {
 const NOTIF_META: Record<NotificationType, { label: string; icon: LucideIcon; tone: "cyan" | "online" | "violet" | "amber" | "neutral" | "magenta" }> = {
   lfg_response:       { label: "ლოკალი",      icon: Users,         tone: "magenta" },
   lfg_accepted:       { label: "ლოკალი",      icon: UserCheck,     tone: "online" },
-  forum_reply:        { label: "ფორუმი",      icon: MessageSquare, tone: "violet" },
   news_comment:       { label: "სიახლე",      icon: MessageSquare, tone: "violet" },
   tournament_checkin: { label: "ჩემპიონატი",  icon: Trophy,        tone: "amber" },
   tournament_match:   { label: "ჩემპიონატი",  icon: Gamepad2,      tone: "amber" },
@@ -66,7 +64,7 @@ const SEVERITY_META: Record<Severity, { icon: LucideIcon; tone: "cyan" | "amber"
 const TAB_LABELS: Record<Tab, string> = {
   all: "ყველა",
   lfg: "ლოკალი",
-  forum: "ფორუმი",
+  news: "სიახლე",
   system: "სისტემური",
 };
 
@@ -136,12 +134,12 @@ export default function AnnouncementsPage() {
   };
 
   const isLfgType = (t: NotificationType) => t === "lfg_response" || t === "lfg_accepted";
-  const isForumType = (t: NotificationType) => t === "forum_reply" || t === "news_comment";
+  const isNewsType = (t: NotificationType) => t === "news_comment";
 
   const filteredNotifs = notifications.filter((n) => {
     if (tab === "all") return true;
     if (tab === "lfg") return isLfgType(n.type);
-    if (tab === "forum") return isForumType(n.type);
+    if (tab === "news") return isNewsType(n.type);
     if (tab === "system") return n.type === "tournament_checkin" || n.type === "tournament_match" || n.type === "system";
     return true;
   });
@@ -194,7 +192,7 @@ export default function AnnouncementsPage() {
 
         {/* Tabs */}
         <div className="mb-5 flex gap-1" style={{ borderBottom: "1px solid rgba(236,72,153,0.2)" }}>
-          {(["all", "lfg", "forum", "system"] as Tab[]).map((t) => {
+          {(["all", "lfg", "news", "system"] as Tab[]).map((t) => {
             const active = tab === t;
             return (
               <button
@@ -225,7 +223,7 @@ export default function AnnouncementsPage() {
             tone="violet"
             illustration={<Bell className="h-8 w-8" style={{ color: "#ffffff", filter: "drop-shadow(0 0 6px rgba(236,72,153,1))" }} />}
             title="შეტყობინება არ გაქვს"
-            description="როცა ლოკალში მოგწერენ ან ფორუმში გიპასუხებენ, აქ გამოჩნდება."
+            description="როცა ლოკალში მოგწერენ ან სიახლეზე გამოხმაურება მოვა, აქ გამოჩნდება."
           />
         ) : (
           <div className="space-y-2">

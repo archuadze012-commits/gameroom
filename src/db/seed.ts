@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 import { db } from "./client";
-import { games, forumCategories } from "./schema";
+import { games } from "./schema";
 
 async function main() {
   console.log("Seeding games...");
@@ -55,18 +55,6 @@ async function main() {
     .onConflictDoNothing()
     .returning();
   console.log(`✓ inserted ${insertedGames.length} games`);
-
-  console.log("Seeding forum categories...");
-  await db
-    .insert(forumCategories)
-    .values([
-      { name: "ზოგადი დისკუსია", slug: "general", position: 1, description: "ყველაფერი გეიმინგზე." },
-      { name: "ჩემპიონატები", slug: "tournaments", position: 2, description: "ჩემპიონატებზე საუბარი." },
-      { name: "ტექნიკა და სეტაპები", slug: "hardware", position: 3, description: "PC, ტელეფონები, კონტროლერები." },
-      { name: "ფიდბექი პლატფორმაზე", slug: "feedback", position: 99, description: "შენი იდეები ჩვენთვის." },
-    ])
-    .onConflictDoNothing();
-  console.log("✓ forum categories ready");
 
   process.exit(0);
 }

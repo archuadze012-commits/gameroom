@@ -66,7 +66,6 @@ export const articleStatusEnum = pgEnum("article_status", [
 export const notificationTypeEnum = pgEnum("notification_type", [
   "lfg_response",
   "lfg_accepted",
-  "forum_reply",
   "news_comment",
   "tournament_checkin",
   "tournament_match",
@@ -587,84 +586,6 @@ export const lfgComments = pgTable(
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (t) => [index("lfg_comments_post_idx").on(t.postId, t.createdAt)]
-);
-
-// ---------- Forum ----------
-
-export const forumCategories = pgTable("forum_categories", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  gameId: uuid("game_id").references(() => games.id, { onDelete: "set null" }),
-  name: varchar("name", { length: 128 }).notNull(),
-  slug: varchar("slug", { length: 64 }).notNull().unique(),
-  description: text("description"),
-  position: integer("position").default(0).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
-
-export const forumThreads = pgTable(
-  "forum_threads",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    categoryId: uuid("category_id")
-      .notNull()
-      .references(() => forumCategories.id, { onDelete: "cascade" }),
-    authorId: uuid("author_id")
-      .notNull()
-      .references(() => profiles.id, { onDelete: "cascade" }),
-    title: varchar("title", { length: 200 }).notNull(),
-    slug: varchar("slug", { length: 220 }).notNull(),
-    pinned: boolean("pinned").default(false).notNull(),
-    locked: boolean("locked").default(false).notNull(),
-    views: integer("views").default(0).notNull(),
-    lastReplyAt: timestamp("last_reply_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-  },
-  (t) => [
-    uniqueIndex("forum_thread_slug_unique").on(t.categoryId, t.slug),
-    index("forum_thread_category_idx").on(t.categoryId, t.lastReplyAt),
-  ]
-);
-
-export const forumPosts = pgTable(
-  "forum_posts",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    threadId: uuid("thread_id")
-      .notNull()
-      .references(() => forumThreads.id, { onDelete: "cascade" }),
-    authorId: uuid("author_id")
-      .notNull()
-      .references(() => profiles.id, { onDelete: "cascade" }),
-    parentPostId: uuid("parent_post_id"),
-    body: text("body").notNull(),
-    edited: boolean("edited").default(false).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-  },
-  (t) => [index("forum_post_thread_idx").on(t.threadId, t.createdAt)]
-);
-
-export const forumLikes = pgTable(
-  "forum_likes",
-  {
-    postId: uuid("post_id")
-      .notNull()
-      .references(() => forumPosts.id, { onDelete: "cascade" }),
-    userId: uuid("user_id")
-      .notNull()
-      .references(() => profiles.id, { onDelete: "cascade" }),
-  },
-  (t) => [primaryKey({ columns: [t.postId, t.userId] })]
 );
 
 // ---------- News ----------
@@ -1283,7 +1204,6 @@ export type NewProfile = typeof profiles.$inferInsert;
 export type Game = typeof games.$inferSelect;
 export type Post = typeof posts.$inferSelect;
 export type LfgPost = typeof lfgPosts.$inferSelect;
-export type ForumThread = typeof forumThreads.$inferSelect;
 export type NewsArticle = typeof newsArticles.$inferSelect;
 export type Tournament = typeof tournaments.$inferSelect;
 export type TournamentMatch = typeof tournamentMatches.$inferSelect;

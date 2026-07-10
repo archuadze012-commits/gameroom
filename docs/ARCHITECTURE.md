@@ -21,12 +21,6 @@ src/
 │   │   ├── new/                    # /lfg/new — შექმნა
 │   │   └── [id]/                   # /lfg/:id — detail + join
 │   │
-│   ├── forum/
-│   │   ├── page.tsx                # /forum — categories
-│   │   └── [category]/
-│   │       ├── page.tsx            # /forum/:category — threads
-│   │       └── [thread]/           # /forum/:category/:thread — posts
-│   │
 │   ├── news/
 │   │   ├── page.tsx                # /news — list
 │   │   └── [slug]/                 # /news/:slug — article + comments
@@ -59,13 +53,13 @@ src/
 │   │   ├── user-menu.tsx           # server (reads session)
 │   │   └── nav-links.ts            # shared link list (no "use client" needed)
 │   ├── tournament/bracket.tsx      # SVG bracket renderer
-│   ├── mention-text.tsx            # @-mention parser (chat/forum)
+│   ├── mention-text.tsx            # @-mention parser
 │   └── page-header.tsx
 │
 ├── db/
 │   ├── schema.ts                   # Drizzle table definitions (იხ. DATABASE.md)
 │   ├── client.ts                   # postgres-js client + drizzle instance
-│   └── seed.ts                     # tsx-მართული seed (games, forum categories)
+│   └── seed.ts                     # tsx-მართული seed (games)
 │
 ├── lib/
 │   ├── supabase/
@@ -89,7 +83,7 @@ src/
 | Route | Component type | მონაცემები |
 |---|---|---|
 | `/` | Server | mock-data |
-| `/lfg`, `/forum`, `/news`, `/tournaments`, `/games` | Server | mock-data |
+| `/lfg`, `/news`, `/tournaments`, `/games` | Server | mock-data |
 | `/lfg/new`, `/settings` | Server + Client form | mock-data → TODO server action |
 | `/chat` | Client (state) | mock-data (Phase 2: Supabase Realtime) |
 | `/admin/*` | Server | mock-data → TODO role guard + Drizzle queries |

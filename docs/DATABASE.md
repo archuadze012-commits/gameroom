@@ -20,15 +20,6 @@ Drizzle ORM + Supabase PostgreSQL. სქემა — `src/db/schema.ts`.
 | `lfg_posts` | `author_id`, `game_id`, `title`, `description`, `rank_min`, `rank_max`, `region`, `slots_total`, `slots_filled`, `voice_required`, `status` (open\|filled\|closed), `expires_at` | "ვეძებ გუნდს" პოსტი |
 | `lfg_responses` | `post_id`, `user_id`, `message`, `status` (pending\|accepted\|rejected) | join request-ი |
 
-### ფორუმი
-
-| Table | მთავარი ველები | აღწერა |
-|---|---|---|
-| `forum_categories` | `game_id` (nullable), `name`, `slug` (unique), `description`, `position` | კატეგორიები (per-game ან general) |
-| `forum_threads` | `category_id`, `author_id`, `title`, `slug` (unique per category), `pinned`, `locked`, `views`, `last_reply_at` | თემები |
-| `forum_posts` | `thread_id`, `author_id`, `parent_post_id` (nullable), `body` (markdown), `edited` | პოსტები + threaded replies |
-| `forum_likes` | `post_id` + `user_id` (composite PK) | ლაიქი |
-
 ### სიახლეები
 
 | Table | მთავარი ველები | აღწერა |
@@ -55,7 +46,7 @@ Drizzle ORM + Supabase PostgreSQL. სქემა — `src/db/schema.ts`.
 
 | Table | მთავარი ველები | აღწერა |
 |---|---|---|
-| `notifications` | `user_id`, `type` (lfg_response\|lfg_accepted\|forum_reply\|news_comment\|tournament_checkin\|tournament_match\|system), `title`, `body`, `link`, `read_at` | in-app notifications |
+| `notifications` | `user_id`, `type` (lfg_response\|lfg_accepted\|news_comment\|tournament_checkin\|tournament_match\|system), `title`, `body`, `link`, `read_at` | in-app notifications |
 
 ## Enums
 
@@ -69,7 +60,7 @@ Drizzle ORM + Supabase PostgreSQL. სქემა — `src/db/schema.ts`.
 | `match_status` | pending, ready, live, reported, confirmed, disputed |
 | `article_status` | draft, published, archived |
 | `chat_channel_type` | global, game, lfg, tournament, direct |
-| `notification_type` | lfg_response, lfg_accepted, forum_reply, news_comment, tournament_checkin, tournament_match, system |
+| `notification_type` | lfg_response, lfg_accepted, news_comment, tournament_checkin, tournament_match, system |
 
 ## Indexes
 
@@ -78,8 +69,6 @@ Hot paths:
 - `profiles.username` — `unique(lower(username))` case-insensitive lookup
 - `lfg_posts(status, created_at)` — list page-ის queue
 - `lfg_posts(game_id)` — per-game ფილტრი
-- `forum_threads(category_id, last_reply_at)` — sort by activity
-- `forum_posts(thread_id, created_at)` — pagination
 - `news_articles(status, published_at)` — public list
 - `tournaments(game_id, status)` — per-game filter
 - `tournament_matches(tournament_id, round, position)` — bracket lookup
@@ -104,7 +93,6 @@ npm run db:studio          # localhost:4983
 `src/db/seed.ts` ჩაყრის:
 
 - **5 თამაში** (eFootball Mobile, FIFA Mobile, PUBG, Warzone, Valorant) + accent ფერი
-- **ფორუმის კატეგორიები** — general + per-game
 
 გაშვება:
 
@@ -140,11 +128,6 @@ create policy "lfg_insert_own" on lfg_posts for insert with check (auth.uid() = 
 create policy "lfg_update_own" on lfg_posts for update using (auth.uid() = author_id);
 create policy "lfg_delete_own" on lfg_posts for delete using (auth.uid() = author_id);
 ```
-
-### forum_posts / forum_threads
-- `select` — ღია
-- `insert` — `auth.uid() = author_id` + `not banned`
-- `update` / `delete` — owner ან admin/moderator
 
 ### news_articles
 - `select` — `status = 'published'` ან admin

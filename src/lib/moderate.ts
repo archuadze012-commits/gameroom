@@ -25,13 +25,13 @@ export async function moderateText(
   content: string,
 ): Promise<{ ok: boolean; reason?: string }> {
   if (!content.trim()) return { ok: true };
-  const groqKey = getServerEnv("GROQ_API_KEY");
-  if (!groqKey) return { ok: true };
-
   const blocklist = await getBlocklist();
   if (blocklist.some((w) => content.toLowerCase().includes(w.toLowerCase()))) {
     return { ok: false, reason: "დაბლოკილი სიტყვა" };
   }
+
+  const groqKey = getServerEnv("GROQ_API_KEY");
+  if (!groqKey) return { ok: true };
 
   try {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -57,7 +57,7 @@ export async function moderateText(
         temperature: 0,
       }),
       // Bound the call so a Groq slowdown/black-hole can't stall every moderated
-      // write path (feed/forum/comments/room chat) up to the platform timeout —
+      // write path (feed/comments/room chat) up to the platform timeout —
       // an aborted fetch rejects into the catch below, which fails open.
       signal: AbortSignal.timeout(4000),
     });

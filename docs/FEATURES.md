@@ -39,18 +39,6 @@
 | ლაიქები და რეაქციები | ✅ | Custom emojis (gg, w, clutch...) |
 | @-mention rendering | ✅ | `MentionText` component |
 
-### ფორუმი
-
-| ფიჩი | სტატუსი | კომენტარი |
-|---|---|---|
-| კატეგორიების სია | ✅ | რეალური კატეგორიები |
-| თემების სია | ✅ | `/forum/[category]` |
-| თემის გვერდი (პოსტებით) | ✅ | რეალური პოსტები |
-| ახალი თემის შექმნა | ✅ | UI + Server Action |
-| პოსტი (markdown) | 🟡 UI | rich editor TODO (Tiptap?) |
-| ლაიქი | ✅ | schema + logic მზადაა |
-| Threaded replies | ✅ | `parent_post_id` logic |
-
 ### სიახლეები
 
 | ფიჩი | სტატუსი | კომენტარი |
