@@ -7,6 +7,23 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt)$).*)",
+    /*
+     * Explicit path matcher avoids standard capturing groups that break Cloudflare Pages/Workers.
+     * Matches the exact prefixes checked in src/lib/supabase/middleware.ts.
+     */
+    "/admin/:path*",
+    "/feed/:path*",
+    "/messages/:path*",
+    "/settings/:path*",
+    "/articles/new",
+    "/clans/new",
+    "/lfg/new",
+    "/rooms/new",
+    "/free-pc-games/voice-test",
+    "/api/admin/:path*",
+    "/api/conversations/:path*",
+    "/api/notifications/:path*",
+    "/api/profile/:path*",
+    "/api/push/:path*",
   ],
 };
