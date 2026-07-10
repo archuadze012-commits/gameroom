@@ -41,7 +41,7 @@
       "source": "alchaincyf/huashu-design",
       "sourceType": "github",
       "skillPath": "SKILL.md",
-      "computedHash": "43ae9ad863e20c59bc2eefd97afa64b486b0c87a3851ed98041771f840194f34"
+      "computedHash": "73bff3eabe7fe30abbc7b3d7399a35b1b2b0a41bb9bd4bed8a8bc7f68b0e4cd3"
     },
     "supabase": {
       "source": "supabase/agent-skills",
