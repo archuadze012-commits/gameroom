@@ -75,7 +75,7 @@ export function PlayManagerSidebar() {
   }, [pathname]);
 
   return (
-    <aside className="pm-hq-sidebar fixed bottom-3 left-3 top-3 z-40 hidden w-[80px] flex-col overflow-hidden rounded-[26px] border border-emerald-300/14 bg-[linear-gradient(180deg,rgba(4,16,10,0.96),rgba(2,9,6,0.9))] text-white shadow-[0_24px_60px_rgba(0,0,0,0.55),inset_0_0_30px_rgba(16,185,129,0.08)] backdrop-blur-2xl xl:flex">
+    <aside className="pm-hq-sidebar fixed bottom-3 left-3 top-3 z-40 hidden w-[80px] flex-col overflow-hidden rounded-[26px] border border-emerald-300/14 bg-[linear-gradient(180deg,rgba(4,16,10,0.96),rgba(2,9,6,0.9))] text-white backdrop-blur-2xl xl:flex">
       <div className="flex h-full flex-col items-center gap-3 px-2 py-3">
         <Link
           href="/"

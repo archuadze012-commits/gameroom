@@ -18,7 +18,7 @@ export function PlayManagerBuildingShell({
   children: ReactNode;
 }) {
   return (
-    <main className="pm-office pm-feedskin pm-hq-shell min-h-screen overflow-x-hidden bg-[#05070a] pb-24 text-white xl:pb-0 xl:pl-[116px]">
+    <main className="pm-office pm-feedskin pm-hq-shell min-h-screen overflow-x-hidden bg-background pb-24 text-white xl:pb-0 xl:pl-[116px]">
       <PlayManagerSidebar />
       <div className="relative mx-auto flex min-h-screen w-full max-w-[1160px] flex-col px-4 py-4 sm:px-6 lg:px-8">
         {actionMessage ? (

@@ -240,7 +240,7 @@ export default async function CrackedGamePage({
                 <span className="w-2 h-2 rounded-full bg-[var(--gr-cyan-glow)] shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
                 აღწერა
               </h2>
-              <p className="mt-4 leading-relaxed text-[15px] font-medium text-[#D0F8FF] drop-shadow-[0_0_8px_rgba(0,230,255,0.4)] whitespace-pre-line">{game.description}</p>
+              <p className="mt-4 leading-relaxed text-[15px] font-medium text-white/80 whitespace-pre-line">{game.description}</p>
             </div>
           </div>
         </div>

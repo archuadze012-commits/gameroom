@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ChevronDown, Loader2, LogIn, Send, Trash2, VolumeX } from "lucide-react";
+import { ArrowLeft, ChevronDown, Loader2, LogIn, RefreshCw, Send, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/user-avatar";
 import { Input } from "@/components/ui/input";
@@ -15,14 +15,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { createChatCursor, mergeChatMessages } from "@/lib/critical-workflows";
 
 type Message = {
   id: string;
   author: string;
+  authorUsername: string;
+  avatarUrl: string | null;
   body: string;
-  ago: string;
-  isMine?: boolean;
-  expiresAtMs?: number;
+  createdAt: string;
+  isMine: boolean;
 };
 
 type CurrentUser = {
@@ -41,8 +43,6 @@ type Props = {
   avatarUrl?: string | null;
 };
 
-const CHAT_STORAGE_KEY = "gameroom_pubg_mobile_chat_messages_v1";
-const MESSAGE_TTL_MS = 24 * 60 * 60 * 1000;
 const MUTE_OPTIONS = [
   { key: "15m", label: "15 წთ" },
   { key: "1h", label: "1 საათი" },
@@ -53,41 +53,10 @@ const MUTE_OPTIONS = [
 
 type MuteDurationKey = (typeof MUTE_OPTIONS)[number]["key"];
 
-function removeExpiredMessages(messages: Message[]) {
-  const now = Date.now();
-  return messages.filter((message) => !message.expiresAtMs || message.expiresAtMs > now);
-}
-
-function getInitialMessages(initialMessages: Message[]) {
-  if (typeof window === "undefined") return initialMessages;
-
-  try {
-    const raw = window.localStorage.getItem(CHAT_STORAGE_KEY);
-    if (!raw) return initialMessages;
-
-    const stored = removeExpiredMessages(JSON.parse(raw) as Message[]);
-    if (!Array.isArray(stored)) return initialMessages;
-
-    const merged = [...initialMessages];
-    for (const storedMessage of stored) {
-      const existingIndex = merged.findIndex((message) => message.id === storedMessage.id);
-      if (existingIndex >= 0) {
-        merged[existingIndex] = storedMessage;
-      } else {
-        merged.push(storedMessage);
-      }
-    }
-    return removeExpiredMessages(merged);
-  } catch {
-    return initialMessages;
-  }
-}
-
-function nowLabel() {
-  return new Date().toLocaleTimeString("en-US", {
+function timeLabel(value: string) {
+  return new Date(value).toLocaleTimeString("ka-GE", {
     hour: "2-digit",
     minute: "2-digit",
-    hour12: true,
   });
 }
 
@@ -113,10 +82,17 @@ export function PubgMobileChatClient({
   avatarUrl,
 }: Props) {
   const [draft, setDraft] = useState("");
-  const [messages, setMessages] = useState<Message[]>(() => getInitialMessages(initialMessages));
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [sending, setSending] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [mutingAuthors, setMutingAuthors] = useState<Record<string, boolean>>({});
   const [mutedAuthors, setMutedAuthors] = useState<Record<string, boolean>>({});
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
+  const latestCursorRef = useRef<string | null>(
+    initialMessages.at(-1)
+      ? createChatCursor({ createdAt: initialMessages.at(-1)!.createdAt, id: initialMessages.at(-1)!.id })
+      : null,
+  );
 
   const canSend = useMemo(() => draft.trim().length > 0, [draft]);
   const isMuted = !!activeMuteUntil;
@@ -127,46 +103,68 @@ export function PubgMobileChatClient({
     node.scrollTo({ top: node.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      setMessages((prev) => {
-        const next = removeExpiredMessages(prev);
-        return next.length === prev.length ? prev : next;
-      });
-    }, 60_000);
+  const refreshMessages = async (showSpinner = false) => {
+    if (showSpinner) setRefreshing(true);
+    try {
+      const cursor = latestCursorRef.current;
+      const url = cursor
+        ? `/api/chat/pubg-mobile?cursor=${encodeURIComponent(cursor)}`
+        : "/api/chat/pubg-mobile";
+      const response = await fetch(url, { cache: "no-store" });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !Array.isArray(data?.messages)) return;
+      const incoming = data.messages as Message[];
+      if (typeof data?.nextCursor === "string") latestCursorRef.current = data.nextCursor;
+      setMessages((current) => mergeChatMessages(current, incoming));
+    } finally {
+      if (showSpinner) setRefreshing(false);
+    }
+  };
 
-    return () => window.clearInterval(id);
+  useEffect(() => {
+    const initialId = window.setTimeout(refreshMessages, 0);
+    const id = window.setInterval(refreshMessages, 3_000);
+    return () => {
+      window.clearTimeout(initialId);
+      window.clearInterval(id);
+    };
   }, []);
 
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(removeExpiredMessages(messages)));
-    } catch {}
-  }, [messages]);
-
-  const onSend = () => {
+  const onSend = async () => {
     const body = draft.trim();
-    if (!body || isMuted) return;
-
-    const author = currentUser?.displayName ?? currentUser?.username ?? "სტუმარი";
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        author,
-        body,
-        ago: nowLabel(),
-        isMine: true,
-        expiresAtMs: Date.now() + MESSAGE_TTL_MS,
-      },
-    ]);
-    setDraft("");
+    if (!body || isMuted || sending) return;
+    setSending(true);
+    try {
+      const response = await fetch("/api/chat/pubg-mobile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        const message = data?.error === "user_muted"
+          ? "ჩატში წერა დროებით შეზღუდულია"
+          : data?.error === "content_blocked"
+            ? data?.reason || "შეტყობინება მოდერაციამ დაბლოკა"
+            : data?.error === "rate_limited"
+              ? "ძალიან სწრაფად აგზავნი შეტყობინებებს"
+              : "შეტყობინება ვერ გაიგზავნა";
+        toast.error(message);
+        return;
+      }
+      const sentMessage = data as Message;
+      latestCursorRef.current = createChatCursor({ createdAt: sentMessage.createdAt, id: sentMessage.id });
+      setMessages((current) => mergeChatMessages(current, [sentMessage]));
+      setDraft("");
+    } finally {
+      setSending(false);
+    }
   };
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
-    if (canSend) onSend();
+    if (canSend) void onSend();
   };
 
   const onMute = async (author: string, profileSlug: string, durationKey: MuteDurationKey) => {
@@ -241,12 +239,13 @@ export function PubgMobileChatClient({
 
           <button
             type="button"
-            onClick={() => setMessages([])}
+            onClick={() => void refreshMessages(true)}
+            disabled={refreshing}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/5 bg-white/5 text-white/50 transition-all hover:border-pink-500/30 hover:bg-pink-500/10 hover:text-pink-400"
-            aria-label="ჩატის გასუფთავება"
-            title="ჩატის გასუფთავება"
+            aria-label="ჩატის განახლება"
+            title="ჩატის განახლება"
           >
-            <Trash2 className="h-5 w-5" />
+            <RefreshCw className={`h-5 w-5 ${refreshing ? "animate-spin" : ""}`} />
           </button>
         </header>
 
@@ -255,7 +254,7 @@ export function PubgMobileChatClient({
             <div className="space-y-5">
               {messages.map((message) => {
                 const isMine = !!message.isMine;
-                const authorUsername = message.author.toLowerCase().replace(/\s+/g, "-");
+                const authorUsername = message.authorUsername;
                 return (
                   <div key={message.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
                     <div className="max-w-[85%]">
@@ -268,7 +267,7 @@ export function PubgMobileChatClient({
                             <UserAvatar
                               username={authorUsername}
                               displayName={message.author}
-                              avatarUrl={null}
+                              avatarUrl={message.avatarUrl}
                               size="sm"
                             />
                             <p className="truncate text-[13px] font-bold leading-none text-white drop-shadow-sm">
@@ -329,7 +328,7 @@ export function PubgMobileChatClient({
                           {message.body}
                         </p>
                         <p className="relative z-10 mt-2 text-right text-[11px] font-bold text-white/40">
-                          {message.ago}
+                          {timeLabel(message.createdAt)}
                         </p>
                       </div>
                     </div>
@@ -362,11 +361,11 @@ export function PubgMobileChatClient({
                   />
                   <Button
                     type="button"
-                    onClick={onSend}
-                    disabled={!canSend}
+                    onClick={() => void onSend()}
+                    disabled={!canSend || sending}
                     className="h-12 w-12 shrink-0 rounded-full border border-cyan-500/50 bg-[linear-gradient(135deg,#06b6d4,#3b82f6)] p-0 text-white shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] disabled:opacity-50 disabled:hover:scale-100"
                   >
-                    <Send className="h-5 w-5" />
+                    {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
                   </Button>
                 </div>
               )

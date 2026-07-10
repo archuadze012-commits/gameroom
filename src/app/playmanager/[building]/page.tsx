@@ -53,7 +53,7 @@ const BUILDING_SPRITE_SRC: Record<string, string> = {
 // that could get stuck in a hidden buffer during hydration.
 export default async function BuildingPage({ params }: { params: Promise<{ building: string }> }) {
   return (
-    <div className="relative min-h-screen w-full bg-[#020806]">
+    <div className="relative min-h-screen w-full bg-background">
       <BuildingData params={params} />
     </div>
   );

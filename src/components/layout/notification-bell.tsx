@@ -1,16 +1,24 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { loadAndClearInvites, type GameInvite } from "@/lib/invites";
-import { INVITE_TOAST_DURATION_MS } from "@/lib/constants";
 import { playInviteSound } from "@/lib/sounds";
 import { useUnreadAnnouncements } from "./use-nav-data";
 
+type PersonalNotification = {
+  id: string;
+  title: string;
+  body: string | null;
+  link: string | null;
+  read_at: string | null;
+};
+
 export function NotificationBell() {
-  const [pending, setPending] = useState<GameInvite[]>([]);
+  const router = useRouter();
+  const [personal, setPersonal] = useState<PersonalNotification[]>([]);
   // Announcements come from the shared nav poller (one request serves the
   // bell, the mobile nav and the webview nav). Locally dismissed ids bridge
   // the gap until the poller refetches and sees the server-side read marks.
@@ -19,32 +27,32 @@ export function NotificationBell() {
   const prevCountRef = useRef(0);
 
   useEffect(() => {
-    const checkInvites = () => {
+    let cancelled = false;
+    const loadPersonal = async () => {
       try {
-        const raw = localStorage.getItem("gameroom_profile");
-        const profile = raw ? JSON.parse(raw) : {};
-        const username: string = profile.username ?? "";
-        if (!username) return;
-
-        const key = `gameroom_invites_${username}`;
-        const invites: GameInvite[] = JSON.parse(localStorage.getItem(key) ?? "[]");
-
-        if (invites.length > prevCountRef.current) {
+        const response = await fetch("/api/notifications?unread=1", { cache: "no-store" });
+        if (!response.ok || cancelled) return;
+        const data = await response.json();
+        const unread = (Array.isArray(data.notifications) ? data.notifications : []).filter(
+          (item: PersonalNotification) => !item.read_at,
+        ) as PersonalNotification[];
+        if (unread.length > prevCountRef.current) {
           playInviteSound();
         }
-        prevCountRef.current = invites.length;
-        setPending(invites);
+        prevCountRef.current = unread.length;
+        setPersonal(unread);
       } catch {}
     };
 
-    checkInvites();
-    const id = setInterval(checkInvites, 2000);
+    void loadPersonal();
+    const id = window.setInterval(loadPersonal, 15_000);
     return () => {
-      clearInterval(id);
+      cancelled = true;
+      window.clearInterval(id);
     };
   }, []);
 
-  const totalCount = pending.length + unreadAnnouncements.length;
+  const totalCount = personal.length + unreadAnnouncements.length;
 
   const handleClick = async () => {
     if (totalCount === 0) return;
@@ -79,36 +87,30 @@ export function NotificationBell() {
       });
     }
 
-    // Show invites
-    try {
-      const raw = localStorage.getItem("gameroom_profile");
-      const profile = raw ? JSON.parse(raw) : {};
-      const username: string = profile.username ?? "";
-      const invites = loadAndClearInvites(username);
-      setPending([]);
-
-      invites.forEach((invite, i) => {
-        setTimeout(() => {
-          toast(`${invite.fromDisplay}-ს ${invite.gameName}-ს თამაში წყურია. რას იზამ?`, {
-            duration: INVITE_TOAST_DURATION_MS,
-            action: {
-              label: "ვიყომარებ",
-              onClick: () =>
-                toast.success("წავედით 😎", {
-                  description: `${invite.gameName}-ში ${invite.fromDisplay} გელოდება.`,
-                }),
-            },
-            cancel: {
-              label: "მეზარება",
-              onClick: () =>
-                toast("გასაგებია 😒", {
-                  description: `${invite.fromDisplay} მაგარ უარზეა, იხტიბარს არ იტეხავს.`,
-                }),
-            },
+    const personalAcked = await Promise.all(
+      personal.map(async (item, index) => {
+        window.setTimeout(() => {
+          toast(item.title, {
+            description: item.body ?? undefined,
+            duration: 12_000,
+            action: item.link
+              ? { label: "გახსნა", onClick: () => router.push(item.link!) }
+              : undefined,
           });
-        }, i * 600);
-      });
-    } catch {}
+        }, index * 350);
+        try {
+          const response = await fetch(`/api/notifications/${item.id}`, { method: "PATCH" });
+          return response.ok ? item.id : null;
+        } catch {
+          return null;
+        }
+      }),
+    );
+    const personalAckedIds = new Set(personalAcked.filter((id): id is string => id !== null));
+    if (personalAckedIds.size > 0) {
+      setPersonal((current) => current.filter((item) => !personalAckedIds.has(item.id)));
+      prevCountRef.current = Math.max(0, personal.length - personalAckedIds.size);
+    }
   };
 
   return (

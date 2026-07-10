@@ -135,12 +135,12 @@ export function ProfileFeed({
                 <div className="min-w-0">
                   <Link
                     href={`/profile/${author.username}`}
-                    className="relative z-10 flex items-center gap-1 font-display text-[15px] font-black uppercase tracking-[0.04em] text-[#D0F8FF] drop-shadow-[0_0_8px_rgba(0,230,255,0.45)] transition-colors hover:text-white"
+                    className="relative z-10 flex items-center gap-1 font-display text-[15px] font-black uppercase tracking-[0.04em] text-white transition-colors hover:text-[#D0F8FF] hover:drop-shadow-[0_0_8px_rgba(0,230,255,0.45)]"
                   >
                     <span className="truncate">{authorName}</span>
                     {author.is_verified && <VerifiedBadge className="h-3.5 w-3.5 shrink-0" />}
                   </Link>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#D0F8FF]/70">{timeAgo(post.created_at)}</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45">{timeAgo(post.created_at)}</p>
                 </div>
                 <Link
                   href={`/profile/${author.username}/${post.id}`}

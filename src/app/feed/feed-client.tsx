@@ -211,10 +211,10 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
             <div className="relative z-[1] flex flex-1 flex-col gap-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#D0F8FF]/72 drop-shadow-[0_0_6px_rgba(0,230,255,0.3)]">
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/40">
                     შენი broadcast
                   </p>
-                  <h2 className="mt-1 font-display text-[18px] font-black uppercase tracking-[0.04em] text-[#D0F8FF] drop-shadow-[0_0_8px_rgba(0,230,255,0.45)]">
+                  <h2 className="mt-1 font-display text-[18px] font-black uppercase tracking-[0.04em] text-white">
                     ახალი პოსტი
                   </h2>
                 </div>
@@ -359,11 +359,11 @@ export function FeedClient({ currentUser, initialPosts, initialLikedIds, news, f
                       </Avatar>
                     </Link>
                     <div className="min-w-0 flex-1">
-                      <Link href={`/profile/${author.username}`} className="relative z-10 flex items-center gap-1.5 font-display text-[16px] font-black uppercase tracking-[0.04em] text-[#D0F8FF] drop-shadow-[0_0_8px_rgba(0,230,255,0.45)] transition-colors hover:text-white">
+                      <Link href={`/profile/${author.username}`} className="relative z-10 flex items-center gap-1.5 font-display text-[16px] font-black uppercase tracking-[0.04em] text-white transition-colors hover:text-[#D0F8FF] hover:drop-shadow-[0_0_8px_rgba(0,230,255,0.45)]">
                         <span className="truncate">{author.display_name || author.username}</span>
                         {author.is_verified && <VerifiedBadge className="h-4 w-4 shrink-0" />}
                       </Link>
-                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#D0F8FF]/72">{timeAgo(post.created_at)}</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/45">{timeAgo(post.created_at)}</p>
                     </div>
                     <span className="pubg-loadout-card relative inline-flex shrink-0 items-center gap-1.5 overflow-hidden px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-[#D0F8FF]">
                       <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { MessageCircle, Search, MessageSquare, Bell, Gamepad2, ShoppingBag, Flame, Building2, ArrowRight } from "lucide-react";
+import { MessageCircle, Search, MessageSquare, Bell, Gamepad2, ShoppingBag, Flame, ArrowRight } from "lucide-react";
 import { mockGames, crackedGames } from "@/lib/mock-data";
 import { HomeNotificationsWidget } from "@/components/home-notifications-widget";
 import { HomeSearchWidget } from "@/components/home-search-widget";
@@ -277,8 +277,8 @@ export default async function HomePage() {
                     <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-8 w-8 opacity-20" />
                     
                     <div className="relative z-[1] flex flex-col items-center gap-3">
-                      <Icon className="h-8 w-8 text-[#D0F8FF] drop-shadow-[0_0_8px_rgba(0,230,255,0.45)] transition-all duration-500 group-hover:text-white group-hover:scale-110 group-hover:drop-shadow-[0_0_16px_rgba(0,230,255,0.9)]" />
-                      <span className="font-display text-[11px] font-black uppercase tracking-[0.15em] text-[#D0F8FF] transition-all duration-300 group-hover:text-white group-hover:drop-shadow-[0_0_8px_rgba(0,230,255,0.5)]">
+                      <Icon className="h-8 w-8 text-white/70 transition-all duration-500 group-hover:text-[#D0F8FF] group-hover:scale-110 group-hover:drop-shadow-[0_0_16px_rgba(0,230,255,0.9)]" />
+                      <span className="font-display text-[11px] font-black uppercase tracking-[0.15em] text-white/70 transition-all duration-300 group-hover:text-[#D0F8FF] group-hover:drop-shadow-[0_0_8px_rgba(0,230,255,0.5)]">
                         {label}
                       </span>
                     </div>
@@ -287,25 +287,86 @@ export default async function HomePage() {
               ))}
             </div>
 
-            <Link href="/playmanager" className="hidden md:block w-full max-w-4xl group">
-              <article className="relative overflow-hidden rounded-[28px] border border-[#2b6b55] bg-[linear-gradient(135deg,rgba(3,18,13,0.96),rgba(6,33,24,0.94)_55%,rgba(9,52,38,0.92))] px-6 py-5 shadow-[0_0_0_1px_rgba(41,117,84,0.25),0_24px_60px_rgba(0,0,0,0.38)] transition-all duration-500 hover:-translate-y-1 hover:border-[#4fb488] hover:shadow-[0_0_0_1px_rgba(79,180,136,0.35)]">
-                <span aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_left,rgba(48,145,102,0.26),transparent_38%),radial-gradient(circle_at_right,rgba(95,201,152,0.18),transparent_34%)] opacity-90" />
-                <span aria-hidden className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(126,255,195,0.55),transparent)]" />
+            <Link href="/playmanager" className="pubg-loadout-link hidden md:block w-full max-w-4xl group" data-variant="pm-green">
+              <article className="pubg-loadout-card relative overflow-hidden px-6 py-5">
+                <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+                <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[3px] z-[5]" />
+                <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-12 w-12 opacity-25 z-[5]" />
                 <span className="relative z-[1] flex items-center justify-between gap-4">
                   <span className="flex items-center gap-4">
-                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#4fb488]/35 bg-[#143a2b]/80 text-[#d9ffec] transition-all duration-500 group-hover:scale-110 group-hover:border-[#7effc3]/55 group-hover:text-white group-hover:shadow-[0_0_18px_rgba(126,255,195,0.22)]">
-                      <Building2 className="h-6 w-6" />
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/45 transition-all duration-500 group-hover:scale-110 group-hover:border-[#7effc3]/55 group-hover:bg-[#143a2b]/80 group-hover:text-white group-hover:shadow-[0_0_18px_rgba(126,255,195,0.35)]">
+                      <svg id="_Слой_1" data-name="Слой 1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 760.12 829.78" className="playmanager-home-logo h-6 w-6">
+                        <defs>
+                          <style>{`
+                            .playmanager-home-logo .cls-1 { fill: currentColor; }
+                            .playmanager-home-logo .cls-2, .playmanager-home-logo .cls-3, .playmanager-home-logo .cls-4 { stroke-miterlimit: 10; }
+                            .playmanager-home-logo .cls-2, .playmanager-home-logo .cls-4 { stroke: currentColor; }
+                            .playmanager-home-logo .cls-2 { fill: currentColor; }
+                            .playmanager-home-logo .cls-5 { clip-path: url(#clippath); }
+                            .playmanager-home-logo .cls-3 { stroke: currentColor; stroke-width: 4px; }
+                            .playmanager-home-logo .cls-3, .playmanager-home-logo .cls-4 { fill: none; }
+                            .playmanager-home-logo .cls-4 { stroke-width: 9px; }
+                            .playmanager-home-logo path:not([class]) { fill: currentColor; }
+                            .playmanager-home-logo circle:not([class]) { fill: #0b0111; }
+                          `}</style>
+                          <clipPath id="clippath">
+                            <circle className="cls-4" cx="533.34" cy="638.18" r="164.39"/>
+                          </clipPath>
+                        </defs>
+                        <path className="cls-2" d="M.58,636.5s-4-152,46-200,126-53,126-53l90,220,18-154-35-66,44-20,39,24-32,59,32,161,76-219s89,11,130,44,50,186,50,186c0,0-97,87-292,83S.58,636.5,.58,636.5Z"/>
+                        <path d="M162.52,65.15c-15.21,53.32-5.36,126.23,6.9,179.9,6.22,12.23,15.69,28.12,25.73,39.77,1.41,1.79,3.77,4.2,5.31,5.94,3.48,3.93,7.49,7.63,11.29,11.22,1.11,.98,6.62,5.53,7.61,6.4,1.05,.85,3.69,2.7,4.8,3.55,1.86,1.4,4.54,3.36,6.52,4.55,1.97,1.21,4.72,3.14,6.73,4.23,15.96,9.27,33.75,15.84,52.03,18.43,5.16,.66,10.31,1.22,15.51,.58,35.25-3.99,70.86-29.45,91.24-57.85,3.04-4.32,5.79-8.84,8.14-13.54,20.5-43.47,30.26-92.3,26.63-140.33-1.65-21.39-6.21-42.57-13.47-62.85,16.13,40.11,20.16,84.72,13.77,127.39-4.03,26.77-11.61,53.11-23.07,77.69-12.3,24.55-33.06,44.11-56.46,58.05-16.52,9.61-35.32,17-54.74,16.71-30.07-2.48-58.94-15.12-82.13-34.22,0,0-6.22-5.32-6.22-5.32-3.88-3.72-7.98-7.55-11.51-11.62-5.49-6.01-10.67-12.46-15.19-19.21-1.27-1.95-3.39-4.77-4.53-6.79,0,0-4.16-7.02-4.16-7.02-1.29-2.02-2.77-5.04-3.85-7.19,0,0-3.67-7.28-3.67-7.28l-.09-.19c-6.46-29.84-10.92-60.15-12.3-90.66-.77-18.99-.45-38.11,1.85-56.99,1.36-11.24,3.59-22.67,7.35-33.35h0Z"/>
+                        <path d="M156.16,176.55s34.96-86.53,68.54-90.26c33.58-3.73,39.8,22.39,72.13,22.39s47.26-28.61,70.89-28.61,63.93,96.48,63.93,96.48c0,0,10.69-164.88-77.61-171.1C265.75-.77,128.66-32.92,156.16,176.55Z"/>
+                        <g>
+                          <circle cx="533.34" cy="638.18" r="169.89" transform="translate(-295.05 564.05) rotate(-45)"/>
+                          <path className="cls-1" d="M533.34,473.79c90.79,0,164.39,73.6,164.39,164.39s-73.6,164.39-164.39,164.39-164.39-73.6-164.39-164.39,73.6-164.39,164.39-164.39m0-11c-23.67,0-46.64,4.64-68.27,13.79-20.89,8.83-39.64,21.48-55.75,37.58-16.1,16.1-28.75,34.86-37.58,55.75-9.15,21.63-13.79,44.6-13.79,68.27s4.64,46.64,13.79,68.27c8.83,20.89,21.48,39.64,37.58,55.75,16.1,16.1,34.86,28.75,55.75,37.58,21.63,9.15,44.6,13.79,68.27,13.79s46.64-4.64,68.27-13.79c20.89-8.83,39.64-21.48,55.75-37.58,16.1-16.1,28.75-34.86,37.58-55.75,9.15-21.63,13.79-44.6,13.79-68.27s-4.64-46.64-13.79-68.27c-8.83-20.89-21.48-39.64-37.58-55.75-16.1-16.1-34.86-28.75-55.75-37.58-21.63-9.15-44.6-13.79-68.27-13.79h0Z"/>
+                        </g>
+                        <g>
+                          <g className="cls-5">
+                            <g>
+                              <polygon className="cls-1" points="505.21 687.25 476.6 637.7 505.21 588.15 562.43 588.15 591.03 637.7 562.43 687.25 505.21 687.25"/>
+                              <path d="M559.83,592.65l26.01,45.05-26.01,45.05h-52.02l-26.01-45.05,26.01-45.05h52.02m5.2-9h-62.41l-2.6,4.5-26.01,45.05-2.6,4.5,2.6,4.5,26.01,45.05,2.6,4.5h62.41l2.6-4.5,26.01-45.05,2.6-4.5-2.6-4.5-26.01-45.05-2.6-4.5h0Z"/>
+                            </g>
+                            <g>
+                              <polygon className="cls-1" points="421.8 825.28 393.19 775.73 421.8 726.17 479.01 726.17 507.62 775.73 479.01 825.28 421.8 825.28"/>
+                              <path d="M476.42,730.67l26.01,45.05-26.01,45.05h-52.02l-26.01-45.05,26.01-45.05h52.02m5.2-9h-62.41l-2.6,4.5-26.01,45.05-2.6,4.5,2.6,4.5,26.01,45.05,2.6,4.5h62.41l2.6-4.5,26.01-45.05,2.6-4.5-2.6-4.5-26.01-45.05-2.6-4.5h0Z"/>
+                            </g>
+                            <g>
+                              <polygon className="cls-1" points="669.1 687.25 640.49 637.7 669.1 588.15 726.31 588.15 754.92 637.7 726.31 687.25 669.1 687.25"/>
+                              <path d="M723.72,592.65l26.01,45.05-26.01,45.05h-52.02l-26.01-45.05,26.01-45.05h52.02m5.2-9h-62.41l-2.6,4.5-26.01,45.05-2.6,4.5,2.6,4.5,26.01,45.05,2.6,4.5h62.41l2.6-4.5,26.01-45.05,2.6-4.5-2.6-4.5-26.01-45.05-2.6-4.5h0Z"/>
+                            </g>
+                            <g>
+                              <polygon className="cls-1" points="583.79 820.48 555.18 770.93 583.79 721.38 641 721.38 669.61 770.93 641 820.48 583.79 820.48"/>
+                              <path d="M638.41,725.88l26.01,45.05-26.01,45.05h-52.02l-26.01-45.05,26.01-45.05h52.02m5.2-9h-62.41l-2.6,4.5-26.01,45.05-2.6,4.5,2.6,4.5,26.01,45.05,2.6,4.5h62.41l2.6-4.5,26.01-45.05,2.6-4.5-2.6-4.5-26.01-45.05-2.6-4.5h0Z"/>
+                            </g>
+                            <g>
+                              <polygon className="cls-1" points="341.28 686.29 312.67 636.74 341.28 587.19 398.5 587.19 427.11 636.74 398.5 686.29 341.28 686.29"/>
+                              <path d="M395.9,591.69l26.01,45.05-26.01,45.05h-52.02l-26.01-45.05,26.01-45.05h52.02m5.2-9h-62.41l-2.6,4.5-26.01,45.05-2.6,4.5,2.6,4.5,26.01,45.05,2.6,4.5h62.41l2.6-4.5,26.01-45.05,2.6-4.5-2.6-4.5-26.01-45.05-2.6-4.5h0Z"/>
+                            </g>
+                            <g>
+                              <polygon className="cls-1" points="421.8 552.1 393.19 502.55 421.8 452.99 479.01 452.99 507.62 502.55 479.01 552.1 421.8 552.1"/>
+                              <path d="M476.42,457.5l26.01,45.05-26.01,45.05h-52.02l-26.01-45.05,26.01-45.05h52.02m5.2-9h-62.41l-2.6,4.5-26.01,45.05-2.6,4.5,2.6,4.5,26.01,45.05,2.6,4.5h62.41l2.6-4.5,26.01-45.05,2.6-4.5-2.6-4.5-26.01-45.05-2.6-4.5h0Z"/>
+                            </g>
+                            <g>
+                              <polygon className="cls-1" points="583.79 551.14 555.18 501.59 583.79 452.04 641 452.04 669.61 501.59 641 551.14 583.79 551.14"/>
+                              <path d="M638.41,456.54l26.01,45.05-26.01,45.05h-52.02l-26.01-45.05,26.01-45.05h52.02m5.2-9h-62.41l-2.6,4.5-26.01,45.05-2.6,4.5,2.6,4.5,26.01,45.05,2.6,4.5h62.41l2.6-4.5,26.01-45.05,2.6-4.5-2.6-4.5-26.01-45.05-2.6-4.5h0Z"/>
+                            </g>
+                          </g>
+                          <circle className="cls-4" cx="533.34" cy="638.18" r="164.39"/>
+                        </g>
+                        <line className="cls-3" x1="601.87" y1="751.76" x2="559.7" y2="682.75"/>
+                        <line className="cls-3" x1="464.8" y1="747.93" x2="507.94" y2="682.75"/>
+                        <line className="cls-3" x1="399.62" y1="637.7" x2="667.5" y2="638.18"/>
+                        <line className="cls-3" x1="507.94" y1="592.65" x2="464.8" y2="527.47"/>
+                        <line className="cls-3" x1="559.7" y1="592.65" x2="601.87" y2="523.63"/>
+                      </svg>
                     </span>
                     <span className="flex flex-col items-start text-left">
-                      <span className="font-display text-[11px] font-black uppercase tracking-[0.22em] text-[#9edbbd]">
-                        Manager Mode
-                      </span>
-                      <span className="font-display text-[26px] font-black uppercase tracking-[0.08em] text-white transition-all duration-300 group-hover:text-[#d9ffec]">
+                      <span className="font-display text-[26px] font-black uppercase tracking-[0.08em] text-white/85 transition-all duration-300 group-hover:text-white group-hover:drop-shadow-[0_0_14px_rgba(126,255,195,0.4)]">
                         PlayManager
                       </span>
                     </span>
                   </span>
-                  <span className="flex items-center gap-2 font-display text-[12px] font-black uppercase tracking-[0.16em] text-[#c7f6df] transition-all duration-300 group-hover:text-white">
+                  <span className="flex items-center gap-2 font-display text-[12px] font-black uppercase tracking-[0.16em] text-white/35 transition-all duration-300 group-hover:text-[#c7f6df]">
                     შესვლა
                     <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </span>
@@ -321,7 +382,7 @@ export default async function HomePage() {
             {/* Left: Games */}
             <div className="space-y-6">
               <div className="flex items-end justify-between px-2 border-b border-white/[0.07] pb-3">
-                <DisplayHeading as="h2" size="md" className="text-[var(--gr-text)] drop-shadow-[0_0_12px_rgba(139,92,246,0.5)]">
+                <DisplayHeading as="h2" size="md" className="text-[var(--gr-text)] drop-shadow-[0_0_10px_rgba(139,92,246,0.28)]">
                   <EditableText siteKey="home.section.games" field="title" value={String(sectionGames.title ?? "თამაშები")} as="span" label="სექციის ტიტული" />
                 </DisplayHeading>
                 <Link href="/auth/login?next=%2Fgames" className="text-[11px] font-black uppercase tracking-[0.15em] text-[var(--gr-violet-hi)] transition-colors hover:text-white hover:drop-shadow-[0_0_8px_rgba(139,92,246,0.8)]">
@@ -352,7 +413,7 @@ export default async function HomePage() {
             {/* Right: Free PC Games */}
             <div className="space-y-6">
               <div className="flex items-end justify-between px-2 border-b border-white/[0.07] pb-3">
-                <DisplayHeading as="h2" size="md" className="text-[var(--gr-text)] drop-shadow-[0_0_12px_rgba(236,72,153,0.5)]">
+                <DisplayHeading as="h2" size="md" className="text-[var(--gr-text)] drop-shadow-[0_0_10px_rgba(236,72,153,0.28)]">
                   <EditableText siteKey="home.section.free_games" field="title" value={String(sectionFreeGames.title ?? "PC თამაშები უფასოდ")} as="span" label="სექციის ტიტული" />
                 </DisplayHeading>
                 <Link href="/auth/login?next=%2Ffree-pc-games" className="text-[11px] font-black uppercase tracking-[0.15em] text-[var(--gr-magenta)] transition-colors hover:text-white hover:drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]">
@@ -397,7 +458,7 @@ export default async function HomePage() {
                     <span aria-hidden className="pubg-loadout-field absolute inset-0" />
                     <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[5px]" />
                     <div className="relative z-[1] flex flex-col items-center">
-                      <Flame className="mb-4 h-10 w-10 text-[var(--gr-magenta)] drop-shadow-[0_0_15px_rgba(236,72,153,0.8)]" />
+                      <Flame className="mb-4 h-10 w-10 text-[var(--gr-magenta)]/85 drop-shadow-[0_0_10px_rgba(236,72,153,0.4)]" />
                       <p className="text-[14px] text-[var(--gr-text-mute)] font-medium">ჯერ არცერთი პოსტი არ არის. გახდი პირველი ვინც დაწერს!</p>
                     </div>
                   </div>
@@ -444,11 +505,11 @@ export default async function HomePage() {
                               </Link>
                               <div className="min-w-0 flex-1 pt-0.5">
                                 <div className="flex flex-col">
-                                  <Link href={author?.username ? `/profile/${author.username}` : "#"} className="relative z-10 font-display text-[15px] font-black uppercase tracking-[0.04em] text-[#D0F8FF] drop-shadow-[0_0_8px_rgba(0,230,255,0.45)] transition-colors hover:text-white">
+                                  <Link href={author?.username ? `/profile/${author.username}` : "#"} className="relative z-10 font-display text-[15px] font-black uppercase tracking-[0.04em] text-white transition-colors hover:text-[#D0F8FF] hover:drop-shadow-[0_0_8px_rgba(0,230,255,0.45)]">
                                     {name}
                                   </Link>
                                   {created && (
-                                    <span className="mt-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#D0F8FF]/72">
+                                    <span className="mt-1 text-[10px] font-black uppercase tracking-[0.18em] text-white/45">
                                       {created}
                                     </span>
                                   )}
@@ -507,7 +568,7 @@ export default async function HomePage() {
                   <span aria-hidden className="pubg-loadout-field absolute inset-0" />
                   <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[5px]" />
                   <div className="relative z-[1]">
-                    <h3 className="font-display text-[12px] font-black uppercase tracking-[0.2em] mb-5 text-[#D0F8FF] drop-shadow-[0_0_8px_rgba(0,230,255,0.6)]">
+                    <h3 className="font-display text-[12px] font-black uppercase tracking-[0.2em] mb-5 text-[#D0F8FF]/80">
                       უწყებები
                     </h3>
                     <HomeNotificationsWidget />
@@ -520,7 +581,7 @@ export default async function HomePage() {
                   <span aria-hidden className="pubg-loadout-field absolute inset-0" />
                   <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[5px]" />
                   <div className="relative z-[1]">
-                    <h3 className="font-display text-[12px] font-black uppercase tracking-[0.2em] mb-5 text-[#D0F8FF] drop-shadow-[0_0_8px_rgba(0,230,255,0.6)]">
+                    <h3 className="font-display text-[12px] font-black uppercase tracking-[0.2em] mb-5 text-[#D0F8FF]/80">
                       მოთამაშეების ძებნა
                     </h3>
                     <HomeSearchWidget />

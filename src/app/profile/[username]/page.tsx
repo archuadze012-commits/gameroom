@@ -378,7 +378,7 @@ export default async function ProfilePage({
                 <InviteButton
                   username={username}
                   displayName={displayName}
-                  gameSlugs={mockUser?.games.map((g) => g.slug) ?? []}
+                  gameSlugs={profileGameSlugs}
                 />
                 {targetUserId && session && <MessageButton targetUserId={targetUserId} />}
                 {targetUserId && (

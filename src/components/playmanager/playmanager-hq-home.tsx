@@ -6,7 +6,7 @@ import { PlayManagerBottomNav } from '@/components/playmanager/playmanager-botto
 
 export function PlayManagerHqHome() {
   return (
-    <main className="pm-hq-home pm-feedskin relative h-[100dvh] overflow-hidden bg-[#050706] text-white">
+    <main className="pm-hq-home pm-feedskin relative h-[100dvh] overflow-hidden bg-background text-white">
       <PlayManagerSidebar />
       <div className="absolute inset-0 pl-0 xl:pl-[116px]">
         <PlayManagerIsoCity />

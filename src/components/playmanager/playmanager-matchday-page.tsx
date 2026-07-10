@@ -140,7 +140,7 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
   }
 
   return (
-    <main className="pm-hq-home pm-feedskin relative min-h-screen overflow-x-hidden bg-[#03070c] text-white xl:pl-[116px]">
+    <main className="pm-hq-home pm-feedskin relative min-h-screen overflow-x-hidden bg-background text-white xl:pl-[116px]">
       <NavRail />
 
       <div className="mx-auto w-full max-w-[1280px] px-4 pb-28 pt-4 sm:px-6 lg:px-8 xl:pb-10">
@@ -159,7 +159,7 @@ export function PlayManagerMatchdayPage(props: MatchdayPageProps) {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mt-4 overflow-hidden rounded-[34px] border border-white/10 shadow-[0_40px_120px_rgba(0,0,0,0.5)]"
+          className="relative mt-4 overflow-hidden rounded-[34px] border border-white/10"
         >
           {/* Next 16: `priority` emits the preload but no longer implies
               fetchPriority — both are needed for a prioritized LCP preload. */}

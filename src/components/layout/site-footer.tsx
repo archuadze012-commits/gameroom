@@ -9,67 +9,47 @@ export function SiteFooter() {
   if (pathname !== "/") return null;
 
   return (
-    <footer className="relative mt-20 bg-[#05040b] backdrop-blur-3xl border-t border-white/5">
+    <footer className="relative mt-20 bg-[#05040b] backdrop-blur-3xl border-t border-white/5 py-8">
       {/* faint violet glow */}
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[rgba(139,92,246,0.6)] to-transparent opacity-80 shadow-[0_0_20px_rgba(139,92,246,0.5)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[rgba(139,92,246,0.4)] to-transparent opacity-80 shadow-[0_0_20px_rgba(139,92,246,0.3)]"
       />
 
-      <div className="container relative mx-auto grid gap-10 px-4 py-12 md:grid-cols-4">
-        {/* brand */}
-        <div className="md:col-span-2 space-y-4">
+      <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-6">
+        {/* left: Brand & Description */}
+        <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left">
           <Link href="/" className="inline-flex transition-transform hover:scale-105">
-            <SiteBrand iconSize={36} className="gap-2.5" wordmarkClassName="text-[20px]" />
+            <SiteBrand iconSize={28} className="gap-2" wordmarkClassName="text-[16px]" />
           </Link>
-          <p className="max-w-sm text-[13px] leading-relaxed text-white/60">
-            ქართველი გეიმერების სათემო პლატფორმა — გუნდის პოვნა, ფორუმი, ჩემპიონატები, კომუნიტი.
+          <span className="hidden md:inline text-white/20">|</span>
+          <p className="text-[12px] text-white/50">
+            ქართველი გეიმერების სათემო პლატფორმა
           </p>
         </div>
 
-        {/* navigate */}
-        <div className="space-y-4">
-          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.4)]">გვერდები</p>
-          <ul className="space-y-2 text-[13px] font-medium">
+        {/* right: Minimal Navigation Links & Copyright */}
+        <div className="flex flex-col items-center md:items-end gap-3">
+          <ul className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-[12px] font-medium text-white/60">
             {[
               { href: "/articles", label: "სტატიები" },
               { href: "/games", label: "თამაშები" },
               { href: "/lfg", label: "ლოკალი" },
               { href: "/tournaments", label: "ჩემპიონატები" },
-            ].map(({ href, label }) => (
-              <li key={href}>
-                <Link href={href} className="text-white/70 transition-colors hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]">
-                  {label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* social */}
-        <div className="space-y-4">
-          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.4)]">საზოგადოება</p>
-          <ul className="space-y-2 text-[13px] font-medium">
-            {[
-              { href: "/announcements", label: "უწყებები" },
-              { href: "/leaderboard", label: "Leaderboard" },
               { href: "/rules", label: "წესები" },
-              { href: "/settings", label: "პარამეტრები" },
             ].map(({ href, label }) => (
               <li key={href}>
-                <Link href={href} className="text-white/70 transition-colors hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]">
+                <Link href={href} className="transition-colors hover:text-white hover:drop-shadow-[0_0_6px_rgba(255,255,255,0.4)]">
                   {label}
                 </Link>
               </li>
             ))}
           </ul>
-        </div>
-      </div>
-
-      <div className="border-t border-white/[0.04]">
-        <div className="container mx-auto flex flex-col items-center justify-between gap-2 px-4 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 md:flex-row">
-          <span>© {new Date().getFullYear()} PLAYGAME.GE</span>
-          <span className="flex items-center gap-1">გაკეთებულია <span className="text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]">❤️</span>-ით საქართველოში</span>
+          <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-white/30">
+            <span>© {new Date().getFullYear()} PLAYGAME.GE</span>
+            <span>•</span>
+            <span className="flex items-center gap-0.5">გაკეთებულია <span className="text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]">❤️</span>-ით საქართველოში</span>
+          </div>
         </div>
       </div>
     </footer>

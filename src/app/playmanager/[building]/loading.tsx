@@ -3,5 +3,5 @@
 // animation-free hold instead of a blank flash while BuildingData fetches — this
 // is the loading.tsx that [building]/page.tsx's comment refers to.
 export default function BuildingLoading() {
-  return <div className="min-h-screen w-full bg-[#020806]" />;
+  return <div className="min-h-screen w-full bg-background" />;
 }

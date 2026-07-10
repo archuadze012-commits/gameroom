@@ -2,24 +2,27 @@ import { notFound } from "next/navigation";
 import { hasPermission } from "@/lib/admin";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { mockChatChannels, mockChatMessages, mockGames } from "@/lib/mock-data";
 import { PubgMobileChatClient } from "./pubg-mobile-chat-client";
 
 export const metadata = { title: "PUBG Mobile Chat" };
 
 export default async function PubgMobileChatPage() {
-  const game = mockGames.find((entry) => entry.slug === "pubg-mobile");
-  const channel = mockChatChannels.find((entry) => entry.gameSlug === "pubg-mobile" && entry.type === "game");
-
-  if (!game || !channel) notFound();
-
   const user = await getSession().catch(() => null);
+  const supabase = await createSupabaseServerClient();
+  const { data: game } = await supabase
+    .from("games")
+    .select("name_ka, icon_url, cover_url")
+    .eq("slug", "pubg-mobile")
+    .eq("active", true)
+    .maybeSingle();
+  if (!game) notFound();
+
+  const channel = { id: "pubg", name: `${game.name_ka} ჩატი` };
   const canManageChat = user ? await hasPermission("manage_chat").catch(() => false) : false;
   let currentUser: { username: string; displayName: string | null; avatarUrl: string | null } | null = null;
   let activeMuteUntil: string | null = null;
 
   if (user) {
-    const supabase = await createSupabaseServerClient();
     const { data: profile } = await supabase
       .from("profiles")
       .select("username, display_name, avatar_url")
@@ -38,7 +41,7 @@ export default async function PubgMobileChatPage() {
       .from("user_mutes")
       .select("expires_at")
       .eq("user_id", user.id)
-      .eq("channel_id", channel.id)
+      .or(`channel_id.eq.${channel.id},channel_id.is.null`)
       .order("created_at", { ascending: false })
       .limit(20);
 
@@ -59,8 +62,6 @@ export default async function PubgMobileChatPage() {
     }
   }
 
-  const messages = mockChatMessages[channel.id] ?? [];
-
   return (
     <div className="relative h-[calc(100dvh-8rem)] overflow-hidden bg-transparent xl:h-[calc(100dvh-4rem)]">
       {/* Cinematic Ambient Background */}
@@ -68,10 +69,10 @@ export default async function PubgMobileChatPage() {
 
       <div className="container relative mx-auto flex h-full items-stretch px-4 pb-6 pt-4 md:pb-7 md:pt-6 xl:pb-10 xl:pt-8">
         <PubgMobileChatClient
-          initialMessages={messages}
+          initialMessages={[]}
           currentUser={currentUser}
           title={channel.name}
-          avatarUrl={game.iconUrl ?? game.coverUrl ?? null}
+          avatarUrl={game.icon_url ?? game.cover_url ?? null}
           channelId={channel.id}
           canManageChat={canManageChat}
           activeMuteUntil={activeMuteUntil}

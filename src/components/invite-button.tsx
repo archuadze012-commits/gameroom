@@ -4,13 +4,8 @@ import { useState } from "react";
 import { Swords, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { mockGames } from "@/lib/mock-data";
 import { INVITE_SENT_FEEDBACK_MS } from "@/lib/constants";
-import { saveInvite, type GameInvite } from "@/lib/invites";
-
-// Re-exported for backward compatibility; the definitions now live in
-// @/lib/invites so global chrome can import them without this heavy component.
-export { saveInvite, loadAndClearInvites, type GameInvite } from "@/lib/invites";
+import { selectInviteGames } from "@/lib/critical-workflows";
 
 interface InviteButtonProps {
   username: string;
@@ -18,64 +13,76 @@ interface InviteButtonProps {
   gameSlugs: string[];
 }
 
-function makeInviteTimestamp() {
-  return Math.round(performance.timeOrigin + performance.now());
-}
+type InviteGame = {
+  slug: string;
+  nameKa: string;
+  coverUrl?: string;
+  emoji: string;
+};
 
 export function InviteButton({ username, displayName, gameSlugs }: InviteButtonProps) {
   const [open, setOpen] = useState(false);
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [games, setGames] = useState<InviteGame[]>([]);
+  const [loadingGames, setLoadingGames] = useState(false);
 
-  const games = gameSlugs
-    .map((slug) => mockGames.find((g) => g.slug === slug))
-    .filter(Boolean) as typeof mockGames;
-
-  const handlePick = (gameSlug: string) => {
-    const game = mockGames.find((g) => g.slug === gameSlug);
-    if (!game) return;
-    setOpen(false);
-    setSent(true);
-
-    // Read sender's username from localStorage
-    let fromUsername = "me";
-    let fromDisplay = "შენ";
+  const openPicker = async () => {
+    setOpen(true);
+    if (games.length > 0 || loadingGames) return;
+    setLoadingGames(true);
     try {
-      const raw = localStorage.getItem("gameroom_profile");
-      const profile = raw ? JSON.parse(raw) : {};
-      fromUsername = profile.username ?? "me";
-      fromDisplay = profile.displayName ?? fromUsername;
-    } catch {}
+      const response = await fetch("/api/games", { cache: "no-store" });
+      const catalog = await response.json().catch(() => []);
+      if (!response.ok || !Array.isArray(catalog)) throw new Error("games_fetch_failed");
+      setGames(selectInviteGames(catalog as InviteGame[], gameSlugs));
+    } catch {
+      toast.error("თამაშების სია ვერ ჩაიტვირთა");
+    } finally {
+      setLoadingGames(false);
+    }
+  };
 
-    const invite: GameInvite = {
-      id: crypto.randomUUID(),
-      fromUsername,
-      fromDisplay,
-      toUsername: username,
-      gameSlug: game.slug,
-      gameName: game.nameKa,
-      sentAt: makeInviteTimestamp(),
-    };
+  const handlePick = async (gameSlug: string) => {
+    const game = games.find((item) => item.slug === gameSlug);
+    if (!game || sending) return;
+    setSending(true);
+    try {
+      const response = await fetch("/api/invites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, gameSlug }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error || "invite_failed");
 
-    saveInvite(invite);
-
-    toast.success("შეთავაზება გაიგზავნა!", {
-      description: `${displayName}-ს ეცნობება ${game.nameKa}-ში თამაშის მოწვევა.`,
-      duration: 4000,
-    });
-
-    setTimeout(() => setSent(false), INVITE_SENT_FEEDBACK_MS);
+      setOpen(false);
+      setSent(true);
+      toast.success("შეთავაზება გაიგზავნა!", {
+        description: `${displayName}-ს ეცნობება ${game.nameKa}-ში თამაშის მოწვევა.`,
+        duration: 4000,
+      });
+      window.setTimeout(() => setSent(false), INVITE_SENT_FEEDBACK_MS);
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "invite_failed";
+      toast.error(
+        reason === "blocked" ? "ამ მომხმარებელთან მოწვევის გაგზავნა შეუძლებელია" : "მოწვევა ვერ გაიგზავნა",
+      );
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
     <>
       <Button
         size="sm"
-        onClick={() => setOpen(true)}
-        disabled={sent}
+        onClick={() => void openPicker()}
+        disabled={sent || sending}
         className={sent ? "bg-emerald-600 hover:bg-emerald-600" : ""}
       >
         {sent ? <Check className="mr-1.5 h-3.5 w-3.5" /> : <Swords className="mr-1.5 h-3.5 w-3.5" />}
-        {sent ? "გაიგზავნა" : "ვიყომაროთ"}
+        {sent ? "გაიგზავნა" : sending ? "იგზავნება..." : "ვიყომაროთ"}
       </Button>
 
       {open && (
@@ -97,13 +104,17 @@ export function InviteButton({ username, displayName, gameSlugs }: InviteButtonP
             <p className="mb-4 text-sm text-muted-foreground">{displayName}-ის ფავორიტი თამაშები</p>
 
             <div className="flex flex-col gap-2">
-              {games.length === 0 && (
+              {loadingGames && (
+                <p className="py-6 text-center text-sm text-muted-foreground">იტვირთება...</p>
+              )}
+              {!loadingGames && games.length === 0 && (
                 <p className="py-6 text-center text-sm text-muted-foreground">ფავორიტი თამაში არ მოიძებნა</p>
               )}
               {games.map((g) => (
                 <button
                   key={g.slug}
-                  onClick={() => handlePick(g.slug)}
+                  onClick={() => void handlePick(g.slug)}
+                  disabled={sending}
                   className="group relative flex items-center gap-3 overflow-hidden rounded-xl border border-border/60 bg-secondary/20 p-3 text-left transition-all hover:border-primary/40 hover:bg-secondary/40"
                 >
                   {g.coverUrl && (
@@ -115,7 +126,6 @@ export function InviteButton({ username, displayName, gameSlugs }: InviteButtonP
                   <span className="relative text-2xl">{g.emoji}</span>
                   <div className="relative">
                     <p className="font-medium leading-tight">{g.nameKa}</p>
-                    <p className="text-xs text-muted-foreground">{g.players.toLocaleString("en-US")} მოთამაშე</p>
                   </div>
                   <Swords className="relative ml-auto h-4 w-4 text-primary opacity-0 transition-opacity group-hover:opacity-100" />
                 </button>

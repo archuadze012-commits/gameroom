@@ -323,7 +323,7 @@ export function LineupTacticsStudio({
   }
 
   return (
-    <main className="pm-lineup-studio relative min-h-[100dvh] w-full overflow-x-hidden bg-[#04100a] pb-12 text-white">
+    <main className="pm-lineup-studio relative min-h-[100dvh] w-full overflow-x-hidden bg-background pb-12 text-white">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(110%_80%_at_50%_-10%,rgba(16,185,129,0.18),transparent_60%)]" />
 
       <div className="relative mx-auto w-full max-w-[1380px] px-3 py-4 sm:px-5 lg:px-7">

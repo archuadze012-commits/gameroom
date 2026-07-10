@@ -10,11 +10,12 @@ export async function isBlocked(a: string, b: string): Promise<boolean> {
   // Both a and b are among {blocker, blocked}. Since a !== b and self-blocks are
   // constrained out, the only rows this can match are the two directional pairs
   // (a→b, b→a) — so a hit means one of them has blocked the other.
-  const { data } = await db
+  const { data, error } = await db
     .from("user_blocks")
     .select("blocker_id")
     .in("blocker_id", [a, b])
     .in("blocked_id", [a, b]);
+  if (error) throw error;
   return (data?.length ?? 0) > 0;
 }
 

@@ -46,11 +46,12 @@ export async function POST(request: NextRequest) {
 
   // Block muted users (a mute on this channel, or a global channel_id=null mute)
   // before anything reaches the feed — mirrors the pubg-mobile chat gate.
-  const { data: mutes } = await supabase
+  const { data: mutes, error: muteError } = await supabase
     .from("user_mutes")
     .select("expires_at")
     .eq("user_id", user.id)
     .or(`channel_id.eq.${CHANNEL_ID},channel_id.is.null`);
+  if (muteError) return NextResponse.json({ error: "mute_check_failed" }, { status: 503 });
   const muted = (mutes ?? []).some(
     (m) => !m.expires_at || new Date(m.expires_at).getTime() > Date.now(),
   );
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await createSupabaseAdminClient()
     .from("chat_messages")
     .insert({
       channel_id: CHANNEL_ID,

@@ -13,6 +13,11 @@
 .pm-playmanager-root {
   --pm-side-nav-space: 0px;
   --pm-frame-edge-gap: 0px;
+  --background: #011104;
+  --gr-bg-0: #011104;
+  --sidebar: #011104;
+  background-color: #011104;
+  min-height: 100vh;
 }
 
 @media (orientation: landscape) and (min-width: 1100px) {
@@ -352,10 +357,9 @@ main:has(.pm-playmanager-root) {
     rgba(6, 10, 8, 0.62);
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.035),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 22px 60px rgba(0, 0, 0, 0.4);
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
   padding: 16px;
-  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+  transition: border-color 0.25s ease;
 }
 
 .pm-facility-module:hover {
@@ -365,45 +369,27 @@ main:has(.pm-playmanager-root) {
 .pm-facility-module-tone-green {
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.035),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 0 34px rgba(52, 211, 153, 0.1),
-    0 22px 60px rgba(0, 0, 0, 0.4);
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .pm-facility-module-tone-red {
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.035),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 0 34px rgba(248, 113, 113, 0.09),
-    0 22px 60px rgba(0, 0, 0, 0.4);
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .pm-facility-module-tone-gold {
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.035),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 0 34px rgba(253, 224, 71, 0.09),
-    0 22px 60px rgba(0, 0, 0, 0.4);
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .pm-facility-command-page {
-  background:
-    radial-gradient(circle at 24% 4%, rgba(34, 211, 238, 0.08), transparent 28%),
-    radial-gradient(circle at 82% 10%, rgba(234, 179, 8, 0.08), transparent 26%),
-    linear-gradient(180deg, #030706 0%, #060807 48%, #020302 100%);
+  background: var(--background);
 }
 
 .pm-facility-command-page::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
-  background-size: 56px 56px;
-  mask-image: linear-gradient(180deg, black, transparent 78%);
-  opacity: 0.55;
+  display: none;
 }
 
 .pm-facility-command-hero {
@@ -768,7 +754,7 @@ main:has(.pm-playmanager-root) {
   background:
     radial-gradient(120% 90% at 92% -8%, rgba(22, 163, 74, 0.05), transparent 46%),
     radial-gradient(120% 90% at 8% 108%, rgba(239, 68, 68, 0.045), transparent 46%),
-    #05070a;
+    var(--background);
 }
 
 /* Recolor the pubg-loadout neon border (hardcoded blue/purple/red at globals.css:267)

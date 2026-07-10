@@ -282,8 +282,8 @@ export function GlobalBackground({ storm = false }: { storm?: boolean }) {
       }
 
       const isCyan = forceColor ? forceColor === "cyan" : Math.random() < 0.3;
-      const color = isCyan ? "0,200,230" : "255,30,50";
-      const hue = isCyan ? 190 : 350; // plasma-bolt hue for the WebGL visual
+      const color = isCyan ? "0,200,230" : "255,27,141";
+      const hue = isCyan ? 190 : 330; // plasma-bolt hue for the WebGL visual
 
       // trigger screen flash
       flashAlpha = 0.12;
@@ -617,7 +617,7 @@ export function GlobalBackground({ storm = false }: { storm?: boolean }) {
     <div className="fixed inset-0 z-[-100] overflow-hidden bg-[var(--gr-bg-0)] select-none pointer-events-none">
       <canvas ref={canvasRef} className="absolute inset-0 z-[1]" />
       <LightningWebGL boltsRef={lightningRef} active={weatherState === "storm"} />
-      <div className="absolute inset-0 z-[2] bg-[linear-gradient(135deg,rgba(0,230,255,0.15)_0%,transparent_35%,transparent_65%,rgba(255,30,50,0.15)_100%)] pointer-events-none" />
+      <div className="absolute inset-0 z-[2] bg-[linear-gradient(135deg,rgba(0,230,255,0.15)_0%,transparent_35%,transparent_65%,rgba(255,27,141,0.15)_100%)] pointer-events-none" />
     </div>
   );
 }

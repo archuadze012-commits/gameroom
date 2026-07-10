@@ -20,7 +20,7 @@ import {
   Gift,
   Headphones,
 } from "lucide-react";
-import { mockGames, mockLfgPosts, mockTournaments, type MockGame } from "@/lib/mock-data";
+import type { MockGame } from "@/lib/mock-data";
 import { FindMatchButton } from "@/components/find-match-button";
 import { FavoriteGameButton } from "@/components/favorite-game-button";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -33,6 +33,28 @@ import { EmptyState } from "@/components/ui/empty-state";
 
 const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
 const LOBBY_GAMES = new Set<string>(["pubg-mobile"]);
+
+type GameLfgPreview = {
+  id: string;
+  authorName: string;
+  title: string;
+  rank: string;
+  region: string;
+  voiceRequired: boolean;
+  createdAgo: string;
+};
+
+type GameTournamentPreview = {
+  slug: string;
+};
+
+function createdAgo(value: string) {
+  const elapsedMinutes = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 60_000));
+  if (elapsedMinutes < 60) return `${elapsedMinutes} წთ წინ`;
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  if (elapsedHours < 24) return `${elapsedHours} სთ წინ`;
+  return `${Math.floor(elapsedHours / 24)} დღე წინ`;
+}
 
 function pubgCardDelay(index: number) {
   return { "--pubg-card-index": index } as React.CSSProperties;
@@ -249,11 +271,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     .select("name_ka, description, cover_url")
     .eq("slug", slug)
     .maybeSingle();
-  const mock = mockGames.find((e) => e.slug === slug);
-  if (!g && !mock) return { title: "თამაში ვერ მოიძებნა", robots: { index: false } };
-  const name = g?.name_ka ?? mock?.nameKa ?? slug;
+  if (!g) return { title: "თამაში ვერ მოიძებნა", robots: { index: false } };
+  const name = g.name_ka;
   const description = g?.description || `${name} — ლობი, ჩემპიონატები, გუნდები და შოპი PLAYGAME.GE-ზე.`;
-  const cover = g?.cover_url ?? mock?.coverUrl;
+  const cover = g.cover_url;
   return {
     title: name,
     description,
@@ -270,21 +291,81 @@ export default async function GamePage({
   const { slug } = await params;
 
   const supabase = await createSupabaseServerClient();
-  // Both queries depend only on `slug`, so fetch them together instead of
-  // awaiting the game row before starting the rooms query (~1 saved round trip).
-  const [{ data: dbGame }, { data: roomsRaw }] = await Promise.all([
-    supabase.from("games").select("*").eq("slug", slug).single(),
+  const fiveMinutesAgoDate = new Date();
+  fiveMinutesAgoDate.setMinutes(fiveMinutesAgoDate.getMinutes() - 5);
+  const fiveMinutesAgo = fiveMinutesAgoDate.toISOString();
+  const nowIso = new Date().toISOString();
+  const [
+    { data: dbGame, error: gameError },
+    { data: roomsRaw },
+    { data: lfgRaw },
+    { count: liveLfgCount },
+    { data: tournamentsRaw },
+    { count: playerCount },
+    { count: onlineCount },
+  ] = await Promise.all([
+    supabase.from("games").select("*").eq("slug", slug).maybeSingle(),
     supabase
       .from("game_rooms")
       .select("id, room_code, mode, map, perspective, max_players, current_players, host_id")
       .eq("game_slug", slug)
       .eq("status", "open")
-      .gt("expires_at", new Date().toISOString())
+      .gt("expires_at", nowIso)
       .limit(30),
+    supabase
+      .from("lfg_posts")
+      .select("id, title, rank, region, voice_required, created_at, profiles(username, display_name)")
+      .eq("game_slug", slug)
+      .eq("status", "open")
+      .is("deleted_at", null)
+      .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+      .order("created_at", { ascending: false })
+      .limit(6),
+    supabase
+      .from("lfg_posts")
+      .select("id", { count: "exact", head: true })
+      .eq("game_slug", slug)
+      .eq("status", "open")
+      .is("deleted_at", null)
+      .or(`expires_at.is.null,expires_at.gt.${nowIso}`),
+    supabase
+      .from("tournaments")
+      .select("slug, games:game_id!inner(slug)")
+      .eq("games.slug", slug)
+      .in("status", ["open", "checkin", "live"])
+      .order("starts_at", { ascending: true })
+      .limit(6),
+    supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("banned", false)
+      .contains("favorite_game_slugs", [slug]),
+    supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("banned", false)
+      .contains("favorite_game_slugs", [slug])
+      .gt("last_seen_at", fiveMinutesAgo),
   ]);
 
-  const game: MockGame | undefined = dbGame
-    ? {
+  if (gameError) throw gameError;
+  if (!dbGame) notFound();
+
+  const gameLfg: GameLfgPreview[] = (lfgRaw ?? []).map((post) => {
+    const profile = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles;
+    return {
+      id: post.id,
+      authorName: profile?.display_name || profile?.username || "მოთამაშე",
+      title: post.title,
+      rank: post.rank || "ნებისმიერი",
+      region: post.region || "GE",
+      voiceRequired: post.voice_required,
+      createdAgo: createdAgo(post.created_at),
+    };
+  });
+  const gameTournaments = (tournamentsRaw ?? []) as unknown as GameTournamentPreview[];
+
+  const game: MockGame = {
         slug: dbGame.slug,
         nameKa: dbGame.name_ka,
         nameEn: dbGame.name_en,
@@ -293,17 +374,12 @@ export default async function GamePage({
         emoji: dbGame.emoji ?? "🎮",
         iconUrl: dbGame.icon_url ?? undefined,
         coverUrl: dbGame.cover_url ?? undefined,
-        players: 0,
-        online: 0,
-        liveLfg: 0,
-        favoritedBy: 0,
-      }
-    : mockGames.find((entry) => entry.slug === slug);
+        players: playerCount ?? 0,
+        online: onlineCount ?? 0,
+        liveLfg: liveLfgCount ?? 0,
+        favoritedBy: playerCount ?? 0,
+      };
 
-  if (!game) notFound();
-
-  const gameLfg = mockLfgPosts.filter((post) => post.gameSlug === slug);
-  const gameTournaments = mockTournaments.filter((entry) => entry.gameSlug === slug);
   const hasLobby = LOBBY_GAMES.has(game.slug);
   const hasPubgCommandCards = true;
   const labels = getGameLabels(game.slug);

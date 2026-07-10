@@ -31,6 +31,9 @@ export async function GET(request: NextRequest) {
   // Strip PostgREST structural/wildcard chars so a crafted `q` can't break out
   // of the .or() filter string (filter injection). Keep it to a safe length.
   const q = rawQ.replace(/[,()*:%\\]/g, " ").trim().slice(0, 64);
+  const rawRole = request.nextUrl.searchParams.get("role")?.trim() ?? "";
+  const allowedRoles = new Set(["admin", "moderator", "organizer", "streamer", "esports", "journalist"]);
+  const role = allowedRoles.has(rawRole) ? rawRole : "";
   try {
     const sb = client();
     let query = sb
@@ -40,23 +43,12 @@ export async function GET(request: NextRequest) {
       .limit(MAX_RESULTS);
 
     if (q) {
-      query = query.or(`username.ilike.%${q}%,display_name.ilike.%${q}%`);
+      query = query.or(`username.ilike.%${q}%,display_name.ilike.%${q}%,region.ilike.%${q}%`);
     }
+    if (role) query = query.eq("role", role as "admin" | "moderator" | "organizer" | "streamer" | "esports" | "journalist");
 
     const { data, error } = await query;
     if (error) throw error;
-
-    // Tally followers ONLY for the (bounded) users we're returning — never scan
-    // the whole follows table.
-    const ids = (data ?? []).map((r) => r.id);
-    const followerCounts = new Map<string, number>();
-    if (ids.length > 0) {
-      const { data: follows } = await sb.from("follows").select("following_id").in("following_id", ids);
-      for (const row of follows ?? []) {
-        const id = (row as { following_id: string }).following_id;
-        followerCounts.set(id, (followerCounts.get(id) ?? 0) + 1);
-      }
-    }
 
     const now = new Date();
     const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
@@ -75,15 +67,11 @@ export async function GET(request: NextRequest) {
         bio: r.bio,
         isOnline: lastSeen ? lastSeen > fiveMinutesAgo : false,
         favoriteGameSlugs: Array.isArray(r.favorite_game_slugs) ? r.favorite_game_slugs : [],
-        followerCount: followerCounts.get(r.id) ?? 0,
+        followerCount: 0,
       };
     });
 
-    // sort by follower count desc, then by username asc as tiebreaker
-    profiles.sort((a, b) => {
-      if (b.followerCount !== a.followerCount) return b.followerCount - a.followerCount;
-      return a.username.localeCompare(b.username);
-    });
+    profiles.sort((a, b) => a.username.localeCompare(b.username));
 
     return NextResponse.json(profiles);
   } catch (e) {

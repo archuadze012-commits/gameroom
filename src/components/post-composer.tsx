@@ -142,14 +142,14 @@ export function PostComposer({
 
             <div className="min-w-0 flex-1 pt-0.5">
               <div className="flex items-center gap-2 mb-1">
-                <span className="font-display text-[16px] font-black uppercase tracking-[0.04em] text-[#D0F8FF] drop-shadow-[0_0_8px_rgba(0,230,255,0.45)]">
+                <span className="font-display text-[16px] font-black uppercase tracking-[0.04em] text-white">
                   {authorName}
                 </span>
                 <Pill tone="magenta" icon={<Activity className="h-3 w-3" />} pulse className="text-[10px]">
                   LIVE POST
                 </Pill>
               </div>
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#D0F8FF]/75 drop-shadow-[0_0_6px_rgba(0,230,255,0.3)]">
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/40">
                 share a moment
               </p>
             </div>

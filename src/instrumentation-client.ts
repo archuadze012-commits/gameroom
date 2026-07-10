@@ -11,3 +11,5 @@ Sentry.init({
   // Not enabling Session Replay/profiling here — free tier is scoped to error
   // tracking; add if/when the plan and need for it grow.
 });
+
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

@@ -143,12 +143,12 @@ export default async function PostDetailPage({
               <div>
                 <Link
                   href={`/profile/${author.username}`}
-                  className="flex items-center gap-1 font-display text-[15px] font-black uppercase tracking-[0.04em] text-[#D0F8FF] drop-shadow-[0_0_8px_rgba(0,230,255,0.45)] transition-colors hover:text-white"
+                  className="flex items-center gap-1 font-display text-[15px] font-black uppercase tracking-[0.04em] text-white transition-colors hover:text-[#D0F8FF] hover:drop-shadow-[0_0_8px_rgba(0,230,255,0.45)]"
                 >
                   {author.display_name || author.username}
                   {author.is_verified && <VerifiedBadge className="h-3.5 w-3.5" />}
                 </Link>
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#D0F8FF]/72">{timeAgoStr}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/45">{timeAgoStr}</p>
               </div>
             </div>
 

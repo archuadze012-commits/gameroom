@@ -164,22 +164,15 @@
   font-family: var(--font-orbitron), var(--font-firago), system-ui, sans-serif;
   font-weight: 900;
   letter-spacing: 0.13em;
-  background-image: linear-gradient(
-    92deg,
-    #cc0022 0%,
-    #ff1144 20%,
-    #0033cc 42%,
-    #0066ff 58%,
-    #ff1144 78%,
-    #cc0022 100%
-  );
-  background-size: 300% auto;
+  /* Idle: calm, balanced red↔blue two-stop wash — not the loud full-saturation
+     rainbow. The animated 6-stop gradient (below) only kicks in on hover, so
+     the resting brand mark doesn't read as red-dominant across every page. */
+  background-image: linear-gradient(92deg, #a8294a 0%, #4a4fc9 100%);
+  background-size: 100% auto;
   color: transparent;
   -webkit-text-fill-color: transparent;
   -webkit-background-clip: text;
   background-clip: text;
-  animation: site-title-pan 6s linear infinite, site-title-glow 2.8s ease-in-out infinite;
-  animation-play-state: paused; /* only animates on hover — see hover rule below */
 }
 
 @keyframes site-title-pan {
@@ -202,8 +195,17 @@
 
 .group:hover .site-title-wordmark,
 .site-title-wordmark:hover {
-  animation-duration: 3.5s, 1.8s;
-  animation-play-state: running;
+  background-image: linear-gradient(
+    92deg,
+    #cc0022 0%,
+    #ff1144 20%,
+    #0033cc 42%,
+    #0066ff 58%,
+    #ff1144 78%,
+    #cc0022 100%
+  );
+  background-size: 300% auto;
+  animation: site-title-pan 3.5s linear infinite, site-title-glow 1.8s ease-in-out infinite;
 }
 
 .site-brand-icon {
@@ -358,6 +360,24 @@
   --huashu-glow-blue: rgba(79, 70, 229, 0.4);
   --huashu-glow-purple-hover: rgba(22, 163, 74, 0.9);
   --huashu-glow-blue-hover: rgba(79, 70, 229, 0.8);
+}
+
+.pubg-loadout-link[data-variant="pm-green"] .pubg-loadout-card {
+  background: #011104 !important;
+  --huashu-purple: rgba(16, 185, 129, 0.15);
+  --huashu-blue: rgba(4, 120, 87, 0.15);
+  --huashu-border-purple: rgba(52, 211, 153, 0.8);
+  --huashu-border-blue: rgba(16, 185, 129, 0.8);
+
+  --huashu-glow-purple: rgba(16, 185, 129, 0.5);
+  --huashu-glow-blue: rgba(4, 120, 87, 0.4);
+  --huashu-glow-purple-hover: rgba(16, 185, 129, 0.9);
+  --huashu-glow-blue-hover: rgba(4, 120, 87, 0.8);
+}
+
+.pubg-loadout-link[data-variant="pm-green"] .pubg-loadout-card::before,
+.pubg-loadout-link[data-variant="pm-green"] .pubg-loadout-card::after {
+  background: conic-gradient(from var(--border-angle), #10b981, #047857, #34d399, #10b981) !important;
 }
 
 .pubg-loadout-field {
@@ -567,17 +587,17 @@
 /* Chat message bubbles: compact version of the site's loadout card language. */
 .msg-bubble {
   --msg-accent: var(--gr-cyan-glow);
-  --msg-accent-soft: rgba(0, 230, 255, 0.16);
-  --msg-accent-faint: rgba(0, 230, 255, 0.07);
+  --msg-accent-soft: rgba(0, 230, 255, 0.08);
+  --msg-accent-faint: rgba(0, 230, 255, 0.04);
   position: relative;
   isolation: isolate;
-  border: 1px solid color-mix(in srgb, var(--msg-accent) 36%, transparent);
+  border: 1px solid color-mix(in srgb, var(--msg-accent) 18%, transparent);
   background:
     linear-gradient(135deg, var(--msg-accent-soft) 0%, rgba(7, 7, 16, 0.74) 38%, var(--msg-accent-faint) 100%),
     rgba(2, 2, 4, 0.82);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.07) inset,
-    0 0 18px color-mix(in srgb, var(--msg-accent) 20%, transparent),
+    0 0 10px color-mix(in srgb, var(--msg-accent) 10%, transparent),
     0 14px 28px -18px rgba(0, 0, 0, 0.95);
   backdrop-filter: blur(14px);
 }
@@ -594,16 +614,16 @@
   inset: 0;
   border-radius: inherit;
   background:
-    radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--msg-accent) 24%, transparent), transparent 32%);
-  opacity: 0.85;
+    radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--msg-accent) 12%, transparent), transparent 32%);
+  opacity: 0.5;
 }
 
 .msg-bubble::after {
   top: 0;
   bottom: 0;
-  width: 3px;
+  width: 2px;
   background: linear-gradient(180deg, var(--msg-accent), color-mix(in srgb, var(--msg-accent) 12%, transparent));
-  box-shadow: 0 0 14px color-mix(in srgb, var(--msg-accent) 58%, transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--msg-accent) 30%, transparent);
 }
 
 .msg-bubble > * {
@@ -613,14 +633,14 @@
 
 .msg-bubble--mine {
   --msg-accent: var(--gr-violet-hi);
-  --msg-accent-soft: rgba(255, 30, 50, 0.19);
-  --msg-accent-faint: rgba(255, 107, 53, 0.08);
+  --msg-accent-soft: rgba(255, 27, 141, 0.1);
+  --msg-accent-faint: rgba(255, 107, 53, 0.05);
 }
 
 .msg-bubble--theirs {
   --msg-accent: var(--gr-cyan-glow);
-  --msg-accent-soft: rgba(0, 230, 255, 0.12);
-  --msg-accent-faint: rgba(59, 130, 246, 0.08);
+  --msg-accent-soft: rgba(0, 230, 255, 0.06);
+  --msg-accent-faint: rgba(59, 130, 246, 0.04);
 }
 
 .msg-bubble--mine::after {
@@ -635,7 +655,7 @@
   backdrop-filter: blur(10px);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.06) inset,
-    0 0 12px color-mix(in srgb, var(--msg-accent) 16%, transparent),
+    0 0 8px color-mix(in srgb, var(--msg-accent) 8%, transparent),
     0 10px 22px -18px rgba(0, 0, 0, 0.92);
 }
 
@@ -845,7 +865,7 @@
   border-radius: 28px;
   padding: 1.5px;
   background:
-    linear-gradient(135deg, rgba(0, 208, 255, 0.88) 0%, rgba(102, 74, 255, 0.74) 48%, rgba(255, 30, 50, 0.88) 100%);
+    linear-gradient(135deg, rgba(0, 208, 255, 0.88) 0%, rgba(102, 74, 255, 0.74) 48%, rgba(255, 27, 141, 0.88) 100%);
   box-shadow:
     0 0 0 1px rgba(186, 230, 253, 0.12),
     0 0 44px rgba(0, 208, 255, 0.12),
@@ -859,7 +879,7 @@
   border-radius: 26px;
   background:
     radial-gradient(circle at 18% 12%, rgba(0, 208, 255, 0.15), transparent 32%),
-    radial-gradient(circle at 84% 100%, rgba(255, 30, 50, 0.16), transparent 30%),
+    radial-gradient(circle at 84% 100%, rgba(255, 27, 141, 0.16), transparent 30%),
     linear-gradient(180deg, rgba(14, 18, 36, 0.92) 0%, rgba(7, 10, 23, 0.97) 52%, rgba(5, 7, 18, 0.99) 100%);
   pointer-events: none;
 }
@@ -928,7 +948,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgba(0, 208, 255, 0.12), transparent 36%, transparent 64%, rgba(255, 30, 50, 0.1));
+  background: linear-gradient(90deg, rgba(0, 208, 255, 0.12), transparent 36%, transparent 64%, rgba(255, 27, 141, 0.1));
   opacity: 0.9;
   pointer-events: none;
 }
@@ -1235,15 +1255,15 @@
 }
 
 .dark {
-  /* Gameroom v3 — Opera GX inspired: dark base, neon red/cyan accents,
+  /* Gameroom v3 — Opera GX inspired: dark base, neon pink/cyan accents,
      aggressive gaming aesthetic. All shadcn surfaces inherit these tokens. */
-  --background: #020204;
+  --background: #0B0111;
   --foreground: #E8EAF0;
   --card: #070710;
   --card-foreground: #E8EAF0;
   --popover: #070710;
   --popover-foreground: #E8EAF0;
-  --primary: #FF1E32;             /* neon red */
+  --primary: #FF1B8D;             /* neon pink */
   --primary-foreground: #FFFFFF;
   --secondary: #0E0E16;
   --secondary-foreground: #E8EAF0;
@@ -1253,22 +1273,22 @@
   --accent-foreground: #0B0B0F;
   --destructive: oklch(0.62 0.22 22);
   --destructive-foreground: #FFFFFF;
-  --border: rgba(255, 30, 50, 0.12);
+  --border: rgba(255, 27, 141, 0.12);
   --input: #0E0E16;
-  --ring: #FF1E32;
-  --chart-1: #FF1E32;
+  --ring: #FF1B8D;
+  --chart-1: #FF1B8D;
   --chart-2: #00E6FF;
   --chart-3: #A3E635;
   --chart-4: #FF6B35;
-  --chart-5: #8B5CF6;
-  --sidebar: #020204;
+  --chart-5: #6B35FF;
+  --sidebar: #0B0111;
   --sidebar-foreground: #E8EAF0;
-  --sidebar-primary: #FF1E32;
+  --sidebar-primary: #FF1B8D;
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #00E6FF;
   --sidebar-accent-foreground: #0B0B0F;
-  --sidebar-border: rgba(255, 30, 50, 0.12);
-  --sidebar-ring: #FF1E32;
+  --sidebar-border: rgba(255, 27, 141, 0.12);
+  --sidebar-ring: #FF1B8D;
   --font-sans: var(--font-firago), var(--font-alk-sanet), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -1293,7 +1313,7 @@
      Used by all pages and primitives in src/components/ui/. */
 
   /* canvas */
-  --gr-bg-0:       #020204;
+  --gr-bg-0:       #0B0111;
   --gr-bg-1:       #070710;
   --gr-bg-2:       #0A0A12;
   --gr-bg-light:   #F1ECE6;
@@ -1304,8 +1324,8 @@
   --gr-bg-elev-2:  var(--gr-bg-2);
 
   /* borders */
-  --gr-border:     rgba(255, 30, 50, 0.12);
-  --gr-border-hi:  rgba(255, 30, 50, 0.30);
+  --gr-border:     rgba(255, 27, 141, 0.12);
+  --gr-border-hi:  rgba(255, 27, 141, 0.30);
   --gr-divider-lt: rgba(10, 8, 20, 0.08);
 
   /* text */
@@ -1316,9 +1336,10 @@
   --gr-text-on-lt: #14101F;
 
   /* accents */
-  --gr-violet:     #FF1E32;    /* remapped: primary neon red */
-  --gr-violet-hi:  #FF4D5E;
+  --gr-violet:     #FF1B8D;    /* remapped: primary neon pink */
+  --gr-violet-hi:  #FF4FA8;
   --gr-magenta:    #00E6FF;    /* remapped: cyan accent */
+  --gr-purple:     #6B35FF;    /* secondary accent */
   --gr-amber:      #FF6B35;
   --gr-cyan-glow:  #00E6FF;
 
@@ -1338,12 +1359,12 @@
 
   /* gradients */
   --gr-grad-hero:   linear-gradient(135deg, #1A0A0A 0%, #0B0B0F 60%);
-  --gr-grad-violet: linear-gradient(135deg, #FF1E32 0%, #FF6B35 100%);
+  --gr-grad-violet: linear-gradient(135deg, #FF1B8D 0%, #FF6B35 100%);
   --gr-grad-amber:  linear-gradient(135deg, #FF6B35 0%, #FFB300 100%);
-  --gr-grad-card:   linear-gradient(180deg, rgba(255, 30, 50, 0.06), rgba(255, 30, 50, 0) 70%);
+  --gr-grad-card:   linear-gradient(180deg, rgba(255, 27, 141, 0.06), rgba(255, 27, 141, 0) 70%);
 
   /* glows */
-  --gr-glow-violet: 0 0 40px rgba(255, 30, 50, 0.35);
+  --gr-glow-violet: 0 0 40px rgba(255, 27, 141, 0.35);
   --gr-glow-amber:  0 0 30px rgba(255, 107, 53, 0.40);
 
   /* card shadow */
@@ -1432,6 +1453,7 @@
   --color-gr-violet:    var(--gr-violet);
   --color-gr-violet-hi: var(--gr-violet-hi);
   --color-gr-magenta:   var(--gr-magenta);
+  --color-gr-purple:    var(--gr-purple);
   --color-gr-amber:     var(--gr-amber);
   --color-gr-cyan-glow: var(--gr-cyan-glow);
   --color-gr-accent:    var(--gr-accent);
@@ -1449,7 +1471,7 @@
   html {
     @apply font-sans antialiased;
     color-scheme: dark;
-    background-color: #020204;
+    background-color: #0B0111;
   }
   body {
     @apply text-foreground;

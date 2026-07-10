@@ -163,7 +163,7 @@ export function BuildingPageClient({
 
   if (building.spriteKey === 'finance') {
     return (
-      <div className="relative min-h-screen w-full bg-[#070503]">
+      <div className="relative min-h-screen w-full bg-background">
         <PlayManagerOffice
           building={building}
           manager={manager}
@@ -182,7 +182,7 @@ export function BuildingPageClient({
 
   if (building.spriteKey === 'residence') {
     return (
-      <div className="relative min-h-screen w-full bg-[#05070a]">
+      <div className="relative min-h-screen w-full bg-background">
         <PlayManagerResidence
           building={building}
           manager={manager}
@@ -201,7 +201,7 @@ export function BuildingPageClient({
 
   if (building.spriteKey === 'training') {
     return (
-      <div className="relative min-h-screen w-full bg-[#05070a]">
+      <div className="relative min-h-screen w-full bg-background">
         <PlayManagerTraining
           building={building}
           manager={manager}
@@ -219,7 +219,7 @@ export function BuildingPageClient({
   }
 
   return (
-    <div className={`relative min-h-screen w-full bg-[#020806] ${initialArenaView === 'lineup' ? 'pm-arena-lineup-page' : ''}`}>
+    <div className={`relative min-h-screen w-full bg-background ${initialArenaView === 'lineup' ? 'pm-arena-lineup-page' : ''}`}>
       <BuildingWorkspace
         building={building}
         initialArenaView={initialArenaView}

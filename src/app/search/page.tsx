@@ -4,10 +4,11 @@ import { useState, useMemo, useEffect } from "react";
 import { Search, Users, Gamepad2, Download, ShieldCheck, Shield, Trophy, MonitorPlay, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
-import { mockGames, crackedGames, type CrackedGame } from "@/lib/mock-data";
+import { crackedGames, type CrackedGame } from "@/lib/mock-data";
 import { DisplayHeading } from "@/components/ui/display-heading";
 import { Pill } from "@/components/ui/pill";
 import type { PublicProfile, UserRole } from "@/lib/types";
+import { buildUserSearchUrl } from "@/lib/critical-workflows";
 
 const neonText = { color: "#ffffff", textShadow: "0 0 4px rgba(196,30,58,0.45), 0 0 10px rgba(196,30,58,0.2)" } as const;
 const neonMute = { color: "rgba(255,255,255,0.75)", textShadow: "0 0 3px rgba(196,30,58,0.3), 0 0 8px rgba(196,30,58,0.14)" } as const;
@@ -16,6 +17,15 @@ const neonMagenta = { color: "rgba(196,30,58,0.92)", textShadow: "0 0 4px rgba(1
 
 type Tab = "players" | "games" | "cracked";
 type RoleFilter = "all" | Exclude<UserRole, "user">;
+type SearchGame = {
+  slug: string;
+  nameKa: string;
+  nameEn: string;
+  description: string;
+  coverUrl?: string;
+  accent: string;
+  emoji: string;
+};
 type DbCrackedGameRow = {
   id: string;
   title: string;
@@ -193,16 +203,38 @@ export default function SearchPage() {
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [allUsers, setAllUsers] = useState<PublicProfile[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const [allGames, setAllGames] = useState<SearchGame[]>([]);
   const [dbCrackedGames, setDbCrackedGames] = useState<CrackedGame[]>([]);
   const [hiddenCrackedIds, setHiddenCrackedIds] = useState<Set<string>>(new Set());
   const [loadingCrackedGames, setLoadingCrackedGames] = useState(true);
 
   useEffect(() => {
-    fetch("/api/users")
-      .then((r) => r.json())
-      .then((data: PublicProfile[]) => setAllUsers(Array.isArray(data) ? data : []))
-      .catch(() => setAllUsers([]))
-      .finally(() => setLoadingUsers(false));
+    if (tab !== "players") return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setLoadingUsers(true);
+      fetch(buildUserSearchUrl(query, roleFilter), { signal: controller.signal, cache: "no-store" })
+        .then((response) => response.json())
+        .then((data: PublicProfile[]) => setAllUsers(Array.isArray(data) ? data : []))
+        .catch((error) => {
+          if (error instanceof DOMException && error.name === "AbortError") return;
+          setAllUsers([]);
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoadingUsers(false);
+        });
+    }, 300);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [query, roleFilter, tab]);
+
+  useEffect(() => {
+    fetch("/api/games", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((data: SearchGame[]) => setAllGames(Array.isArray(data) ? data : []))
+      .catch(() => setAllGames([]));
   }, []);
 
   useEffect(() => {
@@ -224,26 +256,18 @@ export default function SearchPage() {
   const q = query.toLowerCase().trim();
 
   const playerResults = useMemo(() => {
-    const byQuery = !q
-      ? allUsers
-      : allUsers.filter(
-          (u) =>
-            u.username.toLowerCase().includes(q) ||
-            (u.displayName ?? "").toLowerCase().includes(q) ||
-            (u.region ?? "").toLowerCase().includes(q),
-        );
-    return roleFilter === "all" ? byQuery : byQuery.filter((u) => u.role === roleFilter);
-  }, [q, roleFilter, allUsers]);
+    return allUsers;
+  }, [allUsers]);
 
   const gameResults = useMemo(() => {
-    if (!q) return mockGames;
-    return mockGames.filter(
+    if (!q) return allGames;
+    return allGames.filter(
       (g) =>
         g.nameKa.toLowerCase().includes(q) ||
         g.nameEn.toLowerCase().includes(q) ||
         g.description.toLowerCase().includes(q),
     );
-  }, [q]);
+  }, [allGames, q]);
 
   const allCrackedGames = useMemo(() => {
     const byId = new Map<string, CrackedGame>();
@@ -266,19 +290,6 @@ export default function SearchPage() {
 
   const onlineCount = useMemo(
     () => allUsers.filter((u) => u.isOnline).length,
-    [allUsers],
-  );
-
-  const roleCounts = useMemo(
-    () =>
-      Object.fromEntries(
-        ROLE_FILTERS.map((f) => [
-          f.role,
-          f.role === "all"
-            ? allUsers.length
-            : allUsers.filter((u) => u.role === f.role).length,
-        ]),
-      ) as Record<RoleFilter, number>,
     [allUsers],
   );
 
@@ -358,7 +369,6 @@ export default function SearchPage() {
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
             {ROLE_FILTERS.map((f) => {
               const isActive = roleFilter === f.role;
-              const count = roleCounts[f.role] ?? 0;
               return (
                 <button
                   key={f.role}
@@ -368,11 +378,6 @@ export default function SearchPage() {
                   <div className="relative z-10 flex items-center gap-1.5">
                     {f.icon}
                     {f.label}
-                    <span
-                      className={`rounded-full px-1.5 text-[10px] tabular-nums ${isActive ? 'bg-[rgba(196,30,58,0.3)] text-white' : 'bg-white/10 text-white/50'}`}
-                    >
-                      {count}
-                    </span>
                   </div>
                 </button>
               );
