@@ -21,8 +21,6 @@ import { getSiteContentValue } from "@/lib/site-content";
 import { Separator } from "@/components/ui/separator";
 import { PostReactions } from "@/app/feed/[id]/post-reactions";
 import { DeferMount } from "@/components/defer-mount";
-import { EditableText } from "@/components/admin/editable-text";
-import { EditableImage } from "@/components/admin/editable-image";
 import { PostComposer } from "@/components/post-composer";
 import { PostOwnerActions } from "@/components/post-owner-actions";
 import { PostContent } from "@/components/post-content";
@@ -210,26 +208,16 @@ export default async function HomePage() {
         {!user ? (
           <section className="relative z-10 mx-auto max-w-5xl text-center flex flex-col items-center pt-8">
             <div className="mb-8 relative group">
-              <EditableImage
-                siteKey="home.guest.hero"
-                field="logoUrl"
-                value={String(guestHero.logoUrl ?? "/playgame-logo.png")}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={String(guestHero.logoUrl ?? "/playgame-logo.png")}
                 alt="Gameroom"
-                imgClassName="relative z-10 h-44 w-44 object-contain transition-transform duration-700 group-hover:scale-105 lg:h-56 lg:w-56"
-                folder="home"
-                label="ლოგო"
+                className="relative z-10 h-44 w-44 object-contain transition-transform duration-700 group-hover:scale-105 lg:h-56 lg:w-56"
               />
             </div>
 
             <DisplayHeading as="h1" size="display" className="leading-[1.1] bg-[linear-gradient(180deg,#fff_0%,rgba(255,255,255,0.65)_100%)] bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(255,255,255,0.15)]">
-              <EditableText
-                siteKey="home.guest.hero"
-                field="headline"
-                value={String(guestHero.headline ?? "ყველაფერი, რის გამოც თამაშები გიყვარს")}
-                multiline
-                as="span"
-                label="ჰედლაინი"
-              />
+              {String(guestHero.headline ?? "ყველაფერი, რის გამოც თამაშები გიყვარს")}
             </DisplayHeading>
 
             <div className="mt-12 flex justify-center w-full max-w-[320px]">
@@ -383,7 +371,7 @@ export default async function HomePage() {
             <div className="space-y-6">
               <div className="flex items-end justify-between px-2 border-b border-white/[0.07] pb-3">
                 <DisplayHeading as="h2" size="md" className="text-[var(--gr-text)] drop-shadow-[0_0_10px_rgba(139,92,246,0.28)]">
-                  <EditableText siteKey="home.section.games" field="title" value={String(sectionGames.title ?? "თამაშები")} as="span" label="სექციის ტიტული" />
+                  {String(sectionGames.title ?? "თამაშები")}
                 </DisplayHeading>
                 <Link href="/auth/login?next=%2Fgames" className="text-[11px] font-black uppercase tracking-[0.15em] text-[var(--gr-violet-hi)] transition-colors hover:text-white hover:drop-shadow-[0_0_8px_rgba(139,92,246,0.8)]">
                   ყველა
@@ -414,7 +402,7 @@ export default async function HomePage() {
             <div className="space-y-6">
               <div className="flex items-end justify-between px-2 border-b border-white/[0.07] pb-3">
                 <DisplayHeading as="h2" size="md" className="text-[var(--gr-text)] drop-shadow-[0_0_10px_rgba(236,72,153,0.28)]">
-                  <EditableText siteKey="home.section.free_games" field="title" value={String(sectionFreeGames.title ?? "PC თამაშები უფასოდ")} as="span" label="სექციის ტიტული" />
+                  {String(sectionFreeGames.title ?? "PC თამაშები უფასოდ")}
                 </DisplayHeading>
                 <Link href="/auth/login?next=%2Ffree-pc-games" className="text-[11px] font-black uppercase tracking-[0.15em] text-[var(--gr-magenta)] transition-colors hover:text-white hover:drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]">
                   ყველა

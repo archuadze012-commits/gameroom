@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Zap, Gift, Star, ArrowRight, Radio, Play, Eye } from "lucide-react";
-import { EditableText } from "@/components/admin/editable-text";
 
 type FreeGame = {
   id: string;
@@ -107,13 +106,7 @@ export function HomeHeroCarousel({ cta, freeGames, freeGamesTitle, liveStreams =
 
               <Zap className="h-5 w-5 text-[var(--gr-magenta)] drop-shadow-[0_0_10px_rgba(236,72,153,0.8)] relative z-10 transition-transform duration-500 group-hover/btn:scale-110" />
               <span className="font-display font-black uppercase tracking-widest text-[16px] text-[var(--gr-text)] relative z-10 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] transition-colors duration-300 group-hover/btn:text-white">
-                <EditableText
-                  siteKey="home.user.cta"
-                  field="buttonLabel"
-                  value={cta.buttonLabel || "დაწყება"}
-                  as="span"
-                  label="ბუტონის წარწერა"
-                />
+                {cta.buttonLabel || "დაწყება"}
               </span>
             </Link>
           </div>

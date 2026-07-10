@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, ExternalLink, Info } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { playInviteSound } from "@/lib/sounds";
 import {
   DropdownMenu,
@@ -89,15 +88,16 @@ export function NotificationBell() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="შეტყობინებები" className="relative">
+      <DropdownMenuTrigger
+        aria-label="შეტყობინებები"
+        className="relative inline-flex h-9 w-9 items-center justify-center rounded-md text-white/75 transition-colors hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-400/70"
+      >
           <Bell className="h-4 w-4" />
           {totalCount > 0 && (
             <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
               {totalCount > 99 ? "99+" : totalCount}
             </span>
           )}
-        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"

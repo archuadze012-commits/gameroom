@@ -10,17 +10,11 @@ const WebViewSideNav = dynamic(() =>
   { ssr: false },
 );
 
-const AdminEditBar = dynamic(() =>
-  import("@/components/admin/admin-edit-bar").then((m) => m.AdminEditBar),
-  { ssr: false },
-);
-
-export function ClientChrome({ isAuthenticated = false, canEdit = false }: { isAuthenticated?: boolean; canEdit?: boolean }) {
+export function ClientChrome({ isAuthenticated = false }: { isAuthenticated?: boolean }) {
   const pathname = usePathname();
   const isPlayManager = pathname?.startsWith("/playmanager");
   const isLobby = pathname?.endsWith("/lobby");
   const isConversation = /^\/messages\/[^/]+$/.test(pathname ?? "");
-  const showAdminEditBar = canEdit && pathname !== "/";
   const showRightSideNav = false;
 
   useEffect(() => {
@@ -43,8 +37,7 @@ export function ClientChrome({ isAuthenticated = false, canEdit = false }: { isA
 
   return (
     <>
-      {isAuthenticated && (showRightSideNav ? <WebViewSideNav canEdit={canEdit} /> : <MobileTopNav />)}
-      {showAdminEditBar ? <AdminEditBar /> : null}
+      {isAuthenticated && (showRightSideNav ? <WebViewSideNav /> : <MobileTopNav />)}
     </>
   );
 }
