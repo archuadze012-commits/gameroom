@@ -5,6 +5,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getCanonicalOrigin, getRequestOriginFromHeaders, getSiteOrigin } from "@/lib/url";
 import { signupRateLimit } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
+import { cacheGoogleAvatar } from "@/lib/avatar-storage";
 
 const logger = createLogger("auth/callback");
 
@@ -65,6 +66,7 @@ export async function GET(request: NextRequest) {
       const user = data.user;
       const admin = createSupabaseAdminClient();
       const savedUsername = user.user_metadata?.username as string | undefined;
+      const providerAvatarUrl = user.user_metadata?.avatar_url as string | undefined;
       const emailPrefix = (user.email?.split("@")[0] ?? "user")
         .replace(/[^a-zA-Z0-9_]/g, "")
         .slice(0, 26);
@@ -95,6 +97,7 @@ export async function GET(request: NextRequest) {
           }
           // ────────────────────────────────────────────────────────────
 
+          const cachedAvatarUrl = await cacheGoogleAvatar(admin, user.id, providerAvatarUrl);
           await admin.from("profiles").insert({
             id: user.id,
             username: savedUsername ?? fallbackUsername,
@@ -102,12 +105,11 @@ export async function GET(request: NextRequest) {
               (user.user_metadata?.full_name as string | undefined) ??
               (user.user_metadata?.name as string | undefined) ??
               emailPrefix,
-            avatar_url: (user.user_metadata?.avatar_url as string | undefined) ?? null,
+            avatar_url: cachedAvatarUrl ?? providerAvatarUrl ?? null,
             email: user.email ?? null,
           });
         } else {
           hasProfile = true;
-          const nextAvatarUrl = user.user_metadata?.avatar_url as string | undefined;
           const profileUpdate: {
             email: string | null;
             updated_at: string;
@@ -120,10 +122,11 @@ export async function GET(request: NextRequest) {
           // Provider-hosted URLs can expire; never replace a user-uploaded avatar on login.
           if (
             !isUploadedAvatarUrl(existing.avatar_url) &&
-            typeof nextAvatarUrl === "string" &&
-            nextAvatarUrl.trim()
+            typeof providerAvatarUrl === "string" &&
+            providerAvatarUrl.trim()
           ) {
-            profileUpdate.avatar_url = nextAvatarUrl;
+            profileUpdate.avatar_url =
+              (await cacheGoogleAvatar(admin, user.id, providerAvatarUrl)) ?? providerAvatarUrl;
           }
 
           await admin.from("profiles").update(profileUpdate).eq("id", user.id);

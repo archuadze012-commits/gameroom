@@ -16,6 +16,7 @@
     "test:e2e:auth": "playwright test --config=playwright.auth.config.ts",
     "test:migrations": "node scripts/replay-migrations.mjs",
     "test:security-definer": "node scripts/audit-security-definer.mjs",
+    "avatars:cache-google": "tsx --env-file=.env.local scripts/cache-google-avatars.ts",
     "smoke:rls": "node scripts/rls-boundary-smoke.mjs",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/db/seed.ts",
