@@ -184,8 +184,10 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
   const nextDisplayNameChangeAt = displayNameChangedAt
     ? new Date(new Date(displayNameChangedAt).getTime() + DISPLAY_NAME_COOLDOWN_MS)
     : null;
+  // eslint-disable-next-line react-hooks/purity
   const displayNameLocked = !!nextDisplayNameChangeAt && nextDisplayNameChangeAt.getTime() > Date.now();
   const displayNameDaysLeft = nextDisplayNameChangeAt
+    // eslint-disable-next-line react-hooks/purity
     ? Math.max(1, Math.ceil((nextDisplayNameChangeAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
     : 0;
 
