@@ -401,6 +401,7 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          game_slug: string | null
           id: string
           level: number
           name: string
@@ -416,6 +417,7 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
+          game_slug?: string | null
           id?: string
           level?: number
           name: string
@@ -431,6 +433,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          game_slug?: string | null
           id?: string
           level?: number
           name?: string

@@ -13,6 +13,7 @@ const logger = createLogger("clan-actions");
 const createClanSchema = z.object({
   name: z.string().min(3, "სახელი მინიმუმ 3 ასო").max(100),
   tag: z.string().min(2, "ტეგი მინიმუმ 2 ასო").max(10),
+  gameSlug: z.string().min(1, "აირჩიე თამაში").max(64),
   description: z.string().max(1000).optional(),
 });
 
@@ -36,6 +37,7 @@ export async function createClanAction(
   const rawData = {
     name: formData.get("name"),
     tag: formData.get("tag"),
+    gameSlug: formData.get("gameSlug"),
     description: formData.get("description"),
   };
 
@@ -49,7 +51,7 @@ export async function createClanAction(
     };
   }
 
-  const { name, tag, description } = validated.data;
+  const { name, tag, gameSlug, description } = validated.data;
 
   // Clan name/tag/description render across the site — moderate them like every
   // other user-generated text channel (posts, LFG, chat, comments).
@@ -63,6 +65,17 @@ export async function createClanAction(
 
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
   const supabase = await createSupabaseServerClient();
+
+  // 0. Validate the chosen game exists (clans are game-scoped).
+  const { data: gameRow } = await supabase
+    .from("games")
+    .select("slug")
+    .eq("slug", gameSlug)
+    .eq("active", true)
+    .maybeSingle();
+  if (!gameRow) {
+    return { success: false, message: "არასწორი თამაში" };
+  }
 
   // 1. Check if user already in a clan
   const { data: existing } = await supabase
@@ -82,6 +95,7 @@ export async function createClanAction(
       name,
       slug,
       tag: tag.toUpperCase(),
+      game_slug: gameSlug,
       description,
       created_by: user.id,
     })

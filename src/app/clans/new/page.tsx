@@ -4,12 +4,25 @@ import { PageHeader } from "@/components/page-header";
 import { NewClanForm } from "./new-clan-form";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export default async function NewClanPage() {
-  const sessionUser = await getSession();
+export default async function NewClanPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ game?: string }>;
+}) {
+  const [sessionUser, { game: defaultGame }] = await Promise.all([getSession(), searchParams]);
   if (!sessionUser) {
     redirect("/auth/login");
   }
+
+  const supabase = await createSupabaseServerClient();
+  const { data: gameRows } = await supabase
+    .from("games")
+    .select("slug, name_ka")
+    .eq("active", true)
+    .order("name_ka", { ascending: true });
+  const games = (gameRows ?? []).map((g) => ({ slug: g.slug, nameKa: g.name_ka }));
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
@@ -26,7 +39,7 @@ export default async function NewClanPage() {
         description="მართე წევრები, მიიღე მონაწილეობა კლანურ ომებში და მოიპოვეთ რეპუტაცია სერვერზე."
       />
 
-      <NewClanForm />
+      <NewClanForm games={games} defaultGame={defaultGame} />
     </div>
   );
 }

@@ -10,7 +10,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { createClanAction, type ClanActionState } from "../actions";
 
-export function NewClanForm() {
+type GameOption = { slug: string; nameKa: string };
+
+export function NewClanForm({
+  games,
+  defaultGame,
+}: {
+  games: GameOption[];
+  defaultGame?: string;
+}) {
   const router = useRouter();
   const initialState: ClanActionState = { success: false };
   const [state, formAction, isPending] = useActionState(createClanAction, initialState);
@@ -44,6 +52,31 @@ export function NewClanForm() {
             <p className="text-xs text-destructive">{state.errors.tag[0]}</p>
           )}
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="gameSlug">თამაში</Label>
+        <select
+          id="gameSlug"
+          name="gameSlug"
+          required
+          defaultValue={defaultGame && games.some((g) => g.slug === defaultGame) ? defaultGame : ""}
+          disabled={isPending}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <option value="" disabled>
+            აირჩიე თამაში
+          </option>
+          {games.map((g) => (
+            <option key={g.slug} value={g.slug}>
+              {g.nameKa}
+            </option>
+          ))}
+        </select>
+        <p className="text-[11px] text-muted-foreground">კლანი ამ თამაშს მიება — ვერ შეიცვლება მოგვიანებით.</p>
+        {state.errors?.gameSlug && (
+          <p className="text-xs text-destructive">{state.errors.gameSlug[0]}</p>
+        )}
       </div>
 
       <div className="space-y-2">

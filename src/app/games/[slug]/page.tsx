@@ -608,7 +608,7 @@ export default async function GamePage({
                 {hasPubgCommandCards ? (
                   <>
                     <PubgCommandCard
-                      href="/clans"
+                      href={`/clans?game=${game.slug}`}
                       title="კლანის გვერდი"
                       label="CLAN HUB"
                       icon={<Shield />}
@@ -632,7 +632,7 @@ export default async function GamePage({
                   </>
                 ) : (
                   <>
-                    <Link href="/clans" className="group relative block">
+                    <Link href={`/clans?game=${game.slug}`} className="group relative block">
                       <div className="absolute -inset-[2px] bg-gradient-to-r from-pink-500 to-violet-500 rounded-xl blur opacity-30 group-hover:opacity-60 transition duration-500" />
                       <article
                         className="relative isolate h-full transition-transform duration-300 group-hover:-translate-y-1"

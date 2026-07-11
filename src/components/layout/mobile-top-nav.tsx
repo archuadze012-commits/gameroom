@@ -67,6 +67,7 @@ export function MobileTopNav() {
               <Link
                 key={href}
                 href={href}
+                data-tour={href === "/search" ? "nav-search-mobile" : undefined}
                 className={`relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-[22px] text-[9px] font-black uppercase tracking-[0.09em] transition-all duration-300 ${
                   active
                     ? "bg-[linear-gradient(135deg,rgba(236,72,153,0.18),rgba(139,92,246,0.12))] text-pink-400 drop-shadow-[0_0_12px_rgba(236,72,153,0.6)] shadow-[0_0_26px_rgba(236,72,153,0.25)] ring-1 ring-[rgba(236,72,153,0.3)] scale-105"

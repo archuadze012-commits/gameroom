@@ -1073,6 +1073,9 @@ export const clans = pgTable("clans", {
   avatarUrl: text("avatar_url"),
   bannerUrl: text("banner_url"),
   status: clanStatusEnum("status").default("open").notNull(),
+  // Clans belong to a specific game (matches games.slug); nullable only for
+  // legacy rows created before game-scoping.
+  gameSlug: varchar("game_slug", { length: 64 }),
   xp: integer("xp").default(0).notNull(),
   level: integer("level").default(1).notNull(),
   createdBy: uuid("created_by").notNull().references(() => profiles.id, { onDelete: "set null" }),

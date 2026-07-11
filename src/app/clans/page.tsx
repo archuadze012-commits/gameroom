@@ -27,17 +27,25 @@ type ClanListItem = {
   tag: string;
   description: string | null;
   avatar_url: string | null;
+  game_slug: string | null;
   xp: number;
   level: number;
   status: string;
   clan_members: { count: number }[];
 };
 
-export default async function ClansPage() {
+export default async function ClansPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ game?: string }>;
+}) {
   const supabase = await createSupabaseServerClient();
-  const sessionUser = await getSession().catch(() => null);
+  const [sessionUser, { game: gameFilter }] = await Promise.all([
+    getSession().catch(() => null),
+    searchParams,
+  ]);
 
-  const { data: clans } = await supabase
+  let clansQuery = supabase
     .from("clans")
     .select(`
       id,
@@ -46,12 +54,23 @@ export default async function ClansPage() {
       tag,
       description,
       avatar_url,
+      game_slug,
       xp,
       level,
       status,
       clan_members(count)
     `)
     .order("xp", { ascending: false });
+  if (gameFilter) clansQuery = clansQuery.eq("game_slug", gameFilter);
+
+  const [{ data: clans }, { data: gameRows }] = await Promise.all([
+    clansQuery,
+    supabase.from("games").select("slug, name_ka, icon_url").eq("active", true).order("name_ka", { ascending: true }),
+  ]);
+
+  const games = gameRows ?? [];
+  const gameBySlug = new Map(games.map((g) => [g.slug, g]));
+  const activeGame = gameFilter ? gameBySlug.get(gameFilter) : null;
 
   // Check if current user is in a clan
   let userClan: { slug: string } | null = null;
@@ -72,8 +91,12 @@ export default async function ClansPage() {
         <PageHeader
           color="indigo"
           eyebrow="გუნდები & კლანები"
-          title="გაერთიანდი და ითამაშე"
-          description="მოძებნე შენთვის შესაფერისი კლანი ან შექმენი ახალი, გაზარდეთ XP ერთად და მიიღეთ მონაწილეობა კლანურ ტურნირებში."
+          title={activeGame ? `${activeGame.name_ka} — კლანები` : "გაერთიანდი და ითამაშე"}
+          description={
+            activeGame
+              ? `${activeGame.name_ka}-ის კლანები. შეუერთდი გუნდს ან შექმენი ახალი ამ თამაშისთვის.`
+              : "მოძებნე შენთვის შესაფერისი კლანი ან შექმენი ახალი, გაზარდეთ XP ერთად და მიიღეთ მონაწილეობა კლანურ ტურნირებში."
+          }
           actions={
             userClan ? (
               <Button asChild className="rounded-full bg-indigo-500 hover:bg-indigo-600 text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]">
@@ -81,11 +104,42 @@ export default async function ClansPage() {
               </Button>
             ) : (
               <Button asChild className="rounded-full bg-indigo-500 hover:bg-indigo-600 text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]">
-                <Link href="/clans/new"><Plus className="mr-2 h-4 w-4" /> კლანის შექმნა</Link>
+                <Link href={gameFilter ? `/clans/new?game=${gameFilter}` : "/clans/new"}><Plus className="mr-2 h-4 w-4" /> კლანის შექმნა</Link>
               </Button>
             )
           }
         />
+
+        {/* Game filter chips */}
+        <div className="mt-6 flex flex-wrap gap-2">
+          <Link
+            href="/clans"
+            className={`rounded-full border px-3.5 py-1.5 text-[12px] font-black uppercase tracking-wider transition-colors ${
+              !gameFilter
+                ? "border-indigo-500/50 bg-indigo-500/15 text-indigo-300"
+                : "border-white/10 bg-white/[0.03] text-white/55 hover:text-white/80"
+            }`}
+          >
+            ყველა
+          </Link>
+          {games.map((g) => (
+            <Link
+              key={g.slug}
+              href={`/clans?game=${g.slug}`}
+              className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[12px] font-black uppercase tracking-wider transition-colors ${
+                gameFilter === g.slug
+                  ? "border-indigo-500/50 bg-indigo-500/15 text-indigo-300"
+                  : "border-white/10 bg-white/[0.03] text-white/55 hover:text-white/80"
+              }`}
+            >
+              {g.icon_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={g.icon_url} alt="" className="h-4 w-4 rounded object-cover" />
+              )}
+              {g.name_ka}
+            </Link>
+          ))}
+        </div>
 
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {((clans || []) as unknown as ClanListItem[]).map((clan) => (
@@ -110,6 +164,16 @@ export default async function ClansPage() {
                     </div>
                   </div>
 
+                  {clan.game_slug && gameBySlug.get(clan.game_slug) && (
+                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-1 text-[11px] font-bold text-indigo-300">
+                      {gameBySlug.get(clan.game_slug)!.icon_url && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={gameBySlug.get(clan.game_slug)!.icon_url!} alt="" className="h-3.5 w-3.5 rounded object-cover" />
+                      )}
+                      {gameBySlug.get(clan.game_slug)!.name_ka}
+                    </span>
+                  )}
+
                   <p className="text-sm text-white/60 line-clamp-2 h-10 font-medium">
                     {clan.description || "აღწერის გარეშე"}
                   </p>
@@ -132,8 +196,15 @@ export default async function ClansPage() {
           {(!clans || clans.length === 0) && (
             <div className="col-span-full py-20 text-center flex flex-col items-center">
               <ShieldAlert className="h-12 w-12 text-white/20 mb-4" />
-              <h3 className="text-lg font-bold text-white/50">ჯერ არცერთი კლანი არ შექმნილა</h3>
+              <h3 className="text-lg font-bold text-white/50">
+                {activeGame ? `${activeGame.name_ka}-ზე ჯერ კლანი არ არის` : "ჯერ არცერთი კლანი არ შექმნილა"}
+              </h3>
               <p className="text-sm text-white/30 mt-1">იყავი პირველი ვინც შექმნის გუნდს!</p>
+              <Button asChild className="mt-5 rounded-full bg-indigo-500 hover:bg-indigo-600 text-white">
+                <Link href={gameFilter ? `/clans/new?game=${gameFilter}` : "/clans/new"}>
+                  <Plus className="mr-2 h-4 w-4" /> კლანის შექმნა
+                </Link>
+              </Button>
             </div>
           )}
         </div>

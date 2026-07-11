@@ -71,7 +71,7 @@ export default async function ClanDetailPage({
     supabase
       .from("clans")
       .select(`
-        id, name, slug, tag, description, avatar_url, banner_url, xp, level, status,
+        id, name, slug, tag, description, avatar_url, banner_url, xp, level, status, game_slug,
         clan_members (
           id, role, joined_at,
           profiles ( id, username, display_name, avatar_url, is_verified )
@@ -82,6 +82,17 @@ export default async function ClanDetailPage({
   ]);
 
   if (!clan) notFound();
+
+  // The game this clan belongs to (clans are game-scoped).
+  let clanGame: { name_ka: string; icon_url: string | null } | null = null;
+  if (clan.game_slug) {
+    const { data: g } = await supabase
+      .from("games")
+      .select("name_ka, icon_url")
+      .eq("slug", clan.game_slug)
+      .maybeSingle();
+    clanGame = g ?? null;
+  }
 
   const members = (clan.clan_members || []) as ClanMember[];
   
@@ -148,11 +159,23 @@ export default async function ClanDetailPage({
 
       <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between mt-12 mb-10">
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
             <span className="text-xs font-mono text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
               [{clan.tag}]
             </span>
             <span className="text-xs text-muted-foreground uppercase">{clan.status}</span>
+            {clan.game_slug && clanGame && (
+              <Link
+                href={`/games/${clan.game_slug}`}
+                className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/25 bg-indigo-500/10 px-2.5 py-0.5 text-[11px] font-bold text-indigo-300 transition-colors hover:bg-indigo-500/20"
+              >
+                {clanGame.icon_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={clanGame.icon_url} alt="" className="h-3.5 w-3.5 rounded object-cover" />
+                )}
+                {clanGame.name_ka}
+              </Link>
+            )}
           </div>
           <h1 className="text-3xl font-bold font-display uppercase tracking-tight">{clan.name}</h1>
           <p className="mt-3 text-sm text-muted-foreground max-w-2xl leading-relaxed">
