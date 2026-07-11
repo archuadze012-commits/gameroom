@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -299,7 +300,9 @@ export function PubgMobileChatClient({
                                 align="end"
                                 className="w-40 border border-white/10 bg-black/90 backdrop-blur-xl shadow-2xl"
                               >
-                                <DropdownMenuLabel className="text-white/50 text-[10px] font-black uppercase tracking-wider">Mute ხანგრძლივობა</DropdownMenuLabel>
+                                <DropdownMenuGroup>
+                                  <DropdownMenuLabel className="text-white/50 text-[10px] font-black uppercase tracking-wider">Mute ხანგრძლივობა</DropdownMenuLabel>
+                                </DropdownMenuGroup>
                                 <DropdownMenuSeparator className="bg-white/10" />
                                 {MUTE_OPTIONS.map((option) => (
                                   <DropdownMenuItem

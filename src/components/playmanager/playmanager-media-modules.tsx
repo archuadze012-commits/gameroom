@@ -9,6 +9,7 @@ import { ReportButton } from "@/components/report-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -609,9 +610,11 @@ export function PlayManagerGlobalChat() {
                               align="end"
                               className="w-36 border border-white/10 bg-black/90 backdrop-blur-xl"
                             >
-                              <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-wider text-white/50">
-                                Mute ხანგრძლივობა
-                              </DropdownMenuLabel>
+                              <DropdownMenuGroup>
+                                <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-wider text-white/50">
+                                  Mute ხანგრძლივობა
+                                </DropdownMenuLabel>
+                              </DropdownMenuGroup>
                               <DropdownMenuSeparator className="bg-white/10" />
                               {MUTE_OPTIONS.map((option) => (
                                 <DropdownMenuItem
