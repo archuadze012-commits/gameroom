@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, FileText, MessageSquare, Bell, Menu, X, Search, Trophy, Gamepad2, Users, Settings, Star, ShoppingBag, LogOut, Building2, ArrowRight } from "lucide-react";
+import { Home, FileText, MessageSquare, Bell, Menu, X, Search, Trophy, Gamepad2, Users, Settings, Star, ShoppingBag, LogOut, Building2, ArrowRight, Gift } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useNavAnnouncementCount, useNavMessageCount, useNavProfile } from "./use-nav-data";
 
@@ -91,6 +91,7 @@ export function MobileTopNav() {
 
           {/* მეტი */}
           <button
+            data-tour="more-mobile"
             onClick={() => setMoreOpen((v) => !v)}
             className={`relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-[22px] text-[9px] font-black uppercase tracking-[0.09em] transition-all duration-300 ${
               moreOpen
@@ -168,6 +169,25 @@ export function MobileTopNav() {
                 </span>
               </span>
               <ArrowRight className="h-4 w-4 flex-shrink-0 text-[#c7f6df]" />
+            </Link>
+          </div>
+          {/* Invite — growth entry, surfaced prominently in the mobile chrome. */}
+          <div className="px-3 pt-2">
+            <Link
+              href="/invite"
+              onClick={() => setMoreOpen(false)}
+              className="group flex items-center justify-between gap-3 rounded-3xl border border-emerald-500/25 bg-[linear-gradient(135deg,rgba(6,30,22,0.9),rgba(9,44,32,0.85))] px-4 py-3 shadow-[0_8px_20px_rgba(0,0,0,0.3)] transition-transform duration-200 active:scale-[0.98]"
+            >
+              <span className="flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-2xl border border-emerald-400/40 bg-emerald-500/15 text-emerald-200">
+                  <Gift className="h-4.5 w-4.5" />
+                </span>
+                <span className="flex flex-col text-left">
+                  <span className="text-[13px] font-black text-white">მოიწვიე მეგობარი</span>
+                  <span className="text-[10.5px] font-bold text-emerald-300/80">+1000 NC ყოველ მოწვევაზე</span>
+                </span>
+              </span>
+              <ArrowRight className="h-4 w-4 flex-shrink-0 text-emerald-200" />
             </Link>
           </div>
           <div className="grid grid-cols-3 gap-2 p-3 pb-2">

@@ -4,15 +4,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { Bell, BellOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const raw = atob(base64);
-  const out = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
-  return out;
-}
+import { getPushSubscribed, isPushSupported, subscribeToPush, unsubscribeFromPush } from "@/lib/push-subscribe";
 
 const subscribeToPushSupport = () => () => {};
 
@@ -21,12 +13,7 @@ export function getPushSupportServerSnapshot() {
 }
 
 export function getPushSupportSnapshot() {
-  return (
-    typeof window !== "undefined" &&
-    "serviceWorker" in navigator &&
-    "PushManager" in window &&
-    "Notification" in window
-  );
+  return isPushSupported();
 }
 
 export function PushBell({ className }: { className?: string }) {
@@ -40,55 +27,23 @@ export function PushBell({ className }: { className?: string }) {
 
   useEffect(() => {
     if (!supported) return;
-
-    (async () => {
-      try {
-        const reg =
-          (await navigator.serviceWorker.getRegistration("/sw.js")) ??
-          (await navigator.serviceWorker.register("/sw.js"));
-        const sub = await reg.pushManager.getSubscription();
-        setSubscribed(!!sub);
-      } catch {}
-    })();
+    (async () => setSubscribed(await getPushSubscribed()))();
   }, [supported]);
 
   const enable = async () => {
-    if (!supported) return;
     setBusy(true);
     try {
-      const perm = await Notification.requestPermission();
-      if (perm !== "granted") {
+      const result = await subscribeToPush();
+      if (result === "ok") {
+        setSubscribed(true);
+        toast.success("Push notifications ჩაირთო ✅");
+      } else if (result === "denied") {
         toast.error("Notification permission გათიშულია ბრაუზერში.");
-        return;
-      }
-
-      const reg =
-        (await navigator.serviceWorker.getRegistration("/sw.js")) ??
-        (await navigator.serviceWorker.register("/sw.js"));
-
-      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-      if (!vapidKey) {
+      } else if (result === "no-vapid") {
         toast.error("VAPID key არ არის set");
-        return;
+      } else if (result !== "unsupported") {
+        toast.error("ვერ ჩაირთო");
       }
-
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey),
-      });
-
-      const subJson = sub.toJSON();
-      const res = await fetch("/api/push/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(subJson),
-      });
-      if (!res.ok) throw new Error();
-      setSubscribed(true);
-      toast.success("Push notifications ჩაირთო ✅");
-    } catch (e) {
-      console.error(e);
-      toast.error("ვერ ჩაირთო");
     } finally {
       setBusy(false);
     }
@@ -97,19 +52,9 @@ export function PushBell({ className }: { className?: string }) {
   const disable = async () => {
     setBusy(true);
     try {
-      const reg = await navigator.serviceWorker.getRegistration("/sw.js");
-      const sub = await reg?.pushManager.getSubscription();
-      if (sub) {
-        const endpoint = sub.endpoint;
-        await sub.unsubscribe();
-        await fetch(`/api/push/subscribe?endpoint=${encodeURIComponent(endpoint)}`, {
-          method: "DELETE",
-        });
-      }
+      const ok = await unsubscribeFromPush();
       setSubscribed(false);
-      toast.success("Push გათიშულია");
-    } catch {
-      toast.error("შეცდომა");
+      toast[ok ? "success" : "error"](ok ? "Push გათიშულია" : "შეცდომა");
     } finally {
       setBusy(false);
     }

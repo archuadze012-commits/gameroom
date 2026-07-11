@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogoutButton } from "@/components/logout-button";
-import { Home, Users, Trophy, FileText, Star, ShoppingBag, Search, LogIn, Gamepad2 } from "lucide-react";
+import { Home, Users, Trophy, FileText, Star, ShoppingBag, Search, LogIn, Gamepad2, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
@@ -95,6 +95,7 @@ export function SiteHeader() {
                 <Link
                   href={item.href}
                   aria-label={item.label}
+                  data-tour={item.href === "/lfg" ? "nav-lfg" : item.href === "/games" ? "nav-games" : item.href === "/search" ? "nav-search" : undefined}
                   className={`flex h-10 w-10 items-center justify-center transition-all duration-300 ${
                     active ? itemActiveClassName : itemIdleClassName
                   }`}
@@ -129,7 +130,7 @@ export function SiteHeader() {
             
             {profile ? (
               <DropdownMenu>
-                <DropdownMenuTrigger className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-transform hover:scale-105">
+                <DropdownMenuTrigger data-tour="settings-desktop" className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-transform hover:scale-105">
                   <Avatar className="h-9 w-9 border border-white/10 hover:border-pink-500/50 shadow-md">
                     <AvatarImage src={profile.avatarUrl} alt={profile.displayName} />
                     <AvatarFallback className="bg-primary/15 text-primary font-semibold">
@@ -179,6 +180,11 @@ export function SiteHeader() {
                       <DropdownMenuItem className="p-0 text-white/80">
                         <Link href="/lfg/new" className="flex w-full rounded-md px-3 py-2.5 text-white/80 hover:bg-cyan-300/10 hover:text-cyan-100">
                           ლოკალის დაპოსტვა
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="p-0">
+                        <Link href="/invite" className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 font-semibold text-emerald-300 hover:bg-emerald-400/10 hover:text-emerald-200">
+                          <Gift className="h-4 w-4" /> მოიწვიე მეგობარი
                         </Link>
                       </DropdownMenuItem>
                       {["admin", "moderator", "journalist"].includes(profile.role ?? "") && (

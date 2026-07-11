@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { type MockGame } from "@/lib/mock-data";
-import { useFavoriteSlugs } from "@/lib/use-favorite-slugs";
+import { FavoritesProvider, useFavorites } from "@/lib/favorites-context";
 import { FavoriteGameButton } from "@/components/favorite-game-button";
 import { GameCoverImage } from "@/components/game-cover-image";
 import { GameCard } from "./game-card";
@@ -49,9 +49,21 @@ function GameCardInner({ g }: { g: MockGame }) {
 // "favorites" split is layered on here in the client, reading the viewer's
 // favorite slugs from their browser session. Guests (and the first paint before
 // favorites load) simply see the full catalog with no favorites section.
+//
+// FavoritesProvider fetches the viewer's favorites ONCE for the whole page; the
+// split below and every FavoriteGameButton read that shared state instead of
+// each firing their own auth + profiles round-trip.
 export function GamesCatalog({ games }: { games: MockGame[] }) {
-  const favSlugs = useFavoriteSlugs();
-  const favSet = useMemo(() => new Set(favSlugs), [favSlugs]);
+  return (
+    <FavoritesProvider>
+      <GamesCatalogInner games={games} />
+    </FavoritesProvider>
+  );
+}
+
+function GamesCatalogInner({ games }: { games: MockGame[] }) {
+  const { slugs } = useFavorites();
+  const favSet = useMemo(() => new Set(slugs), [slugs]);
   const favGames = useMemo(() => games.filter((g) => favSet.has(g.slug)), [games, favSet]);
   const otherGames = useMemo(() => games.filter((g) => !favSet.has(g.slug)), [games, favSet]);
 

@@ -65,6 +65,12 @@ jobs:
       # RLS policies must have RLS enabled.
       - name: Security-definer audit
         run: npm run test:security-definer
+      # Column-level UPDATE grant coverage: every profiles column an
+      # authenticated-role client writes must be in the grant list, or the
+      # whole update 500s with "permission denied for table profiles" (caught
+      # dm_privacy shipping without a grant — see the script header).
+      - name: Profile write-grant coverage
+        run: npm run test:profile-grants
 
   build:
     name: next build

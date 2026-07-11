@@ -26,6 +26,8 @@ export function GameCoverImage({ slug, name, coverUrl, accent, className }: Game
       src={src}
       alt={name}
       className={className}
+      loading="lazy"
+      decoding="async"
       onError={() => setAttempt((current) => current + 1)}
     />
   );

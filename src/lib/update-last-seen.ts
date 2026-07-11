@@ -54,6 +54,16 @@ export async function updateLastSeen(userId?: string) {
             message: xpResult.message,
           });
         }
+
+        // Fresh-day activity is exactly the "returned on a later day" signal a
+        // pending referral needs — evaluate qualification once per day. No-op
+        // (fast) for users without a pending referral.
+        const { error: refError } = await supabase.rpc("process_referral_qualification", {
+          p_referred: targetUserId,
+        });
+        if (refError) {
+          logger.warn("referral qualification check failed", { userId: targetUserId, error: refError });
+        }
       }
     } else {
       const { error } = await supabase

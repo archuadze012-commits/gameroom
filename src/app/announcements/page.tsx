@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, Users, UserCheck, MessageSquare, Trophy, Gamepad2, Info, AlertTriangle, AlertOctagon, CheckCheck, Loader2, type LucideIcon } from "lucide-react";
+import { Bell, Users, UserCheck, MessageSquare, Trophy, Gamepad2, Info, AlertTriangle, AlertOctagon, CheckCheck, Loader2, Gift, type LucideIcon } from "lucide-react";
 import { PushBell } from "@/components/push-bell";
 import { Pill } from "@/components/ui/pill";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -15,6 +15,7 @@ type NotificationType =
   | "tournament_checkin"
   | "tournament_match"
   | "forum_reply"
+  | "referral"
   | "system";
 
 type Severity = "info" | "warning" | "critical";
@@ -54,6 +55,7 @@ const NOTIF_META: Record<NotificationType, { label: string; icon: LucideIcon; to
   tournament_checkin: { label: "ჩემპიონატი",  icon: Trophy,        tone: "amber" },
   tournament_match:   { label: "ჩემპიონატი",  icon: Gamepad2,      tone: "amber" },
   forum_reply:        { label: "პასუხი",      icon: MessageSquare, tone: "violet" },
+  referral:           { label: "მოწვევა",     icon: Gift,          tone: "online" },
   system:             { label: "სისტემა",     icon: Bell,          tone: "neutral" },
 };
 

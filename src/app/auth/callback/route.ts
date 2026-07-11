@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
   const redirectWithCleanup = (url: string) => {
     const response = NextResponse.redirect(url);
     response.cookies.delete("gr_oauth_origin");
+    response.cookies.delete("gr_ref");
     return response;
   };
 
@@ -108,6 +109,32 @@ export async function GET(request: NextRequest) {
             avatar_url: cachedAvatarUrl ?? providerAvatarUrl ?? null,
             email: user.email ?? null,
           });
+
+          // ── Referral attribution ─────────────────────────────────────
+          // If this signup arrived via an invite link (/i/CODE set a gr_ref
+          // cookie), record a pending referral. The reward is granted later,
+          // once the referred user qualifies (see process_referral_qualification).
+          const refCode = cookieStore.get("gr_ref")?.value?.trim().toUpperCase();
+          if (refCode && refCode.length >= 4) {
+            try {
+              const { data: referrer } = await admin
+                .from("profiles")
+                .select("id")
+                .eq("referral_code", refCode)
+                .maybeSingle();
+              if (referrer && referrer.id !== user.id) {
+                await admin.from("referrals").insert({
+                  referrer_id: referrer.id,
+                  referred_id: user.id,
+                  code_used: refCode,
+                  status: "pending",
+                });
+              }
+            } catch (e) {
+              logger.warn("referral attribution failed", { userId: user.id, error: e });
+            }
+          }
+          // ──────────────────────────────────────────────────────────────
         } else {
           hasProfile = true;
           const profileUpdate: {

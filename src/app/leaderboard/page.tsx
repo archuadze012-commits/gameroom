@@ -89,7 +89,7 @@ export default async function LeaderboardPage() {
             color="violet"
           >
             {(topXp ?? []).length === 0 ? (
-              <p className="py-12 text-center text-sm font-bold text-white/40">No data yet.</p>
+              <EmptyRank variant="xp" />
             ) : (
               ((topXp ?? []) as LeaderboardUser[]).map((u, i) => (
                 <Link
@@ -126,7 +126,7 @@ export default async function LeaderboardPage() {
             color="cyan"
           >
             {topCoins.length === 0 ? (
-              <p className="py-12 text-center text-sm font-bold text-white/40">No data yet.</p>
+              <EmptyRank variant="coins" />
             ) : (
               topCoins.map((u, i) => (
                 <Link
@@ -189,6 +189,41 @@ function LeaderboardSection({
         </div>
       </div>
     </section>
+  );
+}
+
+function EmptyRank({ variant }: { variant: "xp" | "coins" }) {
+  const isXp = variant === "xp";
+  return (
+    <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
+      <span
+        className={`grid h-14 w-14 place-items-center rounded-2xl bg-white/[0.03] ring-1 ring-white/10 ${
+          isXp ? "text-violet-400" : "text-cyan-400"
+        }`}
+      >
+        {isXp ? <Sparkles className="h-6 w-6" /> : <Coins className="h-6 w-6" />}
+      </span>
+      <div className="space-y-1">
+        <p className="font-display text-[15px] font-black uppercase tracking-wide text-white">
+          ჯერ არავინ არ არის რეიტინგში
+        </p>
+        <p className="mx-auto max-w-xs text-[13px] leading-relaxed text-white/45">
+          {isXp
+            ? "იყავი აქტიური PlayGame-ზე და აიწიე პირველ ადგილას."
+            : "მალე აქ საუკეთესო მოთამაშეები გამოჩნდებიან."}
+        </p>
+      </div>
+      <Link
+        href={isXp ? "/feed" : "/"}
+        className={`mt-2 rounded-full border px-5 py-2 text-[11px] font-black uppercase tracking-[0.16em] transition-colors ${
+          isXp
+            ? "border-violet-500/40 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20"
+            : "border-cyan-500/40 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20"
+        }`}
+      >
+        {isXp ? "დაწყება" : "მთავარზე"}
+      </Link>
+    </div>
   );
 }
 

@@ -92,6 +92,9 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
   const [storageKey, setStorageKey] = useState<string>(STORAGE_KEY_PREFIX);
   const [displayNameChangedAt, setDisplayNameChangedAt] = useState<string | null>(null);
   const [savedDisplayName, setSavedDisplayName] = useState("");
+  // Snapshot of the last-persisted profile — lets us detect unsaved edits and
+  // warn before the tab is closed/reloaded/navigated away from.
+  const [savedSnapshot, setSavedSnapshot] = useState<Profile>(defaults);
 
   useEffect(() => {
     async function init() {
@@ -129,7 +132,7 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
       const initialDisplayName = dbProfile?.display_name || (user?.user_metadata?.display_name as string | undefined) || stored.displayName || "";
       setSavedDisplayName(initialDisplayName);
 
-      setProfile({
+      const loaded: Profile = {
         ...defaults,
         ...stored,
         // profiles.username is the authoritative value /api/profile writes to;
@@ -151,7 +154,9 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
         inGameName: dbProfile?.in_game_name ?? stored.inGameName ?? "",
         gameId: dbProfile?.game_id ?? stored.gameId ?? "",
         mainGameSlug: dbProfile?.main_game_slug ?? stored.mainGameSlug ?? "",
-      });
+      };
+      setProfile(loaded);
+      setSavedSnapshot(loaded);
     }
     init();
   }, []);
@@ -180,6 +185,21 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
     }
     setGeneratingBio(false);
   };
+
+  // Warn before losing unsaved edits. beforeunload covers tab close / reload /
+  // hard navigation; App Router soft-nav (clicking an in-app Link) doesn't fire
+  // it, but this catches the destructive cases users actually lose work to.
+  const isDirty = JSON.stringify(profile) !== JSON.stringify(savedSnapshot);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
 
   const nextDisplayNameChangeAt = displayNameChangedAt
     ? new Date(new Date(displayNameChangedAt).getTime() + DISPLAY_NAME_COOLDOWN_MS)
@@ -248,6 +268,7 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
       // Persist locally only after a confirmed server save, so devices don't
       // diverge on a write that never landed.
       localStorage.setItem(storageKey, JSON.stringify(profile));
+      setSavedSnapshot(profile);
       if (profile.displayName !== savedDisplayName) {
         setDisplayNameChangedAt(new Date().toISOString());
         setSavedDisplayName(profile.displayName);
@@ -447,7 +468,10 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
         </p>
       </div>
 
-      <div className="flex justify-end pt-2">
+      <div className="flex items-center justify-between gap-3 pt-2">
+        <p className="text-[12px] font-medium text-amber-400" aria-live="polite">
+          {isDirty ? "შეუნახავი ცვლილებები გაქვს" : ""}
+        </p>
         <button
           type="submit"
           disabled={loading}

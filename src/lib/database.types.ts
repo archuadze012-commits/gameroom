@@ -3287,6 +3287,7 @@ export type Database = {
           last_xp_at: string | null
           level: number
           main_game_slug: string | null
+          referral_code: string | null
           region: string | null
           role: Database["public"]["Enums"]["user_role"]
           tiktok_followers: string | null
@@ -3322,6 +3323,7 @@ export type Database = {
           last_xp_at?: string | null
           level?: number
           main_game_slug?: string | null
+          referral_code?: string | null
           region?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           tiktok_followers?: string | null
@@ -3357,6 +3359,7 @@ export type Database = {
           last_xp_at?: string | null
           level?: number
           main_game_slug?: string | null
+          referral_code?: string | null
           region?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           tiktok_followers?: string | null
@@ -3424,6 +3427,57 @@ export type Database = {
           reset_at?: string
         }
         Relationships: []
+      }
+      referrals: {
+        Row: {
+          code_used: string | null
+          created_at: string
+          id: string
+          qualified_at: string | null
+          referred_id: string
+          referred_reward: number
+          referrer_id: string
+          referrer_reward: number
+          status: string
+        }
+        Insert: {
+          code_used?: string | null
+          created_at?: string
+          id?: string
+          qualified_at?: string | null
+          referred_id: string
+          referred_reward?: number
+          referrer_id: string
+          referrer_reward?: number
+          status?: string
+        }
+        Update: {
+          code_used?: string | null
+          created_at?: string
+          id?: string
+          qualified_at?: string | null
+          referred_id?: string
+          referred_reward?: number
+          referrer_id?: string
+          referrer_reward?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reports: {
         Row: {
@@ -4322,6 +4376,7 @@ export type Database = {
         Returns: Json
       }
       expire_old_lfg_posts: { Args: never; Returns: undefined }
+      gen_ref_code: { Args: never; Returns: string }
       is_admin: { Args: never; Returns: boolean }
       open_box: { Args: { p_id: string }; Returns: undefined }
       open_box_as: {
@@ -4701,6 +4756,10 @@ export type Database = {
           role_key: string
         }[]
       }
+      process_referral_qualification: {
+        Args: { p_referred: string }
+        Returns: boolean
+      }
       purchase_shop_item: { Args: { p_id: string }; Returns: undefined }
       purchase_shop_item_as: {
         Args: { p_item_id: string; p_user_id: string }
@@ -4748,6 +4807,7 @@ export type Database = {
         | "tournament_checkin"
         | "tournament_match"
         | "system"
+        | "referral"
       tournament_format: "single_elim" | "double_elim" | "round_robin"
       tournament_status:
         | "draft"
@@ -4770,6 +4830,7 @@ export type Database = {
         | "event_reward"
         | "spend"
         | "refund"
+        | "referral"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4919,6 +4980,7 @@ export const Constants = {
         "tournament_checkin",
         "tournament_match",
         "system",
+        "referral",
       ],
       tournament_format: ["single_elim", "double_elim", "round_robin"],
       tournament_status: [
@@ -4944,6 +5006,7 @@ export const Constants = {
         "event_reward",
         "spend",
         "refund",
+        "referral",
       ],
     },
   },

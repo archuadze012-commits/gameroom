@@ -23,6 +23,7 @@ import {
 import type { MockGame } from "@/lib/mock-data";
 import { FindMatchButton } from "@/components/find-match-button";
 import { FavoriteGameButton } from "@/components/favorite-game-button";
+import { FavoritesProvider } from "@/lib/favorites-context";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { DisplayHeading } from "@/components/ui/display-heading";
@@ -447,7 +448,9 @@ export default async function GamePage({
                 <DoorOpen className="h-3.5 w-3.5" /> ლობის გახსნა
               </ChevronButton>
             ) : null}
-            <FavoriteGameButton slug={game.slug} />
+            <FavoritesProvider>
+              <FavoriteGameButton slug={game.slug} />
+            </FavoritesProvider>
           </div>
         </div>
 

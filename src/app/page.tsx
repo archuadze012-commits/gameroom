@@ -22,6 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import { PostReactions } from "@/app/feed/[id]/post-reactions";
 import { DeferMount } from "@/components/defer-mount";
 import { PostComposer } from "@/components/post-composer";
+import { OnboardingChecklist } from "@/components/home/onboarding-checklist";
 import { PostOwnerActions } from "@/components/post-owner-actions";
 import { PostContent } from "@/components/post-content";
 export const dynamic = "force-dynamic";
@@ -114,6 +115,15 @@ export default async function HomePage() {
   } | null = null;
   let liveStreams: LiveStream[] = [];
   let isAdmin = false;
+  // First-run onboarding signals (see OnboardingChecklist). Default to "done" so
+  // that if the fetch fails we never nag with a checklist we can't verify.
+  let onboarding = {
+    hasProfile: true,
+    hasGames: true,
+    hasFollows: true,
+    hasPush: true,
+    hasClaimedDaily: true,
+  };
   type FreePcGameRow = { id: string; title: string; cover_url: string | null; rating: number };
   let freePcGamesDb: FreePcGameRow[] = [];
   try {
@@ -122,10 +132,10 @@ export default async function HomePage() {
     // profiles round trip (previously a separate getIsAdmin() query).
     const profilePromise = supabase
       .from("profiles")
-      .select("username, display_name, avatar_url, role, banned")
+      .select("username, display_name, avatar_url, role, banned, favorite_game_slugs, bio, last_login_award_at")
       .eq("id", user.id)
       .maybeSingle();
-    const [postsRes, articleRows, profileRes, streamsRes, crackedRes] = await Promise.all([
+    const [postsRes, articleRows, profileRes, streamsRes, crackedRes, followCountRes, pushCountRes] = await Promise.all([
       supabase
         .from("posts")
         .select("id, author_id, content, media_urls, likes_count, created_at, profiles!posts_author_id_profiles_id_fk(username, display_name, avatar_url)")
@@ -136,6 +146,9 @@ export default async function HomePage() {
       profilePromise,
       getLiveStreams(6),
       supabase.from("cracked_games").select("id, title, cover_url, rating").order("created_at", { ascending: false }).limit(3),
+      // Onboarding signals (head-only counts — no rows shipped).
+      supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", user.id),
+      supabase.from("push_subscriptions").select("*", { count: "exact", head: true }).eq("user_id", user.id),
     ]);
     liveStreams = streamsRes;
     freePcGamesDb = crackedRes.data ?? [];
@@ -155,6 +168,16 @@ export default async function HomePage() {
     feedItems = [...postItems, ...articleItems].sort((a, b) => b.date - a.date);
     const profile = profileRes.data;
     isAdmin = isAdminFromProfile(profile, user.email);
+    onboarding = {
+      // "complete profile" = avatar + a written bio (Google users start with an
+      // avatar but no bio, so this keeps the step meaningful).
+      hasProfile: !!profile?.avatar_url && !!profile?.bio?.trim(),
+      hasGames: Array.isArray(profile?.favorite_game_slugs) && profile.favorite_game_slugs.length > 0,
+      // Social-graph bootstrap — done once they follow at least 3 players.
+      hasFollows: (followCountRes.count ?? 0) >= 3,
+      hasPush: (pushCountRes.count ?? 0) > 0,
+      hasClaimedDaily: !!profile?.last_login_award_at,
+    };
     composerUser = {
       id: user.id,
       username: profile?.username ?? user.email?.split("@")[0] ?? "player",
@@ -226,6 +249,17 @@ export default async function HomePage() {
           </section>
         ) : (
           <section className="relative z-10 mx-auto w-full flex flex-col items-center gap-10">
+            <div className="w-full max-w-2xl">
+              <OnboardingChecklist
+                hasProfile={onboarding.hasProfile}
+                hasGames={onboarding.hasGames}
+                hasFollows={onboarding.hasFollows}
+                hasPush={onboarding.hasPush}
+                hasClaimedDaily={onboarding.hasClaimedDaily}
+                isAdmin={isAdmin}
+              />
+            </div>
+
             {/* PRIMARY CTA CAROUSEL */}
             <HomeHeroCarousel
               cta={{
