@@ -132,10 +132,10 @@ export function OnboardingSpotlight({
   const hH = hBottom - hTop;
   const centerX = Math.min(Math.max(hLeft + hW / 2, 130), W - 130);
   const labelBelow = hBottom + 120 < H;
-  const dark = "fixed border-0 p-0 bg-black/75";
+  const dark = "fixed border-0 p-0 bg-black/75 pointer-events-auto";
 
   return createPortal(
-    <div className="fixed inset-0 z-[100]">
+    <div className="fixed inset-0 z-[100] pointer-events-none">
       {/* Four dark rectangles frame the target, leaving it uncovered (still
           clickable/interactive); clicking any dark area closes. */}
       <button aria-label="დახურვა" onClick={onClose} className={dark} style={{ left: 0, top: 0, width: W, height: hTop }} />
@@ -158,7 +158,7 @@ export function OnboardingSpotlight({
 
       {/* Label + caret pointing at the target */}
       <div
-        className="fixed z-10 w-max max-w-[82vw] -translate-x-1/2"
+        className="fixed z-10 w-max max-w-[82vw] -translate-x-1/2 pointer-events-auto"
         style={{ left: centerX, ...(labelBelow ? { top: hBottom + 16 } : { bottom: H - hTop + 16 }) }}
       >
         <div className="relative rounded-xl border border-[var(--gr-violet-hi)]/60 bg-[var(--gr-bg-elev-1)] px-4 py-2.5 shadow-2xl">
