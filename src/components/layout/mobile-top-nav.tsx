@@ -195,6 +195,15 @@ export function MobileTopNav() {
               <Link
                 key={href}
                 href={href}
+                data-tour={
+                  href === "/games"
+                    ? "games-mobile"
+                    : href === "/search"
+                    ? "search-mobile"
+                    : href === "/lfg"
+                    ? "lfg-mobile"
+                    : undefined
+                }
                 onClick={() => setMoreOpen(false)}
                 className="group flex min-h-20 flex-col items-center justify-center gap-2 rounded-3xl border border-white/[0.05] bg-white/[0.02] px-2 py-3 text-center text-xs font-black text-white/75 shadow-[0_8px_20px_rgba(0,0,0,0.3)] transition-all duration-300 hover:border-[rgba(236,72,153,0.3)] hover:bg-[rgba(236,72,153,0.1)] hover:text-pink-400 hover:drop-shadow-[0_0_12px_rgba(236,72,153,0.5)] hover:scale-105"
               >
@@ -206,6 +215,7 @@ export function MobileTopNav() {
           <div className="grid grid-cols-2 gap-2 px-3 pb-3">
             <Link
               href="/settings"
+              data-tour="settings-mobile"
               onClick={() => setMoreOpen(false)}
               className="group flex min-h-14 items-center justify-center gap-2 rounded-3xl border border-white/[0.05] bg-white/[0.03] px-3 text-xs font-black text-white/80 shadow-[0_8px_20px_rgba(0,0,0,0.3)] transition-all duration-300 hover:border-violet-500/30 hover:bg-violet-500/10 hover:text-violet-400 hover:drop-shadow-[0_0_10px_rgba(139,92,246,0.4)]"
             >
