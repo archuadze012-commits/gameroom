@@ -6,14 +6,25 @@ import { AvatarUpload } from "@/components/avatar-upload";
 import { LinkedAccountsSection } from "@/components/linked-accounts-section";
 import { SkillAssessment } from "@/components/skill-assessment";
 import { PushBell } from "@/components/push-bell";
+import { ReferralRedeemSection } from "@/components/referral-redeem-section";
 import { LogoutButton } from "@/components/logout-button";
 import { LogOut } from "lucide-react";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClientOrNull } from "@/lib/supabase/admin";
 import { mockGames } from "@/lib/mock-data";
 
 export const metadata = { title: "პარამეტრები" };
+
+// Mirror of REDEEM_WINDOW_DAYS in app/api/referral/redeem — only surface the
+// promo-code field to accounts still inside the manual-attribution window (and
+// not already attributed). The API re-enforces both, so this is UX-only.
+const REFERRAL_REDEEM_WINDOW_DAYS = 14;
+
+function withinRedeemWindow(createdAt: string): boolean {
+  return Date.now() - new Date(createdAt).getTime() <= REFERRAL_REDEEM_WINDOW_DAYS * 86_400_000;
+}
 
 function SettingsSection({
   eyebrow,
@@ -65,8 +76,27 @@ export default async function SettingsPage() {
 
   const [{ data: dbGames }, { data: profile }] = await Promise.all([
     supabase.from("games").select("slug, name_ka, emoji"),
-    supabase.from("profiles").select("username, display_name, avatar_url").eq("id", user.id).maybeSingle(),
+    supabase.from("profiles").select("username, display_name, avatar_url, created_at").eq("id", user.id).maybeSingle(),
   ]);
+
+  // Whether to show the "enter your inviter's promo code" field. Gated to new
+  // accounts that haven't already been attributed a referrer. The existing-
+  // referral check needs the admin client — RLS on `referrals` only lets a user
+  // read rows where they are the REFERRER, not the referred side.
+  let canRedeemReferral = false;
+  if (profile?.created_at) {
+    if (withinRedeemWindow(profile.created_at)) {
+      const admin = createSupabaseAdminClientOrNull();
+      if (admin) {
+        const { data: existingReferral } = await admin
+          .from("referrals")
+          .select("id")
+          .eq("referred_id", user.id)
+          .maybeSingle();
+        canRedeemReferral = !existingReferral;
+      }
+    }
+  }
 
   // Avatar upload was previously only reachable from the profile page. Surface it
   // here too — settings is where users expect to change their photo. AvatarUpload
@@ -126,6 +156,17 @@ export default async function SettingsPage() {
         </SettingsSection>
 
         <LinkedAccountsSection />
+
+        {canRedeemReferral && (
+          <SettingsSection
+            eyebrow="მოწვევა"
+            title="პრომოკოდი"
+            accentColor="#10b981"
+            description="მოგიწვია მეგობარმა? ჩაწერე მისი კოდი და ორივემ მიიღეთ ჯილდო."
+          >
+            <ReferralRedeemSection />
+          </SettingsSection>
+        )}
 
         <SettingsSection eyebrow="ანგარიში" title="ანგარიში" accentColor="#f59e0b">
           <div className="space-y-5">

@@ -23,6 +23,8 @@ import { PostReactions } from "@/app/feed/[id]/post-reactions";
 import { DeferMount } from "@/components/defer-mount";
 import { PostComposer } from "@/components/post-composer";
 import { OnboardingChecklist } from "@/components/home/onboarding-checklist";
+import { HomeFeedSeed } from "@/components/home/home-feed-seed";
+import { getFeedSeed, type FeedSeed } from "@/lib/home/feed-seed";
 import { PostOwnerActions } from "@/components/post-owner-actions";
 import { PostContent } from "@/components/post-content";
 export const dynamic = "force-dynamic";
@@ -115,6 +117,8 @@ export default async function HomePage() {
   } | null = null;
   let liveStreams: LiveStream[] = [];
   let isAdmin = false;
+  // Seeded content for the empty-feed path (see getFeedSeed).
+  let feedSeed: FeedSeed = { suggestedUsers: [], lfgPosts: [] };
   // First-run onboarding signals (see OnboardingChecklist). Default to "done" so
   // that if the fetch fails we never nag with a checklist we can't verify.
   let onboarding = {
@@ -166,6 +170,11 @@ export default async function HomePage() {
       date: new Date(r.published_at).getTime(),
     }));
     feedItems = [...postItems, ...articleItems].sort((a, b) => b.date - a.date);
+    // Empty room → seed the feed with players to follow + open LFG (only pays
+    // the extra queries when there's nothing social to show).
+    if (feedItems.length === 0) {
+      feedSeed = await getFeedSeed(supabase, user.id);
+    }
     const profile = profileRes.data;
     isAdmin = isAdminFromProfile(profile, user.email);
     onboarding = {
@@ -475,16 +484,20 @@ export default async function HomePage() {
                 <PostComposer currentUser={composerUser} revalidatePath="/" />
               )}
               {feedItems.length === 0 ? (
-                <div className="pubg-loadout-link group relative block transition-all duration-500" data-variant="strike">
-                  <div className="pubg-loadout-card relative overflow-hidden p-16 text-center flex flex-col items-center">
-                    <span aria-hidden className="pubg-loadout-field absolute inset-0" />
-                    <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[5px]" />
-                    <div className="relative z-[1] flex flex-col items-center">
-                      <Flame className="mb-4 h-10 w-10 text-[var(--gr-magenta)]/85 drop-shadow-[0_0_10px_rgba(236,72,153,0.4)]" />
-                      <p className="text-[14px] text-[var(--gr-text-mute)] font-medium">ჯერ არცერთი პოსტი არ არის. გახდი პირველი ვინც დაწერს!</p>
+                feedSeed.suggestedUsers.length > 0 || feedSeed.lfgPosts.length > 0 ? (
+                  <HomeFeedSeed suggestedUsers={feedSeed.suggestedUsers} lfgPosts={feedSeed.lfgPosts} />
+                ) : (
+                  <div className="pubg-loadout-link group relative block transition-all duration-500" data-variant="strike">
+                    <div className="pubg-loadout-card relative overflow-hidden p-16 text-center flex flex-col items-center">
+                      <span aria-hidden className="pubg-loadout-field absolute inset-0" />
+                      <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[5px]" />
+                      <div className="relative z-[1] flex flex-col items-center">
+                        <Flame className="mb-4 h-10 w-10 text-[var(--gr-magenta)]/85 drop-shadow-[0_0_10px_rgba(236,72,153,0.4)]" />
+                        <p className="text-[14px] text-[var(--gr-text-mute)] font-medium">ჯერ არცერთი პოსტი არ არის. გახდი პირველი ვინც დაწერს!</p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )
               ) : (
                 <div className="space-y-4 pubg-card-stage">
                   {feedItems.map((item, index) => {

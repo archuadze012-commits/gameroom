@@ -84,6 +84,26 @@ create trigger trg_set_referral_code
   for each row
   execute function public.set_referral_code();
 
+-- Defensive backfill: a profile created before this trigger existed would have
+-- a null code (and thus be un-referrable / show "code generating…" forever on
+-- /invite). No-op on this repo's live DB (already backfilled) and on a fresh
+-- replay (every insert runs the trigger), but makes the migration self-healing
+-- for a DB caught in between.
+do $$
+declare r record; c text; tries int;
+begin
+  for r in select id from public.profiles where referral_code is null loop
+    tries := 0;
+    loop
+      c := public.gen_ref_code();
+      exit when not exists (select 1 from public.profiles where referral_code = c);
+      tries := tries + 1;
+      if tries > 6 then c := c || floor(random() * 10)::text; exit; end if;
+    end loop;
+    update public.profiles set referral_code = c where id = r.id;
+  end loop;
+end $$;
+
 -- ── public.referrals ─────────────────────────────────────────────────────
 -- One pending-then-rewarded row per referred user (referred_id is unique —
 -- a user can only ever be referred once). code_used is the code as typed at

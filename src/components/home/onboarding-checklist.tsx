@@ -33,7 +33,7 @@ type ActionKey = "push" | "daily";
 // bottom-sheet button). The spotlight picks whichever target is visible.
 const SETTINGS_SPOT: SpotTarget[] = [
   { sel: "settings-desktop", label: "დააჭირე ავატარს → პარამეტრები" },
-  { sel: "more-mobile", label: "გახსენი «მეტი» → პარამეტრები" },
+  { sel: "more-mobile", label: "გახსენი მეტი, აირჩიე პარამეტრები" },
 ];
 
 /**
