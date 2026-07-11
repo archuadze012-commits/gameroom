@@ -2,13 +2,19 @@
 
 import { useState, useEffect } from "react";
 import { Loader2, Sparkles, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { PROFILE_BIO_MAX_LENGTH } from "@/lib/constants";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Game = { slug: string; nameKa: string; emoji: string };
 
@@ -66,11 +72,26 @@ const TikTokIcon = () => (
   </svg>
 );
 
+const field =
+  "block h-11 w-full border-b-2 border-white/10 bg-black/40 px-4 text-[14px] font-medium text-white transition-all placeholder:text-white/30 focus:border-[var(--gr-violet-hi)] focus:bg-black/60 focus:outline-none hover:bg-black/50 [clip-path:polygon(0_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%)]";
+const fieldPlain =
+  "block h-10 w-full border-b-2 border-white/10 bg-black/40 px-3 text-[14px] font-medium text-white transition-all placeholder:text-white/30 focus:border-[var(--gr-violet-hi)] focus:bg-black/60 focus:outline-none hover:bg-black/50";
+const labelClass =
+  "mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-[var(--gr-violet-hi)]";
+const divider = "h-px w-full bg-gradient-to-r from-transparent via-[var(--gr-border-hi)] to-transparent";
+
+// Display name may only change once per cooldown window — mirrors the server
+// check in /api/profile. Username is not editable here at all: it's the
+// permanent profile URL slug, fixed at signup.
+const DISPLAY_NAME_COOLDOWN_MS = 14 * 24 * 60 * 60 * 1000;
+
 export function SettingsForm({ games = [] }: { games?: Game[] }) {
   const [profile, setProfile] = useState<Profile>(defaults);
   const [loading, setLoading] = useState(false);
   const [generatingBio, setGeneratingBio] = useState(false);
   const [storageKey, setStorageKey] = useState<string>(STORAGE_KEY_PREFIX);
+  const [displayNameChangedAt, setDisplayNameChangedAt] = useState<string | null>(null);
+  const [savedDisplayName, setSavedDisplayName] = useState("");
 
   useEffect(() => {
     async function init() {
@@ -82,6 +103,7 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
 
       // load authoritative fields from Supabase
       let dbProfile: {
+        username?: string | null;
         favorite_game_slugs?: string[] | null;
         bio?: string | null;
         voice_chat?: boolean | null;
@@ -90,6 +112,7 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
         tiktok_handle?: string | null;
         tiktok_followers?: string | null;
         display_name?: string | null;
+        display_name_changed_at?: string | null;
         in_game_name?: string | null;
         game_id?: string | null;
         main_game_slug?: string | null;
@@ -97,17 +120,23 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
       if (user) {
         const { data } = await supabase
           .from("profiles")
-          .select("favorite_game_slugs, bio, voice_chat, dm_privacy, youtube_handle, tiktok_handle, tiktok_followers, display_name, in_game_name, game_id, main_game_slug")
+          .select("username, favorite_game_slugs, bio, voice_chat, dm_privacy, youtube_handle, tiktok_handle, tiktok_followers, display_name, display_name_changed_at, in_game_name, game_id, main_game_slug")
           .eq("id", user.id)
           .single();
         dbProfile = data;
       }
+      setDisplayNameChangedAt(dbProfile?.display_name_changed_at ?? null);
+      const initialDisplayName = dbProfile?.display_name || (user?.user_metadata?.display_name as string | undefined) || stored.displayName || "";
+      setSavedDisplayName(initialDisplayName);
 
       setProfile({
         ...defaults,
         ...stored,
-        username: (user?.user_metadata?.username as string | undefined) || stored.username || "",
-        displayName: dbProfile?.display_name || (user?.user_metadata?.display_name as string | undefined) || stored.displayName || "",
+        // profiles.username is the authoritative value /api/profile writes to;
+        // user_metadata.username is only a best-effort mirror (see handleSubmit)
+        // and can drift if that mirror write fails, so it's the last resort.
+        username: dbProfile?.username || (user?.user_metadata?.username as string | undefined) || stored.username || "",
+        displayName: initialDisplayName,
         bio: dbProfile?.bio ?? stored.bio ?? "",
         voice: dbProfile?.voice_chat ?? stored.voice ?? true,
         dmPrivacy: (dbProfile?.dm_privacy as Profile["dmPrivacy"]) ?? stored.dmPrivacy ?? "everyone",
@@ -152,77 +181,110 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
     setGeneratingBio(false);
   };
 
+  const nextDisplayNameChangeAt = displayNameChangedAt
+    ? new Date(new Date(displayNameChangedAt).getTime() + DISPLAY_NAME_COOLDOWN_MS)
+    : null;
+  const displayNameLocked = !!nextDisplayNameChangeAt && nextDisplayNameChangeAt.getTime() > Date.now();
+  const displayNameDaysLeft = nextDisplayNameChangeAt
+    ? Math.max(1, Math.ceil((nextDisplayNameChangeAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+    : 0;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (displayNameLocked && profile.displayName !== savedDisplayName) {
+      toast.error(`საჩვენებელი სახელის შეცვლა შესაძლებელია ორ კვირაში ერთხელ — კიდევ ${displayNameDaysLeft} დღეში.`);
+      return;
+    }
     setLoading(true);
-    localStorage.setItem(storageKey, JSON.stringify(profile));
     try {
-      const supabase = createSupabaseBrowserClient();
-      await supabase.auth.updateUser({
-        data: { username: profile.username, display_name: profile.displayName },
-      });
-    } catch {}
-    try {
-      const res = await fetch("/api/profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: profile.username,
-          displayName: profile.displayName,
-          bio: profile.bio,
-          voiceChat: profile.voice,
-          dmPrivacy: profile.dmPrivacy,
-          favoriteGameSlugs: profile.favoriteGameSlugs,
-          youtubeHandle: profile.youtubeHandle,
-          tiktokHandle: profile.tiktokHandle,
-          tiktokFollowers: profile.tiktokFollowers,
-          inGameName: profile.inGameName,
-          gameId: profile.gameId,
-          mainGameSlug: profile.mainGameSlug,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        if (err?.error === "username_taken") {
-          toast.error("ეს username უკვე დაკავებულია.");
-          setLoading(false);
-          return;
-        }
+      // auth metadata is a best-effort mirror; a failure here shouldn't block
+      // the authoritative /api/profile write below.
+      try {
+        const supabase = createSupabaseBrowserClient();
+        await supabase.auth.updateUser({
+          data: { display_name: profile.displayName },
+        });
+      } catch {}
+
+      let res: Response;
+      try {
+        res = await fetch("/api/profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            displayName: profile.displayName,
+            bio: profile.bio,
+            voiceChat: profile.voice,
+            dmPrivacy: profile.dmPrivacy,
+            favoriteGameSlugs: profile.favoriteGameSlugs,
+            youtubeHandle: profile.youtubeHandle,
+            tiktokHandle: profile.tiktokHandle,
+            tiktokFollowers: profile.tiktokFollowers,
+            inGameName: profile.inGameName,
+            gameId: profile.gameId,
+            mainGameSlug: profile.mainGameSlug,
+          }),
+        });
+      } catch {
+        toast.error("ქსელის შეცდომა — სცადე თავიდან.");
+        return;
       }
-    } catch {}
-    toast.success("პარამეტრები შენახულია.");
-    setLoading(false);
+
+      // Any non-2xx means the server did NOT save. Previously the code fell
+      // through to a success toast for every error except username_taken, so
+      // moderation blocks / rate limits / DB errors silently reported "saved".
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string; reason?: string; nextChangeAt?: string };
+        const msg =
+          err.error === "display_name_cooldown"
+            ? `საჩვენებელი სახელის შეცვლა შესაძლებელია ორ კვირაში ერთხელ${err.nextChangeAt ? ` — შემდეგი ცვლილება: ${new Date(err.nextChangeAt).toLocaleDateString("ka-GE")}` : ""}.`
+          : err.error === "content_blocked" ? `ტექსტი დაბლოკა მოდერაციამ${err.reason ? ` (${err.reason})` : ""}.`
+          : err.error === "rate_limited" ? "ძალიან ხშირად ცდილობ — მოიცადე წამით."
+          : "შენახვა ვერ მოხერხდა — სცადე თავიდან.";
+        toast.error(msg);
+        return;
+      }
+
+      // Persist locally only after a confirmed server save, so devices don't
+      // diverge on a write that never landed.
+      localStorage.setItem(storageKey, JSON.stringify(profile));
+      if (profile.displayName !== savedDisplayName) {
+        setDisplayNameChangedAt(new Date().toISOString());
+        setSavedDisplayName(profile.displayName);
+      }
+      toast.success("პარამეტრები შენახულია.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label htmlFor="username">მომხმარებლის სახელი</Label>
-          <Input
-            id="username"
-            value={profile.username}
-            onChange={set("username")}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="displayName">საჩვენებელი სახელი</Label>
-          <Input
-            id="displayName"
-            value={profile.displayName}
-            onChange={set("displayName")}
-          />
-        </div>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div>
+        <label htmlFor="displayName" className={labelClass}>საჩვენებელი სახელი</label>
+        <Input
+          id="displayName"
+          className="h-10 bg-black/40 border-white/10 focus-visible:border-violet-500 focus-visible:ring-violet-500/20 text-white rounded-lg"
+          value={profile.displayName}
+          onChange={set("displayName")}
+          disabled={displayNameLocked}
+          maxLength={32}
+        />
+        <p className="mt-1.5 text-[12px] text-[var(--gr-text-mute)]">
+          {displayNameLocked
+            ? `შეცვლა შესაძლებელია ორ კვირაში ერთხელ — კიდევ ${displayNameDaysLeft} დღეში.`
+            : "შეცვლა შესაძლებელია ორ კვირაში ერთხელ."}
+        </p>
       </div>
 
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="bio">ბიო</Label>
+      <div>
+        <div className="mb-1.5 flex items-center justify-between">
+          <label htmlFor="bio" className={labelClass + " mb-0"}>ბიო</label>
           <button
             type="button"
             onClick={handleGenerateBio}
             disabled={generatingBio}
-            className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-2 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--gr-violet-hi)] transition-colors hover:bg-white/5 disabled:opacity-50"
           >
             {generatingBio
               ? <Loader2 className="h-3 w-3 animate-spin" />
@@ -233,86 +295,98 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
         <Textarea
           id="bio"
           rows={3}
+          maxLength={PROFILE_BIO_MAX_LENGTH}
           placeholder="რასაც გვინდა შევიტყობდეთ შენზე..."
           value={profile.bio}
           onChange={set("bio")}
+          className="min-h-[88px] bg-black/40 border-white/10 focus-visible:border-violet-500 focus-visible:ring-violet-500/20 text-white rounded-lg py-3 px-4 leading-relaxed resize-none"
         />
+        {/* Counter mirrors the server's PROFILE_BIO_MAX_LENGTH cap so a bio can't
+            be silently truncated on save. AI-generated bios can exceed the cap
+            (programmatic set bypasses maxLength) — flag that in red. */}
+        <p className={`mt-1 text-right text-[11px] tabular-nums ${profile.bio.length > PROFILE_BIO_MAX_LENGTH ? "text-red-400" : "text-[var(--gr-text-mute)]"}`}>
+          {profile.bio.length}/{PROFILE_BIO_MAX_LENGTH}
+        </p>
       </div>
 
-      <Separator />
+      <div className={divider} />
 
-      <p className="text-sm font-medium">თამაშის ინფო</p>
+      <Eyebrow tone="magenta">თამაშის ინფო</Eyebrow>
       <div className="grid gap-4 sm:grid-cols-2">
         {games.length > 0 && (
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="mainGameSlug">თამაში</Label>
+          <div className="sm:col-span-2">
+            <label htmlFor="mainGameSlug" className={labelClass}>თამაში</label>
             <div className="relative max-w-xs">
-              <select
-                id="mainGameSlug"
-                value={profile.mainGameSlug}
-                onChange={(e) => setProfile((p) => ({ ...p, mainGameSlug: e.target.value }))}
-                className="h-10 w-full appearance-none rounded-md border border-input bg-background px-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              <Select
+                value={profile.mainGameSlug || ""}
+                onValueChange={(val) => setProfile((p) => ({ ...p, mainGameSlug: val ?? "" }))}
               >
-                <option value="">— აირჩიე თამაში —</option>
-                {games.map((g) => (
-                  <option key={g.slug} value={g.slug}>
-                    {g.emoji} {g.nameKa}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <SelectTrigger id="mainGameSlug" className="!h-10 !w-full bg-black/40 border-white/10 rounded-lg text-white">
+                  <SelectValue placeholder="— აირჩიე თამაში —" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#0b0111] border border-white/5 text-white">
+                  <SelectItem value="">— აირჩიე თამაში —</SelectItem>
+                  {games.map((g) => (
+                    <SelectItem key={g.slug} value={g.slug}>
+                      {g.emoji} {g.nameKa}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         )}
-        <div className="space-y-1.5">
-          <Label htmlFor="inGameName">რა გაწერია თამაშში?</Label>
+        <div>
+          <label htmlFor="inGameName" className={labelClass}>რა გაწერია თამაშში?</label>
           <Input
             id="inGameName"
             placeholder="შენი nickname თამაშში"
             value={profile.inGameName}
             onChange={set("inGameName")}
+            className="h-10 bg-black/40 border-white/10 focus-visible:border-violet-500 focus-visible:ring-violet-500/20 text-white rounded-lg"
           />
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="gameId">ID</Label>
+        <div>
+          <label htmlFor="gameId" className={labelClass}>ID</label>
           <Input
             id="gameId"
             placeholder="მაგ. 123456789"
             value={profile.gameId}
             onChange={set("gameId")}
+            className="h-10 bg-black/40 border-white/10 focus-visible:border-violet-500 focus-visible:ring-violet-500/20 text-white rounded-lg"
           />
         </div>
       </div>
 
-      <Separator />
+      <div className={divider} />
 
-      <p className="text-sm font-medium">სოციალური ქსელები</p>
+      <Eyebrow tone="cyan">სოციალური ქსელები</Eyebrow>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label htmlFor="youtubeHandle" className="flex items-center gap-1.5">
+        <div>
+          <label htmlFor="youtubeHandle" className={labelClass + " flex items-center gap-1.5"}>
             <YouTubeIcon /> YouTube
-          </Label>
+          </label>
           <div className="flex items-center">
-            <span className="flex h-10 items-center rounded-l-md border border-r-0 border-border bg-muted px-3 text-sm text-muted-foreground">@</span>
+            <span className="flex h-10 items-center border border-white/10 border-r-0 bg-black/50 px-3 text-sm text-white/40 rounded-l-lg">@</span>
             <Input
               id="youtubeHandle"
-              className="rounded-l-none"
+              className="h-10 bg-black/40 border-white/10 focus-visible:border-violet-500 focus-visible:ring-violet-500/20 text-white rounded-r-lg rounded-l-none"
               placeholder="შენი_სახელი"
               value={profile.youtubeHandle}
               onChange={set("youtubeHandle")}
             />
           </div>
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="tiktokHandle" className="flex items-center gap-1.5">
+        <div>
+          <label htmlFor="tiktokHandle" className={labelClass + " flex items-center gap-1.5"}>
             <TikTokIcon /> TikTok
-          </Label>
+          </label>
           <div className="flex items-center">
-            <span className="flex h-10 items-center rounded-l-md border border-r-0 border-border bg-muted px-3 text-sm text-muted-foreground">@</span>
+            <span className="flex h-10 items-center border border-white/10 border-r-0 bg-black/50 px-3 text-sm text-white/40 rounded-l-lg">@</span>
             <Input
               id="tiktokHandle"
-              className="rounded-l-none"
+              className="h-10 bg-black/40 border-white/10 focus-visible:border-violet-500 focus-visible:ring-violet-500/20 text-white rounded-r-lg rounded-l-none"
               placeholder="შენი_სახელი"
               value={profile.tiktokHandle}
               onChange={set("tiktokHandle")}
@@ -321,56 +395,70 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="tiktokFollowers" className="flex items-center gap-1.5">
+      <div className="max-w-48">
+        <label htmlFor="tiktokFollowers" className={labelClass + " flex items-center gap-1.5"}>
           <TikTokIcon /> TikTok Followers
-        </Label>
+        </label>
         <Input
           id="tiktokFollowers"
-          className="max-w-48"
           placeholder="მაგ. 4.8K ან 12500"
           value={profile.tiktokFollowers}
           onChange={set("tiktokFollowers")}
+          className="h-10 bg-black/40 border-white/10 focus-visible:border-violet-500 focus-visible:ring-violet-500/20 text-white rounded-lg"
         />
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className={divider} />
+
+      <div className="flex items-center gap-2.5">
         <input
           type="checkbox"
           id="voice"
           checked={profile.voice}
           onChange={(e) => setProfile((p) => ({ ...p, voice: e.target.checked }))}
-          className="h-4 w-4 rounded border-border bg-background accent-primary"
+          className="h-4 w-4 border-white/20 bg-black/40 accent-[var(--gr-violet-hi)]"
         />
-        <Label htmlFor="voice" className="font-normal">
+        <label htmlFor="voice" className="text-[13px] font-medium text-[var(--gr-text)]">
           🎙 voice chat-ით კომფორტულად ვამთამაშებ
-        </Label>
+        </label>
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="dm-privacy" className="font-normal">
+      <div>
+        <label htmlFor="dm-privacy" className="mb-1.5 block text-[13px] font-medium text-[var(--gr-text)]">
           💬 ვის შეუძლია მომწეროს
-        </Label>
-        <select
-          id="dm-privacy"
-          value={profile.dmPrivacy}
-          onChange={(e) => setProfile((p) => ({ ...p, dmPrivacy: e.target.value as Profile["dmPrivacy"] }))}
-          className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-        >
-          <option value="everyone">ყველას</option>
-          <option value="followers">მხოლოდ ჩემს followers-ს</option>
-          <option value="nobody">არავის</option>
-        </select>
-        <p className="text-xs text-muted-foreground">
+        </label>
+        <div className="relative max-w-xs">
+          <Select
+            value={profile.dmPrivacy}
+            onValueChange={(val) => setProfile((p) => ({ ...p, dmPrivacy: (val ?? "everyone") as Profile["dmPrivacy"] }))}
+          >
+            <SelectTrigger id="dm-privacy" className="!h-10 !w-full bg-black/40 border-white/10 rounded-lg text-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-[#0b0111] border border-white/5 text-white">
+              <SelectItem value="everyone">ყველას</SelectItem>
+              <SelectItem value="followers">მხოლოდ ჩემს followers-ს</SelectItem>
+              <SelectItem value="nobody">არავის</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <p className="mt-1.5 text-[12px] text-[var(--gr-text-mute)]">
           არსებული საუბრები ამით არ იზღუდება — მხოლოდ ახალი მესიჯების დაწყებას ეხება.
         </p>
       </div>
 
-      <div className="flex justify-end gap-2 pt-2">
-        <Button type="submit" disabled={loading}>
-          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          შენახვა
-        </Button>
+      <div className="flex justify-end pt-2">
+        <button
+          type="submit"
+          disabled={loading}
+          className="group relative inline-flex items-center justify-center overflow-hidden bg-[var(--gr-violet-hi)] px-8 py-3 font-display text-[13px] font-bold uppercase tracking-widest text-white transition-all hover:brightness-110 [clip-path:polygon(0_0,100%_0,100%_calc(100%-10px),calc(100%-10px)_100%,0_100%)] shadow-[0_0_20px_rgba(139,92,246,0.3)] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <span aria-hidden className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-500 group-hover:translate-x-full" />
+          <span className="relative z-10 flex items-center gap-2">
+            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+            შენახვა
+          </span>
+        </button>
       </div>
     </form>
   );

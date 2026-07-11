@@ -102,58 +102,64 @@ export function NotificationBell() {
       <DropdownMenuContent
         align="end"
         sideOffset={10}
-        className="w-[380px] overflow-hidden rounded-xl border border-pink-500/35 bg-[rgba(8,6,15,0.97)] p-0 text-white shadow-[0_0_28px_rgba(236,72,153,0.2),0_18px_50px_rgba(0,0,0,0.65)] backdrop-blur-xl"
+        className="pubg-loadout-card w-[380px] overflow-hidden !rounded-xl !p-0 border border-white/5 bg-[rgba(8,6,15,0.97)] text-white shadow-2xl backdrop-blur-xl"
       >
-        <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <Bell className="h-4 w-4 text-pink-400" />
-            <span className="text-sm font-bold">უწყებები</span>
-            {totalCount > 0 && <span className="rounded-full bg-pink-500/15 px-1.5 py-0.5 text-[10px] font-bold text-pink-300">{totalCount}</span>}
+        <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+        <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[3px] z-[5] bg-[#ec4899] shadow-[0_0_10px_rgba(236,72,153,0.8)]" />
+        <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-12 w-12 opacity-25 z-[5]" />
+
+        <div className="relative z-10 flex flex-col">
+          <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4 text-pink-400" />
+              <span className="text-sm font-bold">უწყებები</span>
+              {totalCount > 0 && <span className="rounded-full bg-pink-500/15 px-1.5 py-0.5 text-[10px] font-bold text-pink-300">{totalCount}</span>}
+            </div>
+            <button onClick={() => router.push("/announcements")} className="text-[11px] font-semibold text-cyan-300 transition-colors hover:text-cyan-100">
+              ყველას ნახვა
+            </button>
           </div>
-          <button onClick={() => router.push("/announcements")} className="text-[11px] font-semibold text-cyan-300 transition-colors hover:text-cyan-100">
-            ყველას ნახვა
+
+          <div className="max-h-[420px] overflow-y-auto p-2">
+            {[...personal, ...announcements]
+              .sort((left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime())
+              .slice(0, 8)
+              .map((item) => {
+                const isPersonal = "read_at" in item;
+                const unread = isPersonal ? !item.read_at : !readAnnouncementIds.has(item.id);
+                return (
+                  <button
+                    key={`${isPersonal ? "notification" : "announcement"}-${item.id}`}
+                    onClick={() => isPersonal ? void openNotification(item) : void markAnnouncementRead(item.id)}
+                    className={`relative flex w-full gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-white/[0.06] ${unread ? "bg-pink-500/[0.06]" : ""}`}
+                  >
+                    <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${unread ? "bg-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.85)]" : "bg-white/15"}`} />
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-start justify-between gap-3">
+                        <span className={`line-clamp-1 text-[13px] ${unread ? "font-semibold text-white" : "font-medium text-white/75"}`}>{item.title}</span>
+                        <span className="shrink-0 text-[10px] text-white/40">{timeAgo(item.created_at)}</span>
+                      </span>
+                      {item.body && <span className="mt-1 block line-clamp-2 text-[12px] leading-relaxed text-white/55">{item.body}</span>}
+                    </span>
+                    {isPersonal && item.link ? <ExternalLink className="mt-1 h-3.5 w-3.5 shrink-0 text-white/35" /> : null}
+                  </button>
+                );
+              })}
+            {personal.length + announcements.length === 0 && (
+              <div className="flex flex-col items-center gap-2 px-4 py-10 text-center text-white/50">
+                <Info className="h-5 w-5 text-cyan-300/75" />
+                <span className="text-sm">უწყება ჯერ არ გაქვს</span>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={() => router.push("/announcements")}
+            className="flex w-full items-center justify-center gap-2 border-t border-white/10 px-4 py-3 text-[11px] font-bold text-cyan-300 transition-colors hover:bg-cyan-400/[0.08] hover:text-cyan-100"
+          >
+            ყველა უწყების გახსნა <ExternalLink className="h-3.5 w-3.5" />
           </button>
         </div>
-
-        <div className="max-h-[420px] overflow-y-auto p-2">
-          {[...personal, ...announcements]
-            .sort((left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime())
-            .slice(0, 8)
-            .map((item) => {
-              const isPersonal = "read_at" in item;
-              const unread = isPersonal ? !item.read_at : !readAnnouncementIds.has(item.id);
-              return (
-                <button
-                  key={`${isPersonal ? "notification" : "announcement"}-${item.id}`}
-                  onClick={() => isPersonal ? void openNotification(item) : void markAnnouncementRead(item.id)}
-                  className={`relative flex w-full gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-white/[0.06] ${unread ? "bg-pink-500/[0.06]" : ""}`}
-                >
-                  <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${unread ? "bg-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.85)]" : "bg-white/15"}`} />
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-start justify-between gap-3">
-                      <span className={`line-clamp-1 text-[13px] ${unread ? "font-semibold text-white" : "font-medium text-white/75"}`}>{item.title}</span>
-                      <span className="shrink-0 text-[10px] text-white/40">{timeAgo(item.created_at)}</span>
-                    </span>
-                    {item.body && <span className="mt-1 block line-clamp-2 text-[12px] leading-relaxed text-white/55">{item.body}</span>}
-                  </span>
-                  {isPersonal && item.link ? <ExternalLink className="mt-1 h-3.5 w-3.5 shrink-0 text-white/35" /> : null}
-                </button>
-              );
-            })}
-          {personal.length + announcements.length === 0 && (
-            <div className="flex flex-col items-center gap-2 px-4 py-10 text-center text-white/50">
-              <Info className="h-5 w-5 text-cyan-300/75" />
-              <span className="text-sm">უწყება ჯერ არ გაქვს</span>
-            </div>
-          )}
-        </div>
-
-        <button
-          onClick={() => router.push("/announcements")}
-          className="flex w-full items-center justify-center gap-2 border-t border-white/10 px-4 py-3 text-[11px] font-bold text-cyan-300 transition-colors hover:bg-cyan-400/[0.08] hover:text-cyan-100"
-        >
-          ყველა უწყების გახსნა <ExternalLink className="h-3.5 w-3.5" />
-        </button>
       </DropdownMenuContent>
     </DropdownMenu>
   );

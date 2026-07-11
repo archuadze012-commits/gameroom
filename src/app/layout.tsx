@@ -66,6 +66,11 @@ export const metadata: Metadata = {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
+  // iOS Safari auto-zooms the page when a focused input renders below 16px,
+  // which on fixed-height views (chat) clips the right edge and spawns both
+  // scrollbars. maximumScale disables that focus-zoom; Apple still honors
+  // user pinch-zoom regardless of this value, so accessibility is intact.
+  maximumScale: 1,
 };
 
 // No getSession()/cookies() here — this layout stays statically renderable so

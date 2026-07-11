@@ -3273,6 +3273,7 @@ export type Database = {
           created_at: string
           daily_streak_count: number
           display_name: string | null
+          display_name_changed_at: string | null
           dm_privacy: string
           email: string | null
           emoji: string | null
@@ -3307,6 +3308,7 @@ export type Database = {
           created_at?: string
           daily_streak_count?: number
           display_name?: string | null
+          display_name_changed_at?: string | null
           dm_privacy?: string
           email?: string | null
           emoji?: string | null
@@ -3341,6 +3343,7 @@ export type Database = {
           created_at?: string
           daily_streak_count?: number
           display_name?: string | null
+          display_name_changed_at?: string | null
           dm_privacy?: string
           email?: string | null
           emoji?: string | null
@@ -3403,6 +3406,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rate_limits: {
+        Row: {
+          bucket_key: string
+          count: number
+          reset_at: string
+        }
+        Insert: {
+          bucket_key: string
+          count?: number
+          reset_at: string
+        }
+        Update: {
+          bucket_key?: string
+          count?: number
+          reset_at?: string
+        }
+        Relationships: []
       }
       reports: {
         Row: {
@@ -3834,6 +3855,39 @@ export type Database = {
           },
         ]
       }
+      user_blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_blocks_blocked_id_fkey"
+            columns: ["blocked_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_blocks_blocker_id_fkey"
+            columns: ["blocker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_challenge_progress: {
         Row: {
           challenge_id: string
@@ -4033,39 +4087,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_blocks: {
-        Row: {
-          blocked_id: string
-          blocker_id: string
-          created_at: string
-        }
-        Insert: {
-          blocked_id: string
-          blocker_id: string
-          created_at?: string
-        }
-        Update: {
-          blocked_id?: string
-          blocker_id?: string
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_blocks_blocked_id_fkey"
-            columns: ["blocked_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_blocks_blocker_id_fkey"
-            columns: ["blocker_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_mutes: {
         Row: {
           channel_id: string | null
@@ -4224,6 +4245,33 @@ export type Database = {
           },
         ]
       }
+      xp_events: {
+        Row: {
+          amount: number
+          created_at: string
+          id: number
+          source_id: string
+          source_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: never
+          source_id: string
+          source_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: never
+          source_id?: string
+          source_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -4247,12 +4295,22 @@ export type Database = {
         Args: { p_amount: number; p_user_id: string }
         Returns: number
       }
-      award_xp_once: {
-        Args: { p_amount: number; p_source_id: string; p_source_type: string; p_user_id: string }
+      award_xp_capped: {
+        Args: {
+          p_amount: number
+          p_daily_cap: number
+          p_source_type: string
+          p_user_id: string
+        }
         Returns: boolean
       }
-      award_xp_capped: {
-        Args: { p_amount: number; p_daily_cap: number; p_source_type: string; p_user_id: string }
+      award_xp_once: {
+        Args: {
+          p_amount: number
+          p_source_id: string
+          p_source_type: string
+          p_user_id: string
+        }
         Returns: boolean
       }
       can_manage_shop_products: { Args: never; Returns: boolean }
@@ -4266,10 +4324,6 @@ export type Database = {
       expire_old_lfg_posts: { Args: never; Returns: undefined }
       is_admin: { Args: never; Returns: boolean }
       open_box: { Args: { p_id: string }; Returns: undefined }
-      rate_limit_hit: {
-        Args: { p_key: string; p_limit: number; p_window_ms: number }
-        Returns: boolean
-      }
       open_box_as: {
         Args: { p_box_id: string; p_user_id: string }
         Returns: Json
@@ -4608,12 +4662,16 @@ export type Database = {
         Args: { p_current_level: number; p_role_key: string }
         Returns: number
       }
-      pm_team_match_count: { Args: { p_team_id: string }; Returns: number }
-      pm_team_match_profile: { Args: { p_team_id: string }; Returns: Json }
       pm_swap_squad_players: {
-        Args: { p_active_id: number; p_team_id: string; p_unassigned_id: number }
+        Args: {
+          p_active_id: number
+          p_team_id: string
+          p_unassigned_id: number
+        }
         Returns: Json
       }
+      pm_team_match_count: { Args: { p_team_id: string }; Returns: number }
+      pm_team_match_profile: { Args: { p_team_id: string }; Returns: Json }
       pm_toggle_market_shortlist: {
         Args: { p_player_key: string; p_team_id: string }
         Returns: Json
@@ -4648,6 +4706,11 @@ export type Database = {
         Args: { p_item_id: string; p_user_id: string }
         Returns: Json
       }
+      rate_limit_hit: {
+        Args: { p_key: string; p_limit: number; p_window_ms: number }
+        Returns: boolean
+      }
+      rate_limits_gc: { Args: never; Returns: number }
       rls_auto_enable: { Args: never; Returns: undefined }
       toggle_post_like: {
         Args: { p_post_id: string; p_user_id: string }

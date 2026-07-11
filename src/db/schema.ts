@@ -1045,7 +1045,7 @@ export const linkedAccounts = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => profiles.id, { onDelete: "cascade" }),
-    provider: text("provider").notNull(), // 'steam', 'riot'
+    provider: text("provider").notNull(), // 'steam', 'tiktok'
     externalId: text("external_id").notNull(),
     externalName: text("external_name"),
     metadata: jsonb("metadata").default({}),

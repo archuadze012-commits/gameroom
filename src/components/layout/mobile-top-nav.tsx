@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, FileText, MessageSquare, Bell, Menu, X, Search, Trophy, Gamepad2, Users, Settings, Star, ShoppingBag, LogOut } from "lucide-react";
+import { Home, FileText, MessageSquare, Bell, Menu, X, Search, Trophy, Gamepad2, Users, Settings, Star, ShoppingBag, LogOut, Building2, ArrowRight } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useNavAnnouncementCount, useNavMessageCount, useNavProfile } from "./use-nav-data";
 
@@ -144,6 +144,32 @@ export function MobileTopNav() {
               </Link>
             </div>
           )}
+          {/* PlayManager — flagship entry. On desktop it lives on the home page
+              as an md:block banner; that banner is hidden on phones, so surface
+              PlayManager here or it's unreachable from the mobile chrome. */}
+          <div className="px-3 pt-3">
+            <Link
+              href="/playmanager"
+              onClick={() => setMoreOpen(false)}
+              className="group relative flex items-center justify-between gap-3 overflow-hidden rounded-3xl border border-[#2b6b55] bg-[linear-gradient(135deg,rgba(3,18,13,0.96),rgba(9,52,38,0.92))] px-4 py-3.5 shadow-[0_8px_24px_rgba(0,0,0,0.35)] transition-transform duration-200 active:scale-[0.98]"
+            >
+              <span aria-hidden className="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(126,255,195,0.5),transparent)]" />
+              <span className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#4fb488]/40 bg-[#143a2b]/80 text-[#d9ffec]">
+                  <Building2 className="h-5 w-5" />
+                </span>
+                <span className="flex flex-col text-left">
+                  <span className="font-display text-[9px] font-black uppercase tracking-[0.22em] text-[#9edbbd]">
+                    Manager Mode
+                  </span>
+                  <span className="font-display text-[17px] font-black uppercase tracking-[0.04em] text-white">
+                    PlayManager
+                  </span>
+                </span>
+              </span>
+              <ArrowRight className="h-4 w-4 flex-shrink-0 text-[#c7f6df]" />
+            </Link>
+          </div>
           <div className="grid grid-cols-3 gap-2 p-3 pb-2">
             {MORE_LINKS.map(({ href, label, icon: Icon }) => (
               <Link

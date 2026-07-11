@@ -549,8 +549,10 @@ export default async function HomePage() {
               )}
             </div>
             
-            {/* Sidebar Column */}
-            <div className="lg:col-span-4 space-y-6">
+            {/* Sidebar Column — mobile hides this below the feed (redundant with
+                the announcements/search quick-nav tiles above); desktop keeps it
+                as the actual sidebar. */}
+            <div className="hidden lg:block lg:col-span-4 space-y-6">
               <div className="pubg-loadout-link group relative block" data-variant="room">
                 <div className="pubg-loadout-card relative overflow-hidden p-6">
                   <span aria-hidden className="pubg-loadout-field absolute inset-0" />

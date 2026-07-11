@@ -10,6 +10,12 @@ import type { Database } from "@/lib/database.types";
 type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
 const logger = createLogger("api:profile");
 
+// Display name may only change once per cooldown window — prevents rapid
+// identity-cycling (impersonation, evading mutes/blocks). Username is not
+// editable through this endpoint at all: it's the permanent profile URL slug,
+// fixed at signup.
+const DISPLAY_NAME_COOLDOWN_MS = 14 * 24 * 60 * 60 * 1000;
+
 export async function POST(request: NextRequest) {
   const user = await getSession().catch(() => null);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -27,8 +33,6 @@ export async function POST(request: NextRequest) {
   const update: ProfileUpdate = {
     updated_at: new Date().toISOString(),
   };
-  if (typeof body.username === "string" && body.username.trim())
-    update.username = body.username.trim().slice(0, PROFILE_SHORT_TEXT_MAX_LENGTH);
   if (typeof body.displayName === "string")
     update.display_name = body.displayName.trim().slice(0, PROFILE_MEDIUM_TEXT_MAX_LENGTH) || null;
   if (typeof body.bio === "string")
@@ -75,15 +79,41 @@ export async function POST(request: NextRequest) {
 
   try {
     const supabase = await createSupabaseServerClient();
+
+    if (typeof update.display_name !== "undefined") {
+      const { data: current } = await supabase
+        .from("profiles")
+        .select("display_name, display_name_changed_at")
+        .eq("id", user.id)
+        .single();
+
+      // Cooldown is enforced (and display_name_changed_at is stamped) by the
+      // trg_display_name_cooldown BEFORE UPDATE trigger — that column has no
+      // authenticated UPDATE grant on purpose, so the app must not write it.
+      // This pre-check only exists to return a friendly localized 429 with the
+      // next-eligible date instead of surfacing the trigger's raw exception.
+      if ((current?.display_name ?? null) !== update.display_name) {
+        const lastChangedAt = current?.display_name_changed_at
+          ? new Date(current.display_name_changed_at).getTime()
+          : null;
+        const elapsed = lastChangedAt !== null ? Date.now() - lastChangedAt : Infinity;
+        if (elapsed < DISPLAY_NAME_COOLDOWN_MS) {
+          return NextResponse.json(
+            {
+              error: "display_name_cooldown",
+              nextChangeAt: new Date(lastChangedAt! + DISPLAY_NAME_COOLDOWN_MS).toISOString(),
+            },
+            { status: 429 }
+          );
+        }
+      }
+    }
+
     const { error } = await supabase
       .from("profiles")
       .update(update)
       .eq("id", user.id);
-    if (error) {
-      if (error.code === "23505")
-        return NextResponse.json({ error: "username_taken" }, { status: 409 });
-      throw error;
-    }
+    if (error) throw error;
     return NextResponse.json({ ok: true });
   } catch (e) {
     logger.error("failed to update profile", { userId: user.id, error: e });

@@ -140,58 +140,64 @@ export function SiteHeader() {
                 <DropdownMenuContent
                   align="end"
                   sideOffset={10}
-                  className="w-[300px] overflow-hidden rounded-xl border border-violet-400/35 bg-[rgba(8,6,15,0.97)] p-2 text-white shadow-[0_0_28px_rgba(139,92,246,0.2),0_18px_50px_rgba(0,0,0,0.65)] backdrop-blur-xl"
+                  className="pubg-loadout-card w-[300px] overflow-hidden !rounded-xl !p-2 border border-white/5 bg-[rgba(8,6,15,0.97)] text-white shadow-2xl backdrop-blur-xl"
                 >
-                  <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-pink-400 to-transparent shadow-[0_0_14px_rgba(236,72,153,0.8)]" />
-                  <DropdownMenuGroup>
-                    <DropdownMenuLabel className="rounded-lg bg-violet-400/[0.08] px-3 py-3 font-normal">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10 border border-pink-400/35 shadow-[0_0_16px_rgba(236,72,153,0.25)]">
-                          <AvatarImage src={profile.avatarUrl} alt={profile.displayName} />
-                          <AvatarFallback className="bg-pink-500/15 text-pink-200 font-semibold">
-                            {profile.displayName.slice(0, 1).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <span className="block truncate text-sm font-bold text-white">{profile.displayName}</span>
-                          <span className="mt-0.5 block truncate text-xs text-white/55">@{profile.username}</span>
+                  <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+                  <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[3px] z-[5] bg-[#8b5cf6] shadow-[0_0_10px_rgba(139,92,246,0.8)]" />
+                  <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-12 w-12 opacity-25 z-[5]" />
+
+                  <div className="relative z-10 flex flex-col">
+                    <div className="pointer-events-none absolute inset-x-2 top-0 h-px bg-gradient-to-r from-transparent via-pink-400 to-transparent shadow-[0_0_14px_rgba(236,72,153,0.8)]" />
+                    <DropdownMenuGroup>
+                      <DropdownMenuLabel className="rounded-lg bg-violet-400/[0.08] px-3 py-3 font-normal">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10 border border-pink-400/35 shadow-[0_0_16px_rgba(236,72,153,0.25)]">
+                            <AvatarImage src={profile.avatarUrl} alt={profile.displayName} />
+                            <AvatarFallback className="bg-pink-500/15 text-pink-200 font-semibold">
+                              {profile.displayName.slice(0, 1).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <span className="block truncate text-sm font-bold text-white">{profile.displayName}</span>
+                            <span className="mt-0.5 block truncate text-xs text-white/55">@{profile.username}</span>
+                          </div>
                         </div>
-                      </div>
-                    </DropdownMenuLabel>
-                  </DropdownMenuGroup>
-                  <DropdownMenuSeparator className="my-2 bg-white/10" />
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem className="p-0 text-white/80">
-                      <Link href={`/profile/${profile.username}`} className="flex w-full rounded-md px-3 py-2.5 text-white/80 hover:bg-pink-400/10 hover:text-pink-200">
-                        ჩემი პროფილი
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="p-0 text-white/80">
-                      <Link href="/settings" className="flex w-full rounded-md px-3 py-2.5 text-white/80 hover:bg-violet-400/10 hover:text-violet-200">
-                        პარამეტრები
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="p-0 text-white/80">
-                      <Link href="/lfg/new" className="flex w-full rounded-md px-3 py-2.5 text-white/80 hover:bg-cyan-300/10 hover:text-cyan-100">
-                        ლოკალის დაპოსტვა
-                      </Link>
-                    </DropdownMenuItem>
-                    {["admin", "moderator", "journalist"].includes(profile.role ?? "") && (
+                      </DropdownMenuLabel>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator className="my-2 bg-white/10" />
+                    <DropdownMenuGroup>
                       <DropdownMenuItem className="p-0 text-white/80">
-                        <Link href="/admin/free-pc-games" className="flex w-full rounded-md px-3 py-2.5 font-bold text-pink-300 hover:bg-pink-400/10 hover:text-pink-100">
-                          ადმინ პანელი
+                        <Link href={`/profile/${profile.username}`} className="flex w-full rounded-md px-3 py-2.5 text-white/80 hover:bg-pink-400/10 hover:text-pink-200">
+                          ჩემი პროფილი
                         </Link>
                       </DropdownMenuItem>
-                    )}
-                  </DropdownMenuGroup>
-                  <DropdownMenuSeparator className="my-2 bg-white/10" />
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem className="p-0">
-                      <div className="w-full rounded-md px-3 py-2 text-white/75 hover:bg-pink-400/10 hover:text-pink-200">
-                        <LogoutButton />
-                      </div>
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
+                      <DropdownMenuItem className="p-0 text-white/80">
+                        <Link href="/settings" className="flex w-full rounded-md px-3 py-2.5 text-white/80 hover:bg-violet-400/10 hover:text-violet-200">
+                          პარამეტრები
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="p-0 text-white/80">
+                        <Link href="/lfg/new" className="flex w-full rounded-md px-3 py-2.5 text-white/80 hover:bg-cyan-300/10 hover:text-cyan-100">
+                          ლოკალის დაპოსტვა
+                        </Link>
+                      </DropdownMenuItem>
+                      {["admin", "moderator", "journalist"].includes(profile.role ?? "") && (
+                        <DropdownMenuItem className="p-0 text-white/80">
+                          <Link href="/admin/free-pc-games" className="flex w-full rounded-md px-3 py-2.5 font-bold text-pink-300 hover:bg-pink-400/10 hover:text-pink-100">
+                            ადმინ პანელი
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator className="my-2 bg-white/10" />
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem className="p-0">
+                        <div className="w-full rounded-md px-3 py-2 text-white/75 hover:bg-pink-400/10 hover:text-pink-200">
+                          <LogoutButton />
+                        </div>
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (

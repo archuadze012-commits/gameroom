@@ -14,6 +14,7 @@ type NotificationType =
   | "news_comment"
   | "tournament_checkin"
   | "tournament_match"
+  | "forum_reply"
   | "system";
 
 type Severity = "info" | "warning" | "critical";
@@ -52,8 +53,15 @@ const NOTIF_META: Record<NotificationType, { label: string; icon: LucideIcon; to
   news_comment:       { label: "სიახლე",      icon: MessageSquare, tone: "violet" },
   tournament_checkin: { label: "ჩემპიონატი",  icon: Trophy,        tone: "amber" },
   tournament_match:   { label: "ჩემპიონატი",  icon: Gamepad2,      tone: "amber" },
+  forum_reply:        { label: "პასუხი",      icon: MessageSquare, tone: "violet" },
   system:             { label: "სისტემა",     icon: Bell,          tone: "neutral" },
 };
+
+// Notification.type is a Postgres enum that can gain values independently of
+// this file (it did — "forum_reply" existed in the DB with no matching entry
+// here, which crashed every user holding that row). Any lookup against it
+// must fall back instead of assuming coverage.
+const FALLBACK_NOTIF_META = { label: "შეტყობინება", icon: Bell, tone: "neutral" as const };
 
 const SEVERITY_META: Record<Severity, { icon: LucideIcon; tone: "cyan" | "amber" | "live"; label: string }> = {
   info:     { icon: Info,          tone: "cyan",  label: "ინფო" },
@@ -134,7 +142,7 @@ export default function AnnouncementsPage() {
   };
 
   const isLfgType = (t: NotificationType) => t === "lfg_response" || t === "lfg_accepted";
-  const isNewsType = (t: NotificationType) => t === "news_comment";
+  const isNewsType = (t: NotificationType) => t === "news_comment" || t === "forum_reply";
 
   const filteredNotifs = notifications.filter((n) => {
     if (tab === "all") return true;
@@ -230,55 +238,47 @@ export default function AnnouncementsPage() {
             {feed.map((item) => {
               if (item.kind === "notif") {
                 const n = item.data;
-                const meta = NOTIF_META[n.type];
+                const meta = NOTIF_META[n.type] ?? FALLBACK_NOTIF_META;
                 const Icon = meta.icon;
                 const unread = !n.read_at;
                 const card = (
-                  <div
-                    className="relative isolate transition-all duration-300"
-                    style={{
-                      background: unread ? "rgba(236,72,153,0.5)" : "rgba(255,255,255,0.12)",
-                      padding: 1,
-                      clipPath: cutSm,
-                    }}
-                  >
-                    <article
-                      className="relative cursor-pointer bg-[var(--gr-bg-1)] p-4 overflow-hidden"
-                      style={{ clipPath: cutSm }}
-                    >
-                      <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
-                      <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
-                      <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
-                      {unread && (
-                        <span aria-hidden className="absolute left-0 top-0 h-full w-[3px] z-[6]" style={{ background: "rgba(236,72,153,1)", boxShadow: "0 0 10px rgba(236,72,153,0.8)" }} />
-                      )}
-                      <div className="relative z-10 flex gap-3">
-                        <div
-                          className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-md"
-                          style={{ background: "rgba(236,72,153,0.1)", border: "1px solid rgba(236,72,153,0.3)" }}
-                        >
-                          <Icon className="h-4 w-4" style={{ color: "#ffffff", filter: "drop-shadow(0 0 5px rgba(236,72,153,0.9))" }} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between gap-2">
-                            <p className={`text-[13.5px] leading-snug ${unread ? "font-semibold" : "font-medium"}`} style={neonText}>
-                              {n.title}
-                            </p>
-                            <Pill tone={meta.tone}>{meta.label}</Pill>
-                          </div>
-                          {n.body && <p className="mt-1 text-[12px] line-clamp-2" style={neonMute}>{n.body}</p>}
-                          <p className="mt-1.5 text-[10.5px] uppercase tracking-[0.12em]" style={neonDim}>{timeAgo(n.created_at)}</p>
-                        </div>
+                  <article className="pubg-loadout-card relative cursor-pointer p-4 overflow-hidden">
+                    <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+                    <span
+                      aria-hidden
+                      className="pubg-loadout-rail absolute left-0 top-0 h-full w-[3px] z-[5]"
+                      style={{
+                        background: unread ? "rgba(236,72,153,1)" : "rgba(255,255,255,0.2)",
+                        boxShadow: unread ? "0 0 10px rgba(236,72,153,0.8)" : "none"
+                      }}
+                    />
+                    <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-12 w-12 opacity-25 z-[5]" />
+                    <div className="relative z-10 flex gap-3">
+                      <div
+                        className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-md"
+                        style={{ background: "rgba(236,72,153,0.1)", border: "1px solid rgba(236,72,153,0.3)" }}
+                      >
+                        <Icon className="h-4 w-4" style={{ color: "#ffffff", filter: "drop-shadow(0 0 5px rgba(236,72,153,0.9))" }} />
                       </div>
-                    </article>
-                  </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className={`text-[13.5px] leading-snug ${unread ? "font-semibold" : "font-medium"}`} style={neonText}>
+                            {n.title}
+                          </p>
+                          <Pill tone={meta.tone}>{meta.label}</Pill>
+                        </div>
+                        {n.body && <p className="mt-1 text-[12px] line-clamp-2" style={neonMute}>{n.body}</p>}
+                        <p className="mt-1.5 text-[10.5px] uppercase tracking-[0.12em]" style={neonDim}>{timeAgo(n.created_at)}</p>
+                      </div>
+                    </div>
+                  </article>
                 );
                 return n.link ? (
-                  <a key={n.id} href={n.link} onClick={() => markNotifRead(n.id)} className="group block transition-transform hover:-translate-y-0.5 duration-300">
+                  <a key={n.id} href={n.link} onClick={() => markNotifRead(n.id)} className="pubg-loadout-link group block transition-transform hover:-translate-y-0.5 duration-300">
                     {card}
                   </a>
                 ) : (
-                  <div key={n.id} onClick={() => markNotifRead(n.id)} className="group block transition-transform hover:-translate-y-0.5 duration-300">
+                  <div key={n.id} onClick={() => markNotifRead(n.id)} className="pubg-loadout-link group block transition-transform hover:-translate-y-0.5 duration-300">
                     {card}
                   </div>
                 );
@@ -292,46 +292,38 @@ export default function AnnouncementsPage() {
                 <div
                   key={a.id}
                   onClick={() => markAnnouncementRead(a.id)}
-                  className="group block transition-transform hover:-translate-y-0.5 duration-300"
+                  className="pubg-loadout-link group block transition-transform hover:-translate-y-0.5 duration-300"
                 >
-                  <div
-                    className="relative isolate transition-all duration-300"
-                    style={{
-                      background: unread ? "rgba(236,72,153,0.5)" : "rgba(255,255,255,0.12)",
-                      padding: 1,
-                      clipPath: cutSm,
-                    }}
-                  >
-                    <article
-                      className="relative cursor-pointer bg-[var(--gr-bg-1)] p-4 overflow-hidden"
-                      style={{ clipPath: cutSm }}
-                    >
-                      <div className="absolute inset-0 bg-gr-magenta opacity-0 transition-opacity group-hover:opacity-[0.04] z-[5] pointer-events-none" />
-                      <div className="absolute inset-0 bg-gradient-to-br from-gr-magenta/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-[5] pointer-events-none" />
-                      <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-to-r from-transparent via-white/50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] group-hover:transition-transform group-hover:duration-700 z-[5] pointer-events-none" />
-                      {unread && (
-                        <span aria-hidden className="absolute left-0 top-0 h-full w-[3px] z-[6]" style={{ background: "rgba(236,72,153,1)", boxShadow: "0 0 10px rgba(236,72,153,0.8)" }} />
-                      )}
-                      <div className="relative z-10 flex gap-3">
-                        <div
-                          className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-md"
-                          style={{ background: "rgba(236,72,153,0.1)", border: "1px solid rgba(236,72,153,0.3)" }}
-                        >
-                          <Icon className="h-4 w-4" style={{ color: "#ffffff", filter: "drop-shadow(0 0 5px rgba(236,72,153,0.9))" }} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between gap-2">
-                            <p className={`text-[13.5px] leading-snug ${unread ? "font-semibold" : "font-medium"}`} style={neonText}>
-                              {a.title}
-                            </p>
-                            <Pill tone={sev.tone}>{sev.label}</Pill>
-                          </div>
-                          <p className="mt-1 text-[12px] line-clamp-2" style={neonMute}>{a.body}</p>
-                          <p className="mt-1.5 text-[10.5px] uppercase tracking-[0.12em]" style={neonDim}>{timeAgo(a.created_at)}</p>
-                        </div>
+                  <article className="pubg-loadout-card relative cursor-pointer p-4 overflow-hidden">
+                    <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+                    <span
+                      aria-hidden
+                      className="pubg-loadout-rail absolute left-0 top-0 h-full w-[3px] z-[5]"
+                      style={{
+                        background: unread ? "rgba(236,72,153,1)" : "rgba(255,255,255,0.2)",
+                        boxShadow: unread ? "0 0 10px rgba(236,72,153,0.8)" : "none"
+                      }}
+                    />
+                    <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-12 w-12 opacity-25 z-[5]" />
+                    <div className="relative z-10 flex gap-3">
+                      <div
+                        className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-md"
+                        style={{ background: "rgba(236,72,153,0.1)", border: "1px solid rgba(236,72,153,0.3)" }}
+                      >
+                        <Icon className="h-4 w-4" style={{ color: "#ffffff", filter: "drop-shadow(0 0 5px rgba(236,72,153,0.9))" }} />
                       </div>
-                    </article>
-                  </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className={`text-[13.5px] leading-snug ${unread ? "font-semibold" : "font-medium"}`} style={neonText}>
+                            {a.title}
+                          </p>
+                          <Pill tone={sev.tone}>{sev.label}</Pill>
+                        </div>
+                        <p className="mt-1 text-[12px] line-clamp-2" style={neonMute}>{a.body}</p>
+                        <p className="mt-1.5 text-[10.5px] uppercase tracking-[0.12em]" style={neonDim}>{timeAgo(a.created_at)}</p>
+                      </div>
+                    </div>
+                  </article>
                 </div>
               );
             })}

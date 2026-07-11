@@ -326,13 +326,16 @@ export function ConversationClient({ conversationId, currentUserId, other }: Pro
         <div className="relative z-10 border-t border-white/[0.07] bg-[var(--gr-bg-0)]/60 p-3 backdrop-blur-md sm:p-4">
           <form action={sendFormAction} className="flex min-w-0 items-center gap-2 sm:gap-3">
             <input type="hidden" name="conversationId" value={conversationId} />
+            {/* text-base (16px) is deliberate: iOS Safari zooms the page in when a
+                focused input's font-size is < 16px, which on this fixed-height chat
+                view clips the right edge and spawns both scrollbars. */}
             <Input
               name="body"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               aria-label="მესიჯის ტექსტი"
               placeholder="დაწერე მესიჯი..."
-              className="h-12 rounded-full border-white/[0.07] bg-white/5 px-6 text-[15px] font-medium text-[var(--gr-text)] shadow-inner transition-all focus-visible:border-[var(--gr-cyan-glow)]/50 focus-visible:bg-white/10 focus-visible:ring-1 focus-visible:ring-[var(--gr-cyan-glow)]/50 focus-visible:shadow-[0_0_20px_rgba(34,211,238,0.15)]"
+              className="h-12 rounded-full border-white/[0.07] bg-white/5 px-6 text-base font-medium text-[var(--gr-text)] shadow-inner transition-all focus-visible:border-[var(--gr-cyan-glow)]/50 focus-visible:bg-white/10 focus-visible:ring-1 focus-visible:ring-[var(--gr-cyan-glow)]/50 focus-visible:shadow-[0_0_20px_rgba(34,211,238,0.15)]"
               autoFocus
               disabled={isSending}
               autoComplete="off"

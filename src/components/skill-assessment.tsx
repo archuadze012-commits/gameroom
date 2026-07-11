@@ -6,8 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const TIER_COLORS: Record<string, string> = {
   Bronze: "text-amber-700 border-amber-700/40 bg-amber-700/10",
@@ -57,8 +63,19 @@ export function SkillAssessment({ games }: { games: Game[] }) {
     : "";
 
   return (
-    <Card className="border-border/60">
-      <CardContent className="space-y-4 p-5">
+    <div className="pubg-loadout-card relative overflow-hidden p-6 sm:p-8">
+      <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+      <span
+        aria-hidden
+        className="pubg-loadout-rail absolute left-0 top-0 h-full w-[3px] z-[5]"
+        style={{
+          background: "#3b82f6",
+          boxShadow: "0 0 10px rgba(59, 130, 246, 0.8)"
+        }}
+      />
+      <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-12 w-12 opacity-25 z-[5]" />
+
+      <div className="relative z-10 space-y-6">
         <div className="flex items-center gap-1.5 text-sm font-semibold">
           <Trophy className="h-4 w-4 text-primary" />
           AI Skill Assessment
@@ -69,18 +86,21 @@ export function SkillAssessment({ games }: { games: Game[] }) {
             <div className="space-y-1">
               <Label className="text-xs">თამაში *</Label>
               <div className="relative">
-                <select
+                <Select
                   value={gameSlug}
-                  onChange={(e) => setGameSlug(e.target.value)}
-                  className="h-8 w-full appearance-none rounded-md border border-input bg-background px-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  onValueChange={(val) => setGameSlug(val ?? "")}
                 >
-                  {games.map((g) => (
-                    <option key={g.slug} value={g.slug}>
-                      {g.emoji} {g.nameKa}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <SelectTrigger className="!h-10 !w-full bg-black/40 border-white/10 rounded-lg text-white">
+                    <SelectValue placeholder="აირჩიე თამაში" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0b0111] border border-white/5 text-white">
+                    {games.map((g) => (
+                      <SelectItem key={g.slug} value={g.slug}>
+                        {g.emoji} {g.nameKa}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="space-y-1">
@@ -89,7 +109,7 @@ export function SkillAssessment({ games }: { games: Game[] }) {
                 placeholder="მაგ. Crown II, Gold Nova"
                 value={rank}
                 onChange={(e) => setRank(e.target.value)}
-                className="h-8 text-sm"
+                className="h-10 bg-black/40 border-white/10 focus-visible:border-violet-500 focus-visible:ring-violet-500/20 text-white rounded-lg"
               />
             </div>
           </div>
@@ -100,7 +120,7 @@ export function SkillAssessment({ games }: { games: Game[] }) {
               placeholder="მაგ. 500+ საათი, ვამჯობინებ aggressive სტილს..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="resize-none text-sm"
+              className="min-h-[64px] bg-black/40 border-white/10 focus-visible:border-violet-500 focus-visible:ring-violet-500/20 text-white rounded-lg py-2 px-3 leading-relaxed resize-none"
             />
           </div>
           <Button
@@ -140,7 +160,7 @@ export function SkillAssessment({ games }: { games: Game[] }) {
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
