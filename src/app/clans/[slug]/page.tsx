@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Users, Trophy, ShieldCheck, Target, MessageSquare } from "lucide-react";
+import { ArrowLeft, Users, Trophy, Target, Pencil, ShieldCheck } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent } from "@/components/ui/card";
 import { getSession } from "@/lib/auth";
+import { CinematicBackground } from "@/components/ui/cinematic-background";
+import { DisplayHeading } from "@/components/ui/display-heading";
+import { Pill } from "@/components/ui/pill";
 import { ClanJoinButton } from "./clan-join-button";
-import { ClanRequestActions } from "./clan-request-actions";
-import { ClanKickButton } from "./clan-kick-button";
-
+import { ClanLeaveButton } from "./clan-leave-button";
+import { ClanAnnouncements, type ClanAnnouncement } from "./clan-announcements";
+import { ClanEvents, type ClanEvent } from "./clan-events";
+import { ClanInviteResponse } from "./clan-invite";
 
 type ClanMemberProfile = {
   id: string;
@@ -17,11 +20,13 @@ type ClanMemberProfile = {
   display_name: string | null;
   avatar_url: string | null;
   is_verified: boolean | null;
+  last_seen_at: string | null;
 };
 type ClanMember = {
   id: string;
   role: string;
   joined_at: string | null;
+  contribution: number | null;
   profiles: ClanMemberProfile;
 };
 type ClanRequestProfile = {
@@ -36,6 +41,14 @@ type ClanRequest = {
   created_at: string | null;
   profiles: ClanRequestProfile;
 };
+
+const STATUS_LABEL: Record<string, string> = {
+  open: "ღია",
+  invite_only: "მოწვევით",
+  closed: "დახურული",
+};
+
+const ROLE_ORDER: Record<string, number> = { leader: 0, officer: 1, member: 2 };
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -65,16 +78,15 @@ export default async function ClanDetailPage({
   const { slug } = await params;
   const supabase = await createSupabaseServerClient();
 
-  // session is independent of the clan row — fetch them together.
   const [sessionUser, { data: clan }] = await Promise.all([
     getSession().catch(() => null),
     supabase
       .from("clans")
       .select(`
-        id, name, slug, tag, description, avatar_url, banner_url, xp, level, status, game_slug,
+        id, name, slug, tag, description, avatar_url, banner_url, xp, level, status, game_slug, recruiting, recruit_note,
         clan_members (
-          id, role, joined_at,
-          profiles ( id, username, display_name, avatar_url, is_verified )
+          id, role, joined_at, contribution,
+          profiles ( id, username, display_name, avatar_url, is_verified, last_seen_at )
         )
       `)
       .eq("slug", slug)
@@ -94,21 +106,21 @@ export default async function ClanDetailPage({
     clanGame = g ?? null;
   }
 
-  const members = (clan.clan_members || []) as ClanMember[];
-  
-  // Check user status relative to this clan
-  let userStatus = "none"; // 'none', 'member', 'pending'
-  let userRole = "none";
+  const members = ([...(clan.clan_members || [])] as ClanMember[]).sort(
+    (a, b) => (ROLE_ORDER[a.role] ?? 9) - (ROLE_ORDER[b.role] ?? 9)
+  );
+
+  // Viewer status relative to this clan.
+  let userStatus = "none"; // 'none' | 'member' | 'pending'
+  let userRole: "leader" | "officer" | "member" | "none" = "none";
   let canManageRequests = false;
-  let canKickMembers = false;
 
   if (sessionUser) {
     const membership = members.find((m) => m.profiles.id === sessionUser.id);
     if (membership) {
       userStatus = "member";
-      userRole = membership.role;
+      userRole = membership.role as "leader" | "officer" | "member";
       canManageRequests = ["leader", "officer"].includes(userRole);
-      canKickMembers = ["leader", "officer"].includes(userRole);
     } else {
       const { data: req } = await supabase
         .from("clan_requests")
@@ -120,7 +132,6 @@ export default async function ClanDetailPage({
     }
   }
 
-  // Fetch pending requests if user has permissions
   let pendingRequests: ClanRequest[] = [];
   if (canManageRequests) {
     const { data: reqs } = await supabase
@@ -135,153 +146,257 @@ export default async function ClanDetailPage({
     pendingRequests = (reqs || []) as ClanRequest[];
   }
 
-  const coverBanner = clan.banner_url || "from-amber-500/40 via-primary/20 to-transparent";
+  const isMember = userStatus === "member";
+  const isLeader = userRole === "leader";
+  const canManage = canManageRequests; // leader or officer
+
+  // ── Clan feature data ────────────────────────────────────────
+  let announcements: ClanAnnouncement[] = [];
+  let events: ClanEvent[] = [];
+  let myInvite: { id: string } | null = null;
+
+  if (isMember && sessionUser) {
+    const viewerId = sessionUser.id;
+    const [annRes, evRes] = await Promise.all([
+      supabase.from("clan_announcements").select("id, body, created_at, author_id").eq("clan_id", clan.id).order("created_at", { ascending: false }).limit(20),
+      supabase.from("clan_events").select("id, title, description, starts_at").eq("clan_id", clan.id).order("starts_at", { ascending: true }).limit(12),
+    ]);
+
+    const annRows = annRes.data ?? [];
+    const authorIds = [...new Set(annRows.map((a) => a.author_id).filter((x): x is string => !!x))];
+    const authorMap = new Map<string, { username: string; display_name: string | null; avatar_url: string | null }>();
+    if (authorIds.length > 0) {
+      const { data: authors } = await supabase.from("profiles").select("id, username, display_name, avatar_url").in("id", authorIds);
+      (authors ?? []).forEach((a) => authorMap.set(a.id, a));
+    }
+    announcements = annRows.map((a) => {
+      const au = a.author_id ? authorMap.get(a.author_id) : null;
+      return {
+        id: a.id,
+        body: a.body,
+        created_at: a.created_at,
+        authorName: au?.display_name ?? au?.username ?? "წევრი",
+        authorUsername: au?.username ?? null,
+        authorAvatar: au?.avatar_url ?? null,
+      };
+    });
+
+    const evRows = evRes.data ?? [];
+    const rsvpMap = new Map<string, { going: number; maybe: number; no: number; mine: "going" | "maybe" | "no" | null }>();
+    evRows.forEach((e) => rsvpMap.set(e.id, { going: 0, maybe: 0, no: 0, mine: null }));
+    const evIds = evRows.map((e) => e.id);
+    if (evIds.length > 0) {
+      const { data: rsvps } = await supabase.from("clan_event_rsvps").select("event_id, user_id, status").in("event_id", evIds);
+      (rsvps ?? []).forEach((r) => {
+        const agg = rsvpMap.get(r.event_id);
+        if (!agg) return;
+        if (r.status === "going") agg.going++;
+        else if (r.status === "maybe") agg.maybe++;
+        else if (r.status === "no") agg.no++;
+        if (r.user_id === viewerId) agg.mine = r.status as "going" | "maybe" | "no";
+      });
+    }
+    events = evRows.map((e) => {
+      const agg = rsvpMap.get(e.id)!;
+      return { id: e.id, title: e.title, description: e.description, starts_at: e.starts_at, going: agg.going, maybe: agg.maybe, no: agg.no, myStatus: agg.mine };
+    });
+  } else if (sessionUser) {
+    const { data: inv } = await supabase
+      .from("clan_invites")
+      .select("id")
+      .eq("clan_id", clan.id)
+      .eq("invited_user", sessionUser.id)
+      .eq("status", "pending")
+      .maybeSingle();
+    myInvite = inv ?? null;
+  }
+
+  // Progression — every 1000 clan XP is a level.
+  const clanLevel = clan.level ?? 1;
+  const clanXp = clan.xp ?? 0;
+  const xpPct = Math.min(100, ((clanXp % 1000) / 1000) * 100);
+
+  const gs = clan.game_slug;
+  const navCards = gs
+    ? [
+        { key: "tournaments", label: "ტურნირები", sub: "COMPETE", href: `/games/${gs}/tournaments/${slug}`, variant: "royale", rail: "bg-amber-500/80" },
+        { key: "scrims", label: "პრაქტიკული თამაშები", sub: "TRAIN", href: `/games/${gs}/scrims/${slug}`, variant: "support", rail: "bg-cyan-500/70" },
+        { key: "chat", label: "კლანის ჩატი", sub: "COMMS", href: `/games/${gs}/clanchat/${slug}`, variant: "room", rail: "bg-cyan-500/70" },
+        { key: "rosters", label: "შემადგენლობა", sub: "ROSTER", href: `/games/${gs}/rosters/${slug}`, variant: "strike", rail: "bg-indigo-500/80" },
+      ]
+    : [];
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
-      <Link
-        href="/clans"
-        className="mb-4 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--gr-text-dim)] hover:text-[var(--gr-text-mute)]"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" /> კლანების სია
-      </Link>
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
+      <CinematicBackground color="indigo" />
 
-      <div className={`mb-6 h-40 rounded-xl bg-gradient-to-br ${coverBanner} md:h-56 relative overflow-hidden`}>
-        <div className="absolute -bottom-8 left-8">
-          <Avatar className="h-24 w-24 border-4 border-background bg-background shadow-xl">
-            <AvatarImage src={clan.avatar_url ?? undefined} />
-            <AvatarFallback className="text-2xl font-bold text-primary bg-primary/10">
-              {clan.tag}
-            </AvatarFallback>
-          </Avatar>
-        </div>
-      </div>
+      <div className="container relative mx-auto max-w-5xl px-4 py-8 lg:py-10">
+        <Link
+          href={clan.game_slug ? `/clans?game=${clan.game_slug}` : "/clans"}
+          className="mb-5 inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-[0.16em] text-white/40 transition-colors hover:text-white/70"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> კლანების სია
+        </Link>
 
-      <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between mt-12 mb-10">
-        <div>
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className="text-xs font-mono text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
-              [{clan.tag}]
-            </span>
-            <span className="text-xs text-muted-foreground uppercase">{clan.status}</span>
-            {clan.game_slug && clanGame && (
-              <Link
-                href={`/games/${clan.game_slug}`}
-                className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/25 bg-indigo-500/10 px-2.5 py-0.5 text-[11px] font-bold text-indigo-300 transition-colors hover:bg-indigo-500/20"
-              >
-                {clanGame.icon_url && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={clanGame.icon_url} alt="" className="h-3.5 w-3.5 rounded object-cover" />
-                )}
-                {clanGame.name_ka}
-              </Link>
-            )}
+        {myInvite && !isMember && (
+          <div className="mb-4">
+            <ClanInviteResponse inviteId={myInvite.id} clanName={clan.name} />
           </div>
-          <h1 className="text-3xl font-bold font-display uppercase tracking-tight">{clan.name}</h1>
-          <p className="mt-3 text-sm text-muted-foreground max-w-2xl leading-relaxed">
-            {clan.description || "ამ კლანს აღწერა არ აქვს."}
-          </p>
-        </div>
+        )}
 
-        <div className="flex flex-col gap-3 min-w-[200px] shrink-0 bg-secondary/20 p-4 rounded-xl border border-border/40">
-           <div className="flex items-center justify-between text-sm">
-             <span className="text-muted-foreground flex items-center gap-1.5"><Trophy className="h-4 w-4" /> დონე</span>
-             <span className="font-bold text-amber-500">{clan.level}</span>
-           </div>
-           <div className="flex items-center justify-between text-sm">
-             <span className="text-muted-foreground flex items-center gap-1.5"><Target className="h-4 w-4" /> XP</span>
-             <span className="font-bold text-primary">{clan.xp}</span>
-           </div>
-           <div className="flex items-center justify-between text-sm">
-             <span className="text-muted-foreground flex items-center gap-1.5"><Users className="h-4 w-4" /> წევრები</span>
-             <span className="font-bold">{members.length}</span>
-           </div>
-           
-           <div className="pt-3 mt-1 border-t border-border/40">
-              <ClanJoinButton 
-                clanId={clan.id} 
-                status={clan.status} 
-                userStatus={userStatus} 
-                isAuthenticated={!!sessionUser} 
-              />
-           </div>
-        </div>
-      </div>
+        {/* Hero */}
+        <div className="pubg-loadout-link block" data-variant="strike">
+          <div className="pubg-loadout-card relative overflow-hidden p-5 sm:p-7">
+            {clan.banner_url && (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={clan.banner_url} alt="" className="absolute inset-0 z-0 h-full w-full object-cover opacity-25" />
+                <span aria-hidden className="absolute inset-0 z-0 bg-gradient-to-t from-[var(--gr-bg-elev-1)] via-[var(--gr-bg-elev-1)]/75 to-transparent" />
+              </>
+            )}
+            <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+            <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[4px] z-[5] bg-indigo-500/80" />
+            <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-16 w-16 opacity-25 z-[5]" />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -top-24 right-0 h-56 w-72 rounded-full bg-gradient-to-b from-indigo-500/25 to-transparent blur-3xl"
+            />
 
-      {canManageRequests && pendingRequests.length > 0 && (
-        <div className="mb-10">
-          <h3 className="font-display text-lg font-bold uppercase tracking-tight mb-4 text-amber-500 flex items-center gap-2">
-            <Users className="h-5 w-5" /> ახალი მოთხოვნები ({pendingRequests.length})
-          </h3>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {pendingRequests.map((req) => (
-              <Card key={req.id} className="border-border/60 bg-amber-500/5 border-amber-500/20">
-                <CardContent className="p-4 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Avatar className="h-10 w-10 border border-amber-500/20">
-                      <AvatarImage src={req.profiles.avatar_url ?? undefined} />
-                      <AvatarFallback>{(req.profiles.display_name || req.profiles.username).slice(0,1)}</AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <Link href={`/profile/${req.profiles.username}`} className="font-semibold text-sm truncate hover:text-primary transition-colors block">
-                        {req.profiles.display_name || req.profiles.username}
+            <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+              <div className="flex items-start gap-4 sm:gap-5">
+                <Avatar className="h-20 w-20 shrink-0 rounded-2xl border border-indigo-500/30 shadow-[0_0_22px_rgba(99,102,241,0.25)] sm:h-24 sm:w-24">
+                  <AvatarImage src={clan.avatar_url ?? undefined} className="object-cover" />
+                  <AvatarFallback className="rounded-2xl bg-indigo-500/15 text-2xl font-black text-indigo-300">
+                    {clan.tag}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div className="min-w-0">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <Pill tone="amber">[{clan.tag}]</Pill>
+                    <Pill tone={clan.status === "open" ? "online" : clan.status === "closed" ? "neutral" : "violet"}>
+                      {STATUS_LABEL[clan.status] ?? clan.status}
+                    </Pill>
+                    {clan.recruiting && (
+                      <Pill tone="lime" pulse>ეძებს წევრებს</Pill>
+                    )}
+                    {clan.game_slug && clanGame && (
+                      <Link href={`/games/${clan.game_slug}`}>
+                        <Pill tone="cyan" className="transition-opacity hover:opacity-80">
+                          {clanGame.icon_url && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={clanGame.icon_url} alt="" className="h-3.5 w-3.5 rounded object-cover" />
+                          )}
+                          {clanGame.name_ka}
+                        </Pill>
                       </Link>
-                      {req.message && (
-                        <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1 mt-0.5" title={req.message}>
-                          <MessageSquare className="h-3 w-3" /> {req.message}
-                        </p>
-                      )}
-                    </div>
+                    )}
                   </div>
-                  <ClanRequestActions requestId={req.id} clanSlug={slug} />
-                </CardContent>
-              </Card>
+                  <DisplayHeading as="h1" size="md" className="text-white">
+                    {clan.name}
+                  </DisplayHeading>
+                  <p className="mt-3 max-w-xl text-[13.5px] leading-relaxed text-white/60">
+                    {clan.description || "ამ კლანს აღწერა არ აქვს."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Right rail: stats + membership actions */}
+              <div className="w-full shrink-0 space-y-3 rounded-2xl border border-white/[0.07] bg-black/20 p-4 md:w-[220px]">
+                <Stat icon={Trophy} label="დონე" value={clanLevel} tone="text-amber-400" />
+                <Stat icon={Target} label="XP" value={clanXp} tone="text-indigo-300" />
+                <Stat icon={Users} label="წევრები" value={members.length} tone="text-white" />
+
+                <div>
+                  <div className="mb-1 flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-white/40">
+                    <span>დონე {clanLevel}</span>
+                    <span className="tabular-nums">{clanXp % 1000}/1000</span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white/8">
+                    <div className="h-full rounded-full bg-[linear-gradient(90deg,var(--gr-amber),var(--gr-magenta))]" style={{ width: `${xpPct}%` }} />
+                  </div>
+                </div>
+
+                <div className="space-y-2 border-t border-white/[0.07] pt-3">
+                  {isMember ? (
+                    <>
+                      <div className="flex items-center justify-center gap-2 rounded-xl border border-[var(--gr-lime)]/25 bg-[var(--gr-lime)]/[0.08] px-4 py-2.5 text-[12px] font-black uppercase tracking-wider text-[var(--gr-lime)]">
+                        <ShieldCheck className="h-4 w-4" /> {userRole === "leader" ? "ლიდერი" : userRole === "officer" ? "ოფიცერი" : "წევრი ხარ"}
+                      </div>
+                      {isLeader && (
+                        <Link
+                          href={`/clans/${slug}/edit`}
+                          className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-[12px] font-black uppercase tracking-wider text-white/70 transition-colors hover:border-[var(--gr-violet-hi)]/40 hover:text-white"
+                        >
+                          <Pencil className="h-3.5 w-3.5" /> რედაქტირება
+                        </Link>
+                      )}
+                      <ClanLeaveButton clanSlug={slug} isLeader={isLeader} />
+                    </>
+                  ) : (
+                    <ClanJoinButton
+                      clanId={clan.id}
+                      status={clan.status}
+                      userStatus={userStatus}
+                      isAuthenticated={!!sessionUser}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Command cards → dedicated pages */}
+        {navCards.length > 0 && (
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {navCards.map((c) => (
+              <Link key={c.key} href={c.href} className="pubg-loadout-link group block" data-variant={c.variant}>
+                <article className="pubg-loadout-card relative h-full min-h-[130px] overflow-hidden p-5">
+                  <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+                  <span aria-hidden className={`pubg-loadout-rail absolute left-0 top-0 h-full w-[4px] z-[5] ${c.rail}`} />
+                  <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-12 w-12 opacity-25 z-[5]" />
+                  <div className="relative z-10 flex h-full flex-col justify-between gap-4">
+                    <span className="font-display text-[10px] font-black uppercase tracking-[0.24em] text-white/45">{c.sub}</span>
+                    <span className="font-display text-[19px] font-black uppercase leading-[0.95] text-white transition-colors group-hover:text-[#D0F8FF]">
+                      {c.label}
+                    </span>
+                  </div>
+                </article>
+              </Link>
             ))}
           </div>
-        </div>
-      )}
+        )}
 
-      <h3 className="font-display text-lg font-bold uppercase tracking-tight mb-4 flex items-center gap-2">
-        <ShieldCheck className="h-5 w-5 text-primary" /> შემადგენლობა
-      </h3>
-      
-      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-        {members.map((m) => {
-          const profile = m.profiles;
-          
-          // Logic for showing kick button
-          let showKick = false;
-          if (canKickMembers && sessionUser?.id !== profile.id) {
-            if (userRole === "leader") showKick = true;
-            if (userRole === "officer" && m.role === "member") showKick = true;
-          }
-
-          return (
-            <Card key={m.id} className="border-border/60 bg-secondary/5">
-              <CardContent className="p-3 flex items-center justify-between gap-3">
-                 <div className="flex items-center gap-3 min-w-0">
-                   <Avatar className="h-10 w-10">
-                      <AvatarImage src={profile.avatar_url ?? undefined} />
-                      <AvatarFallback>{(profile.display_name || profile.username).slice(0,1)}</AvatarFallback>
-                   </Avatar>
-                   <div className="min-w-0">
-                      <Link href={`/profile/${profile.username}`} className="font-semibold text-sm truncate hover:text-primary transition-colors block">
-                        {profile.display_name || profile.username}
-                      </Link>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">
-                        {m.role === 'leader' ? <span className="text-amber-500 font-bold">Leader</span> : m.role}
-                      </p>
-                   </div>
-                 </div>
-                 {showKick && (
-                   <ClanKickButton memberId={m.id} clanSlug={slug} />
-                 )}
-              </CardContent>
-            </Card>
-          )
-        })}
+        {/* Announcements + Events (members) */}
+        {isMember && (
+          <div className="mt-8 grid gap-4 lg:grid-cols-2">
+            <ClanAnnouncements slug={slug} canPost={canManage} announcements={announcements} />
+            <ClanEvents slug={slug} canCreate={canManage} events={events} />
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
 
+function Stat({
+  icon: Icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: number;
+  tone: string;
+}) {
+  return (
+    <div className="flex items-center justify-between text-[13px]">
+      <span className="flex items-center gap-1.5 text-white/50">
+        <Icon className="h-4 w-4" /> {label}
+      </span>
+      <span className={`font-black tabular-nums ${tone}`}>{value.toLocaleString()}</span>
     </div>
   );
 }

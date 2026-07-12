@@ -148,3 +148,164 @@ export async function kickClanMemberAction(
   revalidatePath(`/clans/${clanSlug}`);
   return { success: true, message: "წევრი გაძევებულია კლანიდან" };
 }
+
+// A member voluntarily leaves. A leader may only leave once they are the sole
+// member (that disbands the clan) — otherwise they must transfer leadership or
+// disband explicitly, so a clan is never left leaderless.
+export async function leaveClanAction(
+  clanSlug: string
+): Promise<{ success: boolean; message?: string; disbanded?: boolean }> {
+  const user = await getSession();
+  if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
+
+  const supabase = await createSupabaseServerClient();
+
+  const { data: clan } = await supabase.from("clans").select("id").eq("slug", clanSlug).maybeSingle();
+  if (!clan) return { success: false, message: "კლანი ვერ მოიძებნა" };
+
+  const { data: membership } = await supabase
+    .from("clan_members")
+    .select("id, role")
+    .eq("clan_id", clan.id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!membership) return { success: false, message: "ამ კლანის წევრი არ ხარ" };
+
+  if (membership.role === "leader") {
+    const { count } = await supabase
+      .from("clan_members")
+      .select("id", { count: "exact", head: true })
+      .eq("clan_id", clan.id);
+    if ((count ?? 0) > 1) {
+      return { success: false, message: "ჯერ გადაეცი ლიდერობა ან დაშალე კლანი" };
+    }
+    // Sole member leader → disband (cascade removes membership).
+    const { error } = await supabase.from("clans").delete().eq("id", clan.id);
+    if (error) {
+      logger.error("failed to disband clan on leader leave", { clanSlug, error });
+      return { success: false, message: "ვერ მოხერხდა" };
+    }
+    revalidatePath("/clans");
+    return { success: true, message: "კლანი დაიშალა", disbanded: true };
+  }
+
+  const { error } = await supabase.from("clan_members").delete().eq("id", membership.id);
+  if (error) {
+    logger.error("failed to leave clan", { clanSlug, userId: user.id, error });
+    return { success: false, message: "ვერ მოხერხდა" };
+  }
+  revalidatePath(`/clans/${clanSlug}`);
+  revalidatePath("/clans");
+  return { success: true, message: "დატოვე კლანი" };
+}
+
+// Leader-only: promote a member to officer or demote an officer to member.
+export async function changeMemberRoleAction(
+  memberId: string,
+  newRole: "officer" | "member",
+  clanSlug: string
+): Promise<{ success: boolean; message?: string }> {
+  const user = await getSession();
+  if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
+
+  const supabase = await createSupabaseServerClient();
+
+  const { data: target } = await supabase
+    .from("clan_members")
+    .select("clan_id, user_id, role")
+    .eq("id", memberId)
+    .single();
+  if (!target) return { success: false, message: "წევრი ვერ მოიძებნა" };
+  if (target.role === "leader") return { success: false, message: "ლიდერის როლი ვერ იცვლება" };
+
+  const { data: caller } = await supabase
+    .from("clan_members")
+    .select("role")
+    .eq("clan_id", target.clan_id)
+    .eq("user_id", user.id)
+    .single();
+  if (!caller || caller.role !== "leader") {
+    return { success: false, message: "მხოლოდ ლიდერს შეუძლია როლების მართვა" };
+  }
+  if (target.user_id === user.id) return { success: false, message: "საკუთარ როლს ვერ შეცვლი" };
+
+  const { error } = await supabase.from("clan_members").update({ role: newRole }).eq("id", memberId);
+  if (error) {
+    logger.error("failed to change clan member role", { memberId, clanSlug, newRole, error });
+    return { success: false, message: "ვერ მოხერხდა" };
+  }
+  revalidatePath(`/clans/${clanSlug}`);
+  return { success: true, message: newRole === "officer" ? "დაწინაურდა ოფიცრად" : "ჩამოქვეითდა წევრად" };
+}
+
+// Leader-only: hand the crown to another member. Caller becomes an officer.
+export async function transferLeadershipAction(
+  memberId: string,
+  clanSlug: string
+): Promise<{ success: boolean; message?: string }> {
+  const user = await getSession();
+  if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
+
+  const supabase = await createSupabaseServerClient();
+
+  const { data: target } = await supabase
+    .from("clan_members")
+    .select("id, clan_id, user_id")
+    .eq("id", memberId)
+    .single();
+  if (!target) return { success: false, message: "წევრი ვერ მოიძებნა" };
+
+  const { data: caller } = await supabase
+    .from("clan_members")
+    .select("id, role")
+    .eq("clan_id", target.clan_id)
+    .eq("user_id", user.id)
+    .single();
+  if (!caller || caller.role !== "leader") {
+    return { success: false, message: "მხოლოდ ლიდერს შეუძლია ლიდერობის გადაცემა" };
+  }
+  if (target.user_id === user.id) return { success: false, message: "შენ უკვე ლიდერი ხარ" };
+
+  // Promote target to leader, demote former leader to officer.
+  const [{ error: e1 }, { error: e2 }] = await Promise.all([
+    supabase.from("clan_members").update({ role: "leader" }).eq("id", target.id),
+    supabase.from("clan_members").update({ role: "officer" }).eq("id", caller.id),
+  ]);
+  if (e1 || e2) {
+    logger.error("failed to transfer clan leadership", { memberId, clanSlug, e1, e2 });
+    return { success: false, message: "ვერ მოხერხდა" };
+  }
+  revalidatePath(`/clans/${clanSlug}`);
+  return { success: true, message: "ლიდერობა გადაცემულია" };
+}
+
+// Leader-only: permanently delete the clan (cascade removes members/requests).
+export async function disbandClanAction(
+  clanSlug: string
+): Promise<{ success: boolean; message?: string }> {
+  const user = await getSession();
+  if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
+
+  const supabase = await createSupabaseServerClient();
+
+  const { data: clan } = await supabase.from("clans").select("id").eq("slug", clanSlug).maybeSingle();
+  if (!clan) return { success: false, message: "კლანი ვერ მოიძებნა" };
+
+  const { data: caller } = await supabase
+    .from("clan_members")
+    .select("role")
+    .eq("clan_id", clan.id)
+    .eq("user_id", user.id)
+    .single();
+  if (!caller || caller.role !== "leader") {
+    return { success: false, message: "მხოლოდ ლიდერს შეუძლია კლანის დაშლა" };
+  }
+
+  const { error } = await supabase.from("clans").delete().eq("id", clan.id);
+  if (error) {
+    logger.error("failed to disband clan", { clanSlug, error });
+    return { success: false, message: "ვერ მოხერხდა" };
+  }
+  revalidatePath("/clans");
+  return { success: true, message: "კლანი დაიშალა" };
+}

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { Check, Sparkles, Lock, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { ShopItem, ShopTier } from "@/types/shop";
 import { purchaseShopItem } from "@/lib/shop/actions";
@@ -159,6 +160,8 @@ export function ShopItemCard({ item, hasSession }: { item: ShopItem; hasSession:
   const topGrad       = TIER_TOP_GRAD[item.tier];
   const badge         = TIER_BADGE_STYLE[item.tier];
   const isHero        = (item.category === "character" || item.category === "combo") && !!item.image_url;
+  // Referral-exclusive cosmetic: not buyable — unlocked by inviting friends.
+  const isReferral    = item.cost_currency === "referral";
 
   function handleEquip() {
     if (isPending) return;
@@ -251,9 +254,15 @@ export function ShopItemCard({ item, hasSession }: { item: ShopItem; hasSession:
 
             {/* price + action */}
             <div className="mt-auto flex items-center justify-between gap-3 pt-2">
-              <span className={`font-display text-[20px] font-black tabular-nums ${CURRENCY_COLOR[item.cost_currency]}`}>
-                {item.cost_amount} {CURRENCY_LABEL[item.cost_currency]}
-              </span>
+              {isReferral ? (
+                <span className="flex items-center gap-1.5 font-display text-[13px] font-black uppercase tracking-wider text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]">
+                  <UserPlus className="h-4 w-4" /> {item.cost_amount} მოწვევა
+                </span>
+              ) : (
+                <span className={`font-display text-[20px] font-black tabular-nums ${CURRENCY_COLOR[item.cost_currency]}`}>
+                  {item.cost_amount} {CURRENCY_LABEL[item.cost_currency]}
+                </span>
+              )}
 
               {item.owned ? (
                 <button
@@ -268,6 +277,13 @@ export function ShopItemCard({ item, hasSession }: { item: ShopItem; hasSession:
                 >
                   {item.equipped ? <><Sparkles className="h-3.5 w-3.5" /> აქტიური</> : "გამოყენება"}
                 </button>
+              ) : isReferral ? (
+                <Link
+                  href="/invite"
+                  className="flex h-10 items-center justify-center gap-1.5 rounded-full border border-cyan-500/40 bg-cyan-500/10 px-5 text-[10px] font-black uppercase tracking-[0.16em] text-cyan-300 transition-all hover:scale-105 hover:bg-cyan-500/20"
+                >
+                  <Lock className="h-3.5 w-3.5" /> მოწვევით
+                </Link>
               ) : (
                 <button
                   type="button"

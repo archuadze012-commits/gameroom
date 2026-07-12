@@ -38,6 +38,10 @@ const ALLOWLIST = new Set([
   // Read-only opponent-history count on public team pages; intentionally PUBLIC
   // (verified on live, PR2 + Codex-2 audits).
   'public.pm_team_match_count/1',
+  // Read-only /invite leaderboard aggregate. DEFINER only to bypass referrals'
+  // referrer-only RLS for the cross-user aggregate; returns public-safe columns
+  // only (see 20260712b_referral_diminishing_rewards.sql).
+  'public.get_top_referrers/1',
 ]);
 
 // A definer function may pin only these schemas; pg_temp must be present.

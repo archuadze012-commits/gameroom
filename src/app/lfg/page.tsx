@@ -5,9 +5,11 @@ import { ka } from "date-fns/locale";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LfgFilters } from "./lfg-filters";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/auth";
 import { PageHeader } from "@/components/page-header";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 import { PremiumCard } from "@/components/ui/premium-card";
+import { ContextualInvitePrompt } from "@/components/contextual-invite-prompt";
 
 export const metadata = {
   title: "ლოკალი — გუნდის ძებნა",
@@ -66,6 +68,11 @@ export default async function LfgPage({
   const posts = (data ?? []) as unknown as LfgRow[];
   const activeFilterCount = [params.game, params.mode, params.region, params.voice].filter(Boolean).length;
 
+  // A quiet radar (few unfiltered posts) is the moment to nudge logged-in users
+  // to bring a friend to play with — shown only when they aren't filtering.
+  const user = await getSession().catch(() => null);
+  const showInviteNudge = !!user && activeFilterCount === 0 && posts.length < 5;
+
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
       {/* Cinematic Ambient Background */}
@@ -108,6 +115,7 @@ export default async function LfgPage({
           </aside>
 
           <div className="space-y-5">
+            {showInviteNudge && <ContextualInvitePrompt variant="lfg-quiet" />}
             {posts.length === 0 ? (
               <PremiumCard noHover className="py-20 text-center flex flex-col items-center justify-center">
                 <div className="flex h-24 w-24 items-center justify-center rounded-full bg-pink-500/10 shadow-[0_0_30px_rgba(236,72,153,0.2)]">

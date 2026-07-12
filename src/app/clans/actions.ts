@@ -128,6 +128,72 @@ export async function createClanAction(
   return { success: true, message: "კლანი შეიქმნა!", clanSlug: clan.slug };
 }
 
+const updateClanSchema = z.object({
+  slug: z.string().min(1),
+  description: z.string().max(1000).optional(),
+  status: z.enum(["open", "invite_only", "closed"]),
+  recruiting: z.boolean().optional(),
+  recruitNote: z.string().max(200).optional(),
+});
+
+// Leader-only edit of a clan's description + join policy.
+export async function updateClanAction(
+  prevState: ClanActionState,
+  formData: FormData
+): Promise<ClanActionState> {
+  const user = await getSession();
+  if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
+
+  const validated = updateClanSchema.safeParse({
+    slug: formData.get("slug"),
+    description: formData.get("description"),
+    status: formData.get("status"),
+    recruiting: formData.get("recruiting") === "on",
+    recruitNote: formData.get("recruitNote"),
+  });
+  if (!validated.success) {
+    return { success: false, errors: validated.error.flatten().fieldErrors, message: "არასწორი მონაცემები" };
+  }
+  const { slug, description, status, recruiting, recruitNote } = validated.data;
+
+  if (description && description.trim()) {
+    const mod = await moderateText(description).catch(() => ({ ok: true, reason: undefined as string | undefined }));
+    if (!mod.ok) return { success: false, message: mod.reason || "შინაარსი დაბლოკილია" };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data: clan } = await supabase.from("clans").select("id").eq("slug", slug).maybeSingle();
+  if (!clan) return { success: false, message: "კლანი ვერ მოიძებნა" };
+
+  const { data: membership } = await supabase
+    .from("clan_members")
+    .select("role")
+    .eq("clan_id", clan.id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!membership || membership.role !== "leader") {
+    return { success: false, message: "მხოლოდ ლიდერს შეუძლია რედაქტირება" };
+  }
+
+  const { error } = await supabase
+    .from("clans")
+    .update({
+      description: description ?? null,
+      status,
+      recruiting: recruiting ?? false,
+      recruit_note: (recruitNote ?? "").trim().slice(0, 200) || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", clan.id);
+  if (error) {
+    logger.error("failed to update clan", { slug, error });
+    return { success: false, message: "ვერ მოხერხდა" };
+  }
+
+  revalidatePath(`/clans/${slug}`);
+  return { success: true, message: "კლანი განახლდა", clanSlug: slug };
+}
+
 export async function requestJoinClanAction(
   clanId: string,
   message?: string
@@ -150,6 +216,34 @@ export async function requestJoinClanAction(
 
   if (existing) return { success: false, message: "ჯერ გადი ამჟამინდელი კლანიდან" };
 
+  // Fetch clan status + slug — an "open" clan grants instant membership, others
+  // take a join request that leadership approves.
+  const { data: clan } = await supabase
+    .from("clans")
+    .select("status, slug")
+    .eq("id", clanId)
+    .maybeSingle();
+  if (!clan) return { success: false, message: "კლანი ვერ მოიძებნა" };
+  if (clan.status === "closed") return { success: false, message: "ამ კლანში მიღება დახურულია" };
+
+  // ── Open clan → instant join ────────────────────────────────
+  if (clan.status === "open") {
+    const { error: joinErr } = await supabase.from("clan_members").insert({
+      clan_id: clanId,
+      user_id: user.id,
+      role: "member",
+    });
+    if (joinErr) {
+      if (joinErr.code === "23505") return { success: false, message: "უკვე კლანის წევრი ხარ" };
+      logger.error("failed to join open clan", { userId: user.id, clanId, error: joinErr });
+      return { success: false, message: "გაწევრიანება ვერ მოხერხდა" };
+    }
+    revalidatePath(`/clans/${clan.slug}`);
+    revalidatePath("/clans");
+    return { success: true, message: "მოგესალმებით კლანში! 🎉" };
+  }
+
+  // ── invite_only clan → join request ─────────────────────────
   // The join-request message is free text shown to clan leadership — moderate it.
   if (message && message.trim()) {
     const mod = await moderateText(message).catch(() => ({
@@ -173,6 +267,6 @@ export async function requestJoinClanAction(
     return { success: false, message: "მოთხოვნის გაგზავნა ვერ მოხერხდა" };
   }
 
-  revalidatePath(`/clans`);
+  revalidatePath(`/clans/${clan.slug}`);
   return { success: true, message: "მოთხოვნა გაიგზავნა!" };
 }

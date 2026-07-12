@@ -38,7 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: p === "" ? 1 : 0.7,
   }));
 
-  const [articles, games, tournaments, clans, news, cracked] = await Promise.all([
+  const [articles, games, tournaments, clans, news, cracked, profiles] = await Promise.all([
     listPublishedArticles(1000).catch(() => []),
     rows<{ slug: string }>(supabase.from("games").select("slug")),
     rows<{ slug: string }>(supabase.from("tournaments").select("slug")),
@@ -47,6 +47,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       supabase.from("news_articles").select("slug, published_at").eq("status", "published"),
     ),
     rows<{ id: string }>(supabase.from("cracked_games").select("id")),
+    // Public gamer cards — the viral, OG-rich surface worth indexing.
+    rows<{ username: string; updated_at: string | null }>(
+      supabase.from("profiles").select("username, updated_at").eq("banned", false).limit(5000),
+    ),
   ]);
 
   const dynamic: MetadataRoute.Sitemap = [
@@ -66,6 +70,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...tournaments.map((t) => ({ url: `${base}/tournaments/${t.slug}`, changeFrequency: "daily" as const, priority: 0.6 })),
     ...clans.map((c) => ({ url: `${base}/clans/${c.slug}`, changeFrequency: "weekly" as const, priority: 0.5 })),
     ...cracked.map((c) => ({ url: `${base}/free-pc-games/${c.id}`, changeFrequency: "monthly" as const, priority: 0.5 })),
+    ...profiles.map((p) => ({
+      url: `${base}/g/${encodeURIComponent(p.username)}`,
+      lastModified: p.updated_at ? new Date(p.updated_at) : undefined,
+      changeFrequency: "weekly" as const,
+      priority: 0.4,
+    })),
   ];
 
   return [...staticEntries, ...dynamic];

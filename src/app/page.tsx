@@ -22,9 +22,11 @@ import { Separator } from "@/components/ui/separator";
 import { PostReactions } from "@/app/feed/[id]/post-reactions";
 import { DeferMount } from "@/components/defer-mount";
 import { PostComposer } from "@/components/post-composer";
+import { ContextualInvitePrompt } from "@/components/contextual-invite-prompt";
 import { OnboardingChecklist } from "@/components/home/onboarding-checklist";
 import { HomeFeedSeed } from "@/components/home/home-feed-seed";
 import { getFeedSeed, type FeedSeed } from "@/lib/home/feed-seed";
+import { HomeOnlineNow } from "@/components/home/home-online-now";
 import { PostOwnerActions } from "@/components/post-owner-actions";
 import { PostContent } from "@/components/post-content";
 export const dynamic = "force-dynamic";
@@ -128,6 +130,9 @@ export default async function HomePage() {
     hasPush: true,
     hasClaimedDaily: true,
   };
+  // Contextual "invite friends" nudge — shown when the social graph is thin.
+  // Defaults false so a fetch failure never nags.
+  let fewFollows = false;
   type FreePcGameRow = { id: string; title: string; cover_url: string | null; rating: number };
   let freePcGamesDb: FreePcGameRow[] = [];
   try {
@@ -187,6 +192,7 @@ export default async function HomePage() {
       hasPush: (pushCountRes.count ?? 0) > 0,
       hasClaimedDaily: !!profile?.last_login_award_at,
     };
+    fewFollows = (followCountRes.count ?? 0) < 3;
     composerUser = {
       id: user.id,
       username: profile?.username ?? user.email?.split("@")[0] ?? "player",
@@ -483,6 +489,7 @@ export default async function HomePage() {
               {composerUser && (
                 <PostComposer currentUser={composerUser} revalidatePath="/" />
               )}
+              {fewFollows && <ContextualInvitePrompt variant="few-follows" />}
               {feedItems.length === 0 ? (
                 feedSeed.suggestedUsers.length > 0 || feedSeed.lfgPosts.length > 0 ? (
                   <HomeFeedSeed suggestedUsers={feedSeed.suggestedUsers} lfgPosts={feedSeed.lfgPosts} />
@@ -600,6 +607,8 @@ export default async function HomePage() {
                 the announcements/search quick-nav tiles above); desktop keeps it
                 as the actual sidebar. */}
             <div className="hidden lg:block lg:col-span-4 space-y-6">
+              <HomeOnlineNow currentUserId={user.id} />
+
               <div className="pubg-loadout-link group relative block" data-variant="room">
                 <div className="pubg-loadout-card relative overflow-hidden p-6">
                   <span aria-hidden className="pubg-loadout-field absolute inset-0" />

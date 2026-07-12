@@ -30,6 +30,7 @@ import { DisplayHeading } from "@/components/ui/display-heading";
 import { ChevronButton } from "@/components/ui/chevron-button";
 import { Pill } from "@/components/ui/pill";
 import { EmptyState } from "@/components/ui/empty-state";
+import { getSiteUrl } from "@/lib/url";
 
 
 const cutSm = "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)";
@@ -402,8 +403,21 @@ export default async function GamePage({
   const featuredRoom = topRooms[0] ?? null;
   const featuredTournament = gameTournaments[0] ?? null;
 
+  const gameJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    name: game.nameEn || game.nameKa,
+    alternateName: game.nameKa,
+    description: game.description || undefined,
+    image: game.coverUrl || undefined,
+    url: `${getSiteUrl()}/games/${game.slug}`,
+    genre: "Video Game",
+    gamePlatform: "Online",
+  };
+
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(gameJsonLd) }} />
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
 
       {game.coverUrl && (

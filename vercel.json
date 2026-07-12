@@ -4,6 +4,10 @@
     {
       "path": "/api/admin/cron/unban-expired",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/admin/cron/reengage",
+      "schedule": "0 9 * * *"
     }
   ],
   "functions": {

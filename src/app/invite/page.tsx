@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import Link from "next/link";
 import Image from "next/image";
-import { Gift, Users, Sparkles, Coins, CheckCircle2, Clock } from "lucide-react";
+import { Gift, Users, Sparkles, Coins, CheckCircle2, Clock, Trophy, Crown } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSiteOrigin } from "@/lib/url";
@@ -12,6 +13,9 @@ import { InviteLinkCard } from "./invite-link-card";
 export const metadata = { title: "მოიწვიე მეგობარი | PlayGame" };
 export const dynamic = "force-dynamic";
 
+// Diminishing scale (see process_referral_qualification): full rate for the
+// first 3 qualified invites, reduced after that. These constants are the
+// headline (first-invite) rate shown in the marketing copy below.
 const REFERRER_REWARD = 1000;
 const REFERRED_REWARD = 500;
 const LEO_IMG = "/characters/gameroom-vanguard-guide.webp";
@@ -72,6 +76,18 @@ export default async function InvitePage() {
   const activated = invitees.filter((i) => i.status === "rewarded").length;
   const earned = invitees.reduce((sum, i) => sum + (i.status === "rewarded" ? i.referrer_reward : 0), 0);
 
+  // Top-inviters leaderboard (public-safe RPC — counts only).
+  const { data: topReferrers } = await supabase.rpc("get_top_referrers", { p_limit: 10 });
+  const leaderboard = topReferrers ?? [];
+
+  // Milestone tiers — bonus NC at 3 / 10 / 25 activated invites.
+  const MILESTONES = [
+    { n: 3, bonus: 2000 },
+    { n: 10, bonus: 7500 },
+    { n: 25, bonus: 20000 },
+  ];
+  const nextMilestone = MILESTONES.find((m) => m.n > activated) ?? null;
+
   const hdrs = await headers();
   const host = hdrs.get("x-forwarded-host") ?? hdrs.get("host") ?? "";
   const proto = hdrs.get("x-forwarded-proto") ?? "https";
@@ -93,7 +109,7 @@ export default async function InvitePage() {
               მოიწვიე მეგობარი
             </span>
           }
-          description={`გააზიარე ბმული — როცა მეგობარი შემოგვიერთდება და გააქტიურდება, შენ +${REFERRER_REWARD} NC მიიღებ, ის კი +${REFERRED_REWARD} NC-ს.`}
+          description={`გააზიარე ბმული — როცა მეგობარი შემოგვიერთდება და გააქტიურდება, შენ +${REFERRER_REWARD} NC მიიღებ, ის კი +${REFERRED_REWARD} NC-ს (პირველი 3 მოწვევისთვის — შემდეგ ჯილდო მცირდება).`}
         />
 
         {/* How it works */}
@@ -101,7 +117,7 @@ export default async function InvitePage() {
           {[
             { icon: Sparkles, title: "გააზიარე", text: "გაუგზავნე შენი ბმული მეგობარს", variant: "room", rail: "bg-cyan-500/80 shadow-[0_0_8px_rgba(34,211,238,0.8)]" },
             { icon: Users, title: "ის შემოგვიერთდება", text: "დარეგისტრირდება შენი ბმულით", variant: "support", rail: "bg-[var(--gr-lime)]/80 shadow-[0_0_8px_rgba(132,204,22,0.8)]" },
-            { icon: Coins, title: "მიიღეთ ჯილდო", text: `+${REFERRER_REWARD} NC შენ, +${REFERRED_REWARD} NC მას`, variant: "royale", rail: "bg-pink-500/80 shadow-[0_0_8px_rgba(236,72,153,0.8)]" },
+            { icon: Coins, title: "მიიღეთ ჯილდო", text: `+${REFERRER_REWARD} NC შენ, +${REFERRED_REWARD} NC მას (პირველი 3 მოწვევა)`, variant: "royale", rail: "bg-pink-500/80 shadow-[0_0_8px_rgba(236,72,153,0.8)]" },
           ].map((s, i) => {
             const Icon = s.icon;
             return (
@@ -141,6 +157,21 @@ export default async function InvitePage() {
               </div>
             </div>
           )}
+          {username && (
+            <div className="mt-2 flex flex-wrap items-center justify-end gap-3 text-[12px]">
+              <Link href={`/g/${username}`} className="font-bold text-white/50 transition-colors hover:text-white/80">
+                ბარათის ნახვა →
+              </Link>
+              <a
+                href={`/g/${username}/opengraph-image`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-[var(--gr-violet-hi)] transition-colors hover:brightness-125"
+              >
+                ბარათის სურათი ⬇
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Stats */}
@@ -148,6 +179,58 @@ export default async function InvitePage() {
           <Stat icon={Users} label="მოწვეული" value={totalInvited} tone="violet" />
           <Stat icon={CheckCircle2} label="გააქტიურდა" value={activated} tone="lime" />
           <Stat icon={Coins} label="მიღებული NC" value={earned} tone="pink" />
+        </div>
+
+        {/* Milestones */}
+        <div className="mt-6 pubg-loadout-link block" data-variant="royale">
+          <div className="pubg-loadout-card relative overflow-hidden p-5">
+            <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+            <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[3px] z-[5] bg-amber-500/80" />
+            <div className="relative z-10">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[13px] font-black uppercase tracking-[0.12em] text-white">
+                  <Trophy className="h-4 w-4 text-amber-400" /> ეტაპობრივი ბონუსები
+                </div>
+                {nextMilestone && (
+                  <span className="text-[11px] font-black text-amber-300">
+                    {activated}/{nextMilestone.n} → +{nextMilestone.bonus.toLocaleString()} NC
+                  </span>
+                )}
+              </div>
+              {nextMilestone ? (
+                <div className="h-2 overflow-hidden rounded-full bg-white/8">
+                  <div
+                    className="h-full rounded-full bg-[linear-gradient(90deg,var(--gr-amber),var(--gr-magenta))] transition-[width] duration-500"
+                    style={{ width: `${Math.min(100, (activated / nextMilestone.n) * 100)}%` }}
+                  />
+                </div>
+              ) : (
+                <p className="text-[12.5px] text-[var(--gr-lime)]">ყველა ეტაპი დაფარულია — ლეგენდა ხარ! 🏆</p>
+              )}
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                {MILESTONES.map((m) => {
+                  const done = activated >= m.n;
+                  return (
+                    <div
+                      key={m.n}
+                      className={`rounded-xl border px-2 py-2.5 text-center ${
+                        done
+                          ? "border-[var(--gr-lime)]/30 bg-[var(--gr-lime)]/[0.08]"
+                          : "border-white/[0.06] bg-white/[0.02]"
+                      }`}
+                    >
+                      <div className={`text-[15px] font-black tabular-nums ${done ? "text-[var(--gr-lime)]" : "text-white/80"}`}>
+                        {m.n} მოწვევა
+                      </div>
+                      <div className={`text-[11px] font-black ${done ? "text-[var(--gr-lime)]/80" : "text-white/40"}`}>
+                        +{m.bonus.toLocaleString()} NC
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Invitee list */}
@@ -210,6 +293,34 @@ export default async function InvitePage() {
             </ul>
           )}
         </div>
+
+        {/* Top inviters leaderboard */}
+        {leaderboard.length > 0 && (
+          <div className="mt-6">
+            <h2 className="mb-3 flex items-center gap-2 text-[13px] font-black uppercase tracking-[0.14em] text-white/50">
+              <Crown className="h-4 w-4 text-amber-400" /> ტოპ მომწვევები
+            </h2>
+            <ol className="space-y-2">
+              {leaderboard.map((r, idx) => (
+                <li key={r.username} className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+                  <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-[12px] font-black ${
+                    idx === 0 ? "bg-amber-400/20 text-amber-300" : idx === 1 ? "bg-white/10 text-white/70" : idx === 2 ? "bg-orange-500/15 text-orange-300" : "bg-white/[0.04] text-white/40"
+                  }`}>
+                    {idx + 1}
+                  </span>
+                  <Link href={`/profile/${r.username}`} className="flex min-w-0 flex-1 items-center gap-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={r.avatar_url || "/default-avatar.svg"} alt="" className="h-9 w-9 rounded-full border border-white/10 object-cover" />
+                    <span className="truncate text-[13.5px] font-bold text-white/90">{r.display_name || r.username}</span>
+                  </Link>
+                  <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--gr-violet-hi)]/25 bg-[var(--gr-violet)]/10 px-2.5 py-1 text-[11px] font-black text-[var(--gr-violet-hi)]">
+                    <Gift className="h-3.5 w-3.5" /> {Number(r.invites)}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
       </div>
     </div>
   );

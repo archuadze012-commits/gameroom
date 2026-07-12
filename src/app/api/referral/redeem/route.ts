@@ -89,5 +89,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "unknown" }, { status: 500 });
   }
 
+  // Mutual auto-follow (mirrors the cookie-attribution path in auth/callback).
+  await admin
+    .from("follows")
+    .upsert(
+      [
+        { follower_id: user.id, following_id: referrer.id },
+        { follower_id: referrer.id, following_id: user.id },
+      ],
+      { onConflict: "follower_id,following_id", ignoreDuplicates: true },
+    );
+
   return NextResponse.json({ ok: true });
 }

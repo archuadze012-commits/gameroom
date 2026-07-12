@@ -31,6 +31,8 @@ type ClanListItem = {
   xp: number;
   level: number;
   status: string;
+  recruiting: boolean | null;
+  recruit_note: string | null;
   clan_members: { count: number }[];
 };
 
@@ -58,6 +60,8 @@ export default async function ClansPage({
       xp,
       level,
       status,
+      recruiting,
+      recruit_note,
       clan_members(count)
     `)
     .order("xp", { ascending: false });
@@ -164,15 +168,22 @@ export default async function ClansPage({
                     </div>
                   </div>
 
-                  {clan.game_slug && gameBySlug.get(clan.game_slug) && (
-                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-1 text-[11px] font-bold text-indigo-300">
-                      {gameBySlug.get(clan.game_slug)!.icon_url && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={gameBySlug.get(clan.game_slug)!.icon_url!} alt="" className="h-3.5 w-3.5 rounded object-cover" />
-                      )}
-                      {gameBySlug.get(clan.game_slug)!.name_ka}
-                    </span>
-                  )}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {clan.game_slug && gameBySlug.get(clan.game_slug) && (
+                      <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-1 text-[11px] font-bold text-indigo-300">
+                        {gameBySlug.get(clan.game_slug)!.icon_url && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={gameBySlug.get(clan.game_slug)!.icon_url!} alt="" className="h-3.5 w-3.5 rounded object-cover" />
+                        )}
+                        {gameBySlug.get(clan.game_slug)!.name_ka}
+                      </span>
+                    )}
+                    {clan.recruiting && (
+                      <span className="inline-flex w-fit items-center gap-1 rounded-full border border-[var(--gr-lime)]/30 bg-[var(--gr-lime)]/10 px-2.5 py-1 text-[11px] font-bold text-[var(--gr-lime)]">
+                        ● ეძებს წევრებს
+                      </span>
+                    )}
+                  </div>
 
                   <p className="text-sm text-white/60 line-clamp-2 h-10 font-medium">
                     {clan.description || "აღწერის გარეშე"}

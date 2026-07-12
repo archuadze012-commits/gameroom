@@ -129,6 +129,18 @@ export async function GET(request: NextRequest) {
                   code_used: refCode,
                   status: "pending",
                 });
+                // Mutual auto-follow so both feeds are populated from day one —
+                // an empty social graph is the #1 new-user churn driver.
+                // ignoreDuplicates no-ops if either edge already exists.
+                await admin
+                  .from("follows")
+                  .upsert(
+                    [
+                      { follower_id: user.id, following_id: referrer.id },
+                      { follower_id: referrer.id, following_id: user.id },
+                    ],
+                    { onConflict: "follower_id,following_id", ignoreDuplicates: true },
+                  );
               }
             } catch (e) {
               logger.warn("referral attribution failed", { userId: user.id, error: e });

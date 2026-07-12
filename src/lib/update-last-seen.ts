@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from "./supabase/admin";
 import { awardXp } from "./gamification";
+import { sendPushToUser } from "./push";
 import { createLogger } from "./logger";
 
 const logger = createLogger("update-last-seen");
@@ -58,11 +59,38 @@ export async function updateLastSeen(userId?: string) {
         // Fresh-day activity is exactly the "returned on a later day" signal a
         // pending referral needs — evaluate qualification once per day. No-op
         // (fast) for users without a pending referral.
-        const { error: refError } = await supabase.rpc("process_referral_qualification", {
+        const { data: refRewarded, error: refError } = await supabase.rpc("process_referral_qualification", {
           p_referred: targetUserId,
         });
         if (refError) {
           logger.warn("referral qualification check failed", { userId: targetUserId, error: refError });
+        } else if (refRewarded === true) {
+          // A pending referral just qualified — nudge the referrer with a push
+          // (the in-app notification is created inside the RPC).
+          const { data: ref } = await supabase
+            .from("referrals")
+            .select("referrer_id")
+            .eq("referred_id", targetUserId)
+            .eq("status", "rewarded")
+            .maybeSingle();
+          if (ref?.referrer_id) {
+            await sendPushToUser(ref.referrer_id, {
+              title: "შენი მოწვევა გააქტიურდა! 🎉",
+              body: "მიიღე +1000 NC — მეგობარი შემოგვიერთდა",
+              url: "/invite",
+              tag: "referral-activated",
+            }).catch((e) => logger.warn("referral push failed", { error: e }));
+          }
+        }
+
+        // "Better together" co-op bonus — fires the first fresh day the user has
+        // actually interacted with a referral partner (either direction). No-op
+        // (fast) for users with no un-coop-rewarded referral.
+        const { error: coopError } = await supabase.rpc("process_referral_coop", {
+          p_user: targetUserId,
+        });
+        if (coopError) {
+          logger.warn("referral co-op check failed", { userId: targetUserId, error: coopError });
         }
       }
     } else {

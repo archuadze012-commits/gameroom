@@ -313,9 +313,179 @@ export type Database = {
           },
         ]
       }
+      clan_announcements: {
+        Row: {
+          author_id: string | null
+          body: string
+          clan_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          clan_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          clan_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clan_announcements_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clan_announcements_clan_id_fkey"
+            columns: ["clan_id"]
+            isOneToOne: false
+            referencedRelation: "clans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clan_event_rsvps: {
+        Row: {
+          created_at: string
+          event_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clan_event_rsvps_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "clan_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clan_event_rsvps_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clan_events: {
+        Row: {
+          clan_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          starts_at: string
+          title: string
+        }
+        Insert: {
+          clan_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          starts_at: string
+          title: string
+        }
+        Update: {
+          clan_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          starts_at?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clan_events_clan_id_fkey"
+            columns: ["clan_id"]
+            isOneToOne: false
+            referencedRelation: "clans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clan_events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clan_invites: {
+        Row: {
+          clan_id: string
+          created_at: string
+          id: string
+          invited_by: string | null
+          invited_user: string
+          status: string
+        }
+        Insert: {
+          clan_id: string
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          invited_user: string
+          status?: string
+        }
+        Update: {
+          clan_id?: string
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          invited_user?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clan_invites_clan_id_fkey"
+            columns: ["clan_id"]
+            isOneToOne: false
+            referencedRelation: "clans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clan_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clan_invites_invited_user_fkey"
+            columns: ["invited_user"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clan_members: {
         Row: {
           clan_id: string
+          contribution: number
           id: string
           joined_at: string
           role: Database["public"]["Enums"]["clan_role"]
@@ -323,6 +493,7 @@ export type Database = {
         }
         Insert: {
           clan_id: string
+          contribution?: number
           id?: string
           joined_at?: string
           role?: Database["public"]["Enums"]["clan_role"]
@@ -330,6 +501,7 @@ export type Database = {
         }
         Update: {
           clan_id?: string
+          contribution?: number
           id?: string
           joined_at?: string
           role?: Database["public"]["Enums"]["clan_role"]
@@ -345,6 +517,48 @@ export type Database = {
           },
           {
             foreignKeyName: "clan_members_user_id_profiles_id_fk"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clan_messages: {
+        Row: {
+          body: string
+          clan_id: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          clan_id: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          clan_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clan_messages_clan_id_fkey"
+            columns: ["clan_id"]
+            isOneToOne: false
+            referencedRelation: "clans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clan_messages_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -405,6 +619,8 @@ export type Database = {
           id: string
           level: number
           name: string
+          recruit_note: string | null
+          recruiting: boolean
           slug: string
           status: Database["public"]["Enums"]["clan_status"]
           tag: string
@@ -421,6 +637,8 @@ export type Database = {
           id?: string
           level?: number
           name: string
+          recruit_note?: string | null
+          recruiting?: boolean
           slug: string
           status?: Database["public"]["Enums"]["clan_status"]
           tag: string
@@ -437,6 +655,8 @@ export type Database = {
           id?: string
           level?: number
           name?: string
+          recruit_note?: string | null
+          recruiting?: boolean
           slug?: string
           status?: Database["public"]["Enums"]["clan_status"]
           tag?: string
@@ -3434,6 +3654,7 @@ export type Database = {
       referrals: {
         Row: {
           code_used: string | null
+          coop_rewarded_at: string | null
           created_at: string
           id: string
           qualified_at: string | null
@@ -3445,6 +3666,7 @@ export type Database = {
         }
         Insert: {
           code_used?: string | null
+          coop_rewarded_at?: string | null
           created_at?: string
           id?: string
           qualified_at?: string | null
@@ -3456,6 +3678,7 @@ export type Database = {
         }
         Update: {
           code_used?: string | null
+          coop_rewarded_at?: string | null
           created_at?: string
           id?: string
           qualified_at?: string | null
@@ -3782,6 +4005,7 @@ export type Database = {
       tournament_participants: {
         Row: {
           checked_in: boolean
+          clan_id: string | null
           eliminated_at: string | null
           id: string
           registered_at: string
@@ -3792,6 +4016,7 @@ export type Database = {
         }
         Insert: {
           checked_in?: boolean
+          clan_id?: string | null
           eliminated_at?: string | null
           id?: string
           registered_at?: string
@@ -3802,6 +4027,7 @@ export type Database = {
         }
         Update: {
           checked_in?: boolean
+          clan_id?: string | null
           eliminated_at?: string | null
           id?: string
           registered_at?: string
@@ -3811,6 +4037,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tournament_participants_clan_id_fkey"
+            columns: ["clan_id"]
+            isOneToOne: false
+            referencedRelation: "clans"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tournament_participants_tournament_id_tournaments_id_fk"
             columns: ["tournament_id"]
@@ -3837,6 +4070,7 @@ export type Database = {
           format: Database["public"]["Enums"]["tournament_format"]
           game_id: string
           id: string
+          is_practice: boolean
           max_participants: number
           name: string
           prize_pool: string | null
@@ -3857,6 +4091,7 @@ export type Database = {
           format?: Database["public"]["Enums"]["tournament_format"]
           game_id: string
           id?: string
+          is_practice?: boolean
           max_participants?: number
           name: string
           prize_pool?: string | null
@@ -3877,6 +4112,7 @@ export type Database = {
           format?: Database["public"]["Enums"]["tournament_format"]
           game_id?: string
           id?: string
+          is_practice?: boolean
           max_participants?: number
           name?: string
           prize_pool?: string | null
@@ -4348,6 +4584,10 @@ export type Database = {
         }
         Returns: Json
       }
+      award_clan_xp: {
+        Args: { p_amount: number; p_clan: string; p_user: string }
+        Returns: undefined
+      }
       award_xp: {
         Args: { p_amount: number; p_user_id: string }
         Returns: number
@@ -4380,7 +4620,20 @@ export type Database = {
       }
       expire_old_lfg_posts: { Args: never; Returns: undefined }
       gen_ref_code: { Args: never; Returns: string }
+      get_top_referrers: {
+        Args: { p_limit?: number }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          invites: number
+          username: string
+        }[]
+      }
       is_admin: { Args: never; Returns: boolean }
+      is_clan_member: {
+        Args: { p_clan: string; p_user: string }
+        Returns: boolean
+      }
       open_box: { Args: { p_id: string }; Returns: undefined }
       open_box_as: {
         Args: { p_box_id: string; p_user_id: string }
@@ -4759,6 +5012,7 @@ export type Database = {
           role_key: string
         }[]
       }
+      process_referral_coop: { Args: { p_user: string }; Returns: undefined }
       process_referral_qualification: {
         Args: { p_referred: string }
         Returns: boolean

@@ -5,6 +5,7 @@ import { NewClanForm } from "./new-clan-form";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { CinematicBackground } from "@/components/ui/cinematic-background";
 
 export default async function NewClanPage({
   searchParams,
@@ -25,7 +26,9 @@ export default async function NewClanPage({
   const games = (gameRows ?? []).map((g) => ({ slug: g.slug, nameKa: g.name_ka }));
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
+    <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
+      <CinematicBackground color="indigo" />
+      <div className="container relative mx-auto px-4 py-8 max-w-5xl">
       <Link
         href="/clans"
         className="mb-4 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--gr-text-dim)] hover:text-[var(--gr-text-mute)]"
@@ -40,6 +43,7 @@ export default async function NewClanPage({
       />
 
       <NewClanForm games={games} defaultGame={defaultGame} />
+      </div>
     </div>
   );
 }

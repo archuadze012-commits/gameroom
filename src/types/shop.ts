@@ -19,7 +19,9 @@ export type ShopItem = {
   description: string | null;
   category: ShopCategory;
   image_url: string | null;
-  cost_currency: "nc" | "pro";
+  // "referral" is a sentinel for invite-exclusive cosmetics — not a real wallet
+  // currency; such items are unlocked by inviting friends, never bought.
+  cost_currency: "nc" | "pro" | "referral";
   cost_amount: number;
   tier: ShopTier;
   metadata: Record<string, unknown>;

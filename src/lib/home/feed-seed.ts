@@ -7,6 +7,7 @@ export type SuggestedUser = {
   displayName: string;
   avatarUrl: string | null;
   level: number;
+  lastSeenAt: string | null;
 };
 
 export type SeedLfgPost = {
@@ -39,7 +40,7 @@ export async function getFeedSeed(supabase: ServerClient, userId: string): Promi
   // Suggested players — active, non-banned, with an avatar (feels populated).
   const { data: cand } = await supabase
     .from("profiles")
-    .select("id, username, display_name, avatar_url, level")
+    .select("id, username, display_name, avatar_url, level, last_seen_at")
     .neq("id", userId)
     .eq("banned", false)
     .not("avatar_url", "is", null)
@@ -65,6 +66,7 @@ export async function getFeedSeed(supabase: ServerClient, userId: string): Promi
       displayName: c.display_name ?? c.username,
       avatarUrl: c.avatar_url,
       level: c.level ?? 1,
+      lastSeenAt: c.last_seen_at,
     }));
 
   // Open LFG posts — real "looking for team" activity.

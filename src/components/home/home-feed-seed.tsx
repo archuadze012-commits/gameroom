@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { UserPlus, Users, Radar, ArrowRight, MapPin } from "lucide-react";
 import { FollowButton } from "@/components/follow-button";
+import { OnlineDot } from "@/components/ui/online-dot";
 import type { FeedSeed } from "@/lib/home/feed-seed";
 
 /**
@@ -37,13 +38,14 @@ export function HomeFeedSeed({ suggestedUsers, lfgPosts }: FeedSeed) {
               <ul className="space-y-2.5">
                 {suggestedUsers.map((u) => (
                   <li key={u.username} className="flex items-center gap-3">
-                    <Link href={`/profile/${u.username}`} className="shrink-0">
+                    <Link href={`/profile/${u.username}`} className="relative shrink-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={u.avatarUrl || "/default-avatar.svg"}
                         alt={u.displayName}
                         className="h-11 w-11 rounded-full border border-white/10 object-cover"
                       />
+                      <OnlineDot lastSeenAt={u.lastSeenAt} size={11} className="absolute -bottom-0.5 -right-0.5" />
                     </Link>
                     <Link href={`/profile/${u.username}`} className="min-w-0 flex-1">
                       <p className="truncate text-[13.5px] font-black text-white hover:text-[#D0F8FF]">{u.displayName}</p>

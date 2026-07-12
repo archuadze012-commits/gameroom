@@ -205,6 +205,10 @@ export default function SearchPage() {
   const [isFocused, setIsFocused] = useState(false);
   const [tab, setTab] = useState<Tab>("players");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
+  // Discovery filters (client-side over the already-fetched player list).
+  const [onlineOnly, setOnlineOnly] = useState(false);
+  const [voiceOnly, setVoiceOnly] = useState(false);
+  const [gameFilter, setGameFilter] = useState<string>("all");
   const [allUsers, setAllUsers] = useState<PublicProfile[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [allGames, setAllGames] = useState<SearchGame[]>([]);
@@ -260,8 +264,13 @@ export default function SearchPage() {
   const q = query.toLowerCase().trim();
 
   const playerResults = useMemo(() => {
-    return allUsers;
-  }, [allUsers]);
+    return allUsers.filter(
+      (u) =>
+        (!onlineOnly || u.isOnline) &&
+        (!voiceOnly || u.voiceChat) &&
+        (gameFilter === "all" || (u.favoriteGameSlugs ?? []).includes(gameFilter)),
+    );
+  }, [allUsers, onlineOnly, voiceOnly, gameFilter]);
 
   const gameResults = useMemo(() => {
     if (!q) return allGames;
@@ -386,6 +395,53 @@ export default function SearchPage() {
                 </button>
               );
             })}
+          </div>
+
+          {/* Discovery filters */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setOnlineOnly((v) => !v)}
+              className={`flex items-center gap-1.5 rounded-[12px] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] transition-all duration-300 ${
+                onlineOnly
+                  ? "bg-[var(--gr-lime)]/15 text-[var(--gr-lime)] border border-[var(--gr-lime)]/40 shadow-[0_0_14px_rgba(132,204,22,0.2)]"
+                  : "bg-white/5 border border-white/10 text-white/50 hover:text-white"
+              }`}
+            >
+              <span className={`h-2 w-2 rounded-full ${onlineOnly ? "bg-[var(--gr-lime)] shadow-[0_0_6px_var(--gr-lime)]" : "bg-white/30"}`} />
+              ონლაინ
+            </button>
+            <button
+              type="button"
+              onClick={() => setVoiceOnly((v) => !v)}
+              className={`flex items-center gap-1.5 rounded-[12px] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] transition-all duration-300 ${
+                voiceOnly
+                  ? "bg-[rgba(236,72,153,0.15)] text-pink-300 border border-pink-500/40 shadow-[0_0_14px_rgba(236,72,153,0.2)]"
+                  : "bg-white/5 border border-white/10 text-white/50 hover:text-white"
+              }`}
+            >
+              <MonitorPlay className="h-3.5 w-3.5" /> მიკროფონი
+            </button>
+            <select
+              value={gameFilter}
+              onChange={(e) => setGameFilter(e.target.value)}
+              aria-label="თამაშით ფილტრი"
+              className="rounded-[12px] border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-white/70 outline-none focus:border-[var(--gr-violet-hi)]/50"
+            >
+              <option value="all">ყველა თამაში</option>
+              {allGames.map((g) => (
+                <option key={g.slug} value={g.slug}>{g.nameKa}</option>
+              ))}
+            </select>
+            {(onlineOnly || voiceOnly || gameFilter !== "all") && (
+              <button
+                type="button"
+                onClick={() => { setOnlineOnly(false); setVoiceOnly(false); setGameFilter("all"); }}
+                className="rounded-[12px] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-white/40 transition-colors hover:text-white/70"
+              >
+                გასუფთავება
+              </button>
+            )}
           </div>
 
           {loadingUsers ? (
