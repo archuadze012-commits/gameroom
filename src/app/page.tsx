@@ -327,11 +327,11 @@ export default async function HomePage() {
             <Link href="/playmanager" className="pubg-loadout-link hidden md:block w-full max-w-4xl group" data-variant="pm-green">
               <article className="pubg-loadout-card relative overflow-hidden px-6 py-5">
                 <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
-                <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[3px] z-[5]" />
+                <span aria-hidden className="absolute left-0 top-0 h-full w-[3px] z-[5] bg-gradient-to-b from-emerald-500 via-red-500 to-emerald-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]" />
                 <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-12 w-12 opacity-25 z-[5]" />
                 <span className="relative z-[1] flex items-center justify-between gap-4">
                   <span className="flex items-center gap-4">
-                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/45 transition-all duration-500 group-hover:scale-110 group-hover:border-[#7effc3]/55 group-hover:bg-[#143a2b]/80 group-hover:text-white group-hover:shadow-[0_0_18px_rgba(126,255,195,0.35)]">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/5 text-emerald-400 shadow-[0_0_18px_rgba(34,197,94,0.15)] transition-all duration-500 group-hover:scale-110 group-hover:border-emerald-400 group-hover:bg-emerald-950/40 group-hover:text-white group-hover:shadow-[0_0_24px_rgba(34,197,94,0.4)]">
                       <svg id="_Слой_1" data-name="Слой 1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 760.12 829.78" className="playmanager-home-logo h-6 w-6">
                         <defs>
                           <style>{`
@@ -398,12 +398,12 @@ export default async function HomePage() {
                       </svg>
                     </span>
                     <span className="flex flex-col items-start text-left">
-                      <span className="font-display text-[26px] font-black uppercase tracking-[0.08em] text-white/85 transition-all duration-300 group-hover:text-white group-hover:drop-shadow-[0_0_14px_rgba(126,255,195,0.4)]">
+                      <span className="font-display text-[24px] font-black uppercase tracking-[0.06em] text-[#d6fbe6] drop-shadow-[0_0_8px_rgba(34,197,94,0.45)] transition-all duration-300 group-hover:text-white group-hover:drop-shadow-[0_0_14px_rgba(34,197,94,0.7)]">
                         PlayManager
                       </span>
                     </span>
                   </span>
-                  <span className="flex items-center gap-2 font-display text-[12px] font-black uppercase tracking-[0.16em] text-white/35 transition-all duration-300 group-hover:text-[#c7f6df]">
+                  <span className="flex items-center gap-2 font-display text-[12px] font-black uppercase tracking-[0.16em] text-emerald-400 transition-all duration-300 group-hover:text-white group-hover:drop-shadow-[0_0_8px_rgba(34,197,94,0.6)]">
                     შესვლა
                     <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </span>

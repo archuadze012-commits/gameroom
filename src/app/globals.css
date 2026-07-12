@@ -393,7 +393,16 @@
 
 .pubg-loadout-link[data-variant="pm-green"] .pubg-loadout-card::before,
 .pubg-loadout-link[data-variant="pm-green"] .pubg-loadout-card::after {
-  background: conic-gradient(from var(--border-angle), #10b981, #047857, #34d399, #10b981) !important;
+  background: conic-gradient(from var(--border-angle), #16a34a, #ef4444, #22c55e, #16a34a) !important;
+}
+
+.pubg-loadout-link[data-variant="pm-green"]:hover > .pubg-loadout-card,
+.pubg-loadout-link[data-variant="pm-green"]:focus-visible > .pubg-loadout-card {
+  box-shadow:
+    0 30px 60px -15px rgba(0, 0, 0, 0.9),
+    0 0 12px rgba(34, 197, 94, 0.45),
+    0 0 28px rgba(239, 68, 68, 0.4),
+    0 0 48px rgba(34, 197, 94, 0.3) !important;
 }
 
 .pubg-loadout-field {
