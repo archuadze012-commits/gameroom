@@ -8,9 +8,10 @@ import { getSiteUrl } from "@/lib/url";
 export const revalidate = 3600;
 
 function anon() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return null;
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     { auth: { persistSession: false } },
   );
 }
@@ -38,7 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: p === "" ? 1 : 0.7,
   }));
 
-  const [articles, games, tournaments, clans, news, cracked] = await Promise.all([
+  const [articles, games, tournaments, clans, news, cracked] = supabase ? await Promise.all([
     listPublishedArticles(1000).catch(() => []),
     rows<{ slug: string }>(supabase.from("games").select("slug")),
     rows<{ slug: string }>(supabase.from("tournaments").select("slug")),
@@ -47,7 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       supabase.from("news_articles").select("slug, published_at").eq("status", "published"),
     ),
     rows<{ id: string }>(supabase.from("cracked_games").select("id")),
-  ]);
+  ]) : [[], [], [], [], [], []];
 
   const dynamic: MetadataRoute.Sitemap = [
     ...articles.map((a) => ({

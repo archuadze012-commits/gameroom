@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, Sparkles, ChevronDown } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -72,10 +72,6 @@ const TikTokIcon = () => (
   </svg>
 );
 
-const field =
-  "block h-11 w-full border-b-2 border-white/10 bg-black/40 px-4 text-[14px] font-medium text-white transition-all placeholder:text-white/30 focus:border-[var(--gr-violet-hi)] focus:bg-black/60 focus:outline-none hover:bg-black/50 [clip-path:polygon(0_0,100%_0,100%_calc(100%-8px),calc(100%-8px)_100%,0_100%)]";
-const fieldPlain =
-  "block h-10 w-full border-b-2 border-white/10 bg-black/40 px-3 text-[14px] font-medium text-white transition-all placeholder:text-white/30 focus:border-[var(--gr-violet-hi)] focus:bg-black/60 focus:outline-none hover:bg-black/50";
 const labelClass =
   "mb-1.5 block text-[11px] font-bold uppercase tracking-[0.15em] text-[var(--gr-violet-hi)]";
 const divider = "h-px w-full bg-gradient-to-r from-transparent via-[var(--gr-border-hi)] to-transparent";
@@ -201,12 +197,18 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
     return () => window.removeEventListener("beforeunload", handler);
   }, [isDirty]);
 
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    const handler = setTimeout(() => setNow(Date.now()), 0);
+    return () => clearTimeout(handler);
+  }, []);
+
   const nextDisplayNameChangeAt = displayNameChangedAt
     ? new Date(new Date(displayNameChangedAt).getTime() + DISPLAY_NAME_COOLDOWN_MS)
     : null;
-  const displayNameLocked = !!nextDisplayNameChangeAt && nextDisplayNameChangeAt.getTime() > Date.now();
-  const displayNameDaysLeft = nextDisplayNameChangeAt
-    ? Math.max(1, Math.ceil((nextDisplayNameChangeAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+  const displayNameLocked = now !== null && !!nextDisplayNameChangeAt && nextDisplayNameChangeAt.getTime() > now;
+  const displayNameDaysLeft = now !== null && nextDisplayNameChangeAt
+    ? Math.max(1, Math.ceil((nextDisplayNameChangeAt.getTime() - now) / (24 * 60 * 60 * 1000)))
     : 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
