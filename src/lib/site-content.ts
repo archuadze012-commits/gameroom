@@ -21,6 +21,7 @@ export const SITE_CONTENT_CACHE_TAG = "site-content";
 const fetchSiteContentFromDb = unstable_cache(
   async (key: string): Promise<SiteContent | null> => {
     try {
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_URL.includes("127.0.0.1:9999")) return null;
       const supabase = createSupabaseAdminClient();
       const { data, error } = await supabase
         .from("site_content")

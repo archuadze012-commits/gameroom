@@ -8,8 +8,11 @@ export function LoginForm() {
   const next = params.get("next") ?? "/";
   const error = params.get("error");
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const supabaseConfigured =
-    !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    !!supabaseUrl && !!supabaseKey &&
+    !supabaseUrl.includes("placeholder");
 
   return (
     <div className="space-y-5">
@@ -18,14 +21,15 @@ export function LoginForm() {
           {error}
         </div>
       )}
-      {!supabaseConfigured && (
+      {!supabaseConfigured ? (
         <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-300">
           ⚠ Supabase env ცვლადები არ არის დაყენებული. დააკოპირე{" "}
           <code className="font-mono">.env.local.example</code> →{" "}
           <code className="font-mono">.env.local</code> და შეავსე.
         </div>
+      ) : (
+        <GoogleSignInButton className="w-full min-h-[72px] sm:min-h-[78px]" nextPath={next} />
       )}
-      <GoogleSignInButton className="w-full min-h-[72px] sm:min-h-[78px]" nextPath={next} />
     </div>
   );
 }
