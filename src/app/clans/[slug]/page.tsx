@@ -368,11 +368,10 @@ export default async function ClanDetailPage({
           </div>
         )}
 
-        {/* Announcements + Events (members) */}
+        {/* Announcements (members) — posting gated to leader/officer */}
         {isMember && (
-          <div className="mt-8 grid gap-4 lg:grid-cols-2">
+          <div className="mt-8">
             <ClanAnnouncements slug={slug} canPost={canManage} announcements={announcements} />
-            <ClanEvents slug={slug} canCreate={canManage} events={events} />
           </div>
         )}
       </div>

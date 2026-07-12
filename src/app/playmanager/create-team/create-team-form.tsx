@@ -167,10 +167,12 @@ export function CreateTeamForm() {
                   <button
                     type="submit"
                     disabled={pending}
-                    className="group relative flex h-14 w-full items-center justify-center gap-2.5 overflow-hidden rounded-2xl border border-emerald-500/40 bg-emerald-600 px-5 text-sm font-black uppercase tracking-[0.16em] text-white shadow-[0_0_32px_rgba(16,185,129,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all hover:bg-emerald-500 hover:shadow-[0_0_46px_rgba(16,185,129,0.4),inset_0_1px_0_rgba(255,255,255,0.25)] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="neon-btn group flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl bg-[rgba(1,17,4,0.65)] px-5 text-sm font-black uppercase tracking-[0.16em] text-white shadow-[0_0_32px_rgba(34,197,94,0.15)] transition-all hover:bg-[rgba(1,17,4,0.85)] hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <Sparkles className="h-4.5 w-4.5 text-emerald-200" />
-                    <span>{pending ? 'რეგისტრირდება...' : 'კლუბის გაშვება'}</span>
+                    <span className="flex items-center gap-2.5">
+                      <Sparkles className="h-4.5 w-4.5 text-emerald-300 transition-transform group-hover:scale-110" />
+                      <span>{pending ? 'რეგისტრირდება...' : 'კლუბის გაშვება'}</span>
+                    </span>
                   </button>
                 </form>
 

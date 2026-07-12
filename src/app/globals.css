@@ -559,7 +559,11 @@
    the same way .pubg-loadout-card is recolored above, scoped to .pm-feedskin
    so the main-site nav (mobile-top-nav, site-header) keeps its own palette. */
 .pm-feedskin .neon-rail::before,
-.pm-feedskin .neon-rail::after {
+.pm-feedskin .neon-rail::after,
+.pm-feedskin .neon-btn::before,
+.pm-feedskin .neon-btn::after,
+.pm-feedskin .pubg-loadout-link[data-variant="pm-green"] .pubg-loadout-card::before,
+.pm-feedskin .pubg-loadout-link[data-variant="pm-green"] .pubg-loadout-card::after {
   background: conic-gradient(from var(--border-angle), #16a34a, #ef4444, #22c55e, #16a34a) !important;
 }
 
