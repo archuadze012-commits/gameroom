@@ -170,7 +170,6 @@ export function CreateTeamForm() {
                     className="neon-btn group flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl bg-[rgba(1,17,4,0.65)] px-5 text-sm font-black uppercase tracking-[0.16em] text-white shadow-[0_0_32px_rgba(34,197,94,0.15)] transition-all hover:bg-[rgba(1,17,4,0.85)] hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <span className="flex items-center gap-2.5">
-                      <Sparkles className="h-4.5 w-4.5 text-emerald-300 transition-transform group-hover:scale-110" />
                       <span>{pending ? 'რეგისტრირდება...' : 'კლუბის გაშვება'}</span>
                     </span>
                   </button>
