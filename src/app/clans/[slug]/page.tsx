@@ -1,17 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Users, Trophy, Target, Pencil, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Users, Trophy, Target, Pencil, ShieldCheck, Megaphone } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClientOrNull } from "@/lib/supabase/admin";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getSession } from "@/lib/auth";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 import { DisplayHeading } from "@/components/ui/display-heading";
 import { Pill } from "@/components/ui/pill";
+import { OnlineDot } from "@/components/ui/online-dot";
+import { isOnline } from "@/lib/presence";
 import { ClanJoinButton } from "./clan-join-button";
 import { ClanLeaveButton } from "./clan-leave-button";
 import { ClanAnnouncements, type ClanAnnouncement } from "./clan-announcements";
-import { ClanEvents, type ClanEvent } from "./clan-events";
 import { ClanInviteResponse } from "./clan-invite";
 
 type ClanMemberProfile = {
@@ -49,6 +51,13 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const ROLE_ORDER: Record<string, number> = { leader: 0, officer: 1, member: 2 };
+
+function announceAgo(iso: string) {
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  if (days <= 0) return "დღეს";
+  if (days === 1) return "გუშინ";
+  return `${days} დღის წინ`;
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -96,11 +105,11 @@ export default async function ClanDetailPage({
   if (!clan) notFound();
 
   // The game this clan belongs to (clans are game-scoped).
-  let clanGame: { name_ka: string; icon_url: string | null } | null = null;
+  let clanGame: { id: string; name_ka: string; icon_url: string | null } | null = null;
   if (clan.game_slug) {
     const { data: g } = await supabase
       .from("games")
-      .select("name_ka, icon_url")
+      .select("id, name_ka, icon_url")
       .eq("slug", clan.game_slug)
       .maybeSingle();
     clanGame = g ?? null;
@@ -152,53 +161,38 @@ export default async function ClanDetailPage({
 
   // ── Clan feature data ────────────────────────────────────────
   let announcements: ClanAnnouncement[] = [];
-  let events: ClanEvent[] = [];
   let myInvite: { id: string } | null = null;
+  // Non-member teaser — count + freshness only, never body text (announcements
+  // are member-only content; RLS blocks a non-member client read entirely, so
+  // this uses the admin client but is deliberately kept to metadata).
+  let announcementTeaser: { count: number; latestAt: string | null } | null = null;
 
   if (isMember && sessionUser) {
-    const viewerId = sessionUser.id;
-    const [annRes, evRes] = await Promise.all([
-      supabase.from("clan_announcements").select("id, body, created_at, author_id").eq("clan_id", clan.id).order("created_at", { ascending: false }).limit(20),
-      supabase.from("clan_events").select("id, title, description, starts_at").eq("clan_id", clan.id).order("starts_at", { ascending: true }).limit(12),
-    ]);
-
-    const annRows = annRes.data ?? [];
-    const authorIds = [...new Set(annRows.map((a) => a.author_id).filter((x): x is string => !!x))];
+    const { data: annRows } = await supabase
+      .from("clan_announcements")
+      .select("id, body, created_at, author_id, pinned")
+      .eq("clan_id", clan.id)
+      .order("pinned", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(30);
+    const rows = annRows ?? [];
+    const authorIds = [...new Set(rows.map((a) => a.author_id).filter((x): x is string => !!x))];
     const authorMap = new Map<string, { username: string; display_name: string | null; avatar_url: string | null }>();
     if (authorIds.length > 0) {
       const { data: authors } = await supabase.from("profiles").select("id, username, display_name, avatar_url").in("id", authorIds);
       (authors ?? []).forEach((a) => authorMap.set(a.id, a));
     }
-    announcements = annRows.map((a) => {
+    announcements = rows.map((a) => {
       const au = a.author_id ? authorMap.get(a.author_id) : null;
       return {
         id: a.id,
         body: a.body,
         created_at: a.created_at,
+        pinned: a.pinned,
         authorName: au?.display_name ?? au?.username ?? "წევრი",
         authorUsername: au?.username ?? null,
         authorAvatar: au?.avatar_url ?? null,
       };
-    });
-
-    const evRows = evRes.data ?? [];
-    const rsvpMap = new Map<string, { going: number; maybe: number; no: number; mine: "going" | "maybe" | "no" | null }>();
-    evRows.forEach((e) => rsvpMap.set(e.id, { going: 0, maybe: 0, no: 0, mine: null }));
-    const evIds = evRows.map((e) => e.id);
-    if (evIds.length > 0) {
-      const { data: rsvps } = await supabase.from("clan_event_rsvps").select("event_id, user_id, status").in("event_id", evIds);
-      (rsvps ?? []).forEach((r) => {
-        const agg = rsvpMap.get(r.event_id);
-        if (!agg) return;
-        if (r.status === "going") agg.going++;
-        else if (r.status === "maybe") agg.maybe++;
-        else if (r.status === "no") agg.no++;
-        if (r.user_id === viewerId) agg.mine = r.status as "going" | "maybe" | "no";
-      });
-    }
-    events = evRows.map((e) => {
-      const agg = rsvpMap.get(e.id)!;
-      return { id: e.id, title: e.title, description: e.description, starts_at: e.starts_at, going: agg.going, maybe: agg.maybe, no: agg.no, myStatus: agg.mine };
     });
   } else if (sessionUser) {
     const { data: inv } = await supabase
@@ -211,18 +205,44 @@ export default async function ClanDetailPage({
     myInvite = inv ?? null;
   }
 
+  if (!isMember) {
+    const admin = createSupabaseAdminClientOrNull();
+    if (admin) {
+      const [{ count }, { data: latest }] = await Promise.all([
+        admin.from("clan_announcements").select("id", { count: "exact", head: true }).eq("clan_id", clan.id),
+        admin.from("clan_announcements").select("created_at").eq("clan_id", clan.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+      ]);
+      if ((count ?? 0) > 0) {
+        announcementTeaser = { count: count ?? 0, latestAt: latest?.created_at ?? null };
+      }
+    }
+  }
+
   // Progression — every 1000 clan XP is a level.
   const clanLevel = clan.level ?? 1;
   const clanXp = clan.xp ?? 0;
   const xpPct = Math.min(100, ((clanXp % 1000) / 1000) * 100);
 
+  const onlineMemberCount = members.filter((m) => isOnline(m.profiles.last_seen_at)).length;
+
   const gs = clan.game_slug;
+  let openTournamentCount = 0;
+  let openScrimCount = 0;
+  if (clanGame) {
+    const [{ count: tCount }, { count: sCount }] = await Promise.all([
+      supabase.from("tournaments").select("id", { count: "exact", head: true }).eq("game_id", clanGame.id).eq("is_practice", false).eq("status", "open"),
+      supabase.from("tournaments").select("id", { count: "exact", head: true }).eq("game_id", clanGame.id).eq("is_practice", true).eq("status", "open"),
+    ]);
+    openTournamentCount = tCount ?? 0;
+    openScrimCount = sCount ?? 0;
+  }
+
   const navCards = gs
     ? [
-        { key: "tournaments", label: "ტურნირები", sub: "COMPETE", href: `/games/${gs}/tournaments/${slug}`, variant: "royale", rail: "bg-amber-500/80" },
-        { key: "scrims", label: "პრაქტიკული თამაშები", sub: "TRAIN", href: `/games/${gs}/scrims/${slug}`, variant: "support", rail: "bg-cyan-500/70" },
-        { key: "chat", label: "კლანის ჩატი", sub: "COMMS", href: `/games/${gs}/clanchat/${slug}`, variant: "room", rail: "bg-cyan-500/70" },
-        { key: "rosters", label: "შემადგენლობა", sub: "ROSTER", href: `/games/${gs}/rosters/${slug}`, variant: "strike", rail: "bg-indigo-500/80" },
+        { key: "tournaments", label: "ტურნირები", sub: "COMPETE", href: `/games/${gs}/tournaments/${slug}`, variant: "royale", rail: "bg-amber-500/80", badge: openTournamentCount > 0 ? `${openTournamentCount} ღია` : null, badgeTone: "text-amber-300" },
+        { key: "scrims", label: "პრაქტიკული თამაშები", sub: "TRAIN", href: `/games/${gs}/scrims/${slug}`, variant: "support", rail: "bg-cyan-500/70", badge: openScrimCount > 0 ? `${openScrimCount} ღია` : null, badgeTone: "text-cyan-300" },
+        { key: "chat", label: "კლანის ჩატი", sub: "COMMS", href: `/games/${gs}/clanchat/${slug}`, variant: "room", rail: "bg-cyan-500/70", badge: onlineMemberCount > 0 ? `${onlineMemberCount} ონლაინ` : null, badgeTone: "text-[var(--gr-lime)]" },
+        { key: "rosters", label: "შემადგენლობა", sub: "ROSTER", href: `/games/${gs}/rosters/${slug}`, variant: "strike", rail: "bg-indigo-500/80", badge: `${members.length} წევრი`, badgeTone: "text-indigo-300" },
       ]
     : [];
 
@@ -298,6 +318,32 @@ export default async function ClanDetailPage({
                   <p className="mt-3 max-w-xl text-[13.5px] leading-relaxed text-white/60">
                     {clan.description || "ამ კლანს აღწერა არ აქვს."}
                   </p>
+
+                  {/* Roster preview — who's here, at a glance */}
+                  {members.length > 0 && (
+                    <Link href={gs ? `/games/${gs}/rosters/${slug}` : "#"} className="mt-4 flex items-center gap-3 group/roster">
+                      <div className="flex -space-x-2.5">
+                        {members.slice(0, 6).map((m) => (
+                          <div key={m.id} className="relative shrink-0">
+                            <Avatar className="h-8 w-8 border-2 border-[var(--gr-bg-elev-1)] transition-transform group-hover/roster:scale-105">
+                              <AvatarImage src={m.profiles.avatar_url ?? undefined} className="object-cover" />
+                              <AvatarFallback className="text-[10px]">{(m.profiles.display_name || m.profiles.username).slice(0, 1)}</AvatarFallback>
+                            </Avatar>
+                            <OnlineDot lastSeenAt={m.profiles.last_seen_at} size={9} className="absolute -bottom-0.5 -right-0.5" />
+                          </div>
+                        ))}
+                      </div>
+                      {members.length > 6 && (
+                        <span className="text-[11px] font-black text-white/40">+{members.length - 6}</span>
+                      )}
+                      {onlineMemberCount > 0 && (
+                        <span className="flex items-center gap-1 text-[11px] font-bold text-[var(--gr-lime)]">
+                          <span className="h-1.5 w-1.5 rounded-full bg-[var(--gr-lime)] shadow-[0_0_6px_var(--gr-lime)]" />
+                          {onlineMemberCount} ონლაინ
+                        </span>
+                      )}
+                    </Link>
+                  )}
                 </div>
               </div>
 
@@ -357,7 +403,14 @@ export default async function ClanDetailPage({
                   <span aria-hidden className={`pubg-loadout-rail absolute left-0 top-0 h-full w-[4px] z-[5] ${c.rail}`} />
                   <span aria-hidden className="pubg-loadout-corner absolute right-0 top-0 h-12 w-12 opacity-25 z-[5]" />
                   <div className="relative z-10 flex h-full flex-col justify-between gap-4">
-                    <span className="font-display text-[10px] font-black uppercase tracking-[0.24em] text-white/45">{c.sub}</span>
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="font-display text-[10px] font-black uppercase tracking-[0.24em] text-white/45">{c.sub}</span>
+                      {c.badge && (
+                        <span className={`shrink-0 rounded-full border border-white/10 bg-black/30 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${c.badgeTone}`}>
+                          {c.badge}
+                        </span>
+                      )}
+                    </div>
                     <span className="font-display text-[19px] font-black uppercase leading-[0.95] text-white transition-colors group-hover:text-[#D0F8FF]">
                       {c.label}
                     </span>
@@ -372,6 +425,27 @@ export default async function ClanDetailPage({
         {isMember && (
           <div className="mt-8">
             <ClanAnnouncements slug={slug} canPost={canManage} announcements={announcements} />
+          </div>
+        )}
+
+        {/* Non-member teaser — metadata only, never announcement content */}
+        {!isMember && announcementTeaser && (
+          <div className="mt-8 pubg-loadout-link block" data-variant="royale">
+            <div className="pubg-loadout-card relative overflow-hidden p-5">
+              <span aria-hidden className="pubg-loadout-field absolute inset-0 z-0 opacity-80" />
+              <span aria-hidden className="pubg-loadout-rail absolute left-0 top-0 h-full w-[3px] z-[5] bg-amber-500/80" />
+              <div className="relative z-10 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-amber-500/10 text-amber-400">
+                    <Megaphone className="h-4.5 w-4.5" />
+                  </span>
+                  <p className="text-[13px] text-white/70">
+                    <span className="font-black text-white">{announcementTeaser.count} განცხადება</span> ამ კლანში
+                    {announcementTeaser.latestAt && <> — ბოლო {announceAgo(announcementTeaser.latestAt)}</>}. შეუერთდი რომ ნახო.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

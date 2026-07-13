@@ -320,6 +320,7 @@ export type Database = {
           clan_id: string
           created_at: string
           id: string
+          pinned: boolean
         }
         Insert: {
           author_id?: string | null
@@ -327,6 +328,7 @@ export type Database = {
           clan_id: string
           created_at?: string
           id?: string
+          pinned?: boolean
         }
         Update: {
           author_id?: string | null
@@ -334,6 +336,7 @@ export type Database = {
           clan_id?: string
           created_at?: string
           id?: string
+          pinned?: boolean
         }
         Relationships: [
           {
@@ -5065,6 +5068,8 @@ export type Database = {
         | "tournament_match"
         | "system"
         | "referral"
+        | "follow"
+        | "post_comment"
       tournament_format: "single_elim" | "double_elim" | "round_robin"
       tournament_status:
         | "draft"
@@ -5238,6 +5243,8 @@ export const Constants = {
         "tournament_match",
         "system",
         "referral",
+        "follow",
+        "post_comment",
       ],
       tournament_format: ["single_elim", "double_elim", "round_robin"],
       tournament_status: [

@@ -81,75 +81,13 @@ export async function deleteClanAnnouncementAction(announcementId: string, slug:
   return { success: true };
 }
 
-// ── Events ───────────────────────────────────────────────────
-export async function createClanEventAction(
+// Pinning is exclusive — pinning one announcement unpins any other in the same
+// clan, so at most one is ever pinned.
+export async function togglePinClanAnnouncementAction(
+  announcementId: string,
   slug: string,
-  title: string,
-  description: string,
-  startsAt: string
+  pin: boolean
 ): Promise<Result> {
-  const user = await getSession();
-  if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
-
-  const t = title.trim().slice(0, 120);
-  const d = description.trim().slice(0, 1000);
-  const when = new Date(startsAt);
-  if (!t) return { success: false, message: "სათაური აუცილებელია" };
-  if (Number.isNaN(when.getTime())) return { success: false, message: "თარიღი არასწორია" };
-
-  const info = await resolveRole(slug, user.id);
-  if (!info) return { success: false, message: "კლანი ვერ მოიძებნა" };
-  if (!["leader", "officer"].includes(info.role ?? "")) {
-    return { success: false, message: "მხოლოდ ლიდერს/ოფიცერს შეუძლია ივენთი" };
-  }
-
-  const mod = await moderateText(`${t} ${d}`).catch(() => ({ ok: true, reason: undefined as string | undefined }));
-  if (!mod.ok) return { success: false, message: mod.reason || "შინაარსი დაბლოკილია" };
-
-  const admin = createSupabaseAdminClient();
-  const { data: ev, error } = await admin
-    .from("clan_events")
-    .insert({ clan_id: info.clanId, created_by: user.id, title: t, description: d || null, starts_at: when.toISOString() })
-    .select("id")
-    .single();
-  if (error || !ev) {
-    logger.error("failed to create clan event", { slug, error });
-    return { success: false, message: "ვერ მოხერხდა" };
-  }
-  // Creator auto-RSVPs "going".
-  await admin.from("clan_event_rsvps").upsert({ event_id: ev.id, user_id: user.id, status: "going" });
-  await awardClanXp(info.clanId, user.id, 30);
-  revalidatePath(`/clans/${slug}`);
-  return { success: true, message: "ივენთი დაემატა" };
-}
-
-export async function rsvpClanEventAction(
-  eventId: string,
-  slug: string,
-  status: "going" | "maybe" | "no"
-): Promise<Result> {
-  const user = await getSession();
-  if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
-
-  const admin = createSupabaseAdminClient();
-  const { data: ev } = await admin.from("clan_events").select("clan_id").eq("id", eventId).maybeSingle();
-  if (!ev) return { success: false, message: "ივენთი ვერ მოიძებნა" };
-
-  const { data: m } = await admin
-    .from("clan_members")
-    .select("id")
-    .eq("clan_id", ev.clan_id)
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (!m) return { success: false, message: "კლანის წევრი არ ხარ" };
-
-  const { error } = await admin.from("clan_event_rsvps").upsert({ event_id: eventId, user_id: user.id, status });
-  if (error) return { success: false, message: "ვერ მოხერხდა" };
-  revalidatePath(`/clans/${slug}`);
-  return { success: true };
-}
-
-export async function deleteClanEventAction(eventId: string, slug: string): Promise<Result> {
   const user = await getSession();
   if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
   const info = await resolveRole(slug, user.id);
@@ -157,9 +95,20 @@ export async function deleteClanEventAction(eventId: string, slug: string): Prom
     return { success: false, message: "უფლება არ გაქვს" };
   }
   const admin = createSupabaseAdminClient();
-  await admin.from("clan_events").delete().eq("id", eventId).eq("clan_id", info.clanId);
+  if (pin) {
+    await admin.from("clan_announcements").update({ pinned: false }).eq("clan_id", info.clanId).eq("pinned", true);
+  }
+  const { error } = await admin
+    .from("clan_announcements")
+    .update({ pinned: pin })
+    .eq("id", announcementId)
+    .eq("clan_id", info.clanId);
+  if (error) {
+    logger.error("failed to toggle clan announcement pin", { slug, error });
+    return { success: false, message: "ვერ მოხერხდა" };
+  }
   revalidatePath(`/clans/${slug}`);
-  return { success: true };
+  return { success: true, message: pin ? "დაპინულია" : "მოხსნილია დაპინვიდან" };
 }
 
 // ── Recruitment ──────────────────────────────────────────────

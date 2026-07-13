@@ -32,6 +32,7 @@ type ActionKey = "push" | "daily";
 // Where each action lives, desktop-first with a mobile fallback (the "მეტი"
 // bottom-sheet button). The spotlight picks whichever target is visible.
 const SETTINGS_SPOT: SpotTarget[] = [
+  { sel: "settings-item", label: "დააჭირე ავატარს → პარამეტრები" },
   { sel: "settings-desktop", label: "დააჭირე ავატარს → პარამეტრები" },
   { sel: "settings-mobile", label: "გახსენი მეტი, აირჩიე პარამეტრები" },
   { sel: "more-mobile", label: "გახსენი მეტი, აირჩიე პარამეტრები" },

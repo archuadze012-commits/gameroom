@@ -54,12 +54,24 @@ export async function POST(
         .eq("id", ids.followerId)
         .maybeSingle();
       const name = follower?.display_name ?? follower?.username ?? "ვინმე";
+      const followUrl = `/profile/${follower?.username ?? ""}`;
+
+      // In-app notification (the realtime widget) — previously a follow only
+      // fired a push, so push-less users (the majority) saw nothing.
+      const { createSupabaseAdminClient } = await import("@/lib/supabase/admin");
+      await createSupabaseAdminClient().from("notifications").insert({
+        user_id: ids.followingId,
+        type: "follow",
+        title: `${name}-მ გამოგიწერა 👤`,
+        body: "ნახე ვინ მოგწერა და დაუბრუნე",
+        link: followUrl,
+      });
 
       const { sendPushToUser } = await import("@/lib/push");
       await sendPushToUser(ids.followingId, {
         title: `${name}-მ გამოგიწერა`,
         body: "ნახე ვინ მოგწერა და დაუბრუნე",
-        url: `/profile/${follower?.username ?? ""}`,
+        url: followUrl,
         tag: `follow-${ids.followerId}`,
       });
 

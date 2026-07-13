@@ -6,6 +6,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createLogger } from "@/lib/logger";
 import { rateLimitShared } from "@/lib/rate-limit";
 import { moderateText } from "@/lib/moderate";
+import { sendPushToUser } from "@/lib/push";
 
 const logger = createLogger("api:post-comments");
 
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const admin = createSupabaseAdminClient();
   const { data: post, error: postError } = await admin
     .from("posts")
-    .select("id, profiles!posts_author_id_profiles_id_fk(username)")
+    .select("id, author_id, profiles!posts_author_id_profiles_id_fk(username)")
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();
@@ -118,6 +119,32 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const authorUsername = ((post.profiles as { username?: string } | null)?.username ?? "").trim();
+
+  // Notify the post author (in-app + push) that someone commented — the core
+  // re-engagement pull the feed previously never fired. Skip self-comments.
+  if (post.author_id && post.author_id !== user.id) {
+    const commenterName =
+      (user.user_metadata?.username as string | undefined) || user.email?.split("@")[0] || "ვიღაცამ";
+    const preview = text.length > 60 ? `${text.slice(0, 60)}…` : text;
+    const link = authorUsername ? `/profile/${authorUsername}/${id}` : `/feed/${id}`;
+    const { error: notifErr } = await admin.from("notifications").insert({
+      user_id: post.author_id,
+      type: "post_comment",
+      title: `${commenterName}-მა დააკომენტარა 💬`,
+      body: preview,
+      link,
+    });
+    if (notifErr) {
+      logger.warn("failed to write post comment notification", { postId: id, recipientId: post.author_id, error: notifErr });
+    }
+    sendPushToUser(post.author_id, {
+      title: `${commenterName}-მა დააკომენტარა 💬`,
+      body: preview,
+      url: link,
+      tag: `post-comment-${id}`,
+    }).catch(() => {});
+  }
+
   revalidatePath("/");
   revalidatePath("/feed");
   revalidatePath(`/feed/${id}`);

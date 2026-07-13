@@ -173,7 +173,7 @@ export function SiteHeader() {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem className="p-0 text-white/80">
-                        <Link href="/settings" className="flex w-full rounded-md px-3 py-2.5 text-white/80 hover:bg-violet-400/10 hover:text-violet-200">
+                        <Link href="/settings" data-tour="settings-item" className="flex w-full rounded-md px-3 py-2.5 text-white/80 hover:bg-violet-400/10 hover:text-violet-200">
                           პარამეტრები
                         </Link>
                       </DropdownMenuItem>
