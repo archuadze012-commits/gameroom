@@ -58,10 +58,15 @@ export function OnboardingSpotlight({
     window.addEventListener("resize", update);
     window.addEventListener("scroll", update, true);
     window.addEventListener("keydown", onKey);
+
+    const observer = new MutationObserver(update);
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true });
+
     return () => {
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
       window.removeEventListener("keydown", onKey);
+      observer.disconnect();
     };
   }, [candidates, onClose]);
 
