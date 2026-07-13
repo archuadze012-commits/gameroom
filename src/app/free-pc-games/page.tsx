@@ -58,9 +58,21 @@ function dbRowToGame(row: DbRow): CrackedGame {
 }
 
 export default async function FreePcGamesPage() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return (
+      <div className="container mx-auto max-w-7xl px-4 py-8">
+        <div className="mb-12 space-y-6 text-center">
+          <h1 className="font-display text-4xl font-black uppercase tracking-tight sm:text-6xl text-[var(--gr-text)]">
+            თამაშები არ არის
+          </h1>
+        </div>
+      </div>
+    );
+  }
+
   const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     { auth: { persistSession: false } },
   );
 

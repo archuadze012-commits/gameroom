@@ -8,9 +8,12 @@ import { getSiteUrl } from "@/lib/url";
 export const revalidate = 3600;
 
 function anon() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return null;
+  }
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     { auth: { persistSession: false } },
   );
 }
@@ -40,17 +43,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const [articles, games, tournaments, clans, news, cracked, profiles] = await Promise.all([
     listPublishedArticles(1000).catch(() => []),
-    rows<{ slug: string }>(supabase.from("games").select("slug")),
-    rows<{ slug: string }>(supabase.from("tournaments").select("slug")),
-    rows<{ slug: string }>(supabase.from("clans").select("slug")),
-    rows<{ slug: string; published_at: string | null }>(
+    supabase ? rows<{ slug: string }>(supabase.from("games").select("slug")) : [],
+    supabase ? rows<{ slug: string }>(supabase.from("tournaments").select("slug")) : [],
+    supabase ? rows<{ slug: string }>(supabase.from("clans").select("slug")) : [],
+    supabase ? rows<{ slug: string; published_at: string | null }>(
       supabase.from("news_articles").select("slug, published_at").eq("status", "published"),
-    ),
-    rows<{ id: string }>(supabase.from("cracked_games").select("id")),
+    ) : [],
+    supabase ? rows<{ id: string }>(supabase.from("cracked_games").select("id")) : [],
     // Public gamer cards — the viral, OG-rich surface worth indexing.
-    rows<{ username: string; updated_at: string | null }>(
+    supabase ? rows<{ username: string; updated_at: string | null }>(
       supabase.from("profiles").select("username, updated_at").eq("banned", false).limit(5000),
-    ),
+    ) : [],
   ]);
 
   const dynamic: MetadataRoute.Sitemap = [
