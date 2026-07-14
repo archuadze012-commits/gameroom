@@ -14,3 +14,8 @@
 **Vulnerability:** Application instability and React Hydration / Render Cycle errors causing CI pipeline to fail.
 **Learning:** React `useEffect` with synchronous state updates or impure function calls (`Date.now()`) during render violates React's strict purity and hook rules, causing build-time ESLint errors (`react-hooks/set-state-in-effect`, `react-hooks/purity`). Unescaped quotes (`"`) in JSX text nodes cause parser errors.
 **Prevention:** Wrap `setState` calls inside `useEffect` with `setTimeout(..., 0)` to safely push updates to the end of the event loop. Always initialize time-based state (e.g., `Date.now()`) via `useEffect` instead of calling it directly during render. Escape quotes in JSX using HTML entities like `&quot;`.
+
+\n## 2025-03-05 - [Build Instability from Missing Env Vars]
+**Vulnerability:** Next.js `build` (static generation phase) crashing in CI pipelines because required environment variables are missing on the build server.
+**Learning:** During the `next build` step, Next.js executes page logic to statically render pages (e.g., `/free-pc-games`, `/sitemap.xml`). If a page instantiates the Supabase client without handling cases where the env vars (`NEXT_PUBLIC_SUPABASE_URL`, etc.) are missing, the build process crashes and the CI pipeline fails.
+**Prevention:** For UI pages that fetch data on the server, gracefully handle missing Supabase env vars with an early return (e.g., `if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return null;`). For completely anonymous, server-side data generation like sitemaps, providing a fallback URL string (e.g. `?? "https://placeholder.supabase.co"`) satisfies the Supabase SDK constructor and allows the static generation to safely yield empty data and complete the build step without crashing.
