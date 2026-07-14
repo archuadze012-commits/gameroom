@@ -2,3 +2,10 @@
 **Vulnerability:** Weak path validation in authentication redirects allowed Open Redirect.
 **Learning:** Checking `url.startsWith("/")` is insufficient, as it allows protocol-relative URLs (e.g. `//malicious.com`).
 **Prevention:** Always validate relative URLs by strictly rejecting `//` and `/\\\.
+
+\n## 2025-03-05 - [Deployment Config & Grant Fixes]
+**Vulnerability:** CI/CD Build Failures and Database Schema Grant Mismatch
+**Learning:**
+1. Next.js/Vercel edge functions on Cloudflare Pages fail when using regex capture groups in Next.js config routing `source` fields; glob syntax `/:path*` must be used.
+2. The custom schema auditor (`test:profile-grants`) rigidly checks that any column written to by the application has an explicit `UPDATE` grant for the `authenticated` role in the database migrations.
+**Prevention:** Always use glob path matching (`/:path*`) for Next.js headers/redirects. When adding new profile fields mutated directly by users (like `looking_for_clan`), ensure a corresponding migration adds both the column and the required `GRANT UPDATE... TO authenticated;`.
