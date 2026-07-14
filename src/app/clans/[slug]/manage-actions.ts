@@ -160,7 +160,7 @@ export async function leaveClanAction(
 
   const supabase = await createSupabaseServerClient();
 
-  const { data: clan } = await supabase.from("clans").select("id").eq("slug", clanSlug).maybeSingle();
+  const { data: clan } = await supabase.from("clans").select("id, game_slug").eq("slug", clanSlug).maybeSingle();
   if (!clan) return { success: false, message: "კლანი ვერ მოიძებნა" };
 
   const { data: membership } = await supabase
@@ -185,7 +185,7 @@ export async function leaveClanAction(
       logger.error("failed to disband clan on leader leave", { clanSlug, error });
       return { success: false, message: "ვერ მოხერხდა" };
     }
-    revalidatePath("/clans");
+    if (clan.game_slug) revalidatePath(`/games/${clan.game_slug}/clans`);
     return { success: true, message: "კლანი დაიშალა", disbanded: true };
   }
 
@@ -195,7 +195,7 @@ export async function leaveClanAction(
     return { success: false, message: "ვერ მოხერხდა" };
   }
   revalidatePath(`/clans/${clanSlug}`);
-  revalidatePath("/clans");
+  if (clan.game_slug) revalidatePath(`/games/${clan.game_slug}/clans`);
   return { success: true, message: "დატოვე კლანი" };
 }
 
@@ -288,7 +288,7 @@ export async function disbandClanAction(
 
   const supabase = await createSupabaseServerClient();
 
-  const { data: clan } = await supabase.from("clans").select("id").eq("slug", clanSlug).maybeSingle();
+  const { data: clan } = await supabase.from("clans").select("id, game_slug").eq("slug", clanSlug).maybeSingle();
   if (!clan) return { success: false, message: "კლანი ვერ მოიძებნა" };
 
   const { data: caller } = await supabase
@@ -306,6 +306,6 @@ export async function disbandClanAction(
     logger.error("failed to disband clan", { clanSlug, error });
     return { success: false, message: "ვერ მოხერხდა" };
   }
-  revalidatePath("/clans");
+  if (clan.game_slug) revalidatePath(`/games/${clan.game_slug}/clans`);
   return { success: true, message: "კლანი დაიშალა" };
 }

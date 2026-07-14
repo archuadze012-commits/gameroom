@@ -3,11 +3,12 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, FileText, MessageSquare, Bell, Menu, X, Search, Trophy, Gamepad2, Users, Settings, Star, ShoppingBag, LogOut, Building2, ArrowRight, Gift } from "lucide-react";
+import { Home, FileText, MessageSquare, Bell, Menu, X, Search, Trophy, Gamepad2, Users, Settings, Star, ShoppingBag, LogOut, Building2, ArrowRight, Gift, Compass } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useNavAnnouncementCount, useNavMessageCount, useNavProfile } from "./use-nav-data";
 
 const MORE_LINKS = [
+  { href: "/discover", label: "აღმოაჩინე", icon: Compass },
   { href: "/articles", label: "სტატიები", icon: FileText },
   { href: "/games", label: "თამაშები", icon: Gamepad2 },
   { href: "/lfg", label: "ლოკალი", icon: Users },

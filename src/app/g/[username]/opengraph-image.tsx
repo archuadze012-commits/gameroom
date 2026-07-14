@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { createSupabaseAdminClientOrNull } from "@/lib/supabase/admin";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const alt = "PlayGame.ge — gamer card";
@@ -14,19 +14,19 @@ export default async function OgImage({ params }: { params: Promise<{ username: 
   let avatar: string | null = null;
   let level = 1;
 
-  const admin = createSupabaseAdminClientOrNull();
-  if (admin) {
-    const { data } = await admin
-      .from("profiles")
-      .select("username, display_name, avatar_url, level")
-      .ilike("username", username)
-      .maybeSingle();
-    if (data) {
-      name = data.display_name || data.username;
-      handle = data.username;
-      avatar = data.avatar_url;
-      level = data.level ?? 1;
-    }
+  // Public `profiles` read through the anon/RLS server client (crawlers have no
+  // session → anon, which is fine since profiles are publicly selectable).
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from("profiles")
+    .select("username, display_name, avatar_url, level")
+    .ilike("username", username)
+    .maybeSingle();
+  if (data) {
+    name = data.display_name || data.username;
+    handle = data.username;
+    avatar = data.avatar_url;
+    level = data.level ?? 1;
   }
 
   return new ImageResponse(

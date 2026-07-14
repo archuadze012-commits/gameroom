@@ -18,12 +18,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogoutButton } from "@/components/logout-button";
-import { Home, Users, Trophy, FileText, Star, ShoppingBag, Search, LogIn, Gamepad2, Gift } from "lucide-react";
+import { Home, Users, Trophy, FileText, Star, ShoppingBag, Search, LogIn, Gamepad2, Gift, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
   { href: "/", label: "მთავარი", icon: Home },
   { href: "/search", label: "ძებნა", icon: Search },
+  { href: "/discover", label: "აღმოაჩინე", icon: Compass },
   { href: "/games", label: "თამაშები", icon: Gamepad2 },
   { href: "/lfg", label: "ლოკალი", icon: Users },
   { href: "/tournaments", label: "ტურნირები", icon: Trophy },

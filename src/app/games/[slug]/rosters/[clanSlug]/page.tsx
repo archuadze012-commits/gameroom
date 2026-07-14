@@ -8,6 +8,8 @@ import { ClanSubPageHeader } from "@/components/clan/clan-subpage-header";
 import { ClanRosterPanel, type RosterMember } from "@/app/clans/[slug]/clan-roster";
 import { ClanInviteBox } from "@/app/clans/[slug]/clan-invite";
 import { ClanRequestActions } from "@/app/clans/[slug]/clan-request-actions";
+import { ClanLineup, type LineupMember } from "@/app/clans/[slug]/clan-lineup";
+import { ClanLineupManager, type ManagedMember } from "@/app/clans/[slug]/clan-lineup-manager";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "შემადგენლობა | კლანი", robots: { index: false } };
@@ -17,6 +19,15 @@ type PendingRequest = {
   message: string | null;
   profiles: { id: string; username: string; display_name: string | null; avatar_url: string | null };
 };
+
+type FullMember = RosterMember & {
+  is_captain: boolean;
+  lineup_status: string;
+  position: string | null;
+  jersey_number: number | null;
+};
+
+const ROLE_ORDER: Record<string, number> = { leader: 0, officer: 1, member: 2 };
 
 export default async function ClanRostersPage({
   params,
@@ -29,9 +40,36 @@ export default async function ClanRostersPage({
 
   const { data: membersData } = await ctx.supabase
     .from("clan_members")
-    .select("id, role, contribution, profiles ( id, username, display_name, avatar_url, last_seen_at )")
+    .select("id, role, contribution, is_captain, lineup_status, position, jersey_number, profiles ( id, username, display_name, avatar_url, last_seen_at )")
     .eq("clan_id", ctx.clan.id);
-  const members = (membersData ?? []) as unknown as RosterMember[];
+  const members = (membersData ?? []) as unknown as FullMember[];
+
+  const lineupMembers: LineupMember[] = members.map((m) => ({
+    id: m.id,
+    name: m.profiles.display_name || m.profiles.username,
+    username: m.profiles.username,
+    avatar: m.profiles.avatar_url,
+    role: m.role,
+    position: m.position,
+    lineupStatus: m.lineup_status,
+    jerseyNumber: m.jersey_number,
+    isCaptain: m.is_captain,
+    lastSeenAt: m.profiles.last_seen_at,
+  }));
+
+  const managedMembers: ManagedMember[] = [...members]
+    .sort((a, b) => (ROLE_ORDER[a.role] ?? 9) - (ROLE_ORDER[b.role] ?? 9))
+    .map((m) => ({
+      id: m.id,
+      name: m.profiles.display_name || m.profiles.username,
+      username: m.profiles.username,
+      avatar: m.profiles.avatar_url,
+      role: m.role,
+      position: m.position,
+      lineupStatus: m.lineup_status,
+      jerseyNumber: m.jersey_number,
+      isCaptain: m.is_captain,
+    }));
 
   let pending: PendingRequest[] = [];
   if (ctx.canManage) {
@@ -59,6 +97,8 @@ export default async function ClanRostersPage({
         />
 
         <div className="space-y-6">
+          <ClanLineup members={lineupMembers} />
+
           {ctx.canManage && (
             <div className="pubg-loadout-link block" data-variant="strike">
               <div className="pubg-loadout-card relative overflow-hidden p-5">
@@ -73,6 +113,8 @@ export default async function ClanRostersPage({
               </div>
             </div>
           )}
+
+          {ctx.canManage && <ClanLineupManager clanSlug={clanSlug} members={managedMembers} />}
 
           {ctx.canManage && pending.length > 0 && (
             <div>

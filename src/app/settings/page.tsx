@@ -12,7 +12,6 @@ import { LogOut } from "lucide-react";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { createSupabaseAdminClientOrNull } from "@/lib/supabase/admin";
 import { mockGames } from "@/lib/mock-data";
 
 export const metadata = { title: "პარამეტრები" };
@@ -80,22 +79,18 @@ export default async function SettingsPage() {
   ]);
 
   // Whether to show the "enter your inviter's promo code" field. Gated to new
-  // accounts that haven't already been attributed a referrer. The existing-
-  // referral check needs the admin client — RLS on `referrals` only lets a user
-  // read rows where they are the REFERRER, not the referred side.
+  // accounts that haven't already been attributed a referrer. The referred-side
+  // read now works through the anon/RLS server client thanks to the
+  // referrals_select_referred policy (a user may read the row where they are the
+  // referred party) — no service-role client needed.
   let canRedeemReferral = false;
-  if (profile?.created_at) {
-    if (withinRedeemWindow(profile.created_at)) {
-      const admin = createSupabaseAdminClientOrNull();
-      if (admin) {
-        const { data: existingReferral } = await admin
-          .from("referrals")
-          .select("id")
-          .eq("referred_id", user.id)
-          .maybeSingle();
-        canRedeemReferral = !existingReferral;
-      }
-    }
+  if (profile?.created_at && withinRedeemWindow(profile.created_at)) {
+    const { data: existingReferral } = await supabase
+      .from("referrals")
+      .select("id")
+      .eq("referred_id", user.id)
+      .maybeSingle();
+    canRedeemReferral = !existingReferral;
   }
 
   // Avatar upload was previously only reachable from the profile page. Surface it

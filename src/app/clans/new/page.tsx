@@ -30,7 +30,7 @@ export default async function NewClanPage({
       <CinematicBackground color="indigo" />
       <div className="container relative mx-auto px-4 py-8 max-w-5xl">
       <Link
-        href="/clans"
+        href={defaultGame ? `/games/${defaultGame}/clans` : "/games"}
         className="mb-4 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--gr-text-dim)] hover:text-[var(--gr-text-mute)]"
       >
         <ArrowLeft className="h-3.5 w-3.5" /> უკან დაბრუნება

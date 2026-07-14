@@ -124,7 +124,7 @@ export async function createClanAction(
     return { success: false, message: "კლანის შექმნა ვერ მოხერხდა (უფლებების შეცდომა)" };
   }
 
-  revalidatePath("/clans");
+  revalidatePath(`/games/${gameSlug}/clans`);
   return { success: true, message: "კლანი შეიქმნა!", clanSlug: clan.slug };
 }
 
@@ -220,7 +220,7 @@ export async function requestJoinClanAction(
   // take a join request that leadership approves.
   const { data: clan } = await supabase
     .from("clans")
-    .select("status, slug")
+    .select("status, slug, game_slug")
     .eq("id", clanId)
     .maybeSingle();
   if (!clan) return { success: false, message: "კლანი ვერ მოიძებნა" };
@@ -239,7 +239,7 @@ export async function requestJoinClanAction(
       return { success: false, message: "გაწევრიანება ვერ მოხერხდა" };
     }
     revalidatePath(`/clans/${clan.slug}`);
-    revalidatePath("/clans");
+    if (clan.game_slug) revalidatePath(`/games/${clan.game_slug}/clans`);
     return { success: true, message: "მოგესალმებით კლანში! 🎉" };
   }
 

@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { Trophy, Users, Calendar } from "lucide-react";
-import { createSupabaseAdminClientOrNull } from "@/lib/supabase/admin";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { format } from "date-fns";
 import { PageHeader } from "@/components/page-header";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
-import { unstable_cache } from "next/cache";
 
 export const metadata = {
   title: "ჩემპიონატები",
@@ -58,42 +57,34 @@ type TournamentCard = {
   game: { nameKa: string | null; emoji: string | null } | null;
 };
 
-const getTournaments = unstable_cache(
-  async () => {
-    const admin = createSupabaseAdminClientOrNull();
-    if (!admin) return null;
-    const { data } = await admin
-      .from("tournaments")
-      .select(`
-        id,
-        name,
-        slug,
-        description,
-        banner_url,
-        format,
-        max_participants,
-        prize_pool,
-        starts_at,
-        status,
-        games:game_id (
-          slug,
-          name_ka,
-          emoji
-        ),
-        tournament_participants (
-          id
-        )
-      `)
-      .neq("status", "draft")
-      .order("starts_at", { ascending: true });
-    return data;
-  },
-  ["tournaments"],
-  { revalidate: 120, tags: ["tournaments"] },
-);
-
+// `tournaments` is public (SELECT USING(true)), so the anon/RLS server client
+// reads it directly — resilient to a missing/invalid service-role key.
 export default async function TournamentsPage() {
-  const dbTournaments = await getTournaments();
+  const supabase = await createSupabaseServerClient();
+  const { data: dbTournaments } = await supabase
+    .from("tournaments")
+    .select(`
+      id,
+      name,
+      slug,
+      description,
+      banner_url,
+      format,
+      max_participants,
+      prize_pool,
+      starts_at,
+      status,
+      games:game_id (
+        slug,
+        name_ka,
+        emoji
+      ),
+      tournament_participants (
+        id
+      )
+    `)
+    .neq("status", "draft")
+    .order("starts_at", { ascending: true });
 
   const tournaments = ((dbTournaments ?? []) as unknown as TournamentRow[]).map((t) => {
     const participantsCount = t.tournament_participants?.length || 0;

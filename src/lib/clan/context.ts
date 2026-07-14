@@ -53,8 +53,277 @@ export async function getClanTournaments(
   });
 }
 
+export type ClanTrophyStats = {
+  championships: number;
+  tournamentsEntered: number;
+  scrimsPlayed: number;
+};
+
+export type ClanTournamentRegistration = {
+  tournamentId: string;
+  name: string;
+  slug: string;
+  isPractice: boolean;
+  registeredAt: string | null;
+  userId: string;
+};
+
+// Derives a clan's competitive record from its tournament entries (no separate
+// results table needed): championships = completed tournaments whose winner is
+// this clan's captain-of-record. Also returns the normalized registration list
+// so callers can reuse it for an activity feed without a second query.
+export async function getClanTrophyData(
+  supabase: SupabaseServer,
+  clanId: string,
+): Promise<{ stats: ClanTrophyStats; registrations: ClanTournamentRegistration[] }> {
+  const { data } = await supabase
+    .from("tournament_participants")
+    .select("user_id, registered_at, tournaments!inner ( id, name, slug, is_practice, status, winner_id )")
+    .eq("clan_id", clanId);
+
+  const rows = ((data ?? []) as unknown as Array<{
+    user_id: string;
+    registered_at: string | null;
+    tournaments: { id: string; name: string; slug: string; is_practice: boolean; status: string; winner_id: string | null } | null;
+  }>).filter((r) => r.tournaments);
+
+  const comp = rows.filter((r) => !r.tournaments!.is_practice);
+  const practice = rows.filter((r) => r.tournaments!.is_practice);
+  const championships = comp.filter(
+    (r) => r.tournaments!.status === "completed" && !!r.tournaments!.winner_id && r.tournaments!.winner_id === r.user_id,
+  ).length;
+
+  return {
+    stats: {
+      championships,
+      tournamentsEntered: new Set(comp.map((r) => r.tournaments!.id)).size,
+      scrimsPlayed: new Set(practice.map((r) => r.tournaments!.id)).size,
+    },
+    registrations: rows.map((r) => ({
+      tournamentId: r.tournaments!.id,
+      name: r.tournaments!.name,
+      slug: r.tournaments!.slug,
+      isPractice: r.tournaments!.is_practice,
+      registeredAt: r.registered_at,
+      userId: r.user_id,
+    })),
+  };
+}
+
+export type ClanFixture = {
+  tournamentId: string;
+  name: string;
+  slug: string;
+  isPractice: boolean;
+  status: string;
+  startsAt: string | null;
+};
+
+// A clan's UPCOMING fixtures = the tournaments/scrims it is registered for that
+// haven't finished. These appear automatically when a leader/officer registers
+// the clan (registerClanForTournamentAction) — never hand-created here.
+export async function getClanFixtures(supabase: SupabaseServer, clanId: string): Promise<ClanFixture[]> {
+  const { data } = await supabase
+    .from("tournament_participants")
+    .select("tournaments!inner ( id, name, slug, is_practice, status, starts_at )")
+    .eq("clan_id", clanId);
+
+  const rows = (data ?? []) as unknown as Array<{
+    tournaments: { id: string; name: string; slug: string; is_practice: boolean; status: string; starts_at: string | null } | null;
+  }>;
+
+  return rows
+    .map((r) => r.tournaments)
+    .filter((t): t is NonNullable<typeof t> => !!t && ["draft", "open", "checkin", "live"].includes(t.status))
+    .map((t) => ({ tournamentId: t.id, name: t.name, slug: t.slug, isPractice: t.is_practice, status: t.status, startsAt: t.starts_at }))
+    .sort((a, b) => (a.startsAt ? +new Date(a.startsAt) : Infinity) - (b.startsAt ? +new Date(b.startsAt) : Infinity));
+}
+
+export type ClanMatchResult = {
+  id: string;
+  opponentName: string;
+  result: "win" | "loss" | "draw";
+  ourScore: number | null;
+  theirScore: number | null;
+  isPractice: boolean;
+  playedAt: string;
+  tournamentName: string | null;
+  tournamentSlug: string | null;
+};
+
+// A clan's match RESULTS, derived from the tournament engine's completed bracket
+// matches (tournament_matches). For a clan entry the captain's user id is the
+// participant, so a match belongs to the clan when the captain is player1/player2.
+export async function getClanMatchResults(
+  supabase: SupabaseServer,
+  clanId: string,
+): Promise<{ results: ClanMatchResult[]; record: { w: number; l: number; d: number } }> {
+  const { data: entries } = await supabase
+    .from("tournament_participants")
+    .select("tournament_id, user_id")
+    .eq("clan_id", clanId);
+  const entryRows = (entries ?? []) as { tournament_id: string; user_id: string }[];
+  if (entryRows.length === 0) return { results: [], record: { w: 0, l: 0, d: 0 } };
+
+  const tournamentIds = [...new Set(entryRows.map((r) => r.tournament_id))];
+  const captainByTournament = new Map(entryRows.map((r) => [r.tournament_id, r.user_id]));
+
+  const [{ data: matchesData }, { data: tmeta }, { data: parts }] = await Promise.all([
+    supabase
+      .from("tournament_matches")
+      .select("id, tournament_id, player1_id, player2_id, score1, score2, winner_id, status, scheduled_at, created_at")
+      .in("tournament_id", tournamentIds),
+    supabase.from("tournaments").select("id, name, slug, is_practice").in("id", tournamentIds),
+    supabase.from("tournament_participants").select("tournament_id, user_id, team_name, profiles ( username, display_name )").in("tournament_id", tournamentIds),
+  ]);
+
+  const tById = new Map(((tmeta ?? []) as { id: string; name: string; slug: string; is_practice: boolean }[]).map((t) => [t.id, t]));
+  const nameByKey = new Map<string, string>();
+  ((parts ?? []) as unknown as Array<{ tournament_id: string; user_id: string; team_name: string | null; profiles: { username: string; display_name: string | null } | { username: string; display_name: string | null }[] | null }>).forEach((p) => {
+    const prof = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
+    nameByKey.set(`${p.tournament_id}:${p.user_id}`, p.team_name || prof?.display_name || prof?.username || "მოწინააღმდეგე");
+  });
+
+  const results: ClanMatchResult[] = [];
+  for (const m of (matchesData ?? []) as Array<{
+    id: string; tournament_id: string; player1_id: string | null; player2_id: string | null;
+    score1: number | null; score2: number | null; winner_id: string | null; status: string;
+    scheduled_at: string | null; created_at: string;
+  }>) {
+    const captain = captainByTournament.get(m.tournament_id);
+    if (!captain) continue;
+    const isP1 = m.player1_id === captain;
+    const isP2 = m.player2_id === captain;
+    if (!isP1 && !isP2) continue;
+    if (!["reported", "confirmed"].includes(m.status) && m.winner_id == null) continue; // only played matches
+    const oppId = isP1 ? m.player2_id : m.player1_id;
+    if (!oppId) continue; // bye
+    const ourScore = isP1 ? m.score1 : m.score2;
+    const theirScore = isP1 ? m.score2 : m.score1;
+    const result: "win" | "loss" | "draw" = m.winner_id === captain ? "win" : m.winner_id === oppId ? "loss" : "draw";
+    const t = tById.get(m.tournament_id);
+    results.push({
+      id: m.id,
+      opponentName: nameByKey.get(`${m.tournament_id}:${oppId}`) ?? "მოწინააღმდეგე",
+      result,
+      ourScore: ourScore ?? null,
+      theirScore: theirScore ?? null,
+      isPractice: !!t?.is_practice,
+      playedAt: m.scheduled_at ?? m.created_at,
+      tournamentName: t?.name ?? null,
+      tournamentSlug: t?.slug ?? null,
+    });
+  }
+  results.sort((a, b) => +new Date(b.playedAt) - +new Date(a.playedAt));
+  const record = {
+    w: results.filter((r) => r.result === "win").length,
+    l: results.filter((r) => r.result === "loss").length,
+    d: results.filter((r) => r.result === "draw").length,
+  };
+  return { results, record };
+}
+
+export type ClanPowerEntry = { rating: number; games: number; w: number; l: number; d: number };
+
+// Clan POWER RATING — a derived competitive rating (ELO). 100% computed from the
+// tournament engine's played matches (no stored value, no write path, no grant
+// surface). Replays every clan-vs-someone match chronologically from a 1000 base;
+// individuals (non-clan opponents) act as a fixed 1000-rated baseline. Returns a
+// map for every clan that has played at least one rated match.
+export async function getClanPowerRatings(supabase: SupabaseServer): Promise<Map<string, ClanPowerEntry>> {
+  const [{ data: parts }, { data: matchesData }] = await Promise.all([
+    supabase.from("tournament_participants").select("tournament_id, user_id, clan_id").not("clan_id", "is", null),
+    supabase.from("tournament_matches").select("tournament_id, player1_id, player2_id, winner_id, status, scheduled_at, created_at"),
+  ]);
+
+  const clanByKey = new Map<string, string>();
+  ((parts ?? []) as { tournament_id: string; user_id: string; clan_id: string }[]).forEach((p) => {
+    clanByKey.set(`${p.tournament_id}:${p.user_id}`, p.clan_id);
+  });
+
+  const played = ((matchesData ?? []) as Array<{
+    tournament_id: string; player1_id: string | null; player2_id: string | null;
+    winner_id: string | null; status: string; scheduled_at: string | null; created_at: string;
+  }>)
+    .filter((m) => m.player1_id && m.player2_id && (["reported", "confirmed"].includes(m.status) || m.winner_id != null))
+    .sort((a, b) => new Date(a.scheduled_at ?? a.created_at).getTime() - new Date(b.scheduled_at ?? b.created_at).getTime());
+
+  const BASE = 1000;
+  const K = 32;
+  const ratings = new Map<string, ClanPowerEntry>();
+  const entry = (id: string) => ratings.get(id) ?? { rating: BASE, games: 0, w: 0, l: 0, d: 0 };
+
+  for (const m of played) {
+    const clanA = clanByKey.get(`${m.tournament_id}:${m.player1_id}`) ?? null;
+    const clanB = clanByKey.get(`${m.tournament_id}:${m.player2_id}`) ?? null;
+    if (!clanA && !clanB) continue;
+
+    const eA = clanA ? entry(clanA) : null;
+    const eB = clanB ? entry(clanB) : null;
+    const rA = eA ? eA.rating : BASE;
+    const rB = eB ? eB.rating : BASE;
+
+    const sA = m.winner_id === m.player1_id ? 1 : m.winner_id === m.player2_id ? 0 : 0.5;
+    const expA = 1 / (1 + Math.pow(10, (rB - rA) / 400));
+
+    if (clanA && eA) {
+      eA.rating = rA + K * (sA - expA);
+      eA.games += 1;
+      if (sA === 1) eA.w += 1;
+      else if (sA === 0) eA.l += 1;
+      else eA.d += 1;
+      ratings.set(clanA, eA);
+    }
+    if (clanB && eB) {
+      eB.rating = rB + K * (1 - sA - (1 - expA));
+      eB.games += 1;
+      if (sA === 0) eB.w += 1;
+      else if (sA === 1) eB.l += 1;
+      else eB.d += 1;
+      ratings.set(clanB, eB);
+    }
+  }
+
+  for (const [k, v] of ratings) ratings.set(k, { ...v, rating: Math.round(v.rating) });
+  return ratings;
+}
+
+// Resolves a game + the viewer's clan FOR THAT GAME (if any). Powers the
+// game-level tournaments/scrims listing pages, which are game-scoped entities the
+// viewer's clan can register for (register buttons show only for leader/officer).
+export async function getGameTournamentContext(gameSlug: string) {
+  const supabase = await createSupabaseServerClient();
+  const [{ data: game }, session] = await Promise.all([
+    supabase.from("games").select("id, slug, name_ka, icon_url").eq("slug", gameSlug).maybeSingle(),
+    getSession().catch(() => null),
+  ]);
+  if (!game) return null;
+
+  let clan: { id: string; slug: string; role: ClanRole } | null = null;
+  if (session) {
+    const { data: m } = await supabase
+      .from("clan_members")
+      .select("role, clan_id, clans!inner ( slug, game_slug )")
+      .eq("user_id", session.id)
+      .eq("clans.game_slug", gameSlug)
+      .maybeSingle();
+    if (m) {
+      const c = Array.isArray(m.clans) ? m.clans[0] : m.clans;
+      clan = { id: m.clan_id as string, slug: (c as { slug: string }).slug, role: m.role as ClanRole };
+    }
+  }
+
+  return {
+    supabase,
+    game,
+    session,
+    clan,
+    canRegister: !!clan && (clan.role === "leader" || clan.role === "officer"),
+  };
+}
+
 // Shared loader for the game-scoped clan sub-pages
-// (/games/[slug]/{tournaments,scrims,clanchat,rosters}/[clanSlug]). Resolves the
+// (/games/[slug]/{clanchat,rosters,schedule,matches}/[clanSlug]). Resolves the
 // clan + game, verifies the clan actually belongs to that game, and computes the
 // viewer's role. Returns null when the clan/game is missing or mismatched (→ 404).
 export async function getClanGameContext(gameSlug: string, clanSlug: string) {

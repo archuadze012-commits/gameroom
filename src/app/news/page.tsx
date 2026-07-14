@@ -3,10 +3,9 @@ import { Clock } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 import { Pill } from "@/components/ui/pill";
-import { createSupabaseAdminClientOrNull } from "@/lib/supabase/admin";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { format } from "date-fns";
 import { GamerCard } from "@/components/ui/gamer-card";
-import { unstable_cache } from "next/cache";
 
 export const metadata = {
   title: "სიახლეები",
@@ -38,11 +37,11 @@ type NewsRow = {
   } | null;
 };
 
-const getNews = unstable_cache(
-  async () => {
-  const admin = createSupabaseAdminClientOrNull();
-  if (!admin) return null;
-  const { data } = await admin
+// Published news is public (news_select_published RLS: status='published'), so
+// the anon/RLS server client reads it directly — no service-role key needed.
+export default async function NewsPage() {
+  const supabase = await createSupabaseServerClient();
+  const { data: dbNews } = await supabase
     .from("news_articles")
     .select(`
       id,
@@ -63,14 +62,6 @@ const getNews = unstable_cache(
     `)
     .eq("status", "published")
     .order("published_at", { ascending: false });
-  return data;
-  },
-  ["news"],
-  { revalidate: 300, tags: ["news"] },
-);
-
-export default async function NewsPage() {
-  const dbNews = await getNews();
 
   const news = ((dbNews ?? []) as NewsRow[]).map((n) => {
     const readMinutes = Math.max(1, Math.ceil((n.body?.length || 0) / 800));

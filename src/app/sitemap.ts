@@ -29,7 +29,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = anon();
 
   const staticPaths = [
-    "", "/games", "/tournaments", "/clans", "/articles", "/news",
+    "", "/games", "/tournaments", "/articles", "/news",
     "/lfg", "/streams", "/free-pc-games", "/leaderboard", "/shop",
   ];
   const staticEntries: MetadataRoute.Sitemap = staticPaths.map((p) => ({
@@ -67,6 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     })),
     ...games.map((g) => ({ url: `${base}/games/${g.slug}`, changeFrequency: "weekly" as const, priority: 0.7 })),
+    ...games.map((g) => ({ url: `${base}/games/${g.slug}/clans`, changeFrequency: "weekly" as const, priority: 0.6 })),
     ...tournaments.map((t) => ({ url: `${base}/tournaments/${t.slug}`, changeFrequency: "daily" as const, priority: 0.6 })),
     ...clans.map((c) => ({ url: `${base}/clans/${c.slug}`, changeFrequency: "weekly" as const, priority: 0.5 })),
     ...cracked.map((c) => ({ url: `${base}/free-pc-games/${c.id}`, changeFrequency: "monthly" as const, priority: 0.5 })),

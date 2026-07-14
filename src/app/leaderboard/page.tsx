@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Trophy, Crown, Medal, Coins, Sparkles } from "lucide-react";
-import { createSupabaseAdminClientOrNull } from "@/lib/supabase/admin";
-import { unstable_cache } from "next/cache";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { UserAvatar } from "@/components/user-avatar";
 import { VerifiedBadge } from "@/components/verified-badge";
 import { xpToLevel } from "@/lib/badges";
@@ -9,29 +8,6 @@ import { PageHeader } from "@/components/page-header";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 
 export const metadata = { title: "Leaderboard" };
-
-const getLeaderboardData = unstable_cache(
-  async () => {
-    const admin = createSupabaseAdminClientOrNull();
-    if (!admin) return { topXp: null, topWallets: null };
-    const [{ data: topXp }, { data: topWallets }] = await Promise.all([
-      admin
-        .from("profiles")
-        .select("username, display_name, avatar_url, xp, level, is_verified")
-        .eq("banned", false)
-        .order("xp", { ascending: false })
-        .limit(20),
-      admin
-        .from("wallets")
-        .select("nc_balance, profiles!inner(username, display_name, avatar_url, is_verified)")
-        .order("nc_balance", { ascending: false })
-        .limit(20),
-    ]);
-    return { topXp, topWallets };
-  },
-  ["leaderboard"],
-  { revalidate: 120, tags: ["leaderboard"] },
-);
 
 type LeaderboardUser = {
   username: string;
@@ -43,23 +19,23 @@ type LeaderboardUser = {
   is_verified?: boolean | null;
 };
 
-type WalletRow = {
-  nc_balance: number | null;
-  profiles: {
-    username: string;
-    display_name: string | null;
-    avatar_url: string | null;
-    is_verified: boolean | null;
-  };
-};
-
+// Reads run through the anon/RLS server client (not the service-role admin
+// client) so the page stays alive if the service-role key is missing/invalid.
+// XP ranking reads the public `profiles` table directly; the wealth ranking
+// goes through get_top_wallets() because `wallets` SELECT is owner-only.
 export default async function LeaderboardPage() {
-  const { topXp, topWallets } = await getLeaderboardData();
+  const supabase = await createSupabaseServerClient();
+  const [{ data: topXp }, { data: topWallets }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("username, display_name, avatar_url, xp, level, is_verified")
+      .eq("banned", false)
+      .order("xp", { ascending: false })
+      .limit(20),
+    supabase.rpc("get_top_wallets", { p_limit: 20 }),
+  ]);
 
-  const topCoins: LeaderboardUser[] = ((topWallets ?? []) as unknown as WalletRow[]).map((w) => ({
-    nc_balance: w.nc_balance,
-    ...w.profiles,
-  }));
+  const topCoins: LeaderboardUser[] = (topWallets ?? []) as LeaderboardUser[];
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">

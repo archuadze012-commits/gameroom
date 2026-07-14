@@ -42,6 +42,15 @@ const ALLOWLIST = new Set([
   // referrer-only RLS for the cross-user aggregate; returns public-safe columns
   // only (see 20260712b_referral_diminishing_rewards.sql).
   'public.get_top_referrers/1',
+  // Read-only public leaderboard "Top Earners" aggregate. DEFINER only to bypass
+  // wallets' owner-only RLS; returns public-safe profile columns + nc_balance —
+  // the same ranking the public /leaderboard already renders (see
+  // 20260731_leaderboard_and_referral_resilience.sql).
+  'public.get_top_wallets/1',
+  // Read-only non-member clan teaser. DEFINER only to bypass clan_announcements'
+  // member-only RLS; returns ONLY (count, latest_at) metadata — no body text
+  // (see 20260731_leaderboard_and_referral_resilience.sql).
+  'public.clan_announcement_teaser/1',
 ]);
 
 // A definer function may pin only these schemas; pg_temp must be present.

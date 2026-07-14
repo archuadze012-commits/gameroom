@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/page-header";
 import { mockGames, type MockGame } from "@/lib/mock-data";
-import { createSupabaseAdminClientOrNull } from "@/lib/supabase/admin";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 import { GamesCatalog } from "./games-catalog";
 
@@ -16,13 +16,9 @@ export const metadata = {
   },
 };
 
-// The games catalog is identical for every visitor — the per-user "favorites"
-// split is layered on client-side (see GamesCatalog). That lets this page render
-// without a per-request session/cookie read, so it can be served from the CDN
-// via ISR instead of a full server round-trip on every navigation. A cookie-free
-// admin client reads the public games table.
-export const revalidate = 300;
-
+// The public `games` table is read through the anon/RLS server client so the
+// catalog survives a missing/invalid service-role key. The per-user "favorites"
+// split is still layered on client-side (see GamesCatalog).
 type DbGame = {
   slug: string;
   name_ka: string;
@@ -52,12 +48,8 @@ function dbToGame(g: DbGame): MockGame {
 }
 
 export default async function GamesCatalogPage() {
-  // Falls back to the built-in mockGames catalog if admin env is missing (e.g. a
-  // preview build); production build/runtime reads the live games table.
-  const supabase = createSupabaseAdminClientOrNull();
-  const { data: dbGames } = supabase
-    ? await supabase.from("games").select("*")
-    : { data: null };
+  const supabase = await createSupabaseServerClient();
+  const { data: dbGames } = await supabase.from("games").select("*");
 
   const db: MockGame[] = (dbGames ?? []).map(dbToGame);
   const dbSlugs = new Set(db.map((g) => g.slug));

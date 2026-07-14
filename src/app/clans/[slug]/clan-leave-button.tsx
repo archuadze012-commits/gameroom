@@ -11,9 +11,11 @@ import { leaveClanAction, disbandClanAction } from "./manage-actions";
 export function ClanLeaveButton({
   clanSlug,
   isLeader,
+  gameSlug,
 }: {
   clanSlug: string;
   isLeader: boolean;
+  gameSlug: string | null;
 }) {
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
@@ -24,7 +26,7 @@ export function ClanLeaveButton({
       const res = isLeader ? await disbandClanAction(clanSlug) : await leaveClanAction(clanSlug);
       if (res.success) {
         toast.success(res.message);
-        router.push("/clans");
+        router.push(gameSlug ? `/games/${gameSlug}/clans` : "/games");
         router.refresh();
       } else {
         toast.error(res.message);

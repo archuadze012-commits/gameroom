@@ -27,6 +27,7 @@ import { OnboardingChecklist } from "@/components/home/onboarding-checklist";
 import { HomeFeedSeed } from "@/components/home/home-feed-seed";
 import { getFeedSeed, type FeedSeed } from "@/lib/home/feed-seed";
 import { HomeOnlineNow } from "@/components/home/home-online-now";
+import { HomeSuggestedFollows } from "@/components/home/home-suggested-follows";
 import { PostOwnerActions } from "@/components/post-owner-actions";
 import { PostContent } from "@/components/post-content";
 export const dynamic = "force-dynamic";
@@ -608,6 +609,8 @@ export default async function HomePage() {
                 as the actual sidebar. */}
             <div className="hidden lg:block lg:col-span-4 space-y-6">
               <HomeOnlineNow currentUserId={user.id} />
+
+              <HomeSuggestedFollows currentUserId={user.id} />
 
               <div className="pubg-loadout-link group relative block" data-variant="room">
                 <div className="pubg-loadout-card relative overflow-hidden p-6">

@@ -355,6 +355,66 @@ export type Database = {
           },
         ]
       }
+      clan_cosmetic_catalog: {
+        Row: {
+          cost: number
+          key: string
+          name: string
+          sort: number
+          type: string
+          value: string
+        }
+        Insert: {
+          cost: number
+          key: string
+          name: string
+          sort?: number
+          type: string
+          value: string
+        }
+        Update: {
+          cost?: number
+          key?: string
+          name?: string
+          sort?: number
+          type?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      clan_cosmetics: {
+        Row: {
+          clan_id: string
+          cosmetic_key: string
+          purchased_at: string
+        }
+        Insert: {
+          clan_id: string
+          cosmetic_key: string
+          purchased_at?: string
+        }
+        Update: {
+          clan_id?: string
+          cosmetic_key?: string
+          purchased_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clan_cosmetics_clan_id_fkey"
+            columns: ["clan_id"]
+            isOneToOne: false
+            referencedRelation: "clans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clan_cosmetics_cosmetic_key_fkey"
+            columns: ["cosmetic_key"]
+            isOneToOne: false
+            referencedRelation: "clan_cosmetic_catalog"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       clan_event_rsvps: {
         Row: {
           created_at: string
@@ -397,6 +457,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          event_type: string
           id: string
           starts_at: string
           title: string
@@ -406,6 +467,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          event_type?: string
           id?: string
           starts_at: string
           title: string
@@ -415,6 +477,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          event_type?: string
           id?: string
           starts_at?: string
           title?: string
@@ -430,6 +493,52 @@ export type Database = {
           {
             foreignKeyName: "clan_events_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clan_fixture_rsvps: {
+        Row: {
+          clan_id: string
+          created_at: string
+          status: string
+          tournament_id: string
+          user_id: string
+        }
+        Insert: {
+          clan_id: string
+          created_at?: string
+          status: string
+          tournament_id: string
+          user_id: string
+        }
+        Update: {
+          clan_id?: string
+          created_at?: string
+          status?: string
+          tournament_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clan_fixture_rsvps_clan_id_fkey"
+            columns: ["clan_id"]
+            isOneToOne: false
+            referencedRelation: "clans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clan_fixture_rsvps_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clan_fixture_rsvps_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -490,7 +599,11 @@ export type Database = {
           clan_id: string
           contribution: number
           id: string
+          is_captain: boolean
+          jersey_number: number | null
           joined_at: string
+          lineup_status: string
+          position: string | null
           role: Database["public"]["Enums"]["clan_role"]
           user_id: string
         }
@@ -498,7 +611,11 @@ export type Database = {
           clan_id: string
           contribution?: number
           id?: string
+          is_captain?: boolean
+          jersey_number?: number | null
           joined_at?: string
+          lineup_status?: string
+          position?: string | null
           role?: Database["public"]["Enums"]["clan_role"]
           user_id: string
         }
@@ -506,7 +623,11 @@ export type Database = {
           clan_id?: string
           contribution?: number
           id?: string
+          is_captain?: boolean
+          jersey_number?: number | null
           joined_at?: string
+          lineup_status?: string
+          position?: string | null
           role?: Database["public"]["Enums"]["clan_role"]
           user_id?: string
         }
@@ -611,13 +732,60 @@ export type Database = {
           },
         ]
       }
+      clan_treasury_ledger: {
+        Row: {
+          clan_id: string
+          created_at: string
+          delta: number
+          id: string
+          kind: string
+          memo: string | null
+          user_id: string | null
+        }
+        Insert: {
+          clan_id: string
+          created_at?: string
+          delta: number
+          id?: string
+          kind: string
+          memo?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          clan_id?: string
+          created_at?: string
+          delta?: number
+          id?: string
+          kind?: string
+          memo?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clan_treasury_ledger_clan_id_fkey"
+            columns: ["clan_id"]
+            isOneToOne: false
+            referencedRelation: "clans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clan_treasury_ledger_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clans: {
         Row: {
+          accent_color: string | null
           avatar_url: string | null
           banner_url: string | null
           created_at: string
           created_by: string
           description: string | null
+          emblem: string | null
           game_slug: string | null
           id: string
           level: number
@@ -627,15 +795,18 @@ export type Database = {
           slug: string
           status: Database["public"]["Enums"]["clan_status"]
           tag: string
+          treasury: number
           updated_at: string
           xp: number
         }
         Insert: {
+          accent_color?: string | null
           avatar_url?: string | null
           banner_url?: string | null
           created_at?: string
           created_by: string
           description?: string | null
+          emblem?: string | null
           game_slug?: string | null
           id?: string
           level?: number
@@ -645,15 +816,18 @@ export type Database = {
           slug: string
           status?: Database["public"]["Enums"]["clan_status"]
           tag: string
+          treasury?: number
           updated_at?: string
           xp?: number
         }
         Update: {
+          accent_color?: string | null
           avatar_url?: string | null
           banner_url?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
+          emblem?: string | null
           game_slug?: string | null
           id?: string
           level?: number
@@ -663,6 +837,7 @@ export type Database = {
           slug?: string
           status?: Database["public"]["Enums"]["clan_status"]
           tag?: string
+          treasury?: number
           updated_at?: string
           xp?: number
         }
@@ -3512,6 +3687,7 @@ export type Database = {
           last_seen_at: string | null
           last_xp_at: string | null
           level: number
+          looking_for_clan: boolean
           main_game_slug: string | null
           referral_code: string | null
           region: string | null
@@ -3548,6 +3724,7 @@ export type Database = {
           last_seen_at?: string | null
           last_xp_at?: string | null
           level?: number
+          looking_for_clan?: boolean
           main_game_slug?: string | null
           referral_code?: string | null
           region?: string | null
@@ -3584,6 +3761,7 @@ export type Database = {
           last_seen_at?: string | null
           last_xp_at?: string | null
           level?: number
+          looking_for_clan?: boolean
           main_game_slug?: string | null
           referral_code?: string | null
           region?: string | null
@@ -4616,6 +4794,21 @@ export type Database = {
       can_manage_shop_products: { Args: never; Returns: boolean }
       claim_daily_bonus: { Args: never; Returns: undefined }
       claim_daily_bonus_as: { Args: { p_user_id: string }; Returns: Json }
+      clan_announcement_teaser: {
+        Args: { p_clan_id: string }
+        Returns: {
+          cnt: number
+          latest_at: string
+        }[]
+      }
+      clan_buy_cosmetic: {
+        Args: { p_clan: string; p_key: string; p_user: string }
+        Returns: Json
+      }
+      clan_donate_nc: {
+        Args: { p_amount: number; p_clan: string; p_user: string }
+        Returns: Json
+      }
       equip_item: { Args: { p_id: string }; Returns: undefined }
       equip_item_as: {
         Args: { p_item_id: string; p_user_id: string }
@@ -4623,12 +4816,35 @@ export type Database = {
       }
       expire_old_lfg_posts: { Args: never; Returns: undefined }
       gen_ref_code: { Args: never; Returns: string }
+      get_suggested_follows: {
+        Args: { p_limit?: number; p_user: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          id: string
+          last_seen_at: string
+          level: number
+          mutual_count: number
+          shared_games: number
+          username: string
+        }[]
+      }
       get_top_referrers: {
         Args: { p_limit?: number }
         Returns: {
           avatar_url: string
           display_name: string
           invites: number
+          username: string
+        }[]
+      }
+      get_top_wallets: {
+        Args: { p_limit?: number }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          is_verified: boolean
+          nc_balance: number
           username: string
         }[]
       }

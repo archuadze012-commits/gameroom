@@ -9,9 +9,11 @@ type Props = {
   username: string;
   initialFollowing: boolean;
   onCountChange?: (delta: number) => void;
+  /** Sidebar/list rendering — smaller button, shorter label. */
+  compact?: boolean;
 };
 
-export function FollowButton({ username, initialFollowing, onCountChange }: Props) {
+export function FollowButton({ username, initialFollowing, onCountChange, compact }: Props) {
   const [following, setFollowing] = useState(initialFollowing);
   const [loading, setLoading] = useState(false);
 
@@ -40,18 +42,19 @@ export function FollowButton({ username, initialFollowing, onCountChange }: Prop
   return (
     <Button
       variant={following ? "outline" : "default"}
+      size={compact ? "sm" : "default"}
       onClick={toggle}
       disabled={loading}
       className={following ? "border-primary/40 text-primary hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40" : ""}
     >
       {loading ? (
-        <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+        <Loader2 className={compact ? "h-4 w-4 animate-spin" : "mr-1.5 h-4 w-4 animate-spin"} />
       ) : following ? (
-        <UserCheck className="mr-1.5 h-4 w-4" />
+        <UserCheck className={compact ? "h-4 w-4" : "mr-1.5 h-4 w-4"} />
       ) : (
-        <UserPlus className="mr-1.5 h-4 w-4" />
+        <UserPlus className={compact ? "h-4 w-4" : "mr-1.5 h-4 w-4"} />
       )}
-      {following ? "გამოწერილია" : "გამოწერა"}
+      {compact ? null : following ? "გამოწერილია" : "გამოწერა"}
     </Button>
   );
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BadgeCheck, MapPin, Zap, Users, Gamepad2, ArrowRight, Share2 } from "lucide-react";
+import { BadgeCheck, MapPin, Zap, Users, Gamepad2, ArrowRight, Share2, Sparkles } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
@@ -153,12 +153,20 @@ export default async function GamerCardPage({
               შემოუერთდი {name}-ს PlayGame-ზე <ArrowRight className="h-5 w-5" />
             </Link>
           ) : isOwner ? (
-            <Link
-              href="/invite"
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[var(--gr-violet-hi)]/40 bg-[var(--gr-violet)]/10 px-6 py-3.5 font-display text-[14px] font-black uppercase tracking-wider text-[var(--gr-violet-hi)] transition-colors hover:bg-[var(--gr-violet)]/20"
-            >
-              <Share2 className="h-4 w-4" /> გააზიარე შენი ბარათი
-            </Link>
+            <div className="flex flex-col gap-2">
+              <Link
+                href="/invite"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[var(--gr-violet-hi)]/40 bg-[var(--gr-violet)]/10 px-6 py-3.5 font-display text-[14px] font-black uppercase tracking-wider text-[var(--gr-violet-hi)] transition-colors hover:bg-[var(--gr-violet)]/20"
+              >
+                <Share2 className="h-4 w-4" /> გააზიარე შენი ბარათი
+              </Link>
+              <Link
+                href={`/wrapped/${profile.username}`}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[var(--gr-magenta)]/40 bg-[var(--gr-magenta)]/10 px-6 py-3.5 font-display text-[14px] font-black uppercase tracking-wider text-[var(--gr-magenta)] transition-colors hover:bg-[var(--gr-magenta)]/20"
+              >
+                <Sparkles className="h-4 w-4" /> ნახე შენი Wrapped
+              </Link>
+            </div>
           ) : (
             <Link
               href={`/profile/${profile.username}`}

@@ -155,6 +155,8 @@ type PubgCommandCardProps = {
   iconSizeClassName?: string;
   index?: number;
   variant?: "strike" | "royale" | "room" | "support";
+  badge?: string | null;
+  badgeTone?: string;
 };
 
 function PubgCommandCard({
@@ -167,6 +169,8 @@ function PubgCommandCard({
   iconSizeClassName = "[&_svg]:h-10 [&_svg]:w-10 sm:[&_svg]:h-12 sm:[&_svg]:w-12",
   index = 0,
   variant = "strike",
+  badge = null,
+  badgeTone = "text-white/70",
 }: PubgCommandCardProps) {
   return (
     <Link
@@ -188,6 +192,11 @@ function PubgCommandCard({
                 {label}
               </p>
               <span aria-hidden className="pubg-loadout-marker mt-2 block h-px w-16" />
+              {badge && (
+                <span className={`mt-2 inline-flex items-center rounded-full border border-white/10 bg-black/30 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${badgeTone}`}>
+                  {badge}
+                </span>
+              )}
             </div>
             <span className="pubg-loadout-code font-display text-[13px] font-black uppercase tracking-[0.18em] text-white/34">
               #{String(index + 1).padStart(2, "0")}
@@ -305,6 +314,8 @@ export default async function GamePage({
     { data: tournamentsRaw },
     { count: playerCount },
     { count: onlineCount },
+    { count: clanCount },
+    { count: clanRecruitingCount },
   ] = await Promise.all([
     supabase.from("games").select("*").eq("slug", slug).maybeSingle(),
     supabase
@@ -348,6 +359,8 @@ export default async function GamePage({
       .eq("banned", false)
       .contains("favorite_game_slugs", [slug])
       .gt("last_seen_at", fiveMinutesAgo),
+    supabase.from("clans").select("id", { count: "exact", head: true }).eq("game_slug", slug),
+    supabase.from("clans").select("id", { count: "exact", head: true }).eq("game_slug", slug).eq("recruiting", true),
   ]);
 
   if (gameError) throw gameError;
@@ -402,6 +415,14 @@ export default async function GamePage({
   topRooms = topRooms.slice(0, 3);
   const featuredRoom = topRooms[0] ?? null;
   const featuredTournament = gameTournaments[0] ?? null;
+
+  const clanBadge =
+    (clanCount ?? 0) > 0
+      ? (clanRecruitingCount ?? 0) > 0
+        ? `${clanCount} კლანი · ${clanRecruitingCount} ღია`
+        : `${clanCount} კლანი`
+      : null;
+  const clanBadgeTone = (clanRecruitingCount ?? 0) > 0 ? "text-[var(--gr-lime)]" : "text-indigo-300";
 
   const gameJsonLd = {
     "@context": "https://schema.org",
@@ -622,7 +643,7 @@ export default async function GamePage({
                 {hasPubgCommandCards ? (
                   <>
                     <PubgCommandCard
-                      href={`/clans?game=${game.slug}`}
+                      href={`/games/${game.slug}/clans`}
                       title="კლანის გვერდი"
                       label="CLAN HUB"
                       icon={<Shield />}
@@ -631,6 +652,8 @@ export default async function GamePage({
                       iconSizeClassName="[&_svg]:h-10 [&_svg]:w-10 sm:[&_svg]:h-12 sm:[&_svg]:w-12"
                       index={1}
                       variant="strike"
+                      badge={clanBadge}
+                      badgeTone={clanBadgeTone}
                     />
                     <PubgCommandCard
                       href={`/games/${game.slug}/discordvoicechannels`}
@@ -646,7 +669,7 @@ export default async function GamePage({
                   </>
                 ) : (
                   <>
-                    <Link href={`/clans?game=${game.slug}`} className="group relative block">
+                    <Link href={`/games/${game.slug}/clans`} className="group relative block">
                       <div className="absolute -inset-[2px] bg-gradient-to-r from-pink-500 to-violet-500 rounded-xl blur opacity-30 group-hover:opacity-60 transition duration-500" />
                       <article
                         className="relative isolate h-full transition-transform duration-300 group-hover:-translate-y-1"
@@ -768,7 +791,7 @@ export default async function GamePage({
                   variant="royale"
                 />
                 <PromoCard
-                  href="/tournaments"
+                  href={`/games/${game.slug}/tournaments`}
                   title={featuredTournament ? "ტურნირები" : labels.bracketTitle}
                   icon={<Trophy />}
                   accent="from-amber-500/25 to-orange-500/10"

@@ -17,12 +17,13 @@ import { ProfileSummaryRight } from "@/components/profile-summary-right";
 import { ProfileGameRows } from "@/components/profile-game-rows";
 import { ProfileTabs } from "@/components/profile-tabs";
 import { Button } from "@/components/ui/button";
-import { Paintbrush } from "lucide-react";
+import { Paintbrush, Sparkles, ArrowRight } from "lucide-react";
 import { getSession, getIsAdmin } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { AdminGrantCoins } from "@/components/admin-grant-coins";
 import { getEquippedItems } from "@/lib/shop/equip-queries";
 import { ProfileFriendsTab } from "@/components/profile-friends-tab";
+import { TrophyCabinet } from "@/components/profile/trophy-cabinet";
 
 // Public-safe display fields per linked-account provider. Everything else in
 // linked_accounts.metadata (and — for token-bearing providers like TikTok —
@@ -86,7 +87,7 @@ export default async function ProfilePage({
     getIsAdmin().catch(() => false),
     supabase
       .from("profiles")
-      .select("id, username, display_name, avatar_url, favorite_game_slugs, main_game_slug, banner_url, is_verified, youtube_handle, tiktok_handle, tiktok_followers")
+      .select("id, username, display_name, avatar_url, favorite_game_slugs, main_game_slug, banner_url, is_verified, youtube_handle, tiktok_handle, tiktok_followers, xp, daily_streak_count")
       .eq("username", username)
       .maybeSingle(),
   ]);
@@ -146,7 +147,7 @@ export default async function ProfilePage({
   // previously awaited one-by-one, serializing ~5 round-trips on every profile
   // view. Fire them concurrently instead; the posts follow-up (comment/like
   // counts) still runs after, since it needs the post ids.
-  const [followerRes, followingRes, postsRes, linkedRes, lfgFallbackRes, equippedItems] = await Promise.all([
+  const [followerRes, followingRes, postsRes, linkedRes, lfgFallbackRes, equippedItems, badgeRes] = await Promise.all([
     targetUserId
       ? supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", targetUserId)
       : Promise.resolve({ count: 0 }),
@@ -174,7 +175,14 @@ export default async function ProfilePage({
       ? supabase.from("lfg_posts").select("game_slug").eq("author_id", targetUserId).limit(12)
       : Promise.resolve({ data: null }),
     targetUserId ? getEquippedItems(targetUserId) : Promise.resolve([]),
+    targetUserId
+      ? supabase.from("badge_unlocks").select("badge_code").eq("user_id", targetUserId)
+      : Promise.resolve({ data: null }),
   ]);
+
+  const unlockedBadgeCodes = ((badgeRes.data ?? []) as Array<{ badge_code: string }>).map(
+    (b) => b.badge_code
+  );
 
   const followerCount = followerRes.count ?? 0;
   const initialFollowing = !!followingRes.data;
@@ -396,6 +404,36 @@ export default async function ProfilePage({
           </div>
         </div>
         </div>
+
+        {targetUserId && (
+          <div className="mt-8">
+            <TrophyCabinet
+              xp={dbProfile?.xp ?? 0}
+              streak={dbProfile?.daily_streak_count ?? 0}
+              isVerified={!!dbProfile?.is_verified}
+              unlockedCodes={unlockedBadgeCodes}
+            />
+
+            {/* Seasonal Wrapped entry — prominent link to the shareable recap. */}
+            <Link
+              href={`/wrapped/${username}`}
+              className="group mt-3 flex items-center gap-3 overflow-hidden rounded-2xl border border-[var(--gr-violet-hi)]/30 bg-[linear-gradient(135deg,rgba(139,92,246,0.14),rgba(236,72,153,0.1))] px-4 py-3.5 transition-all hover:border-[var(--gr-violet-hi)]/60 hover:brightness-110"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(135deg,var(--gr-violet),var(--gr-magenta))] shadow-[0_0_16px_rgba(139,92,246,0.45)]">
+                <Sparkles className="h-5 w-5 text-white" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-display text-[14px] font-black uppercase tracking-wide text-white">
+                  {isOwner ? "შენი PlayGame Wrapped" : "PlayGame Wrapped"}
+                </span>
+                <span className="block text-[11.5px] text-white/50">
+                  სეზონური რთანი — ნახე და გააზიარე
+                </span>
+              </span>
+              <ArrowRight className="h-4 w-4 shrink-0 text-[var(--gr-violet-hi)] transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+        )}
 
         <Separator className="my-8 bg-white/5" />
 
