@@ -1,0 +1,4 @@
+## 2025-02-18 - Prevent Open Redirect Via Protocol-Relative URLs
+**Vulnerability:** A local redirect check using only `.startsWith("/")` allows for protocol-relative URLs (e.g. `//attacker.com` or `/\attacker.com`), which bypasses local domain restrictions and leads to an open redirect vulnerability. This was found in the OAuth authentication flow callbacks `auth/callback/route.ts` and `auth/google/route.ts`.
+**Learning:** Checking for a leading slash is not sufficient for enforcing relative internal redirects, as standard browser behavior and URL parsing engines will treat protocol-relative inputs starting with double slashes as valid external destinations.
+**Prevention:** Always restrict protocol-relative navigation by checking `!url.startsWith("//") && !url.startsWith("/\\")` alongside `.startsWith("/")` when validating relative redirect destinations from user input.

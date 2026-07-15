@@ -40,19 +40,6 @@ type ClanMember = {
   jersey_number: number | null;
   profiles: ClanMemberProfile;
 };
-type ClanRequestProfile = {
-  id: string;
-  username: string;
-  display_name: string | null;
-  avatar_url: string;
-};
-type ClanRequest = {
-  id: string;
-  message: string | null;
-  created_at: string | null;
-  profiles: ClanRequestProfile;
-};
-
 const STATUS_LABEL: Record<string, string> = {
   open: "ღია",
   invite_only: "მოწვევით",
@@ -158,20 +145,6 @@ export default async function ClanDetailPage({
         .maybeSingle();
       if (req && req.status === "pending") userStatus = "pending";
     }
-  }
-
-  let pendingRequests: ClanRequest[] = [];
-  if (canManageRequests) {
-    const { data: reqs } = await supabase
-      .from("clan_requests")
-      .select(`
-        id, message, created_at,
-        profiles ( id, username, display_name, avatar_url )
-      `)
-      .eq("clan_id", clan.id)
-      .eq("status", "pending")
-      .order("created_at", { ascending: false });
-    pendingRequests = (reqs || []) as ClanRequest[];
   }
 
   const isMember = userStatus === "member";
