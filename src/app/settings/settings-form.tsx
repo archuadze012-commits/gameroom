@@ -186,6 +186,11 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
     setGeneratingBio(false);
   };
 
+  const [now, setNow] = useState(0);
+  useEffect(() => {
+    setTimeout(() => setNow(Date.now()), 0);
+  }, []);
+
   // Warn before losing unsaved edits. beforeunload covers tab close / reload /
   // hard navigation; App Router soft-nav (clicking an in-app Link) doesn't fire
   // it, but this catches the destructive cases users actually lose work to.
@@ -204,9 +209,9 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
   const nextDisplayNameChangeAt = displayNameChangedAt
     ? new Date(new Date(displayNameChangedAt).getTime() + DISPLAY_NAME_COOLDOWN_MS)
     : null;
-  const displayNameLocked = !!nextDisplayNameChangeAt && nextDisplayNameChangeAt.getTime() > Date.now();
-  const displayNameDaysLeft = nextDisplayNameChangeAt
-    ? Math.max(1, Math.ceil((nextDisplayNameChangeAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+  const displayNameLocked = !!nextDisplayNameChangeAt && now > 0 && nextDisplayNameChangeAt.getTime() > now;
+  const displayNameDaysLeft = nextDisplayNameChangeAt && now > 0
+    ? Math.max(1, Math.ceil((nextDisplayNameChangeAt.getTime() - now) / (24 * 60 * 60 * 1000)))
     : 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
