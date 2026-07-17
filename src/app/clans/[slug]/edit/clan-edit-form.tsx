@@ -105,7 +105,7 @@ export function ClanEditForm({
             disabled={isPending}
             className="h-4 w-4 accent-[var(--gr-lime)]"
           />
-          რექრუტინგი — გამოაჩინე &bdquo;ეძებს წევრებს&ldquo; ბეჯი კლანების სიაში
+          რექრუტინგი — გამოაჩინე „ეძებს წევრებს" ბეჯი კლანების სიაში
         </label>
         <input
           name="recruitNote"
