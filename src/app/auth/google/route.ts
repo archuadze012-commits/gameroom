@@ -6,8 +6,10 @@ export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const origin = getSiteOrigin() ?? getRequestOriginFromHeaders(request.headers, requestUrl.origin);
   const next = requestUrl.searchParams.get("next") ?? "/";
+  // 🛡️ Sentinel: Fix Open Redirect vulnerability (prevent protocol-relative URLs)
+  const isSafeNext = next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\");
   const callbackUrl = `${origin}/auth/callback${
-    next.startsWith("/") ? `?next=${encodeURIComponent(next)}` : ""
+    isSafeNext ? `?next=${encodeURIComponent(next)}` : ""
   }`;
 
   const supabase = await createSupabaseServerClient();
