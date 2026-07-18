@@ -8,9 +8,19 @@ import { getSiteUrl } from "@/lib/url";
 export const revalidate = 3600;
 
 function anon() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    // Provide dummy fallback for build process where env vars might be absent.
+    // This allows the build to complete. The functions querying this will fail
+    // gracefully and return empty arrays anyway because of the `rows` catch.
+    return createClient("https://dummy.supabase.co", "dummy_key", { auth: { persistSession: false } });
+  }
+
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseKey,
     { auth: { persistSession: false } },
   );
 }
