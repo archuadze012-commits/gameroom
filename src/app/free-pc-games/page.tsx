@@ -58,26 +58,35 @@ function dbRowToGame(row: DbRow): CrackedGame {
 }
 
 export default async function FreePcGamesPage() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { persistSession: false } },
-  );
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  const [rowsRes, hiddenRes] = await Promise.all([
-    supabase.from("cracked_games").select("*").order("created_at", { ascending: false }),
-    supabase.from("hidden_cracked_games").select("id"),
-  ]);
+  const byId = new Map<string, CrackedGame>();
+  crackedGames.forEach((g) => byId.set(g.id, g));
 
-  const dbGames = ((rowsRes.data ?? []) as unknown as DbRow[]).map(dbRowToGame);
-  const hidden = new Set(((hiddenRes.data ?? []) as { id: string }[]).map((r) => r.id));
+  if (supabaseUrl && supabaseKey) {
+    const supabase = createClient(
+      supabaseUrl,
+      supabaseKey,
+      { auth: { persistSession: false } },
+    );
+
+    const [rowsRes, hiddenRes] = await Promise.all([
+      supabase.from("cracked_games").select("*").order("created_at", { ascending: false }),
+      supabase.from("hidden_cracked_games").select("id"),
+    ]);
+
+    const dbGames = ((rowsRes.data ?? []) as unknown as DbRow[]).map(dbRowToGame);
+    const hidden = new Set(((hiddenRes.data ?? []) as { id: string }[]).map((r) => r.id));
+
+    dbGames.forEach((g) => byId.set(g.id, g));
+    const games = Array.from(byId.values()).filter((g) => !hidden.has(g.id));
+    return <CrackedGamesClient games={games} />;
+  }
 
   // Merge mock + DB (DB wins on id), drop hidden. Same shape the client used to
   // compute on mount — now done once on the server.
-  const byId = new Map<string, CrackedGame>();
-  crackedGames.forEach((g) => byId.set(g.id, g));
-  dbGames.forEach((g) => byId.set(g.id, g));
-  const games = Array.from(byId.values()).filter((g) => !hidden.has(g.id));
+  const games = Array.from(byId.values());
 
   return <CrackedGamesClient games={games} />;
 }
