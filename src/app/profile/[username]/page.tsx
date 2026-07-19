@@ -24,6 +24,9 @@ import { AdminGrantCoins } from "@/components/admin-grant-coins";
 import { getEquippedItems } from "@/lib/shop/equip-queries";
 import { ProfileFriendsTab } from "@/components/profile-friends-tab";
 import { TrophyCabinet } from "@/components/profile/trophy-cabinet";
+import { PlayerStatsCard } from "@/components/profile/player-stats-card";
+import { PlayerSetups, type PlayerSetup } from "@/components/profile/player-setups";
+import { getPlayerStats } from "@/lib/player/stats";
 
 // Public-safe display fields per linked-account provider. Everything else in
 // linked_accounts.metadata (and — for token-bearing providers like TikTok —
@@ -147,7 +150,7 @@ export default async function ProfilePage({
   // previously awaited one-by-one, serializing ~5 round-trips on every profile
   // view. Fire them concurrently instead; the posts follow-up (comment/like
   // counts) still runs after, since it needs the post ids.
-  const [followerRes, followingRes, postsRes, linkedRes, lfgFallbackRes, equippedItems, badgeRes] = await Promise.all([
+  const [followerRes, followingRes, postsRes, linkedRes, lfgFallbackRes, equippedItems, badgeRes, playerStats, playerSetups] = await Promise.all([
     targetUserId
       ? supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", targetUserId)
       : Promise.resolve({ count: 0 }),
@@ -178,6 +181,30 @@ export default async function ProfilePage({
     targetUserId
       ? supabase.from("badge_unlocks").select("badge_code").eq("user_id", targetUserId)
       : Promise.resolve({ data: null }),
+    targetUserId ? getPlayerStats(supabase, targetUserId) : Promise.resolve(null),
+    targetUserId
+      ? (async (): Promise<PlayerSetup[]> => {
+          const { data: rows } = await supabase
+            .from("profile_game_setups")
+            .select("game_slug, device, mouse, keyboard, headset, monitor, sensitivity, notes")
+            .eq("user_id", targetUserId);
+          const setups = rows ?? [];
+          if (setups.length === 0) return [];
+          const slugs = [...new Set(setups.map((s) => s.game_slug))];
+          const { data: gs } = await supabase.from("games").select("slug, name_ka, emoji").in("slug", slugs);
+          const nameMap = new Map((gs ?? []).map((g) => [g.slug, `${g.emoji ?? "🎮"} ${g.name_ka}`]));
+          return setups.map((s) => ({
+            gameName: nameMap.get(s.game_slug) ?? s.game_slug,
+            device: s.device,
+            mouse: s.mouse,
+            keyboard: s.keyboard,
+            headset: s.headset,
+            monitor: s.monitor,
+            sensitivity: s.sensitivity,
+            notes: s.notes,
+          }));
+        })()
+      : Promise.resolve([] as PlayerSetup[]),
   ]);
 
   const unlockedBadgeCodes = ((badgeRes.data ?? []) as Array<{ badge_code: string }>).map(
@@ -446,6 +473,8 @@ export default async function ProfilePage({
         <ProfileTabs
           games={
             <div className="space-y-8">
+              {playerStats && <PlayerStatsCard stats={playerStats} />}
+              <PlayerSetups setups={playerSetups} />
               <ProfileGameRows slugs={profileGameSlugs} username={username} />
               <ProfileFeed {...profileFeedProps} />
             </div>

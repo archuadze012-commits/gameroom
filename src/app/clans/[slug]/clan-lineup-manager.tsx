@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Star, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { clanRoleLabel } from "@/lib/clan/roles";
 import { setClanMemberLineupAction, setClanCaptainAction } from "./clan-roster-actions";
 
 export type ManagedMember = {
@@ -74,7 +75,7 @@ export function ClanLineupManager({ clanSlug, members }: { clanSlug: string; mem
                       <div className="min-w-0">
                         <div className="truncate text-[13px] font-black text-white">{m.name}</div>
                         <div className="text-[10px] font-black uppercase tracking-wider text-white/35">
-                          {m.role === "leader" ? "ლიდერი" : m.role === "officer" ? "ოფიცერი" : "წევრი"}
+                          {clanRoleLabel(m.role)}
                         </div>
                       </div>
                     </div>

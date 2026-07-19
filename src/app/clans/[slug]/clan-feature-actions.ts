@@ -7,6 +7,7 @@ import { moderateText } from "@/lib/moderate";
 import { rateLimitShared } from "@/lib/rate-limit";
 import { sendPushToUser } from "@/lib/push";
 import { createLogger } from "@/lib/logger";
+import { isClanManager } from "@/lib/clan/roles";
 
 const logger = createLogger("clan-feature-actions");
 
@@ -39,7 +40,11 @@ async function resolveRole(slug: string, userId: string) {
 }
 
 // ── Announcements ────────────────────────────────────────────
-export async function postClanAnnouncementAction(slug: string, body: string): Promise<Result> {
+export async function postClanAnnouncementAction(
+  slug: string,
+  body: string,
+  poll?: { question: string; options: string[] },
+): Promise<Result> {
   const user = await getSession();
   if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
   if (!(await rateLimitShared(`clan-ann:${user.id}`, 10, 60_000)))
@@ -50,29 +55,71 @@ export async function postClanAnnouncementAction(slug: string, body: string): Pr
 
   const info = await resolveRole(slug, user.id);
   if (!info) return { success: false, message: "კლანი ვერ მოიძებნა" };
-  if (!["leader", "officer"].includes(info.role ?? "")) {
-    return { success: false, message: "მხოლოდ ლიდერს/ოფიცერს შეუძლია განცხადება" };
+  if (!isClanManager(info.role)) {
+    return { success: false, message: "მხოლოდ ლიდერს/co-ლიდერს/მენეჯერს შეუძლია განცხადება" };
   }
 
-  const mod = await moderateText(text).catch(() => ({ ok: true, reason: undefined as string | undefined }));
+  const pollQuestion = poll ? poll.question.trim().slice(0, 200) : null;
+  const pollOptions = poll ? poll.options.map((o) => o.trim().slice(0, 80)).filter(Boolean).slice(0, 6) : [];
+  if (poll && (!pollQuestion || pollOptions.length < 2)) {
+    return { success: false, message: "გამოკითხვას სჭირდება კითხვა და მინიმუმ 2 პასუხი" };
+  }
+
+  const mod = await moderateText([text, pollQuestion, ...pollOptions].filter(Boolean).join("\n")).catch(() => ({ ok: true, reason: undefined as string | undefined }));
   if (!mod.ok) return { success: false, message: mod.reason || "შინაარსი დაბლოკილია" };
 
   const admin = createSupabaseAdminClient();
-  const { error } = await admin.from("clan_announcements").insert({ clan_id: info.clanId, author_id: user.id, body: text });
-  if (error) {
+  const { data: ann, error } = await admin
+    .from("clan_announcements")
+    .insert({ clan_id: info.clanId, author_id: user.id, body: text, poll_question: pollQuestion })
+    .select("id")
+    .single();
+  if (error || !ann) {
     logger.error("failed to post clan announcement", { slug, error });
     return { success: false, message: "ვერ მოხერხდა" };
+  }
+  if (poll && pollOptions.length >= 2) {
+    await admin.from("clan_poll_options").insert(pollOptions.map((label, i) => ({ announcement_id: ann.id, label, sort: i })));
   }
   await awardClanXp(info.clanId, user.id, 50);
   revalidatePath(`/clans/${slug}`);
   return { success: true, message: "განცხადება გამოქვეყნდა" };
 }
 
+// A clan member casts / changes their single vote on an announcement poll.
+export async function voteClanPollAction(slug: string, announcementId: string, optionId: string): Promise<Result> {
+  const user = await getSession();
+  if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
+  const info = await resolveRole(slug, user.id);
+  if (!info || !info.role) return { success: false, message: "მხოლოდ წევრებს შეუძლიათ" };
+
+  const admin = createSupabaseAdminClient();
+  const { data: opt } = await admin
+    .from("clan_poll_options")
+    .select("announcement_id")
+    .eq("id", optionId)
+    .eq("announcement_id", announcementId)
+    .maybeSingle();
+  if (!opt) return { success: false, message: "არასწორი პასუხი" };
+  const { data: ann } = await admin.from("clan_announcements").select("clan_id").eq("id", announcementId).maybeSingle();
+  if (!ann || ann.clan_id !== info.clanId) return { success: false, message: "ვერ მოიძებნა" };
+
+  const { error } = await admin
+    .from("clan_poll_votes")
+    .upsert({ announcement_id: announcementId, option_id: optionId, user_id: user.id }, { onConflict: "announcement_id,user_id" });
+  if (error) {
+    logger.error("failed to vote clan poll", { slug, announcementId, error });
+    return { success: false, message: "ვერ მოხერხდა" };
+  }
+  revalidatePath(`/clans/${slug}`);
+  return { success: true };
+}
+
 export async function deleteClanAnnouncementAction(announcementId: string, slug: string): Promise<Result> {
   const user = await getSession();
   if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
   const info = await resolveRole(slug, user.id);
-  if (!info || !["leader", "officer"].includes(info.role ?? "")) {
+  if (!info || !isClanManager(info.role)) {
     return { success: false, message: "უფლება არ გაქვს" };
   }
   const admin = createSupabaseAdminClient();
@@ -91,7 +138,7 @@ export async function togglePinClanAnnouncementAction(
   const user = await getSession();
   if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
   const info = await resolveRole(slug, user.id);
-  if (!info || !["leader", "officer"].includes(info.role ?? "")) {
+  if (!info || !isClanManager(info.role)) {
     return { success: false, message: "უფლება არ გაქვს" };
   }
   const admin = createSupabaseAdminClient();
@@ -138,7 +185,7 @@ export async function inviteToClanAction(slug: string, username: string): Promis
 
   const info = await resolveRole(slug, user.id);
   if (!info) return { success: false, message: "კლანი ვერ მოიძებნა" };
-  if (!["leader", "officer"].includes(info.role ?? "")) {
+  if (!isClanManager(info.role)) {
     return { success: false, message: "მხოლოდ ლიდერს/ოფიცერს შეუძლია მოწვევა" };
   }
 
@@ -198,7 +245,7 @@ export async function registerClanForTournamentAction(slug: string, tournamentSl
 
   const info = await resolveRole(slug, user.id);
   if (!info) return { success: false, message: "კლანი ვერ მოიძებნა" };
-  if (!["leader", "officer"].includes(info.role ?? "")) {
+  if (!isClanManager(info.role)) {
     return { success: false, message: "მხოლოდ ლიდერს/ოფიცერს შეუძლია რეგისტრაცია" };
   }
 
@@ -256,7 +303,7 @@ export async function unregisterClanFromTournamentAction(slug: string, tournamen
   const user = await getSession();
   if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
   const info = await resolveRole(slug, user.id);
-  if (!info || !["leader", "officer"].includes(info.role ?? "")) {
+  if (!info || !isClanManager(info.role)) {
     return { success: false, message: "უფლება არ გაქვს" };
   }
   const admin = createSupabaseAdminClient();

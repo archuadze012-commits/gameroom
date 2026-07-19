@@ -75,7 +75,7 @@ export default async function GameClansPage({
     .eq("game_slug", slug)
     .order("xp", { ascending: false });
 
-  const [{ data: clans }, powerRatings] = await Promise.all([clansQuery, getClanPowerRatings(ctx.supabase)]);
+  const [{ data: clans }, powerRatings] = await Promise.all([clansQuery, getClanPowerRatings()]);
 
   let clanList = ((clans || []) as unknown as ClanListItem[]).map((c) => ({
     ...c,

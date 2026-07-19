@@ -19,7 +19,7 @@ export default async function ClanMatchesPage({
 
   const [{ results }, powerRatings] = await Promise.all([
     getClanMatchResults(ctx.supabase, ctx.clan.id),
-    getClanPowerRatings(ctx.supabase),
+    getClanPowerRatings(),
   ]);
   const powerRating = powerRatings.get(ctx.clan.id)?.rating ?? null;
   const matches: ClanMatchRow[] = results.map((r) => ({

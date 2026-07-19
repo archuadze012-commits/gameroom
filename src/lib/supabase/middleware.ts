@@ -26,9 +26,14 @@ export async function updateSession(request: NextRequest) {
     "/api/push",
   ];
 
+  // Cron routes authenticate via a CRON_SECRET bearer header at the route
+  // handler itself (Vercel Cron requests carry no Supabase session cookie).
+  const isCronRoute = path.startsWith("/api/admin/cron/");
+
   const requiresSession =
-    protectedPathPrefixes.some((p) => path === p || path.startsWith(`${p}/`)) ||
-    protectedApiPrefixes.some((p) => path === p || path.startsWith(`${p}/`));
+    !isCronRoute &&
+    (protectedPathPrefixes.some((p) => path === p || path.startsWith(`${p}/`)) ||
+      protectedApiPrefixes.some((p) => path === p || path.startsWith(`${p}/`)));
 
   if (!requiresSession) {
     return NextResponse.next({ request });

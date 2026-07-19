@@ -134,7 +134,36 @@ const updateClanSchema = z.object({
   status: z.enum(["open", "invite_only", "closed"]),
   recruiting: z.boolean().optional(),
   recruitNote: z.string().max(200).optional(),
+  rules: z.string().max(4000).optional(),
+  discordUrl: z.string().max(300).optional(),
+  youtubeUrl: z.string().max(300).optional(),
+  tiktokUrl: z.string().max(300).optional(),
+  instagramUrl: z.string().max(300).optional(),
+  twitchUrl: z.string().max(300).optional(),
+  recruitingRoles: z.string().max(400).optional(),
 });
+
+function sanitizeUrl(v: string | undefined): string | null {
+  const s = (v ?? "").trim().slice(0, 200);
+  if (!s) return null;
+  return /^https?:\/\//i.test(s) ? s : `https://${s}`;
+}
+
+// "IGL, Entry, Sniper" → distinct, capped tags for structured recruiting.
+function parseRecruitingRoles(v: string | undefined): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const part of (v ?? "").split(",")) {
+    const t = part.trim().slice(0, 24);
+    if (!t) continue;
+    const key = t.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(t);
+    if (out.length >= 8) break;
+  }
+  return out;
+}
 
 // Leader-only edit of a clan's description + join policy.
 export async function updateClanAction(
@@ -150,14 +179,24 @@ export async function updateClanAction(
     status: formData.get("status"),
     recruiting: formData.get("recruiting") === "on",
     recruitNote: formData.get("recruitNote"),
+    rules: formData.get("rules"),
+    discordUrl: formData.get("discordUrl"),
+    youtubeUrl: formData.get("youtubeUrl"),
+    tiktokUrl: formData.get("tiktokUrl"),
+    instagramUrl: formData.get("instagramUrl"),
+    twitchUrl: formData.get("twitchUrl"),
+    recruitingRoles: formData.get("recruitingRoles"),
   });
   if (!validated.success) {
     return { success: false, errors: validated.error.flatten().fieldErrors, message: "არასწორი მონაცემები" };
   }
-  const { slug, description, status, recruiting, recruitNote } = validated.data;
+  const { slug, description, status, recruiting, recruitNote, rules, recruitingRoles } = validated.data;
 
-  if (description && description.trim()) {
-    const mod = await moderateText(description).catch(() => ({ ok: true, reason: undefined as string | undefined }));
+  const roles = parseRecruitingRoles(recruitingRoles);
+  // Moderate every free-text field the leader controls (all render publicly).
+  const modInput = [description, rules, recruitNote, roles.join(" ")].filter(Boolean).join("\n").trim();
+  if (modInput) {
+    const mod = await moderateText(modInput).catch(() => ({ ok: true, reason: undefined as string | undefined }));
     if (!mod.ok) return { success: false, message: mod.reason || "შინაარსი დაბლოკილია" };
   }
 
@@ -182,6 +221,13 @@ export async function updateClanAction(
       status,
       recruiting: recruiting ?? false,
       recruit_note: (recruitNote ?? "").trim().slice(0, 200) || null,
+      rules: (rules ?? "").trim().slice(0, 4000) || null,
+      recruiting_roles: roles,
+      discord_url: sanitizeUrl(validated.data.discordUrl),
+      youtube_url: sanitizeUrl(validated.data.youtubeUrl),
+      tiktok_url: sanitizeUrl(validated.data.tiktokUrl),
+      instagram_url: sanitizeUrl(validated.data.instagramUrl),
+      twitch_url: sanitizeUrl(validated.data.twitchUrl),
       updated_at: new Date().toISOString(),
     })
     .eq("id", clan.id);

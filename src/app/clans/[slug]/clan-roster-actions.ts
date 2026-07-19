@@ -5,6 +5,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSession } from "@/lib/auth";
 import { resolveClanRole } from "@/lib/clan/server-utils";
 import { createLogger } from "@/lib/logger";
+import { isClanManager } from "@/lib/clan/roles";
 
 const logger = createLogger("clan-roster-actions");
 type Result = { success: boolean; message?: string };
@@ -26,7 +27,7 @@ export async function setClanMemberLineupAction(
   const user = await getSession();
   if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
   const info = await resolveClanRole(clanSlug, user.id);
-  if (!info || !["leader", "officer"].includes(info.role ?? "")) return { success: false, message: "უფლება არ გაქვს" };
+  if (!info || !isClanManager(info.role)) return { success: false, message: "უფლება არ გაქვს" };
 
   const update: { position?: string | null; lineup_status?: string; jersey_number?: number | null } = {};
   if (patch.position !== undefined) {
@@ -60,7 +61,7 @@ export async function setClanCaptainAction(clanSlug: string, memberId: string, i
   const user = await getSession();
   if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
   const info = await resolveClanRole(clanSlug, user.id);
-  if (!info || !["leader", "officer"].includes(info.role ?? "")) return { success: false, message: "უფლება არ გაქვს" };
+  if (!info || !isClanManager(info.role)) return { success: false, message: "უფლება არ გაქვს" };
 
   const admin = createSupabaseAdminClient();
   if (isCaptain) {

@@ -2,19 +2,24 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { MoreVertical, ArrowUp, ArrowDown, Crown, UserMinus, Loader2 } from "lucide-react";
+import { MoreVertical, Crown, UserMinus, Loader2, ShieldPlus, UserCog, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
+import { clanRoleRank, isClanManager, type AssignableClanRole } from "@/lib/clan/roles";
 import {
   kickClanMemberAction,
   changeMemberRoleAction,
   transferLeadershipAction,
 } from "./manage-actions";
 
-type ViewerRole = "leader" | "officer" | "member" | "none";
+const ROLE_ACTION_LABEL: Record<AssignableClanRole, string> = {
+  co_leader: "Co-ლიდერად",
+  manager: "მენეჯერად",
+  member: "წევრად ჩამოქვეითება",
+};
 
-// Per-member leadership controls, shown on the clan detail page. What renders
-// depends on the viewer's role and the target's role (mirrors the server-side
-// permission checks — the actions re-verify, this is just UI gating).
+// Per-member leadership controls, shown on the roster. What renders depends on the
+// viewer's role and the target's rank (mirrors the server-side permission checks —
+// the actions re-verify, this is just UI gating).
 export function ClanMemberActions({
   memberId,
   memberRole,
@@ -25,7 +30,7 @@ export function ClanMemberActions({
   memberId: string;
   memberRole: string;
   clanSlug: string;
-  viewerRole: ViewerRole;
+  viewerRole: string;
   isSelf: boolean;
 }) {
   const router = useRouter();
@@ -35,14 +40,15 @@ export function ClanMemberActions({
   if (isSelf || memberRole === "leader") return null;
 
   const isLeader = viewerRole === "leader";
-  const isOfficer = viewerRole === "officer";
-  // Officers may only kick plain members; leaders may act on anyone below them.
-  const canKick = isLeader || (isOfficer && memberRole === "member");
-  const canPromote = isLeader && memberRole === "member";
-  const canDemote = isLeader && memberRole === "officer";
+  // A manager may kick anyone strictly below them in rank.
+  const canKick = isClanManager(viewerRole) && clanRoleRank(viewerRole) < clanRoleRank(memberRole);
   const canTransfer = isLeader;
+  // Only the leader assigns roles; offer every role the target isn't already.
+  const roleOptions: AssignableClanRole[] = isLeader
+    ? (["co_leader", "manager", "member"] as const).filter((r) => r !== memberRole)
+    : [];
 
-  if (!canKick && !canPromote && !canDemote && !canTransfer) return null;
+  if (!canKick && !canTransfer && roleOptions.length === 0) return null;
 
   const run = (fn: () => Promise<{ success: boolean; message?: string }>) => {
     setOpen(false);
@@ -72,13 +78,15 @@ export function ClanMemberActions({
       {open && (
         <>
           <button type="button" aria-hidden className="fixed inset-0 z-10 cursor-default" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-9 z-20 w-48 overflow-hidden rounded-xl border border-[var(--gr-border-hi)] bg-[var(--gr-bg-elev-1)] p-1 shadow-2xl">
-            {canPromote && (
-              <MenuItem icon={ArrowUp} label="ოფიცრად დაწინაურება" onClick={() => run(() => changeMemberRoleAction(memberId, "officer", clanSlug))} />
-            )}
-            {canDemote && (
-              <MenuItem icon={ArrowDown} label="წევრად ჩამოქვეითება" onClick={() => run(() => changeMemberRoleAction(memberId, "member", clanSlug))} />
-            )}
+          <div className="absolute right-0 top-9 z-20 w-52 overflow-hidden rounded-xl border border-[var(--gr-border-hi)] bg-[var(--gr-bg-elev-1)] p-1 shadow-2xl">
+            {roleOptions.map((r) => (
+              <MenuItem
+                key={r}
+                icon={r === "member" ? ArrowDown : r === "co_leader" ? ShieldPlus : UserCog}
+                label={ROLE_ACTION_LABEL[r]}
+                onClick={() => run(() => changeMemberRoleAction(memberId, r, clanSlug))}
+              />
+            ))}
             {canTransfer && (
               <MenuItem icon={Crown} label="ლიდერობის გადაცემა" onClick={() => run(() => transferLeadershipAction(memberId, clanSlug))} />
             )}
@@ -108,9 +116,7 @@ function MenuItem({
       type="button"
       onClick={onClick}
       className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[12.5px] font-bold transition-colors ${
-        danger
-          ? "text-red-300 hover:bg-red-500/10"
-          : "text-white/80 hover:bg-white/[0.06] hover:text-white"
+        danger ? "text-red-300 hover:bg-red-500/10" : "text-white/80 hover:bg-white/[0.06] hover:text-white"
       }`}
     >
       <Icon className="h-3.5 w-3.5" /> {label}

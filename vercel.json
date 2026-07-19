@@ -8,6 +8,10 @@
     {
       "path": "/api/admin/cron/reengage",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/admin/cron/expire-highlights",
+      "schedule": "30 2 * * *"
     }
   ],
   "functions": {

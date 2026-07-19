@@ -21,7 +21,7 @@ export default async function EditClanPage({
   const supabase = await createSupabaseServerClient();
   const { data: clan } = await supabase
     .from("clans")
-    .select("id, name, tag, description, status, avatar_url, banner_url, recruiting, recruit_note")
+    .select("id, name, tag, description, status, avatar_url, banner_url, recruiting, recruit_note, rules, recruiting_roles, discord_url, youtube_url, tiktok_url, instagram_url, twitch_url")
     .eq("slug", slug)
     .maybeSingle();
   if (!clan) notFound();
@@ -62,6 +62,15 @@ export default async function EditClanPage({
           bannerUrl={clan.banner_url}
           recruiting={clan.recruiting}
           recruitNote={clan.recruit_note ?? ""}
+          rules={clan.rules ?? ""}
+          recruitingRoles={(clan.recruiting_roles ?? []).join(", ")}
+          socials={{
+            discord: clan.discord_url ?? "",
+            youtube: clan.youtube_url ?? "",
+            tiktok: clan.tiktok_url ?? "",
+            instagram: clan.instagram_url ?? "",
+            twitch: clan.twitch_url ?? "",
+          }}
         />
       </div>
     </div>

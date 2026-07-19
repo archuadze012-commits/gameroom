@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { createLogger } from "@/lib/logger";
+import { isClanManager, clanRoleRank, clanRoleLabel, ASSIGNABLE_CLAN_ROLES, type AssignableClanRole } from "@/lib/clan/roles";
 
 const logger = createLogger("clan-manage-actions");
 
@@ -35,7 +36,7 @@ export async function processClanRequestAction(
     .eq("user_id", user.id)
     .single();
 
-  if (!membership || !["leader", "officer"].includes(membership.role)) {
+  if (!membership || !isClanManager(membership.role)) {
     return { success: false, message: "არ გაქვს მოთხოვნის მართვის უფლება" };
   }
 
@@ -127,12 +128,13 @@ export async function kickClanMemberAction(
 
   if (!callerMember) return { success: false, message: "უფლებები არ გაქვთ" };
 
-  // Logic: Leader can kick anyone. Officer can kick only members.
-  if (callerMember.role === "member") {
-    return { success: false, message: "მხოლოდ ლიდერებს და ოფიცრებს შეუძლიათ წევრის გაგდება" };
+  // Managers (leader / co-leader / manager) may kick anyone STRICTLY below them in
+  // rank; leaders are unkickable (rank 0). Members can't kick at all.
+  if (!isClanManager(callerMember.role)) {
+    return { success: false, message: "მხოლოდ ლიდერს/co-ლიდერს/მენეჯერს შეუძლია გაგდება" };
   }
-  if (callerMember.role === "officer" && targetMember.role !== "member") {
-    return { success: false, message: "ოფიცერს არ შეუძლია სხვა ოფიცრის ან ლიდერის გაგდება" };
+  if (clanRoleRank(callerMember.role) >= clanRoleRank(targetMember.role)) {
+    return { success: false, message: "შენზე მაღალი ან თანაბარი როლის წევრს ვერ გააგდებ" };
   }
 
   const { error } = await supabase
@@ -199,14 +201,17 @@ export async function leaveClanAction(
   return { success: true, message: "დატოვე კლანი" };
 }
 
-// Leader-only: promote a member to officer or demote an officer to member.
+// Leader-only: set another member's role to co-leader / manager / member.
 export async function changeMemberRoleAction(
   memberId: string,
-  newRole: "officer" | "member",
+  newRole: AssignableClanRole,
   clanSlug: string
 ): Promise<{ success: boolean; message?: string }> {
   const user = await getSession();
   if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
+  if (!(ASSIGNABLE_CLAN_ROLES as readonly string[]).includes(newRole)) {
+    return { success: false, message: "არასწორი როლი" };
+  }
 
   const supabase = await createSupabaseServerClient();
 
@@ -235,7 +240,7 @@ export async function changeMemberRoleAction(
     return { success: false, message: "ვერ მოხერხდა" };
   }
   revalidatePath(`/clans/${clanSlug}`);
-  return { success: true, message: newRole === "officer" ? "დაწინაურდა ოფიცრად" : "ჩამოქვეითდა წევრად" };
+  return { success: true, message: `როლი განახლდა: ${clanRoleLabel(newRole)}` };
 }
 
 // Leader-only: hand the crown to another member. Caller becomes an officer.
@@ -266,10 +271,10 @@ export async function transferLeadershipAction(
   }
   if (target.user_id === user.id) return { success: false, message: "შენ უკვე ლიდერი ხარ" };
 
-  // Promote target to leader, demote former leader to officer.
+  // Promote target to leader, demote former leader to co-leader.
   const [{ error: e1 }, { error: e2 }] = await Promise.all([
     supabase.from("clan_members").update({ role: "leader" }).eq("id", target.id),
-    supabase.from("clan_members").update({ role: "officer" }).eq("id", caller.id),
+    supabase.from("clan_members").update({ role: "co_leader" }).eq("id", caller.id),
   ]);
   if (e1 || e2) {
     logger.error("failed to transfer clan leadership", { memberId, clanSlug, e1, e2 });

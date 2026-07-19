@@ -76,8 +76,8 @@ export function SiteHeader() {
   const isActive = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <header className={`gr-site-header-root block fixed top-0 left-0 right-0 z-40 bg-[rgba(8,6,15,0.6)] backdrop-blur-2xl shadow-[0_4px_30px_rgba(0,0,0,0.5)] transition-transform duration-300 sm:translate-y-0 ${visible ? "translate-y-0" : "-translate-y-full"}`}>
-      <div className="neon-rail gr-site-header-shell gr-site-header-inner mx-0 sm:mx-4 lg:mx-6 my-2 flex h-14 items-center justify-between rounded-none sm:rounded-2xl bg-[rgba(8,6,15,0.5)] px-4 relative">
+    <header className={`gr-site-header-root block fixed top-0 left-0 right-0 z-40 bg-[rgba(8,6,15,0.6)] backdrop-blur-2xl shadow-[0_4px_30px_rgba(0,0,0,0.5)] transition-transform duration-300 xl:translate-y-0 ${visible ? "translate-y-0" : "-translate-y-full"}`}>
+      <div className="neon-rail gr-site-header-shell gr-site-header-inner mx-0 xl:mx-6 my-2 flex h-14 items-center justify-between rounded-none xl:rounded-2xl bg-[rgba(8,6,15,0.5)] px-4 relative">
         {/* Left: Brand Logo */}
         <div className="gr-site-header-brand flex items-center flex-shrink-0 relative z-10 w-fit">
           <Link href="/">
@@ -86,7 +86,7 @@ export function SiteHeader() {
         </div>
 
         {/* Center: Main Navigation */}
-        <nav className="hidden sm:flex flex-1 justify-center items-center h-full py-3 flex-nowrap">
+        <nav className="hidden xl:flex flex-1 justify-center items-center h-full py-3 flex-nowrap">
           <div className="flex items-center gap-1.5 h-full pointer-events-auto">
           {navItems.map((item) => {
             const active = isActive(item.href);
@@ -119,7 +119,7 @@ export function SiteHeader() {
         </nav>
 
         {/* Right: Actions */}
-        <div className="gr-site-header-actions hidden sm:flex items-center gap-2 flex-shrink-0 relative z-10">
+        <div className="gr-site-header-actions hidden xl:flex items-center gap-2 flex-shrink-0 relative z-10">
           {/* Desktop Actions */}
           <div className="flex items-center gap-3">
             {profile && (

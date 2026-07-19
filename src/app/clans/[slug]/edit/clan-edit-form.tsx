@@ -15,6 +15,14 @@ const STATUS_OPTIONS = [
   { value: "closed", label: "დახურული — მიღება შეჩერებულია" },
 ];
 
+const SOCIAL_FIELDS = [
+  { name: "discordUrl", key: "discord", label: "Discord", placeholder: "discord.gg/..." },
+  { name: "youtubeUrl", key: "youtube", label: "YouTube", placeholder: "youtube.com/@..." },
+  { name: "tiktokUrl", key: "tiktok", label: "TikTok", placeholder: "tiktok.com/@..." },
+  { name: "instagramUrl", key: "instagram", label: "Instagram", placeholder: "instagram.com/..." },
+  { name: "twitchUrl", key: "twitch", label: "Twitch", placeholder: "twitch.tv/..." },
+] as const;
+
 export function ClanEditForm({
   slug,
   tag,
@@ -24,6 +32,9 @@ export function ClanEditForm({
   bannerUrl,
   recruiting,
   recruitNote,
+  rules,
+  recruitingRoles,
+  socials,
 }: {
   slug: string;
   tag: string;
@@ -33,6 +44,9 @@ export function ClanEditForm({
   bannerUrl: string | null;
   recruiting: boolean;
   recruitNote: string;
+  rules: string;
+  recruitingRoles: string;
+  socials: { discord: string; youtube: string; tiktok: string; instagram: string; twitch: string };
 }) {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(updateClanAction, { success: false } as ClanActionState);
@@ -115,6 +129,46 @@ export function ClanEditForm({
           disabled={isPending}
           className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] text-white outline-none focus:border-[var(--gr-lime)]/50"
         />
+        <input
+          name="recruitingRoles"
+          defaultValue={recruitingRoles}
+          maxLength={400}
+          placeholder="საჭირო როლები, მძიმით (მაგ: IGL, Entry, Sniper)"
+          disabled={isPending}
+          className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] text-white outline-none focus:border-[var(--gr-lime)]/50"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="rules">წესები / შინაგანაწესი</Label>
+        <Textarea
+          id="rules"
+          name="rules"
+          rows={5}
+          defaultValue={rules}
+          maxLength={4000}
+          placeholder="კლანის წესები, მოთხოვნები, აქტივობის მინიმუმი..."
+          disabled={isPending}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>სოციალური ბმულები</Label>
+        <div className="space-y-2">
+          {SOCIAL_FIELDS.map((f) => (
+            <div key={f.name} className="flex items-center gap-2">
+              <span className="w-20 shrink-0 text-[12px] font-bold text-white/50">{f.label}</span>
+              <input
+                name={f.name}
+                defaultValue={socials[f.key]}
+                maxLength={200}
+                placeholder={f.placeholder}
+                disabled={isPending}
+                className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] text-white outline-none focus:border-[var(--gr-violet-hi)]/50"
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="flex justify-end gap-3 border-t border-border/40 pt-4">

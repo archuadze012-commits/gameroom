@@ -5,6 +5,7 @@ import { SettingsForm } from "./settings-form";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { LinkedAccountsSection } from "@/components/linked-accounts-section";
 import { SkillAssessment } from "@/components/skill-assessment";
+import { GameSetupsManager, type GameSetup } from "@/components/profile/game-setups-manager";
 import { PushBell } from "@/components/push-bell";
 import { ReferralRedeemSection } from "@/components/referral-redeem-section";
 import { LogoutButton } from "@/components/logout-button";
@@ -73,9 +74,10 @@ export default async function SettingsPage() {
 
   const supabase = await createSupabaseServerClient();
 
-  const [{ data: dbGames }, { data: profile }] = await Promise.all([
+  const [{ data: dbGames }, { data: profile }, { data: gameSetups }] = await Promise.all([
     supabase.from("games").select("slug, name_ka, emoji"),
     supabase.from("profiles").select("username, display_name, avatar_url, created_at").eq("id", user.id).maybeSingle(),
+    supabase.from("profile_game_setups").select("game_slug, device, mouse, keyboard, headset, monitor, sensitivity, notes").eq("user_id", user.id),
   ]);
 
   // Whether to show the "enter your inviter's promo code" field. Gated to new
@@ -140,6 +142,15 @@ export default async function SettingsPage() {
         </SettingsSection>
 
         <SkillAssessment games={games} />
+
+        <SettingsSection
+          eyebrow="სეტაპი"
+          title="მოწყობილობა"
+          accentColor="#8b5cf6"
+          description="შენი სათამაშო მოწყობილობა თითო თამაშისთვის — მოწყობილობა, პერიფერია, sensitivity. ჩანს პროფილზე."
+        >
+          <GameSetupsManager games={games} setups={(gameSetups ?? []) as GameSetup[]} />
+        </SettingsSection>
 
         <SettingsSection
           eyebrow="შეტყობინებები"

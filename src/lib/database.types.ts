@@ -321,6 +321,7 @@ export type Database = {
           created_at: string
           id: string
           pinned: boolean
+          poll_question: string | null
         }
         Insert: {
           author_id?: string | null
@@ -329,6 +330,7 @@ export type Database = {
           created_at?: string
           id?: string
           pinned?: boolean
+          poll_question?: string | null
         }
         Update: {
           author_id?: string | null
@@ -337,6 +339,7 @@ export type Database = {
           created_at?: string
           id?: string
           pinned?: boolean
+          poll_question?: string | null
         }
         Relationships: [
           {
@@ -354,6 +357,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      clan_highlights: {
+        Row: { clan_id: string; created_at: string; id: string; platform: string | null; title: string | null; url: string; user_id: string | null }
+        Insert: { clan_id: string; created_at?: string; id?: string; platform?: string | null; title?: string | null; url: string; user_id?: string | null }
+        Update: { clan_id?: string; created_at?: string; id?: string; platform?: string | null; title?: string | null; url?: string; user_id?: string | null }
+        Relationships: []
+      }
+      clan_poll_options: {
+        Row: { announcement_id: string; id: string; label: string; sort: number }
+        Insert: { announcement_id: string; id?: string; label: string; sort?: number }
+        Update: { announcement_id?: string; id?: string; label?: string; sort?: number }
+        Relationships: []
+      }
+      clan_poll_votes: {
+        Row: { announcement_id: string; created_at: string; option_id: string; user_id: string }
+        Insert: { announcement_id: string; created_at?: string; option_id: string; user_id: string }
+        Update: { announcement_id?: string; created_at?: string; option_id?: string; user_id?: string }
+        Relationships: []
       }
       clan_cosmetic_catalog: {
         Row: {
@@ -785,19 +806,26 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          discord_url: string | null
           emblem: string | null
           game_slug: string | null
           id: string
+          instagram_url: string | null
           level: number
           name: string
           recruit_note: string | null
           recruiting: boolean
+          recruiting_roles: string[]
+          rules: string | null
           slug: string
           status: Database["public"]["Enums"]["clan_status"]
           tag: string
+          tiktok_url: string | null
           treasury: number
+          twitch_url: string | null
           updated_at: string
           xp: number
+          youtube_url: string | null
         }
         Insert: {
           accent_color?: string | null
@@ -806,19 +834,26 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
+          discord_url?: string | null
           emblem?: string | null
           game_slug?: string | null
           id?: string
+          instagram_url?: string | null
           level?: number
           name: string
           recruit_note?: string | null
           recruiting?: boolean
+          recruiting_roles?: string[]
+          rules?: string | null
           slug: string
           status?: Database["public"]["Enums"]["clan_status"]
           tag: string
+          tiktok_url?: string | null
           treasury?: number
+          twitch_url?: string | null
           updated_at?: string
           xp?: number
+          youtube_url?: string | null
         }
         Update: {
           accent_color?: string | null
@@ -827,19 +862,26 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          discord_url?: string | null
           emblem?: string | null
           game_slug?: string | null
           id?: string
+          instagram_url?: string | null
           level?: number
           name?: string
           recruit_note?: string | null
           recruiting?: boolean
+          recruiting_roles?: string[]
+          rules?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["clan_status"]
           tag?: string
+          tiktok_url?: string | null
           treasury?: number
+          twitch_url?: string | null
           updated_at?: string
           xp?: number
+          youtube_url?: string | null
         }
         Relationships: [
           {
@@ -3662,6 +3704,12 @@ export type Database = {
           },
         ]
       }
+      profile_game_setups: {
+        Row: { device: string | null; game_slug: string; headset: string | null; keyboard: string | null; monitor: string | null; mouse: string | null; notes: string | null; sensitivity: string | null; updated_at: string; user_id: string }
+        Insert: { device?: string | null; game_slug: string; headset?: string | null; keyboard?: string | null; monitor?: string | null; mouse?: string | null; notes?: string | null; sensitivity?: string | null; updated_at?: string; user_id: string }
+        Update: { device?: string | null; game_slug?: string; headset?: string | null; keyboard?: string | null; monitor?: string | null; mouse?: string | null; notes?: string | null; sensitivity?: string | null; updated_at?: string; user_id?: string }
+        Relationships: []
+      }
       profiles: {
         Row: {
           available_hours: Json | null
@@ -5264,7 +5312,7 @@ export type Database = {
     Enums: {
       article_status: "draft" | "published" | "archived"
       clan_request_status: "pending" | "accepted" | "rejected"
-      clan_role: "leader" | "officer" | "member"
+      clan_role: "leader" | "officer" | "member" | "co_leader" | "manager"
       clan_status: "open" | "invite_only" | "closed"
       lfg_response_status: "pending" | "accepted" | "rejected"
       lfg_status: "open" | "filled" | "closed"
@@ -5438,7 +5486,7 @@ export const Constants = {
     Enums: {
       article_status: ["draft", "published", "archived"],
       clan_request_status: ["pending", "accepted", "rejected"],
-      clan_role: ["leader", "officer", "member"],
+      clan_role: ["leader", "officer", "member", "co_leader", "manager"],
       clan_status: ["open", "invite_only", "closed"],
       lfg_response_status: ["pending", "accepted", "rejected"],
       lfg_status: ["open", "filled", "closed"],

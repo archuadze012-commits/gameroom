@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { isClanManager } from "@/lib/clan/roles";
 import { ClanTreasury, type CatalogItem, type LedgerItem } from "../clan-treasury";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +28,7 @@ export default async function ClanTreasuryPage({ params }: { params: Promise<{ s
     role = m?.role ?? null;
   }
   const isMember = !!role;
-  const canManage = role === "leader" || role === "officer";
+  const canManage = isClanManager(role);
 
   const header = (
     <>

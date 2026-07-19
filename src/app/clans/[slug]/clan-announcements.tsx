@@ -3,10 +3,17 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Megaphone, Send, Trash2, Loader2, Pin, PinOff } from "lucide-react";
+import { Megaphone, Send, Trash2, Loader2, Pin, PinOff, BarChart3, Plus, X, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { postClanAnnouncementAction, deleteClanAnnouncementAction, togglePinClanAnnouncementAction } from "./clan-feature-actions";
+import {
+  postClanAnnouncementAction,
+  deleteClanAnnouncementAction,
+  togglePinClanAnnouncementAction,
+  voteClanPollAction,
+} from "./clan-feature-actions";
+
+export type ClanPollOption = { id: string; label: string; votes: number };
 
 export type ClanAnnouncement = {
   id: string;
@@ -16,6 +23,9 @@ export type ClanAnnouncement = {
   authorName: string;
   authorUsername: string | null;
   authorAvatar: string | null;
+  pollQuestion: string | null;
+  pollOptions: ClanPollOption[];
+  myVote: string | null;
 };
 
 function ago(iso: string) {
@@ -29,24 +39,38 @@ function ago(iso: string) {
 export function ClanAnnouncements({
   slug,
   canPost,
+  isMember,
   announcements,
 }: {
   slug: string;
   canPost: boolean;
+  isMember: boolean;
   announcements: ClanAnnouncement[];
 }) {
   const router = useRouter();
   const [body, setBody] = useState("");
+  const [pollOn, setPollOn] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
   const [isPending, startTransition] = useTransition();
 
   const post = () => {
     const text = body.trim();
     if (!text) return;
+    const opts = pollOptions.map((o) => o.trim()).filter(Boolean);
+    const poll = pollOn && pollQuestion.trim() && opts.length >= 2 ? { question: pollQuestion.trim(), options: opts } : undefined;
+    if (pollOn && !poll) {
+      toast.error("გამოკითხვას სჭირდება კითხვა და 2+ პასუხი");
+      return;
+    }
     startTransition(async () => {
-      const res = await postClanAnnouncementAction(slug, text);
+      const res = await postClanAnnouncementAction(slug, text, poll);
       if (res.success) {
         toast.success(res.message);
         setBody("");
+        setPollOn(false);
+        setPollQuestion("");
+        setPollOptions(["", ""]);
         router.refresh();
       } else {
         toast.error(res.message);
@@ -69,6 +93,14 @@ export function ClanAnnouncements({
         toast.success(res.message);
         router.refresh();
       } else toast.error(res.message);
+    });
+  };
+
+  const vote = (announcementId: string, optionId: string) => {
+    startTransition(async () => {
+      const res = await voteClanPollAction(slug, announcementId, optionId);
+      if (res.success) router.refresh();
+      else toast.error(res.message);
     });
   };
 
@@ -96,7 +128,53 @@ export function ClanAnnouncements({
                 disabled={isPending}
                 className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-[13px] text-white outline-none focus:border-amber-500/50 disabled:opacity-50"
               />
-              <div className="mt-2 flex justify-end">
+
+              {pollOn && (
+                <div className="mt-2 space-y-2 rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                  <input
+                    value={pollQuestion}
+                    onChange={(e) => setPollQuestion(e.target.value)}
+                    maxLength={200}
+                    placeholder="გამოკითხვის კითხვა"
+                    disabled={isPending}
+                    className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] text-white outline-none focus:border-amber-500/50"
+                  />
+                  {pollOptions.map((o, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <input
+                        value={o}
+                        onChange={(e) => setPollOptions((arr) => arr.map((x, j) => (j === i ? e.target.value : x)))}
+                        maxLength={80}
+                        placeholder={`პასუხი ${i + 1}`}
+                        disabled={isPending}
+                        className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] text-white outline-none focus:border-amber-500/50"
+                      />
+                      {pollOptions.length > 2 && (
+                        <button type="button" onClick={() => setPollOptions((arr) => arr.filter((_, j) => j !== i))} className="rounded p-1 text-white/30 hover:text-red-400">
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {pollOptions.length < 6 && (
+                    <button type="button" onClick={() => setPollOptions((arr) => [...arr, ""])} className="flex items-center gap-1 text-[11px] font-bold text-white/50 hover:text-white/80">
+                      <Plus className="h-3.5 w-3.5" /> პასუხის დამატება
+                    </button>
+                  )}
+                </div>
+              )}
+
+              <div className="mt-2 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setPollOn((v) => !v)}
+                  disabled={isPending}
+                  className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-black uppercase tracking-wider transition-colors ${
+                    pollOn ? "border-amber-500/50 bg-amber-500/10 text-amber-300" : "border-white/10 text-white/50 hover:text-white/80"
+                  }`}
+                >
+                  <BarChart3 className="h-3.5 w-3.5" /> გამოკითხვა
+                </button>
                 <button
                   type="button"
                   onClick={post}
@@ -140,6 +218,7 @@ export function ClanAnnouncements({
                     )}
                   </div>
                   <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-white/90">{pinned.body}</p>
+                  <Poll a={pinned} isMember={isMember} disabled={isPending} onVote={vote} />
                 </div>
               </div>
             </div>
@@ -182,6 +261,7 @@ export function ClanAnnouncements({
                         )}
                       </div>
                       <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-white/85">{a.body}</p>
+                      <Poll a={a} isMember={isMember} disabled={isPending} onVote={vote} />
                     </div>
                   </div>
                 </li>
@@ -190,6 +270,55 @@ export function ClanAnnouncements({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function Poll({
+  a,
+  isMember,
+  disabled,
+  onVote,
+}: {
+  a: ClanAnnouncement;
+  isMember: boolean;
+  disabled: boolean;
+  onVote: (announcementId: string, optionId: string) => void;
+}) {
+  if (!a.pollQuestion || a.pollOptions.length === 0) return null;
+  const total = a.pollOptions.reduce((s, o) => s + o.votes, 0);
+
+  return (
+    <div className="mt-2 rounded-lg border border-white/[0.06] bg-black/20 p-2.5">
+      <div className="mb-2 flex items-center gap-1.5 text-[12px] font-black text-white">
+        <BarChart3 className="h-3.5 w-3.5 text-amber-400" /> {a.pollQuestion}
+      </div>
+      <div className="space-y-1.5">
+        {a.pollOptions.map((o) => {
+          const pct = total > 0 ? Math.round((o.votes / total) * 100) : 0;
+          const mine = a.myVote === o.id;
+          return (
+            <button
+              key={o.id}
+              type="button"
+              disabled={disabled || !isMember}
+              onClick={() => onVote(a.id, o.id)}
+              className={`relative block w-full overflow-hidden rounded-md border px-2.5 py-1.5 text-left transition-colors disabled:cursor-default ${
+                mine ? "border-amber-500/50" : "border-white/10 hover:border-white/25"
+              }`}
+            >
+              <span aria-hidden className="absolute inset-y-0 left-0 bg-amber-500/15" style={{ width: `${pct}%` }} />
+              <span className="relative flex items-center justify-between gap-2 text-[12px]">
+                <span className={`flex items-center gap-1 font-bold ${mine ? "text-amber-300" : "text-white/80"}`}>
+                  {mine && <Check className="h-3 w-3" />} {o.label}
+                </span>
+                <span className="tabular-nums text-white/45">{pct}%</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-1.5 text-[10px] text-white/30">{total} ხმა{isMember ? "" : " · მხოლოდ წევრები ხმას აძლევენ"}</div>
     </div>
   );
 }

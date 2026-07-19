@@ -6,6 +6,7 @@ import { getSession } from "@/lib/auth";
 import { resolveClanRole, awardClanXp } from "@/lib/clan/server-utils";
 import { rateLimitShared } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/logger";
+import { isClanManager } from "@/lib/clan/roles";
 
 const logger = createLogger("clan-treasury-actions");
 type Result = { success: boolean; message?: string };
@@ -56,7 +57,7 @@ export async function buyClanCosmeticAction(clanSlug: string, key: string): Prom
   const user = await getSession();
   if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
   const info = await resolveClanRole(clanSlug, user.id);
-  if (!info || !["leader", "officer"].includes(info.role ?? "")) return { success: false, message: "მხოლოდ ლიდერს/ოფიცერს" };
+  if (!info || !isClanManager(info.role)) return { success: false, message: "უფლება არ გაქვს" };
 
   const admin = createSupabaseAdminClient();
   const { data, error } = await admin.rpc("clan_buy_cosmetic", { p_user: user.id, p_clan: info.clanId, p_key: key });
@@ -88,7 +89,7 @@ export async function equipClanCosmeticAction(
   const user = await getSession();
   if (!user) return { success: false, message: "ავტორიზაცია აუცილებელია" };
   const info = await resolveClanRole(clanSlug, user.id);
-  if (!info || !["leader", "officer"].includes(info.role ?? "")) return { success: false, message: "მხოლოდ ლიდერს/ოფიცერს" };
+  if (!info || !isClanManager(info.role)) return { success: false, message: "უფლება არ გაქვს" };
 
   const admin = createSupabaseAdminClient();
   let value: string | null = null;

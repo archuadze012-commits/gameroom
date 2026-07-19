@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Shield, Users, UserPlus, MessageSquare } from "lucide-react";
 import { getClanGameContext } from "@/lib/clan/context";
+import { clanRoleRank } from "@/lib/clan/roles";
+import { getPlayerPowerRatings } from "@/lib/player/stats";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ClanSubPageHeader } from "@/components/clan/clan-subpage-header";
@@ -27,7 +29,6 @@ type FullMember = RosterMember & {
   jersey_number: number | null;
 };
 
-const ROLE_ORDER: Record<string, number> = { leader: 0, officer: 1, member: 2 };
 
 export default async function ClanRostersPage({
   params,
@@ -38,10 +39,13 @@ export default async function ClanRostersPage({
   const ctx = await getClanGameContext(slug, clanSlug);
   if (!ctx) notFound();
 
-  const { data: membersData } = await ctx.supabase
-    .from("clan_members")
-    .select("id, role, contribution, is_captain, lineup_status, position, jersey_number, profiles ( id, username, display_name, avatar_url, last_seen_at )")
-    .eq("clan_id", ctx.clan.id);
+  const [{ data: membersData }, playerRatings] = await Promise.all([
+    ctx.supabase
+      .from("clan_members")
+      .select("id, role, contribution, is_captain, lineup_status, position, jersey_number, profiles ( id, username, display_name, avatar_url, last_seen_at )")
+      .eq("clan_id", ctx.clan.id),
+    getPlayerPowerRatings(),
+  ]);
   const members = (membersData ?? []) as unknown as FullMember[];
 
   const lineupMembers: LineupMember[] = members.map((m) => ({
@@ -58,7 +62,7 @@ export default async function ClanRostersPage({
   }));
 
   const managedMembers: ManagedMember[] = [...members]
-    .sort((a, b) => (ROLE_ORDER[a.role] ?? 9) - (ROLE_ORDER[b.role] ?? 9))
+    .sort((a, b) => clanRoleRank(a.role) - clanRoleRank(b.role))
     .map((m) => ({
       id: m.id,
       name: m.profiles.display_name || m.profiles.username,
@@ -157,7 +161,7 @@ export default async function ClanRostersPage({
             <h2 className="mb-3 flex items-center gap-2 text-[13px] font-black uppercase tracking-[0.14em] text-white/60">
               <Shield className="h-4 w-4 text-indigo-300" /> წევრები ({members.length})
             </h2>
-            <ClanRosterPanel clanSlug={clanSlug} members={members} viewerRole={ctx.role} viewerId={ctx.session?.id ?? null} />
+            <ClanRosterPanel clanSlug={clanSlug} members={members} viewerRole={ctx.role} viewerId={ctx.session?.id ?? null} ratings={playerRatings} />
           </div>
         </div>
       </div>

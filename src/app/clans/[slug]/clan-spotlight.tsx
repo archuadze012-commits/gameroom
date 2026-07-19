@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Crown, Medal, Award } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { clanRoleLabel } from "@/lib/clan/roles";
 
 export type SpotlightMember = {
   id: string;
@@ -16,10 +17,6 @@ const RANK = [
   { icon: Medal, tone: "text-slate-300", ring: "border-slate-400/30", bg: "bg-white/[0.03]" },
   { icon: Award, tone: "text-orange-400", ring: "border-orange-500/25", bg: "bg-white/[0.02]" },
 ];
-
-function roleLabel(role: string) {
-  return role === "leader" ? "ლიდერი" : role === "officer" ? "ოფიცერი" : "წევრი";
-}
 
 export function ClanSpotlight({ members }: { members: SpotlightMember[] }) {
   if (members.length === 0) return null;
@@ -53,7 +50,7 @@ export function ClanSpotlight({ members }: { members: SpotlightMember[] }) {
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[13px] font-bold text-white">{m.name}</div>
-                      <div className="text-[10.5px] font-black uppercase tracking-wider text-white/35">{roleLabel(m.role)}</div>
+                      <div className="text-[10.5px] font-black uppercase tracking-wider text-white/35">{clanRoleLabel(m.role)}</div>
                     </div>
                     {i === 0 && hasContribution && (
                       <span className="shrink-0 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-amber-300">

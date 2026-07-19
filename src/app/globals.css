@@ -1511,15 +1511,15 @@
   }
 }
 
-/* bottom nav clearance on mobile */
-@media (max-width: 767px) {
+/* bottom nav clearance — portrait phones & tablets (incl. iPad Pro 12.9") where the bottom nav shows */
+@media (orientation: portrait) and (max-width: 1279px) {
   body:not(.no-bottom-nav) {
     padding-bottom: 5rem;
   }
 }
 
-/* hide header border in portrait mobile */
-@media (orientation: portrait) and (max-width: 767px) {
+/* hide header border + center brand in portrait mobile & tablet */
+@media (orientation: portrait) and (max-width: 1279px) {
   .gr-site-header-inner::before,
   .gr-site-header-inner::after {
     display: none !important;
@@ -1532,13 +1532,20 @@
   }
 }
 
-/* landscape mobile: hide brand, center nav */
+/* landscape mobile (phones): hide brand, center nav */
 @media (orientation: landscape) and (max-width: 1023px) {
   .gr-site-header-brand { display: none !important; }
   .gr-site-header-actions { display: none !important; }
   .gr-site-header-inner {
     justify-content: center !important;
   }
+}
+
+/* landscape tablets (≥1024, below the xl desktop cutoff): the floating bottom
+   bar is portrait-only, so keep the desktop top nav here or there'd be no nav. */
+@media (orientation: landscape) and (min-width: 1024px) and (max-width: 1279px) {
+  .gr-site-header-root nav { display: flex !important; }
+  .gr-site-header-actions { display: flex !important; }
 }
 
 /* PlayManager office/feedskin styles moved to

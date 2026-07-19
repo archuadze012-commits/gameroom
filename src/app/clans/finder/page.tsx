@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { CinematicBackground } from "@/components/ui/cinematic-background";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { OnlineDot } from "@/components/ui/online-dot";
+import { isClanManager } from "@/lib/clan/roles";
 import { LfcToggle, InvitePlayerButton } from "./finder-controls";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +27,7 @@ type RecruitingClan = {
   level: number;
   emblem: string | null;
   recruit_note: string | null;
+  recruiting_roles: string[] | null;
   clan_members: { count: number }[];
 };
 
@@ -65,11 +67,11 @@ export default async function ClanFinderPage({
     }
     viewerLfc = prof?.looking_for_clan ?? false;
   }
-  const canInvite = (viewerRole === "leader" || viewerRole === "officer") && !!viewerClanSlug;
+  const canInvite = isClanManager(viewerRole) && !!viewerClanSlug;
 
   let recQuery = supabase
     .from("clans")
-    .select("id, name, slug, tag, description, avatar_url, game_slug, level, emblem, recruit_note, clan_members(count)")
+    .select("id, name, slug, tag, description, avatar_url, game_slug, level, emblem, recruit_note, recruiting_roles, clan_members(count)")
     .eq("recruiting", true)
     .order("xp", { ascending: false })
     .limit(24);
@@ -173,6 +175,15 @@ export default async function ClanFinderPage({
                         </div>
                       </div>
                       <p className="mt-2 line-clamp-2 text-[12px] text-white/55">{c.recruit_note || c.description || "შემოუერთდი გუნდს."}</p>
+                      {c.recruiting_roles && c.recruiting_roles.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {c.recruiting_roles.slice(0, 5).map((r) => (
+                            <span key={r} className="rounded-full border border-[var(--gr-lime)]/30 bg-[var(--gr-lime)]/10 px-2 py-0.5 text-[9.5px] font-black uppercase tracking-wider text-[var(--gr-lime)]">
+                              {r}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       <div className="mt-2 flex items-center gap-3 text-[11px] font-bold text-white/45">
                         <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {c.clan_members[0]?.count ?? 1}</span>
                         <span className="text-indigo-300">LVL {c.level}</span>

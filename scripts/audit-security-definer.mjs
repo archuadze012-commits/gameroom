@@ -51,6 +51,10 @@ const ALLOWLIST = new Set([
   // member-only RLS; returns ONLY (count, latest_at) metadata — no body text
   // (see 20260731_leaderboard_and_referral_resilience.sql).
   'public.clan_announcement_teaser/1',
+  // Read-only membership predicate (select exists). DEFINER + anon/authenticated
+  // EXECUTE is REQUIRED: 8 clan RLS policies call it (mirrors is_admin/can_manage).
+  // Revoking it would render clan RLS inert — see 20260732_clan_subsystem_backfill.
+  'public.is_clan_member/2',
 ]);
 
 // A definer function may pin only these schemas; pg_temp must be present.
