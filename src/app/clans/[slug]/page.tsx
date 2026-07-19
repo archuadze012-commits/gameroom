@@ -238,7 +238,7 @@ export default async function ClanDetailPage({
         .from("clan_highlights")
         .select("id, url, title, platform, user_id")
         .eq("clan_id", clan.id)
-        .gte("created_at", new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString())
+        .gte("created_at", new Date(new Date().getTime() - 3 * 24 * 60 * 60 * 1000).toISOString())
         .order("created_at", { ascending: false })
         .limit(12);
       const rows = hls ?? [];
