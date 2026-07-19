@@ -21,7 +21,11 @@ export function InviteLinkCard({
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") setOrigin(window.location.origin);
+    if (typeof window !== "undefined") {
+      setTimeout(() => {
+        setOrigin(window.location.origin);
+      }, 0);
+    }
   }, []);
 
   const link = username ? `${origin}/g/${username}` : `${origin}/i/${code}`;
