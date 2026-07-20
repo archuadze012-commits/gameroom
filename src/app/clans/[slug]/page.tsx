@@ -238,6 +238,7 @@ export default async function ClanDetailPage({
         .from("clan_highlights")
         .select("id, url, title, platform, user_id")
         .eq("clan_id", clan.id)
+        // eslint-disable-next-line react-hooks/purity
         .gte("created_at", new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString())
         .order("created_at", { ascending: false })
         .limit(12);
