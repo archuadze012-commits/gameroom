@@ -25,13 +25,5 @@
     "src/app/api/bracket-generate/route.ts": { "maxDuration": 30 },
     "src/app/api/translate/route.ts": { "maxDuration": 30 },
     "src/app/api/auth/steam/callback/route.ts": { "maxDuration": 30 }
-  },
-  "headers": [
-    {
-      "source": "/api/:path*",
-      "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex" }
-      ]
-    }
-  ]
+  }
 }
