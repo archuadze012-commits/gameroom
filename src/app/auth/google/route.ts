@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   const origin = getSiteOrigin() ?? getRequestOriginFromHeaders(request.headers, requestUrl.origin);
   const next = requestUrl.searchParams.get("next") ?? "/";
   const callbackUrl = `${origin}/auth/callback${
-    next.startsWith("/") ? `?next=${encodeURIComponent(next)}` : ""
+    (next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\")) ? `?next=${encodeURIComponent(next)}` : ""
   }`;
 
   const supabase = await createSupabaseServerClient();
