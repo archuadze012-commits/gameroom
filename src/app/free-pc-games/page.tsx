@@ -58,11 +58,9 @@ function dbRowToGame(row: DbRow): CrackedGame {
 }
 
 export default async function FreePcGamesPage() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return null;
-
   const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     { auth: { persistSession: false } },
   );
 
