@@ -40,7 +40,9 @@ export async function GET(request: NextRequest) {
       const header = "id,username,display_name,email,role,banned,is_verified,created_at\n";
       const csvEscape = (v: unknown) => {
         const s = String(v ?? "");
-        const safe = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+        // Prepend tab instead of single quote to prevent CSV injection (Formula Injection)
+        // without visibly displaying an apostrophe to the end user in spreadsheet applications.
+        const safe = /^[=+\-@\t\r]/.test(s) ? `\t${s}` : s;
         return `"${safe.replace(/"/g, '""')}"`;
       };
       const body = rows
