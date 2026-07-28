@@ -48,8 +48,8 @@ const STATUS_LABEL: Record<string, string> = {
   closed: "დახურული",
 };
 
-function announceAgo(iso: string) {
-  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+function announceAgo(iso: string, nowMs: number) {
+  const days = Math.floor((nowMs - new Date(iso).getTime()) / 86_400_000);
   if (days <= 0) return "დღეს";
   if (days === 1) return "გუშინ";
   return `${days} დღის წინ`;
@@ -92,6 +92,7 @@ export default async function ClanDetailPage({
 }) {
   const { slug } = await params;
   const supabase = await createSupabaseServerClient();
+  const serverNow = new Date().getTime();
 
   const [sessionUser, { data: clan }] = await Promise.all([
     getSession().catch(() => null),
@@ -238,7 +239,7 @@ export default async function ClanDetailPage({
         .from("clan_highlights")
         .select("id, url, title, platform, user_id")
         .eq("clan_id", clan.id)
-        .gte("created_at", new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString())
+        .gte("created_at", new Date(serverNow - 3 * 24 * 60 * 60 * 1000).toISOString())
         .order("created_at", { ascending: false })
         .limit(12);
       const rows = hls ?? [];
@@ -392,7 +393,7 @@ export default async function ClanDetailPage({
               </span>
               <p className="text-[13px] text-white/70">
                 <span className="font-black text-white">{announcementTeaser.count} განცხადება</span> ამ კლანში
-                {announcementTeaser.latestAt && <> — ბოლო {announceAgo(announcementTeaser.latestAt)}</>}. შეუერთდი რომ ნახო.
+                {announcementTeaser.latestAt && <> — ბოლო {announceAgo(announcementTeaser.latestAt, serverNow)}</>}. შეუერთდი რომ ნახო.
               </p>
             </div>
           </div>
