@@ -85,7 +85,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
           >
             {avatar ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <img alt="Opengraph Image"
                 src={avatar}
                 width={244}
                 height={244}
