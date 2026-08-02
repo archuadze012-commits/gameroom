@@ -39,7 +39,7 @@
     "drizzle-orm": "^0.45.2",
     "lucide-react": "^1.16.0",
     "motion": "^12.42.0",
-    "next": "^16.2.6",
+    "next": "^16.2.12",
     "next-themes": "^0.4.6",
     "postgres": "^3.4.9",
     "react": "^19.2.4",
@@ -64,7 +64,7 @@
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.2.12",
     "shadcn": "^4.7.0",
     "sharp": "^0.35.2",
     "tailwindcss": "^4",
@@ -72,10 +72,12 @@
     "typescript": "^5"
   },
   "overrides": {
-    "postcss": "^8.5.10",
+    "postcss": "^8.5.17",
     "undici": "^6.27.0",
     "lodash": "^4.18.1",
-    "sharp": "$sharp"
+    "sharp": "$sharp",
+    "brace-expansion": "^2.0.1",
+    "fast-uri": "^3.1.4"
   },
   "allowScripts": {
     "esbuild@0.18.20": true,
