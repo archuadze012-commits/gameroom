@@ -95,6 +95,11 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
   // Snapshot of the last-persisted profile — lets us detect unsaved edits and
   // warn before the tab is closed/reloaded/navigated away from.
   const [savedSnapshot, setSavedSnapshot] = useState<Profile>(defaults);
+  const [nowMs, setNowMs] = useState<number>(0);
+
+  useEffect(() => {
+    setTimeout(() => setNowMs(Date.now()), 0);
+  }, []);
 
   useEffect(() => {
     async function init() {
@@ -204,9 +209,9 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
   const nextDisplayNameChangeAt = displayNameChangedAt
     ? new Date(new Date(displayNameChangedAt).getTime() + DISPLAY_NAME_COOLDOWN_MS)
     : null;
-  const displayNameLocked = !!nextDisplayNameChangeAt && nextDisplayNameChangeAt.getTime() > Date.now();
+  const displayNameLocked = !!nextDisplayNameChangeAt && nextDisplayNameChangeAt.getTime() > nowMs;
   const displayNameDaysLeft = nextDisplayNameChangeAt
-    ? Math.max(1, Math.ceil((nextDisplayNameChangeAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+    ? Math.max(1, Math.ceil((nextDisplayNameChangeAt.getTime() - nowMs) / (24 * 60 * 60 * 1000)))
     : 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
