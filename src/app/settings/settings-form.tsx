@@ -204,9 +204,14 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
   const nextDisplayNameChangeAt = displayNameChangedAt
     ? new Date(new Date(displayNameChangedAt).getTime() + DISPLAY_NAME_COOLDOWN_MS)
     : null;
-  const displayNameLocked = !!nextDisplayNameChangeAt && nextDisplayNameChangeAt.getTime() > Date.now();
-  const displayNameDaysLeft = nextDisplayNameChangeAt
-    ? Math.max(1, Math.ceil((nextDisplayNameChangeAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    setTimeout(() => setNow(new Date().getTime()), 0);
+  }, []);
+
+  const displayNameLocked = !!nextDisplayNameChangeAt && !!now && nextDisplayNameChangeAt.getTime() > now;
+  const displayNameDaysLeft = nextDisplayNameChangeAt && now
+    ? Math.max(1, Math.ceil((nextDisplayNameChangeAt.getTime() - now) / (24 * 60 * 60 * 1000)))
     : 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
