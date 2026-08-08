@@ -39,7 +39,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   distDir: ".next",
-  devIndicators: false,
+  devIndicators: { buildActivity: false, appIsrStatus: false },
   serverExternalPackages: ["discord.js"],
   // Strip console.* (except errors) from the production client bundle:
   // smaller JS, no runtime logging cost, no accidental log leakage.
@@ -49,8 +49,14 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/(.*)",
+        source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        source: "/api/:path*",
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex" }
+        ],
       },
     ];
   },
