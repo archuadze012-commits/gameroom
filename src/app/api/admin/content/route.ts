@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
   // { expire: 0 } forces immediate expiry (this is a Route Handler, not a
   // Server Action, so the recommended `profile: 'max'` stale-while-revalidate
   // path would still serve one more stale read before refreshing).
-  revalidateTag(SITE_CONTENT_CACHE_TAG);
+  revalidateTag(SITE_CONTENT_CACHE_TAG, { expire: 0 });
 
   await logAdminAction({
     actorId: auth.userId,

@@ -39,7 +39,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   distDir: ".next",
-  devIndicators: { buildActivity: false, appIsrStatus: false },
+  devIndicators: false,
   serverExternalPackages: ["discord.js"],
   // Strip console.* (except errors) from the production client bundle:
   // smaller JS, no runtime logging cost, no accidental log leakage.

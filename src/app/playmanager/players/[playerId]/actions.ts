@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath, revalidateTag } from 'next/cache';
+import { revalidatePath, updateTag } from 'next/cache';
 import { logAdminAction, requirePermission } from '@/lib/admin';
 import { getBaseTransferValueGel, getCurrentTransferValueGel } from '@/lib/playmanager/economy';
 import { createInitialPlayerStats, normalizePlayerStats, type PlayerCardStatsInput } from '@/lib/playmanager/player-card-stats';
@@ -153,7 +153,7 @@ export async function updatePlayManagerPlayerAdmin(
   revalidatePath('/playmanager');
   revalidatePath('/playmanager/market');
   revalidatePath(`/playmanager/players/${playerId}`);
-  revalidateTag('market-players');
+  updateTag('market-players');
   (globalThis as { __pmMarketRowsCache?: unknown }).__pmMarketRowsCache = undefined;
 
   return { success: true, message: 'მოთამაშე განახლდა' };
