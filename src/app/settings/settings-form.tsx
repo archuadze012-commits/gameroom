@@ -201,12 +201,21 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
     return () => window.removeEventListener("beforeunload", handler);
   }, [isDirty]);
 
+  // Workaround for react-hooks/purity: Avoid calling Date.now() directly during render.
+  // We can just use the value of an effect initialized state, but since this is client-side,
+  // we can also initialize the state safely without breaking hydration if we're careful.
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    setTimeout(() => setNow(Date.now()), 0);
+  }, []);
+
   const nextDisplayNameChangeAt = displayNameChangedAt
     ? new Date(new Date(displayNameChangedAt).getTime() + DISPLAY_NAME_COOLDOWN_MS)
     : null;
-  const displayNameLocked = !!nextDisplayNameChangeAt && nextDisplayNameChangeAt.getTime() > Date.now();
-  const displayNameDaysLeft = nextDisplayNameChangeAt
-    ? Math.max(1, Math.ceil((nextDisplayNameChangeAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+
+  const displayNameLocked = !!nextDisplayNameChangeAt && now !== null && nextDisplayNameChangeAt.getTime() > now;
+  const displayNameDaysLeft = nextDisplayNameChangeAt && now !== null
+    ? Math.max(1, Math.ceil((nextDisplayNameChangeAt.getTime() - now) / (24 * 60 * 60 * 1000)))
     : 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
