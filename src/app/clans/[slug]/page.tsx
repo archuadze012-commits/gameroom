@@ -49,7 +49,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 function announceAgo(iso: string) {
-  const days = Math.floor((new Date().getTime() - new Date(iso).getTime()) / 86_400_000);
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
   if (days <= 0) return "დღეს";
   if (days === 1) return "გუშინ";
   return `${days} დღის წინ`;
@@ -234,12 +234,11 @@ export default async function ClanDetailPage({
       : Promise.resolve({ count: 0 }),
     // Highlights (public showcase) + author names.
     (async (): Promise<ClanHighlight[]> => {
-      const threeDaysAgo = new Date(new Date().getTime() - 3 * 24 * 60 * 60 * 1000).toISOString();
       const { data: hls } = await supabase
         .from("clan_highlights")
         .select("id, url, title, platform, user_id")
         .eq("clan_id", clan.id)
-        .gte("created_at", threeDaysAgo)
+        .gte("created_at", new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString())
         .order("created_at", { ascending: false })
         .limit(12);
       const rows = hls ?? [];
