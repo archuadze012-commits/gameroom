@@ -1,0 +1,4 @@
+## 2024-08-13 - Insecure OAuth CSRF Token Generation
+**Vulnerability:** The OAuth CSRF state token for the TikTok integration was being generated using `Math.random().toString(36).substring(2, 15)`. `Math.random()` is a pseudo-random number generator and is not cryptographically secure, making the state tokens predictable.
+**Learning:** This vulnerability likely existed due to a lack of awareness that `Math.random()` is predictable and insufficient for generating security-sensitive tokens, especially when standard cryptographic alternatives are readily available in Node.js.
+**Prevention:** Always use cryptographically secure random number generators for security-sensitive values like OAuth CSRF state tokens, such as `crypto.randomUUID()` or `node:crypto`'s `randomBytes`. The project uses Node 24.x, ensuring `crypto.randomUUID()` is globally available.
