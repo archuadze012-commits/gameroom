@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Radar, Users, ShieldQuestion, Search } from "lucide-react";
+import { Radar, Users, ShieldQuestion } from "lucide-react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSession } from "@/lib/auth";
 import { PageHeader } from "@/components/page-header";
