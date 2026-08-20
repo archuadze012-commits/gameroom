@@ -1,4 +1,0 @@
-## 2025-02-28 - Insecure Randomness for OAuth CSRF Tokens
-**Vulnerability:** The TikTok OAuth start route `src/app/api/auth/tiktok/start/route.ts` used `Math.random().toString(36)` to generate the CSRF state parameter.
-**Learning:** `Math.random()` is a pseudo-random number generator that is not cryptographically secure, meaning generated values can theoretically be predicted. Predictable state parameters undermine CSRF protection in OAuth flows, allowing attackers to potentially bypass state validation and link unauthorized accounts or perform other CSRF actions.
-**Prevention:** Never use `Math.random()` for security-sensitive tokens, passwords, or session IDs. Always use cryptographically secure methods like `crypto.randomUUID()` or `crypto.getRandomValues()` (in browsers) or `node:crypto.randomBytes()` (in Node.js).
