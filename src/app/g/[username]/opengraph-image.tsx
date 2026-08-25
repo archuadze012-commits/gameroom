@@ -74,9 +74,9 @@ export default async function OgImage({ params }: { params: Promise<{ username: 
             }}
           >
             {avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={avatar}
-                alt=""
                 width={244}
                 height={244}
                 style={{ width: "244px", height: "244px", borderRadius: "9999px", objectFit: "cover" }}
