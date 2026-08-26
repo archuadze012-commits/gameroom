@@ -1,0 +1,4 @@
+## 2025-03-05 - Insecure CSRF Token Generation
+**Vulnerability:** Used `Math.random().toString(36)` to generate OAuth state (CSRF) tokens in `src/app/api/auth/tiktok/start/route.ts`.
+**Learning:** `Math.random()` is a pseudo-random number generator and is not cryptographically secure, making tokens potentially predictable and susceptible to CSRF attacks. Node.js environments (v24.x) natively support the Web Crypto API, so `crypto.randomUUID()` is readily available.
+**Prevention:** Always use `crypto.randomUUID()` or `node:crypto`'s `randomBytes()` for generating security-sensitive values like CSRF tokens, session IDs, or password reset tokens.
