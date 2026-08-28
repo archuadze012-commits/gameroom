@@ -26,6 +26,7 @@
     "pm:seed:eafc26:all": "node --env-file=.env.local scripts/seed-eafc26-all-players.mjs"
   },
   "dependencies": {
+    "nanoid": "^3.3.18",
     "@base-ui/react": "^1.4.1",
     "@radix-ui/react-slot": "^1.2.4",
     "@sentry/nextjs": "^10.63.0",
@@ -63,17 +64,18 @@
     "@types/web-push": "^3.6.4",
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
-    "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "shadcn": "^4.7.0",
     "sharp": "^0.35.2",
     "tailwindcss": "^4",
-    "tsx": "^4.22.1",
     "typescript": "^5"
   },
   "overrides": {
-    "postcss": "^8.5.10",
-    "undici": "^6.27.0",
+    "brace-expansion": "^2.0.1",
+    "fast-uri": "^3.1.5",
+    "nanoid": "^3.3.18",
+    "postcss": "^8.5.26",
+    "undici": "^8.10.0",
     "lodash": "^4.18.1",
     "sharp": "$sharp"
   },
