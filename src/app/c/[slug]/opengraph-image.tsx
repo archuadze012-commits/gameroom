@@ -84,12 +84,12 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
             }}
           >
             {avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={avatar}
                 width={244}
                 height={244}
                 style={{ width: "244px", height: "244px", borderRadius: "38px", objectFit: "cover" }}
-                alt=""
               />
             ) : (
               <div style={{ display: "flex", color: "#fff", fontSize: "110px", fontWeight: 800 }}>
