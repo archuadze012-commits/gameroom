@@ -95,7 +95,6 @@ export default async function OgImage({
             }}
           >
             {avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={avatar}
                 alt=""
