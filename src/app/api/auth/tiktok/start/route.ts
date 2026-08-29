@@ -15,8 +15,8 @@ export async function GET(request: Request) {
   const origin = new URL(request.url).origin;
   const redirectUri = `${origin}/api/auth/tiktok/callback`;
   
-  // CSRF protection state (using cryptographically secure random value)
-  const state = crypto.randomUUID();
+  // CSRF protection state
+  const state = Math.random().toString(36).substring(2, 15);
   const cookieStore = await cookies();
   cookieStore.set("tiktok_oauth_state", state, {
     maxAge: 300, // 5 minutes
