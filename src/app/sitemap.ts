@@ -8,11 +8,12 @@ import { getSiteUrl } from "@/lib/url";
 export const revalidate = 3600;
 
 function anon() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { persistSession: false } },
-  );
+  // Use placeholder values to allow static generation (next build) in CI
+  // environments where Supabase environment variables are intentionally omitted.
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "http://localhost:9999";
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder";
+
+  return createClient(url, key, { auth: { persistSession: false } });
 }
 
 async function rows<T>(q: PromiseLike<{ data: T[] | null }>): Promise<T[]> {
