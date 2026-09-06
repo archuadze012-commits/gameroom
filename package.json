@@ -27,6 +27,8 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
+    "@esbuild-kit/core-utils": "^3.3.2",
+    "@esbuild-kit/esm-loader": "^2.6.5",
     "@radix-ui/react-slot": "^1.2.4",
     "@sentry/nextjs": "^10.63.0",
     "@supabase/ssr": "^0.10.3",
