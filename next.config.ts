@@ -35,6 +35,7 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=(), payment=(), usb=()" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
   { key: "Content-Security-Policy", value: csp },
+  { key: "X-XSS-Protection", value: "1; mode=block" },
 ];
 
 const nextConfig: NextConfig = {
@@ -49,8 +50,14 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/(.*)",
+        source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        source: "/api/:path*",
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex" },
+        ],
       },
     ];
   },
