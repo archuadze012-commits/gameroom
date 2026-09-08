@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { getServerEnv } from "@/lib/env";
 import { cookies } from "next/headers";
+import { randomBytes } from "node:crypto";
 
 export async function GET(request: Request) {
   const user = await getSession().catch(() => null);
@@ -15,8 +16,8 @@ export async function GET(request: Request) {
   const origin = new URL(request.url).origin;
   const redirectUri = `${origin}/api/auth/tiktok/callback`;
   
-  // CSRF protection state
-  const state = Math.random().toString(36).substring(2, 15);
+  // CSRF protection state (cryptographically secure)
+  const state = randomBytes(16).toString("hex");
   const cookieStore = await cookies();
   cookieStore.set("tiktok_oauth_state", state, {
     maxAge: 300, // 5 minutes
