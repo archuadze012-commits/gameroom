@@ -438,7 +438,8 @@ export default async function GamePage({
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(gameJsonLd) }} />
+      {/* Sentinel: Sanitize JSON-LD to prevent XSS via unescaped HTML characters */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(gameJsonLd).replace(/</g, '\\u003c') }} />
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
 
       {game.coverUrl && (
