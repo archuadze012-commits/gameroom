@@ -17,7 +17,7 @@ jobs:
     name: types + lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
@@ -32,7 +32,7 @@ jobs:
     name: unit + integration
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
@@ -51,7 +51,7 @@ jobs:
     # Replays every supabase/migrations/*.sql against an in-process Postgres
     # (pglite, no Docker) to prove the tree builds a database from scratch.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
@@ -84,7 +84,7 @@ jobs:
       NEXT_PUBLIC_VAPID_PUBLIC_KEY: placeholder-vapid-key
       SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
@@ -106,7 +106,7 @@ jobs:
       NEXT_PUBLIC_VAPID_PUBLIC_KEY: placeholder-vapid-key
       SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: "24"

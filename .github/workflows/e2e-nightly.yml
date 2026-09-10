@@ -22,7 +22,7 @@ jobs:
     name: authenticated flows
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Gate on E2E backend secret
         id: gate
