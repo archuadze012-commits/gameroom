@@ -1,0 +1,4 @@
+## 2023-10-27 - Properly Escape Serialized JSON in dangerouslySetInnerHTML
+**Vulnerability:** XSS vulnerability through unescaped HTML characters when using `dangerouslySetInnerHTML` to inject JSON data (e.g., JSON-LD).
+**Learning:** React's `dangerouslySetInnerHTML` passes the provided HTML string directly to the DOM. When using `JSON.stringify()` to serialize data for `<script>` tags, it does not escape `<` or `/` characters. If the serialized data contains user-controlled input with closing script tags (e.g., `</script><script>alert(1)</script>`), an attacker can execute arbitrary JavaScript.
+**Prevention:** Always sanitize serialized JSON strings before injection by escaping HTML characters, particularly replacing `<` with `\u003c` (e.g., `JSON.stringify(data).replace(/</g, '\\u003c')`).
