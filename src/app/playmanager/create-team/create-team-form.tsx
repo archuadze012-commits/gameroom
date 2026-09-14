@@ -8,7 +8,6 @@ import {
   BadgeCheck,
   Banknote,
   Shield,
-  Sparkles,
   Swords,
   Users,
 } from 'lucide-react';
