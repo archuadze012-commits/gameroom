@@ -1,0 +1,4 @@
+## 2024-03-21 - JSON-LD XSS via dangerouslySetInnerHTML
+**Vulnerability:** JSON-LD script tags (`<script type="application/ld+json">`) using `dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}` are vulnerable to Cross-Site Scripting (XSS) if the data contains unescaped `<script>` tags or HTML entities.
+**Learning:** `JSON.stringify` does not escape HTML control characters like `<` or `>`. When injected directly into the DOM via `dangerouslySetInnerHTML`, the browser will parse those unescaped characters as HTML, allowing execution of malicious scripts if user-controlled input (like game descriptions or article titles) is included in the JSON-LD object.
+**Prevention:** Always escape `<` to `\u003c` when serializing JSON data for injection into script tags. E.g., `JSON.stringify(data).replace(/</g, "\\u003c")`. Alternatively, use safer serialization libraries designed for embedding JSON in HTML.
