@@ -1,0 +1,14 @@
+## 2025-02-18 - Prevent XSS in React JSON-LD injection
+**Vulnerability:** When using `dangerouslySetInnerHTML` to inject structured data (JSON-LD) into `<script>` tags, using plain `JSON.stringify(data)` without escaping leaves the application vulnerable to XSS. An attacker can craft inputs containing `</script><script>alert(1)</script>` which terminates the JSON script tag prematurely and executes arbitrary JavaScript.
+**Learning:** React's `dangerouslySetInnerHTML` bypasses its typical XSS protections. `JSON.stringify` alone does not escape HTML control characters like `<` and `>`. The injected payload is parsed as HTML first, before being parsed as JSON, making tag injection trivial if any user-controlled string is present in the JSON.
+**Prevention:** Always escape `<` characters in JSON structures injected via `dangerouslySetInnerHTML`. Append `.replace(/</g, '\\u003c')` to `JSON.stringify()` calls. This ensures any HTML tags within the JSON data are rendered harmless.
+
+## 2025-02-18 - Cloudflare/Netlify Build Failures with Regex Capture Groups
+**Vulnerability:** Next.js routing headers defined in configuration files (like `vercel.json` or `next.config.ts`) using regex capture groups (e.g., `/(.*)`) can cause build processes for Cloudflare Pages/Workers and Netlify to fail. This is because these platforms' routing engines often do not fully support or strictly parse regex capture groups in the same way as Vercel.
+**Learning:** Using regex capture groups (like `/(.*)`) for global headers leads to deployment failures across different hosting platforms.
+**Prevention:** Avoid duplicating routing headers across `next.config.ts` and `vercel.json`. When setting global headers, use Next.js glob syntax (e.g., `/:path*` or `/api/:path*`) in `next.config.ts` instead of regex capture groups to ensure compatibility across Vercel, Cloudflare, and Netlify deployments. Always ensure critical security headers (e.g., `X-XSS-Protection`) are migrated properly if modifying configuration blocks.
+
+## 2025-02-18 - Next.js Cloudflare Proxy Bypass & RCE Vulnerabilities
+**Vulnerability:** Next.js versions `<16.3.2` are susceptible to multiple high-severity CVEs (e.g., GHSA-6gpp-xcg3-4w24, GHSA-p293-qw3h-jr36) including Middleware bypasses and unauthenticated RCE on edge platforms like Cloudflare Workers. These trigger `npm audit` failures in CI and block deployments.
+**Learning:** Hard-pinning or using older Next.js versions can break edge deployments due to automated security check runs on platforms like Cloudflare and GitHub Actions.
+**Prevention:** Increment the Next.js `package.json` dependency to a known safe, stable version (e.g., `^16.3.6`) and commit an updated `package-lock.json` (`npm install`). Do not rely on `npm audit fix --force` as it can introduce destructive breaking changes to other core dependencies.
