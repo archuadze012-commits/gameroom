@@ -1,4 +1,8 @@
-## 2024-09-24 - XSS in dangerouslySetInnerHTML JSON-LD
-**Vulnerability:** XSS vulnerability where `dangerouslySetInnerHTML` was used with `JSON.stringify` directly in script tags (`<script type="application/ld+json">`) in Next.js pages without escaping `<` characters.
-**Learning:** `JSON.stringify` does not escape `<` or `/` characters by default. If an attacker can control part of the object being stringified (e.g., game title or description), they could inject a closing `</script>` tag followed by malicious JavaScript, leading to Cross-Site Scripting (XSS).
-**Prevention:** Always sanitize data passed to `dangerouslySetInnerHTML`. When injecting serialized JSON into an HTML document via a script tag, escape HTML characters, specifically replacing `<` with `\u003c` (e.g., `JSON.stringify(data).replace(/</g, '\\u003c')`).
+## 2024-09-24 - XSS in dangerouslySetInnerHTML JSON-LD & Cloudflare Pages deployment failure with Vercel/Next headers
+**Vulnerability 1:** XSS vulnerability where `dangerouslySetInnerHTML` was used with `JSON.stringify` directly in script tags (`<script type="application/ld+json">`) in Next.js pages without escaping `<` characters.
+**Learning 1:** `JSON.stringify` does not escape `<` or `/` characters by default. If an attacker can control part of the object being stringified (e.g., game title or description), they could inject a closing `</script>` tag followed by malicious JavaScript, leading to Cross-Site Scripting (XSS).
+**Prevention 1:** Always sanitize data passed to `dangerouslySetInnerHTML`. When injecting serialized JSON into an HTML document via a script tag, escape HTML characters, specifically replacing `<` with `\u003c` (e.g., `JSON.stringify(data).replace(/</g, '\\u003c')`).
+
+**Vulnerability 2:** Not a direct vulnerability, but a configuration bug preventing deployment. Build processes for Netlify and Cloudflare Pages/Workers fail when encountering regex capture groups (like `/(.*)`) in `vercel.json` headers.
+**Learning 2:** Avoid duplicating routing headers across `next.config.ts` and `vercel.json`. Cloudflare and Netlify do not support the same regex syntax in `vercel.json` as Vercel does, and Next.js glob syntax (e.g., `/:path*`) is preferred.
+**Prevention 2:** Remove the headers block from `vercel.json` if they are already defined in `next.config.ts` using Next.js glob syntax (`/:path*`), ensuring security headers remain intact in the application's configuration while enabling successful edge deployments.
