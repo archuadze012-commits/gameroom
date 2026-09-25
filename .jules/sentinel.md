@@ -1,0 +1,4 @@
+## 2025-02-24 - Weak PRNG used for OAuth CSRF tokens
+**Vulnerability:** The TikTok OAuth authentication route (`src/app/api/auth/tiktok/start/route.ts`) was using `Math.random().toString(36)` to generate the `state` parameter for CSRF protection.
+**Learning:** Developers sometimes reach for `Math.random()` to generate unique strings without realizing it is a pseudo-random number generator (PRNG) that is predictable and not cryptographically secure, defeating the purpose of a security token.
+**Prevention:** Always use cryptographically secure random generation (e.g., `crypto.randomUUID()` or `crypto.getRandomValues()`) when generating security-sensitive values like session IDs, CSRF tokens, or password resets. Node 24.x provides `crypto.randomUUID()` globally.
