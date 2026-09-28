@@ -1,0 +1,4 @@
+## 2024-09-28 - XSS vulnerability via JSON-LD in dangerouslySetInnerHTML
+**Vulnerability:** Found `JSON.stringify()` directly used inside `dangerouslySetInnerHTML` for JSON-LD data without escaping HTML characters like `<`. This could potentially allow XSS if any data fields in the JSON object (e.g. game description, article title) contained malicious `<script>` tags, since `JSON.stringify` does not escape `<`.
+**Learning:** React's `dangerouslySetInnerHTML` injects strings exactly as provided. Even when the type is `application/ld+json`, a stray closing `</script>` tag in user-controlled data can terminate the script block and allow execution of a subsequent `<script>` tag.
+**Prevention:** Always escape `<` characters when inserting serialized JSON into HTML templates. Replace `/</g` with `\\u003c` after `JSON.stringify()`.
