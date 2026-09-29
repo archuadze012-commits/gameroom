@@ -7,6 +7,7 @@ import { ka } from "date-fns/locale";
 import Link from "next/link";
 import { ArrowLeft, Clock } from "lucide-react";
 import { UserAvatar } from "@/components/user-avatar";
+import { sanitizeJson } from "@/lib/sanitize-json";
 import { ArticleOwnerActions } from "@/components/article-owner-actions";
 import { getIsAdmin, getSession } from "@/lib/auth";
 import { getSiteUrl } from "@/lib/url";
@@ -72,7 +73,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
     <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeJson(JSON.stringify(jsonLd)) }}
       />
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-40" />
 
