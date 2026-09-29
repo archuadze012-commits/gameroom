@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { sanitizeJson } from "@/lib/sanitize-json";
 import {
   MessageSquare,
   Users as UsersIcon,
@@ -438,7 +439,7 @@ export default async function GamePage({
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(gameJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: sanitizeJson(JSON.stringify(gameJsonLd)) }} />
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-50" />
 
       {game.coverUrl && (

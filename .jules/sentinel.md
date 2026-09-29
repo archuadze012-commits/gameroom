@@ -1,0 +1,4 @@
+## 2025-01-27 - XSS via JSON.stringify in script tags
+**Vulnerability:** XSS vulnerability when embedding JSON data using `dangerouslySetInnerHTML` combined with `JSON.stringify` inside `<script type="application/ld+json">` tags.
+**Learning:** `JSON.stringify` does not escape HTML control characters like `<` or `>`. An attacker who can control input included in the JSON payload (such as an article title, game slug, or description) could inject a payload like `</script><script>alert("XSS")</script>`, which would prematurely close the `<script>` tag and execute arbitrary Javascript.
+**Prevention:** Sanitize the output of `JSON.stringify` by escaping HTML characters before using it with `dangerouslySetInnerHTML`. A utility function `sanitizeJson` should be used to replace `<` with `\u003c` (and optionally `>` with `\u003e`).
