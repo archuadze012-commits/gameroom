@@ -1,0 +1,4 @@
+## 2024-10-12 - Prevent Timing Attacks in Cron Endpoints
+**Vulnerability:** Cron endpoints (`/api/admin/cron/*`) were using strict string equality (`!==`) to compare the `CRON_SECRET` with the incoming `authorization` header.
+**Learning:** String equality operators return `false` as soon as they find a mismatching character, meaning the time it takes to compare the strings depends on how many characters match. This can allow an attacker to guess the secret character by character by measuring the response time (Timing Attack).
+**Prevention:** Always use constant-time comparison functions like `crypto.timingSafeEqual` when comparing sensitive tokens, secrets, or signatures. Ensure the strings are the same length before comparing them with `timingSafeEqual` to avoid early exits based on length.
