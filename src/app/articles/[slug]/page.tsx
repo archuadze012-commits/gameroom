@@ -70,10 +70,9 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
-      {/* 🛡️ Escape HTML angle brackets to prevent XSS breakout when injecting JSON-LD */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-40" />
 
