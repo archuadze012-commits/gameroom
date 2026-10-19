@@ -201,12 +201,13 @@ export function SettingsForm({ games = [] }: { games?: Game[] }) {
     return () => window.removeEventListener("beforeunload", handler);
   }, [isDirty]);
 
+  const nowTime = new Date().getTime();
   const nextDisplayNameChangeAt = displayNameChangedAt
     ? new Date(new Date(displayNameChangedAt).getTime() + DISPLAY_NAME_COOLDOWN_MS)
     : null;
-  const displayNameLocked = !!nextDisplayNameChangeAt && nextDisplayNameChangeAt.getTime() > Date.now();
+  const displayNameLocked = !!nextDisplayNameChangeAt && nextDisplayNameChangeAt.getTime() > nowTime;
   const displayNameDaysLeft = nextDisplayNameChangeAt
-    ? Math.max(1, Math.ceil((nextDisplayNameChangeAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+    ? Math.max(1, Math.ceil((nextDisplayNameChangeAt.getTime() - nowTime) / (24 * 60 * 60 * 1000)))
     : 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
