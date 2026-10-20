@@ -49,8 +49,12 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/(.*)",
-        headers: securityHeaders,
+        source: "/:path*",
+        headers: [...securityHeaders, { key: "X-XSS-Protection", value: "1; mode=block" }],
+      },
+      {
+        source: "/api/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex" }],
       },
     ];
   },
