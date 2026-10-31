@@ -72,7 +72,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
     <div className="relative min-h-[calc(100vh-4rem)] bg-transparent">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
       <div aria-hidden className="pointer-events-none absolute inset-0 gr-dot-grid opacity-40" />
 
