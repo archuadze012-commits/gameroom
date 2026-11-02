@@ -1,0 +1,4 @@
+## 2026-11-02 - Migrate Header Routes to Glob Syntax
+**Vulnerability:** Regex capture groups (like `/(.*)`) in `vercel.json` headers cause build failures when deploying to Netlify and Cloudflare Pages/Workers, which can block necessary security headers from being applied or cause the app to fail to deploy securely.
+**Learning:** Build processes for certain platforms fail when they encounter standard regex routes rather than Next.js glob syntax routes. Duplicating routing headers across `next.config.ts` and `vercel.json` complicates configuration and introduces potential divergence and failure points across deployments.
+**Prevention:** Avoid duplicating routing headers. Instead, migrate *all* headers to `next.config.ts` (e.g., `X-XSS-Protection` for global routes, and `X-Robots-Tag: noindex` for APIs) and use glob syntax (e.g., `/:path*` or `/api/:path*`) to ensure cross-platform compatibility without degrading security or SEO.
