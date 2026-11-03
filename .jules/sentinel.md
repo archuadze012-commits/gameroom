@@ -1,0 +1,4 @@
+## 2026-11-03 - Unescaped JSON-LD in dangerouslySetInnerHTML
+**Vulnerability:** XSS vulnerability through unescaped `<` characters in `JSON.stringify()` inside `dangerouslySetInnerHTML` for JSON-LD scripts.
+**Learning:** `JSON.stringify()` does not escape HTML characters, making it unsafe to inject directly into HTML elements via `dangerouslySetInnerHTML` without escaping, as malicious input containing `<script>` tags can trigger XSS.
+**Prevention:** Always sanitize serialized JSON strings by replacing `<` with `\u003c` (e.g., `JSON.stringify(data).replace(/</g, '\\u003c')`) before injecting them into the DOM.
