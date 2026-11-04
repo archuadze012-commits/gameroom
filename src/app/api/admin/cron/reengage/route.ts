@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "node:crypto";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getServerEnv } from "@/lib/env";
 import { sendPushToUser } from "@/lib/push";
@@ -40,7 +41,18 @@ function digestEmail(opts: {
 async function reengage(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   const secret = process.env.CRON_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
+
+  if (!secret || !authHeader) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const expectedToken = Buffer.from(`Bearer ${secret}`);
+  const providedToken = Buffer.from(authHeader);
+
+  if (
+    expectedToken.byteLength !== providedToken.byteLength ||
+    !crypto.timingSafeEqual(expectedToken, providedToken)
+  ) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
