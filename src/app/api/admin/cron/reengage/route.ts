@@ -5,6 +5,7 @@ import { sendPushToUser } from "@/lib/push";
 import { onlineCutoffIso } from "@/lib/presence";
 import { getSiteOrigin } from "@/lib/url";
 import { createLogger } from "@/lib/logger";
+import crypto from "node:crypto";
 
 const logger = createLogger("api:cron-reengage");
 
@@ -40,7 +41,19 @@ function digestEmail(opts: {
 async function reengage(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   const secret = process.env.CRON_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
+
+  if (!secret || !authHeader) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const expectedToken = `Bearer ${secret}`;
+  const providedBuffer = Buffer.from(authHeader);
+  const expectedBuffer = Buffer.from(expectedToken);
+
+  if (
+    providedBuffer.byteLength !== expectedBuffer.byteLength ||
+    !crypto.timingSafeEqual(providedBuffer, expectedBuffer)
+  ) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

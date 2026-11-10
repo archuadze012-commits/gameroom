@@ -1,10 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import crypto from "node:crypto";
 
 async function sweepExpiredHighlights(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   const secret = process.env.CRON_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
+
+  if (!secret || !authHeader) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const expectedToken = `Bearer ${secret}`;
+  const providedBuffer = Buffer.from(authHeader);
+  const expectedBuffer = Buffer.from(expectedToken);
+
+  if (
+    providedBuffer.byteLength !== expectedBuffer.byteLength ||
+    !crypto.timingSafeEqual(providedBuffer, expectedBuffer)
+  ) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
